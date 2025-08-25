@@ -20,7 +20,7 @@ export class SceneManager {
     }
     static loadScene(gl, jsonData, scene) {
         scene = scene || new Scene();
-        const { meshMaps, lights, objects } = jsonData;
+        const { meshMaps, objects } = jsonData;
         const meshes = SceneManager.instaciateSceneMeshes(meshMaps);
         jsonData['objects'] = SceneManager.instaciateSceneObjects(scene, objects, meshes, gl);
         scene.fromJson(jsonData);

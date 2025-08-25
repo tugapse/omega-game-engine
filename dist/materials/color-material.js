@@ -15,7 +15,6 @@ export class ColorMaterial extends JsonSerializable {
     }
     fromJson(jsonObject) {
         this.name = jsonObject['name'];
-        debugger;
         this.color = Color.createFromJsonData(jsonObject['color']);
     }
 }

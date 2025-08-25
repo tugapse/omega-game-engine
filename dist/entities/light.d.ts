@@ -1,9 +1,18 @@
-import { vec3 } from "gl-matrix";
-import { GlEntity } from "./entity";
 import { Color } from "../core/color";
 import { Transform } from "../core/transform";
+import { Vector3 } from "../core/vector";
 import { EntityType } from "../enums/entity-type";
 import { JsonSerializedData } from "../interfaces/json-serialized-data";
+import { GlEntity } from "./entity";
+export declare class LightAttenuation {
+    constant: number;
+    linear: number;
+    quadratic: number;
+}
+export declare class LightConeAngles {
+    inner: number;
+    outer: number;
+}
 export declare class Light extends GlEntity {
     entityType: EntityType;
     color: Color;
@@ -13,7 +22,7 @@ export declare class Light extends GlEntity {
     static instanciate(name?: string, transform?: Transform): Light;
 }
 export declare class DirectionalLight extends Light {
-    direction: vec3;
+    direction: Vector3;
     entityType: EntityType;
     constructor(name: string);
     toJsonObject(): JsonSerializedData;
@@ -22,11 +31,7 @@ export declare class DirectionalLight extends Light {
 }
 export declare class PointLight extends Light {
     entityType: EntityType;
-    attenuation: {
-        constant: number;
-        linear: number;
-        quadratic: number;
-    };
+    attenuation: LightAttenuation;
     constructor(name: string);
     toJsonObject(): JsonSerializedData;
     fromJson(jsonObject: JsonSerializedData): void;
@@ -34,16 +39,9 @@ export declare class PointLight extends Light {
 }
 export declare class SpotLight extends Light {
     entityType: EntityType;
-    direction: vec3;
-    coneAngles: {
-        inner: number;
-        outer: number;
-    };
-    attenuation: {
-        constant: number;
-        linear: number;
-        quadratic: number;
-    };
+    direction: Vector3;
+    coneAngles: LightConeAngles;
+    attenuation: LightAttenuation;
     constructor(name: string);
     toJsonObject(): JsonSerializedData;
     fromJson(jsonObject: JsonSerializedData): void;

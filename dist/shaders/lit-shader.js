@@ -17,7 +17,6 @@ export class LitShader extends Shader {
             return;
         this.checkAndLoadTextures();
         if (!this.material.color.toVec4) {
-            debugger;
         }
         this.setVec4(ShaderUniformsEnum.U_MAT_COLOR, this.material.color.toVec4());
         this.setVec2(ShaderUniformsEnum.U_UV_SCALE, this.material.uvScale);

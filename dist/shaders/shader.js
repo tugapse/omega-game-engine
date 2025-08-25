@@ -52,8 +52,6 @@ export class Shader extends JsonSerializable {
         this.shaderProgram = this.createProgram(this.gl, vertexShader, fragmentShader);
         this.initialized = true;
     }
-    async addShaderImports(vsSource, fsSource) {
-    }
     initBuffers(gl, mesh) {
         mesh.calculateNormals();
         mesh.calculateTangentsAndBitangents();
@@ -178,9 +176,6 @@ export class Shader extends JsonSerializable {
         if (location) {
             this.gl.uniformMatrix4fv(location, false, Float32Array.from(value));
         }
-        else {
-            console.warn(`Uniform location for ${name} not found or is null.`);
-        }
     }
     setMat3(name, value) {
         const location = this.gl.getUniformLocation(this.shaderProgram, name);
@@ -277,6 +272,7 @@ export class Shader extends JsonSerializable {
         if (this.shaderProgram)
             this.gl.deleteProgram(this.shaderProgram);
         this.initialized = false;
+        console.debug("i was called");
     }
     toJsonObject() {
         return {

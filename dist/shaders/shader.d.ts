@@ -29,7 +29,6 @@ export declare class Shader extends JsonSerializable {
     buffers: WebGLBuffers;
     constructor(gl: WebGL2RenderingContext, material: ColorMaterial, fragUri?: string, vertexUri?: string);
     initialize(): Promise<void>;
-    private addShaderImports;
     initBuffers(gl: WebGL2RenderingContext, mesh: MeshData): void;
     bindBuffers(): void;
     use(): void;

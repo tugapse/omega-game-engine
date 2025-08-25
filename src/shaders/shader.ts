@@ -87,10 +87,6 @@ export class Shader extends JsonSerializable {
     this.initialized = true;
   }
 
-  private async addShaderImports(vsSource: string, fsSource: string) {
-
-  }
-
   initBuffers(gl: WebGL2RenderingContext, mesh: MeshData): void {
     mesh.calculateNormals();
     mesh.calculateTangentsAndBitangents();
@@ -226,9 +222,7 @@ export class Shader extends JsonSerializable {
     const location = this.gl.getUniformLocation(this.shaderProgram, name);
     if (location) {
       this.gl.uniformMatrix4fv(location, false, Float32Array.from(value));
-    } else {
-      console.warn(`Uniform location for ${name} not found or is null.`);
-    }
+    } 
   }
 
   public setMat3(name: string, value: mat3): void {
@@ -313,6 +307,7 @@ export class Shader extends JsonSerializable {
     }
     return shaderProgram;
   }
+
   public recompile() {
     this.destroy();
     this.initialize();
@@ -341,6 +336,7 @@ export class Shader extends JsonSerializable {
     if (this.shaderProgram)
       this.gl.deleteProgram(this.shaderProgram);
     this.initialized = false;
+    console.debug("i was called")
   }
 
   public override toJsonObject(): JsonSerializedData {

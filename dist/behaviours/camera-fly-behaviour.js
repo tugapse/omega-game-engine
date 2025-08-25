@@ -6,8 +6,8 @@ export class CameraFlyBehaviour extends EntityBehaviour {
         super(...arguments);
         this.moveSpeed = 20;
         this.rotationSpeed = 0.8;
-        this._acceleration = 10;
         this.rotationDampening = 0.4;
+        this._acceleration = 10;
         this._forwardVelocity = 0;
         this._strafeVelocity = 0;
         this._upVelocity = 0;
@@ -16,6 +16,12 @@ export class CameraFlyBehaviour extends EntityBehaviour {
     }
     static instanciate() { return new CameraFlyBehaviour(); }
     update(ellapsed) {
+        this.updateInput(ellapsed);
+        super.update(ellapsed);
+    }
+    updateInput(ellapsed) {
+        if (!this._initialized)
+            return;
         const transform = this.parent.transform;
         const accelerationDelta = this._acceleration * ellapsed;
         const maxSpeed = this.moveSpeed;
@@ -78,7 +84,6 @@ export class CameraFlyBehaviour extends EntityBehaviour {
         const smoothedRotation = quat.create();
         quat.slerp(smoothedRotation, transform.rotationQuat, finalRotation, this.rotationDampening);
         transform.setRotationQuat(smoothedRotation);
-        super.update(ellapsed);
     }
     toJsonObject() {
         return {

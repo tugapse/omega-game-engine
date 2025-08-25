@@ -19,7 +19,6 @@ export class ColorMaterial extends JsonSerializable {
 
   override fromJson(jsonObject: JsonSerializedData): void {
     this.name = jsonObject['name'];
-    debugger
     this.color = Color.createFromJsonData(jsonObject['color']);
 
   }

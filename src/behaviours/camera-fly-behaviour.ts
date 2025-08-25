@@ -9,17 +9,23 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
   public moveSpeed = 20;
   public rotationSpeed = 0.8;
-  private _acceleration = 10;
   public rotationDampening = 0.4;
+  protected _acceleration = 10;
 
-  private _forwardVelocity = 0;
-  private _strafeVelocity = 0;
-  private _upVelocity = 0;
+  protected _forwardVelocity = 0;
+  protected _strafeVelocity = 0;
+  protected _upVelocity = 0;
 
-  private _currentYaw = 0;
-  private _currentPitch = 0;
+  protected _currentYaw = 0;
+  protected _currentPitch = 0;
 
   override update(ellapsed: number): void {
+    this.updateInput(ellapsed);
+    super.update(ellapsed);
+  }
+
+  protected updateInput(ellapsed: number) {
+    if (!this._initialized) return;
     const transform = this.parent.transform;
 
     const accelerationDelta = this._acceleration * ellapsed;
@@ -67,8 +73,8 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
     // --- Corrected Camera Rotation Logic (Mouse Input) ---
     if (Mouse.mouseButtonDown[0]) {
-        this._currentYaw += -Mouse.mouseMovement.x * this.rotationSpeed;
-        this._currentPitch += Mouse.mouseMovement.y * this.rotationSpeed;
+      this._currentYaw += -Mouse.mouseMovement.x * this.rotationSpeed;
+      this._currentPitch += Mouse.mouseMovement.y * this.rotationSpeed;
     }
 
     // Clamp the pitch to prevent flipping
@@ -89,8 +95,6 @@ export class CameraFlyBehaviour extends EntityBehaviour {
     const smoothedRotation = quat.create();
     quat.slerp(smoothedRotation, transform.rotationQuat, finalRotation, this.rotationDampening);
     transform.setRotationQuat(smoothedRotation);
-
-    super.update(ellapsed);
   }
 
   override toJsonObject(): JsonSerializedData {

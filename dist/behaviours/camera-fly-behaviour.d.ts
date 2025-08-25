@@ -4,14 +4,15 @@ export declare class CameraFlyBehaviour extends EntityBehaviour {
     static instanciate(): CameraFlyBehaviour;
     moveSpeed: number;
     rotationSpeed: number;
-    private _acceleration;
     rotationDampening: number;
-    private _forwardVelocity;
-    private _strafeVelocity;
-    private _upVelocity;
-    private _currentYaw;
-    private _currentPitch;
+    protected _acceleration: number;
+    protected _forwardVelocity: number;
+    protected _strafeVelocity: number;
+    protected _upVelocity: number;
+    protected _currentYaw: number;
+    protected _currentPitch: number;
     update(ellapsed: number): void;
+    protected updateInput(ellapsed: number): void;
     toJsonObject(): JsonSerializedData;
     fromJson(jsonObject: JsonSerializedData): void;
 }

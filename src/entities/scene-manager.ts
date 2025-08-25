@@ -29,7 +29,7 @@ export class SceneManager {
 
   public static loadScene(gl: WebGL2RenderingContext, jsonData: JsonSerializedData, scene?: Scene): Scene {
     scene = scene || new Scene();
-    const { meshMaps, lights, objects } = jsonData;
+    const { meshMaps,  objects } = jsonData;
     const meshes: { [key: string]: MeshData; } = SceneManager.instaciateSceneMeshes(meshMaps);
 
     jsonData['objects'] = SceneManager.instaciateSceneObjects(scene, objects, meshes, gl);
