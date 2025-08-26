@@ -46,12 +46,23 @@ export class Color extends JsonSerializable {
     this.a = jsonObject['b'];
   }
 
-  public toVec3() {
+  public toVec3(): vec3 {
     return vec3.fromValues(this.r, this.g, this.b);
   }
 
-  public toVec4() {
+  public toVec4(): vec4 {
     return this.vector;
+  }
+
+  public clone(): Color {
+    return new Color(...this.vector);
+  }
+
+  public set(r: number = 1, g: number = 1, b: number = 1, a: number = 1): void {
+    this.vector[0] = r;
+    this.vector[1] = g;
+    this.vector[2] = b;
+    this.vector[3] = a;
   }
 }
 

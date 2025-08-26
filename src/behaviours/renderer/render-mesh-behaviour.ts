@@ -123,7 +123,7 @@ export class RenderMeshBehaviour extends RendererBehaviour {
 
     spotLights.forEach(light => {
       spotPositionsFlat.push(...light.transform.position);
-      const normalizedDir = vec3.normalize(vec3.create(), light.direction.vector);
+      const normalizedDir = vec3.normalize(vec3.create(), light.direction);
       spotDirectionsFlat.push(...normalizedDir);
       spotColorsFlat.push(...light.color.toVec3());
       spotInnerConeCosFlat.push(Math.cos(light.coneAngles.inner));
@@ -157,7 +157,7 @@ export class RenderMeshBehaviour extends RendererBehaviour {
     const dirColorsFlat: number[] = [];
 
     directionalLights.forEach(light => {
-      const normalizedDir = vec3.normalize(vec3.create(), light.direction.vector);
+      const normalizedDir = vec3.normalize(vec3.create(), light.direction);
       dirDirectionsFlat.push(...normalizedDir);
       dirColorsFlat.push(...light.color.toVec3());
     });

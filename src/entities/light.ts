@@ -1,4 +1,5 @@
 
+import { vec3 } from "gl-matrix";
 import { Color } from "../core/color";
 import { Transform } from "../core/transform";
 import { Vector3 } from "../core/vector";
@@ -8,8 +9,8 @@ import { GlEntity } from "./entity";
 
 
 export class LightAttenuation { constant!: number; linear!: number; quadratic!: number }
-
 export class LightConeAngles { inner!: number; outer!: number; }
+
 export class Light extends GlEntity {
 
   public override entityType: EntityType = EntityType.LIGHT_AMBIENT;
@@ -40,25 +41,23 @@ export class Light extends GlEntity {
 
 export class DirectionalLight extends Light {
 
-  public direction!: Vector3;
+  public get direction() { return this.transform.rotation }
   public override entityType: EntityType = EntityType.LIGHT_DIRECTIONAL;
-  
+
   constructor(name: string) {
     super(name);
     this.entityType = EntityType.LIGHT_DIRECTIONAL;
-    this.direction = new Vector3();
   }
+
   public override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
-      direction: this.direction.toJsonObject()
 
     }
   }
 
   public override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
-    this.direction.fromJson(jsonObject['direction']);
 
   }
 
@@ -70,6 +69,7 @@ export class DirectionalLight extends Light {
 export class PointLight extends Light {
   public override entityType: EntityType = EntityType.LIGHT_POINT;
   public attenuation!: LightAttenuation;
+
 
 
   constructor(name: string) {
@@ -98,14 +98,13 @@ export class PointLight extends Light {
 
 export class SpotLight extends Light {
   public override entityType: EntityType = EntityType.LIGHT_SPOT;
-  public direction!: Vector3;
   public coneAngles!: LightConeAngles;
   public attenuation!: LightAttenuation;
+  public get direction() { return this.transform.rotation }
 
   constructor(name: string) {
     super(name);
     this.entityType = EntityType.LIGHT_SPOT;
-    this.direction = new Vector3();
     this.coneAngles = new LightConeAngles();
     this.attenuation = new LightAttenuation();
   }
@@ -115,14 +114,11 @@ export class SpotLight extends Light {
       ...super.toJsonObject(),
       coneAngles: this.coneAngles,
       attenuation: this.attenuation,
-      direction: this.direction.toJsonObject()
     }
   }
 
   public override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
-    this.direction = new Vector3();
-    this.direction.fromJson(jsonObject['direction']);
     this.coneAngles = jsonObject['coneAngles'];
     this.attenuation = jsonObject['attenuation'];
   }
