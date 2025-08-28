@@ -6,9 +6,7 @@ import { JsonSerializedData } from "../interfaces/json-serialized-data";
 import { Camera } from "./camera";
 import { GlEntity } from "./entity";
 import { Light } from "./light";
-
-
-
+import { SceneEntityBehaviour } from "../behaviours/scene/scene-behaviour";
 
 export class Scene extends GlEntity {
 
@@ -18,6 +16,7 @@ export class Scene extends GlEntity {
   public isRunning: boolean = false;
   public color: vec3 = vec3.fromValues(0.2, 1, 0.2);
   public override tag: string = "Scene";
+  public override behaviours: SceneEntityBehaviour[];
   override entityType: number = EntityType.SCENE;
 
   private _objects: GlEntity[];
@@ -29,6 +28,7 @@ export class Scene extends GlEntity {
   constructor() {
     super("Scene");
     this._objects = [];
+    this.behaviours = [];
 
     !Scene._currentScene && (Scene._currentScene = this);
 
@@ -45,19 +45,23 @@ export class Scene extends GlEntity {
     if (this.destroyed) return;
 
     Camera.mainCamera.update(ellapsed);
+
     if (!this.isRunning) return;
+    this.behaviours.forEach(behaviour=>behaviour.beforeUpdate(ellapsed))
     this.ellapsedTime += ellapsed
     super.update(ellapsed);
 
     for (const object of this.objects.filter(e => e.active)) {
       object.update(ellapsed);
     }
+    this.behaviours.forEach(behaviour=>behaviour.afterUpdate())
   }
 
   public override draw(): void {
     if (this.destroyed) return;
 
     if (!this.gl || !Camera.mainCamera) return;
+    this.behaviours.forEach(behaviour=>behaviour.beforeDraw())
 
     this.gl.clearColor(this.color[0], Math.sin(this.ellapsedTime) * this.color[1], this.color[2], 1.0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
@@ -66,6 +70,7 @@ export class Scene extends GlEntity {
       object.draw();
     }
     super.draw();
+    this.behaviours.forEach(behaviour=>behaviour.afterDraw())
   }
 
   public addEntity(entity: GlEntity) {
@@ -74,6 +79,12 @@ export class Scene extends GlEntity {
     entity.scene = this;
     this._objects.push(entity);
     entity.initialize()
+  }
+
+  override addBehaviour(behaviour: SceneEntityBehaviour): void {
+    behaviour.parent = this;
+    this.behaviours.push(behaviour);
+    behaviour.initialize();
   }
 
   public setGlRenderingContext(gl: WebGL2RenderingContext): void {

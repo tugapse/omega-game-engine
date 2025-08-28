@@ -9,10 +9,12 @@ import { JsonSerializedData } from "../../interfaces/json-serialized-data";
 import { Shader } from "../../shaders/shader";
 import { EntityBehaviour } from "../entity-behaviour";
 import { mat3 } from "gl-matrix";
+import { GLPrimitiveType } from "../../enums/gl-primitive-type.enum";
 
 export class RendererBehaviour extends EntityBehaviour {
+  public drawPrimitiveType = GLPrimitiveType.LINES;
   public mesh!: Mesh;
-  public shader!: Shader;
+  public shader?: Shader;
   protected time = 0;
 
   protected worldMatrixUniformLocation: WebGLUniformLocation | null = null;
@@ -25,7 +27,7 @@ export class RendererBehaviour extends EntityBehaviour {
   }
 
   override initialize(): boolean {
-    if (this._initialized) return false;
+    if (this._initialized || !this.gl) return false;
     this.setGlSettings();
     this.initializeShader();
     return super.initialize();
@@ -44,6 +46,7 @@ export class RendererBehaviour extends EntityBehaviour {
   }
 
   protected initializeShader() {
+    if (!this.shader) return;
     this.shader.initialize();
     this.shader.buffers.position = this.gl.createBuffer();
     this.shader.buffers.uv = this.gl.createBuffer();
@@ -54,12 +57,14 @@ export class RendererBehaviour extends EntityBehaviour {
 
 
   protected setCameraMatrices() {
-    const camera = Camera.mainCamera;
-    const mvpMatrix = mat4.create();
-    this.parent.transform.updateMatrices();
-    mat4.multiply(mvpMatrix, camera.projectionMatrix, camera.viewMatrix);
-    mat4.multiply(mvpMatrix, mvpMatrix, this.parent.transform.modelMatrix);
-    this.shader.setMat4(ShaderUniformsEnum.U_MVP_MATRIX, mvpMatrix);
+    if (this.shader) {
+      const camera = Camera.mainCamera;
+      const mvpMatrix = mat4.create();
+      this.parent.transform.updateMatrices();
+      mat4.multiply(mvpMatrix, camera.projectionMatrix, camera.viewMatrix);
+      mat4.multiply(mvpMatrix, mvpMatrix, this.parent.transform.modelMatrix);
+      this.shader.setMat4(ShaderUniformsEnum.U_MVP_MATRIX, mvpMatrix);
+    }
   }
 
   protected setModelWorldMatrices() {
@@ -84,15 +89,17 @@ export class RendererBehaviour extends EntityBehaviour {
     this.setGlSettings();
     this.setCameraMatrices();
     this.setModelWorldMatrices();
-    this.shader.setFloat(ShaderUniformsEnum.U_TIME, this.time);
-    this.shader.setVec2(ShaderUniformsEnum.U_SCREEN_RESOLUTION, [CanvasViewport.rendererWidth, CanvasViewport.rendererHeight]);
-    this.shader.loadDataIntoShader();
+    if (this.shader) {
+      this.shader.setFloat(ShaderUniformsEnum.U_TIME, this.time);
+      this.shader.setVec2(ShaderUniformsEnum.U_SCREEN_RESOLUTION, [CanvasViewport.rendererWidth, CanvasViewport.rendererHeight]);
+      this.shader.loadDataIntoShader();
+    }
   }
 
   override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
-      shader: this.shader.toJsonObject(),
+      shader: this.shader?.toJsonObject(),
       mesh: this.mesh.toJsonObject()
     }
   }

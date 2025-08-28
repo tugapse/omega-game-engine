@@ -26,6 +26,8 @@ export class SkyboxRenderer extends RenderMeshBehaviour {
   }
 
   override draw(): void {
+    if(!this.shader)return;
+
     if (!this.mesh || !this.shader.shaderProgram) { return }
 
     this.shader.bindBuffers();
@@ -35,6 +37,8 @@ export class SkyboxRenderer extends RenderMeshBehaviour {
   }
 
   override setCameraMatrices() {
+    if(!this.shader)return;
+
     const camera = Camera.mainCamera;
 
     // Create a view matrix without translation
@@ -52,6 +56,8 @@ export class SkyboxRenderer extends RenderMeshBehaviour {
   }
 
   override setShaderVariables() {
+    if(!this.shader)return;
+    
     this.setGlSettings();
     this.setCameraMatrices();
     this.shader.loadDataIntoShader();

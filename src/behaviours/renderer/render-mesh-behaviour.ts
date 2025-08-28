@@ -6,6 +6,7 @@ import { ShaderUniformsEnum } from "../../enums/shader-uniforms.enum";
 import { LitMaterial } from "../../materials/lit-material";
 import { LitShader } from "../../shaders/lit-shader";
 import { RendererBehaviour } from "./renderer-behaviour";
+import { GLPrimitiveType } from "../../enums/gl-primitive-type.enum";
 
 export class RenderMeshBehaviour extends RendererBehaviour {
 
@@ -22,27 +23,29 @@ export class RenderMeshBehaviour extends RendererBehaviour {
 
   constructor(public override gl: WebGL2RenderingContext) {
     super(gl);
+    this.drawPrimitiveType = GLPrimitiveType.TRIANGLES;
   }
 
   override draw(): void {
-    if (!this.mesh || !this.shader.shaderProgram) { return }
+    if (!this.mesh || !this.shader?.shaderProgram) { return }
 
     this.getNormalMapLocations();
     this.shader.bindBuffers();
     this.shader.use();
     this.setShaderVariables();
-    this.gl.drawElements(this.gl.TRIANGLES, this.mesh.meshData.indices.length, this.gl.UNSIGNED_SHORT, 0);
+    this.gl.drawElements(this.drawPrimitiveType, this.mesh.meshData.indices.length, this.gl.UNSIGNED_SHORT, 0);
   }
 
 
 
   protected override initializeShader() {
     super.initializeShader();
-
-    this.shader.buffers.normal = this.gl.createBuffer();
-    this.shader.buffers.tangent = this.gl.createBuffer();
-    this.shader.buffers.bitangent = this.gl.createBuffer();
-    this.shader.initBuffers(this.gl, this.mesh.meshData);
+    if (this.shader) {
+      this.shader.buffers.normal = this.gl.createBuffer();
+      this.shader.buffers.tangent = this.gl.createBuffer();
+      this.shader.buffers.bitangent = this.gl.createBuffer();
+      this.shader.initBuffers(this.gl, this.mesh.meshData);
+    }
 
   }
 
@@ -53,7 +56,7 @@ export class RenderMeshBehaviour extends RendererBehaviour {
   }
 
   protected getNormalMapLocations() {
-    if (this.shader.shaderProgram && this.enableNormalmaps) {
+    if (this.shader?.shaderProgram && this.enableNormalmaps) {
       this.normalMapUniformLocation = this.gl.getUniformLocation(this.shader.shaderProgram, ShaderUniformsEnum.U_NORMAL_MAP);
       this.worldMatrixUniformLocation = this.gl.getUniformLocation(this.shader.shaderProgram, ShaderUniformsEnum.U_WORLD_MATRIX);
       this.worldInverseTransposeMatrixUniformLocation = this.gl.getUniformLocation(this.shader.shaderProgram, ShaderUniformsEnum.U_WORLD_INVERSE_TRANSPOSE_MATRIX);
@@ -63,6 +66,7 @@ export class RenderMeshBehaviour extends RendererBehaviour {
   }
 
   protected setNormalMapsInformation() {
+    if (!this.shader) return;
     const material = this.shader.material as LitMaterial;
     // If a normal map texture is provided, bind and pass it
     if (material.normalTex && material.normalTex.glTexture && this.normalMapUniformLocation) {
@@ -101,6 +105,7 @@ export class RenderMeshBehaviour extends RendererBehaviour {
   }
 
   protected loadSpotLights(spotLights: SpotLight[]) {
+    if (!this.shader) return;
     // Get uniform locations (ensuring '[0]' for array uniforms)
     const uNumSpotLightsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, 'u_numSpotLights');
     const uSpotPositionsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, 'u_spotLightPositions[0]');
@@ -148,6 +153,8 @@ export class RenderMeshBehaviour extends RendererBehaviour {
   }
 
   protected loadDirectionalLights(directionalLights: DirectionalLight[]) {
+    if (!this.shader) return;
+
     // Get uniform locations (ensuring '[0]' for array uniforms)
     const uNumDirLightsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, 'u_numDirectionalLights');
     const uDirDirectionsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, 'u_directionalLightDirections[0]');
@@ -171,6 +178,8 @@ export class RenderMeshBehaviour extends RendererBehaviour {
   }
 
   protected loadPointLights(pointLights: PointLight[]) {
+    if (!this.shader) return;
+
     // Get uniform locations (ensuring '[0]' for array uniforms)
     const uNumPointLightsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, 'u_numPointLights');
     const uPointPositionsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, 'u_pointLightPositions[0]');
