@@ -1,15 +1,25 @@
-// src/primitives/SpherePrimitive.ts
-
 import { vec2, vec3 } from "gl-matrix";
 import { MeshData } from "../core/mesh";
 
+/**
+  Represents a procedurally generated sphere primitive with positions, normals, and UV coordinates.
+ * @augments {MeshData}
+ */
 export class SpherePrimitive extends MeshData {
+  /**
+    Creates a new instance of SpherePrimitive.
+   * This constructor generates a sphere mesh by creating a grid of vertices using spherical coordinates.
+   * @param {number} [radius=1.0] - The radius of the sphere.
+   * @param {number} [slices=32] - The number of vertical segments (longitude lines).
+   * @param {number} [stacks=16] - The number of horizontal segments (latitude lines).
+   */
   constructor(radius: number = 1.0, slices: number = 32, stacks: number = 16) {
     const vertices: vec3[] = [];
     const normals: vec3[] = [];
     const uvs: vec2[] = [];
-    const indices: number[] = []; // for triangles
+    const indices: number[] = [];
 
+    // Generate vertices, normals, and UVs.
     for (let i = 0; i <= stacks; ++i) {
       const v = i / stacks;
       const phi = v * Math.PI;
@@ -32,24 +42,19 @@ export class SpherePrimitive extends MeshData {
       }
     }
 
-    // Generate triangle indices with corrected winding order
+    // Generate triangle indices with corrected winding order.
     for (let i = 0; i < stacks; ++i) {
       for (let j = 0; j < slices; ++j) {
         const first = (i * (slices + 1)) + j;
-        const second = first + slices + 1; // Vertex directly below 'first'
+        const second = first + slices + 1;
 
-        // Original (problematic) order:
-        // indices.push(first, second, first + 1);
-        // indices.push(second, second + 1, first + 1);
-
-        // Corrected order for CCW winding when viewed from outside
-        // This forms two triangles (first, first+1, second) and (first+1, second+1, second)
-        // that together form a quad from the mesh grid.
+        // Forms a quad from two triangles with counter-clockwise winding.
+        // Triangle 1 (first, first+1, second)
         indices.push(first, first + 1, second);
+        // Triangle 2 (first+1, second+1, second)
         indices.push(first + 1, second + 1, second);
       }
     }
-
 
     super(vertices, normals, uvs, indices);
   }

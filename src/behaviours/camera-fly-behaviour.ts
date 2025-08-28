@@ -4,8 +4,8 @@ import { EntityBehaviour } from "./entity-behaviour";
 import { JsonSerializedData } from '../interfaces/json-serialized-data';
 
 /**
- * @behaviour CameraFlyBehaviour
- * @description
+   CameraFlyBehaviour
+  
  * Implements a free-look camera controller, often referred to as "flycam" or "FPS camera."
  * It allows movement with W/A/S/D/Q/E keys and rotation with mouse input.
  * The movement includes smooth acceleration and deceleration, and rotation is smoothly dampened.

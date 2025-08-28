@@ -1,69 +1,115 @@
+/**
+  An enumeration of texture wrapping modes. These values correspond to WebGL constants for `TEXTURE_WRAP_S` and `TEXTURE_WRAP_T`.
+ */
 export enum TextureWrapMode {
+  /**
+    The texture will repeat itself.
+   */
   REPEAT = 10497,
+  /**
+    The texture will repeat itself, but each successive repeat is mirrored.
+   */
   MIRRORED_REPEAT = 33648,
+  /**
+    The texture will be clamped to the edge pixels.
+   */
   CLAMP_TO_EDGE = 33071,
-
 }
 
+/**
+  A class to manage the loading, creation, and binding of 2D textures for use in WebGL.
+ */
 export class Texture {
-
-
+  /**
+    The HTML image element that contains the texture data.
+   * @protected
+   * @type {HTMLImageElement | null}
+   */
   protected _image: HTMLImageElement | null = null;
+  /**
+    The WebGL texture object.
+   * @protected
+   * @type {WebGLTexture | null}
+   */
   protected _glTexture: WebGLTexture | null = null;
+  /**
+    Indicates whether the image data has been loaded.
+   * @protected
+   * @type {boolean}
+   */
   protected _isLoaded: boolean = false;
+  /**
+    Indicates whether the texture is currently in the process of loading.
+   * @protected
+   * @type {boolean}
+   */
   protected _isLoading: boolean = false;
 
-  constructor(protected gl: WebGL2RenderingContext, protected textureUri?: string) { }
+  /**
+    Creates an instance of Texture.
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @param {string} [textureUri] - The URI of the image to load.
+   */
+  constructor(protected gl: WebGL2RenderingContext, protected textureUri?: string) {}
 
+  /**
+    Creates and returns a default 1x1 white texture.
+   * This is useful as a fallback texture for materials that don't have one specified.
+    
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @returns {Texture} - A new Texture instance with a 1x1 white pixel.
+   */
   public static getDefaultWhiteTexture(gl: WebGL2RenderingContext): Texture {
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
 
-    // Create a 1x1 white pixel
     const whitePixel = new Uint8Array([255, 255, 255, 255]);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, whitePixel);
 
-    // Set texture parameters for default behavior
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-    gl.bindTexture(gl.TEXTURE_2D, null); // Unbind
+    gl.bindTexture(gl.TEXTURE_2D, null);
     const result = new Texture(gl);
     result._glTexture = texture;
     result._isLoaded = true;
     return result;
   }
 
-  public setTextureUri(textureURi: string) {
+  /**
+    Sets the URI for the texture's image.
+   * @param {string} textureURi - The new URI for the texture.
+   * @returns {void}
+   */
+  public setTextureUri(textureURi: string): void {
     this.textureUri = textureURi;
   }
 
   /**
-   * Loads an image from the given URL.
-   * @param url The URL of the image to load.
-   * @returns A Promise that resolves when the image is loaded.
+    Loads an image from the provided URI and creates the WebGL texture.
+   * @returns {Promise<void>} - A Promise that resolves when the image is fully loaded and the WebGL texture is created.
    */
   public async load(): Promise<void> {
-    if (this._isLoading || this.isImageLoaded) return
+    if (this._isLoading || this.isImageLoaded) return;
     this._isLoading = true;
     return new Promise((resolve, reject) => {
       if (!this.textureUri) {
-        reject(new Error(`Failed to load image. Please provide a texture url!`));
+        reject(new Error("Failed to load image. Please provide a texture URL!"));
       }
 
       this._image = new Image();
       this._image.onload = () => {
         this._isLoaded = true;
         if (this.gl) {
-          this.createGLTexture(this.gl); // Automatically create GL texture if context is available
+          this.createGLTexture(this.gl);
         }
         this._isLoading = false;
         resolve();
       };
       this._image.onerror = (error) => {
-        this._isLoading = true;
+        this._isLoading = false;
         this._isLoaded = false;
         this._image = null;
         reject(new Error(`Failed to load image: ${this.textureUri!}. Error: ${error}`));
@@ -73,9 +119,10 @@ export class Texture {
   }
 
   /**
-   * Creates the WebGLTexture object from the loaded image data.
-   * This should be called after the image has loaded and the WebGL context is available.
-   * @param gl The WebGL2RenderingContext.
+    Creates the WebGLTexture object from the loaded image data.
+   * @protected
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @returns {void}
    */
   protected createGLTexture(gl: WebGL2RenderingContext): void {
     if (!this._isLoaded || !this._image) {
@@ -83,63 +130,76 @@ export class Texture {
       return;
     }
 
-    this._glTexture = gl.createTexture(); // Create a new texture object
+    this._glTexture = gl.createTexture();
     this.setTextureWrapMode(TextureWrapMode.CLAMP_TO_EDGE);
 
-    this.bind()
+    this.bind();
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this._image);
     gl.generateMipmap(gl.TEXTURE_2D);
     this.unBind();
   }
 
-  public setTextureWrapMode(wrapMode: TextureWrapMode) {
-    this.bind(); // Bind it to the TEXTURE_2D target
+  /**
+    Sets the texture wrapping mode for the S and T axes.
+   * @param {TextureWrapMode} wrapMode - The wrapping mode to apply.
+   * @returns {void}
+   */
+  public setTextureWrapMode(wrapMode: TextureWrapMode): void {
+    this.bind();
 
-    // Set texture parameters:
-    // CLAMP_TO_EDGE prevents texture bleeding at the edges.
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, wrapMode);
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, wrapMode);
 
-    // LINEAR filtering provides smoother scaling.
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
 
     this.unBind();
   }
 
-  public bind() {
+  /**
+    Binds the texture to the `TEXTURE_2D` target.
+   * @returns {void}
+   */
+  public bind(): void {
     this.gl.bindTexture(this.gl.TEXTURE_2D, this._glTexture);
   }
 
-  public unBind() {
+  /**
+    Unbinds the texture from the `TEXTURE_2D` target.
+   * @returns {void}
+   */
+  public unBind(): void {
     this.gl.bindTexture(this.gl.TEXTURE_2D, null);
   }
 
   /**
-   * Returns the WebGLTexture object.
-   * @returns The WebGLTexture or null if not yet created.
+    Gets the WebGLTexture object.
+   * @readonly
+   * @type {WebGLTexture | null}
    */
   public get glTexture(): WebGLTexture | null {
     return this._glTexture;
   }
 
   /**
-   * Checks if the image data has been loaded.
+    Checks if the image data has been successfully loaded into the HTMLImageElement.
+   * @readonly
+   * @type {boolean}
    */
   public get isImageLoaded(): boolean {
     return this._isLoaded;
   }
 
   /**
-   * Destroys the WebGL texture to free up GPU memory.
+    Destroys the WebGL texture to free up GPU memory.
+   * @returns {void}
    */
   public destroy(): void {
     if (this.gl && this._glTexture) {
       this.gl.deleteTexture(this._glTexture);
       this._glTexture = null;
     }
-    this._image = null; // Also clear the image reference
+    this._image = null;
     this._isLoaded = false;
   }
-
 }

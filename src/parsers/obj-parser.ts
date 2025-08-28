@@ -2,37 +2,77 @@ import { vec3, vec2 } from "gl-matrix";
 import { MeshData } from "../core/mesh";
 import { ObjFace } from "./interfaces";
 
-
+/**
+  A class for parsing Wavefront .obj files and converting the data into a WebGL-compatible MeshData format.
+ */
 export class ObjParser {
-  // Temporary arrays to store data as we parse
+  /**
+    Temporary array to store raw vertex position data as it is parsed from the file.
+   * @private
+   * @type {number[]}
+   */
   private tempVertices: number[] = [];
+  /**
+    Temporary array to store raw normal vector data as it is parsed from the file.
+   * @private
+   * @type {number[]}
+   */
   private tempNormals: number[] = [];
+  /**
+    Temporary array to store raw texture coordinate (UV) data as it is parsed from the file.
+   * @private
+   * @type {number[]}
+   */
   private tempUVs: number[] = [];
+  /**
+    Temporary array to store face data with 1-based indices, before consolidation.
+   * @private
+   * @type {ObjFace[]}
+   */
   private tempFaces: ObjFace[] = [];
 
-  // Final processed data that will be returned
+  /**
+    Final processed vertex position data in a format suitable for WebGL buffers.
+   * @private
+   * @type {vec3[]}
+   */
   private outputVertices: vec3[] = [];
+  /**
+    Final processed normal vector data in a format suitable for WebGL buffers.
+   * @private
+   * @type {vec3[]}
+   */
   private outputNormals: vec3[] = [];
+  /**
+    Final processed texture coordinate (UV) data in a format suitable for WebGL buffers.
+   * @private
+   * @type {vec2[]}
+   */
   private outputUVs: vec2[] = [];
-  private outputIndices: number[] = []; // Indices for drawing (e.g., in WebGL)
+  /**
+    Final processed indices for drawing, which reference the consolidated vertex data.
+   * @private
+   * @type {number[]}
+   */
+  private outputIndices: number[] = [];
 
   /**
-   * Parses the content of an OBJ file string.
-   * @param objContent The entire content of the OBJ file as a string.
-   * @returns A ParsedObjData object containing the mesh data.
+    Parses the content of an OBJ file string.
+   * @param {string} objContent - The entire content of the OBJ file as a string.
+   * @returns {MeshData} - A MeshData object containing the parsed and consolidated mesh data.
    */
   public parse(objContent: string): MeshData {
-    this.resetParser(); // Clear previous data
+    this.resetParser();
 
     const lines = objContent.split('\n');
 
     for (const line of lines) {
       const trimmedLine = line.trim();
       if (trimmedLine.length === 0 || trimmedLine.startsWith('#')) {
-        continue; // Skip empty lines and comments
+        continue;
       }
 
-      const parts = trimmedLine.split(/\s+/); // Split by one or more spaces
+      const parts = trimmedLine.split(/\s+/);
       const prefix = parts[0];
 
       switch (prefix) {
@@ -48,23 +88,11 @@ export class ObjParser {
         case 'f':
           this.parseFace(parts);
           break;
-        // You can add more cases for 'o', 'mtllib', 'usemtl', 's', etc.
-        // case 'o':
-        //   console.log('Object Name:', parts[1]);
-        //   break;
-        // case 'mtllib':
-        //   console.log('Material Library:', parts[1]);
-        //   break;
-        // case 'usemtl':
-        //   console.log('Using Material:', parts[1]);
-        //   break;
         default:
-          // console.warn(`Unknown OBJ line prefix: ${prefix}`);
           break;
       }
     }
 
-    // After parsing all lines, consolidate data for drawing
     this.consolidateMeshData();
 
     return new MeshData(
@@ -75,6 +103,11 @@ export class ObjParser {
     );
   }
 
+  /**
+    Resets all internal temporary and output arrays to prepare for parsing a new OBJ file.
+   * @private
+   * @returns {void}
+   */
   private resetParser(): void {
     this.tempVertices = [];
     this.tempNormals = [];
@@ -86,8 +119,13 @@ export class ObjParser {
     this.outputIndices = [];
   }
 
+  /**
+    Parses a 'v' line from the OBJ file and stores the vertex position.
+   * @private
+   * @param {string[]} parts - The line parts, e.g., ['v', 'x', 'y', 'z'].
+   * @returns {void}
+   */
   private parseVertex(parts: string[]): void {
-    // 'v x y z'
     this.tempVertices.push(
       parseFloat(parts[1]),
       parseFloat(parts[2]),
@@ -95,16 +133,26 @@ export class ObjParser {
     );
   }
 
+  /**
+    Parses a 'vt' line from the OBJ file and stores the texture coordinates.
+   * @private
+   * @param {string[]} parts - The line parts, e.g., ['vt', 'u', 'v'].
+   * @returns {void}
+   */
   private parseUV(parts: string[]): void {
-    // 'vt u v' (or 'vt u v w', w is often 0 or 1, we usually only care about u,v)
     this.tempUVs.push(
       parseFloat(parts[1]),
       parseFloat(parts[2])
     );
   }
 
+  /**
+    Parses a 'vn' line from the OBJ file and stores the normal vector.
+   * @private
+   * @param {string[]} parts - The line parts, e.g., ['vn', 'nx', 'ny', 'nz'].
+   * @returns {void}
+   */
   private parseNormal(parts: string[]): void {
-    // 'vn nx ny nz'
     this.tempNormals.push(
       parseFloat(parts[1]),
       parseFloat(parts[2]),
@@ -112,44 +160,38 @@ export class ObjParser {
     );
   }
 
+  /**
+    Parses a 'f' line from the OBJ file, handling triangulation for N-gons, and stores the face data.
+   * @private
+   * @param {string[]} parts - The line parts, e.g., ['f', 'v/vt/vn', ...].
+   * @returns {void}
+   */
   private parseFace(parts: string[]): void {
-    // 'f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3 ...'
-    // Can also be 'f v1 v2 v3' or 'f v1/vt1 v2/vt2' or 'f v1//vn1 v2//vn2'
     const face: ObjFace = { positions: [], uvs: [], normals: [] };
 
-    // Start from index 1 because parts[0] is 'f'
     for (let i = 1; i < parts.length; i++) {
-      const vertexDef = parts[i]; // e.g., "1/1/1", "5/2/1", "3", "4//2"
-
+      const vertexDef = parts[i];
       const indices = vertexDef.split('/').map(s => parseInt(s, 10));
 
-      // OBJ indices are 1-based, so subtract 1 for 0-based arrays
-      // Handle missing indices (e.g., 'v' only, 'v/vt', 'v//vn')
-      face.positions.push(indices[0] - 1); // Vertex index is always present
+      face.positions.push(indices[0] - 1);
 
       if (indices.length > 1 && !isNaN(indices[1])) {
-        face.uvs.push(indices[1] - 1); // Texture coord index
+        face.uvs.push(indices[1] - 1);
       } else {
-        face.uvs.push(-1); // Mark as not present
+        face.uvs.push(-1);
       }
 
       if (indices.length > 2 && !isNaN(indices[2])) {
-        face.normals.push(indices[2] - 1); // Normal index
+        face.normals.push(indices[2] - 1);
       } else if (indices.length === 2 && isNaN(indices[1])) {
-        // This case handles 'v//vn' where indices[1] would be NaN
         face.normals.push(indices[2] - 1);
       } else {
-        face.normals.push(-1); // Mark as not present
+        face.normals.push(-1);
       }
     }
 
-    // OBJ faces can be N-gons. For WebGL (which uses triangles),
-    // we need to triangulate them. A common method is fan triangulation.
     if (face.positions.length >= 3) {
       for (let i = 1; i < face.positions.length - 1; i++) {
-        // Triangle 1: (0, 1, 2)
-        // Triangle 2: (0, 2, 3)
-        // ...
         this.tempFaces.push({
           positions: [face.positions[0], face.positions[i], face.positions[i + 1]],
           uvs: face.uvs.includes(-1) ? [-1, -1, -1] : [face.uvs[0], face.uvs[i], face.uvs[i + 1]],
@@ -159,55 +201,52 @@ export class ObjParser {
     }
   }
 
-  // Maps OBJ indices to continuous WebGL-compatible buffers
+  /**
+    Consolidates the temporary face data into a single, indexed set of buffers for rendering. This process handles duplicate vertices by creating a unique mapping for each combination of position, UV, and normal.
+   * @private
+   * @returns {void}
+   */
   private consolidateMeshData(): void {
-    const uniqueVertexMap = new Map<string, number>(); // Maps "v_idx/vt_idx/vn_idx" to new flat index
+    const uniqueVertexMap = new Map<string, number>();
     let currentOutputIndex = 0;
 
     for (const face of this.tempFaces) {
-      for (let i = 0; i < 3; i++) { // Each triangulated face has 3 vertices
+      for (let i = 0; i < 3; i++) {
         const posIdx = face.positions[i];
         const uvIdx = face.uvs[i];
         const normIdx = face.normals[i];
 
-        // Create a unique key for each combination of (position, uv, normal)
         const key = `${posIdx}/${uvIdx}/${normIdx}`;
 
         if (!uniqueVertexMap.has(key)) {
-          // If this combination is new, add its data to the output arrays
           uniqueVertexMap.set(key, currentOutputIndex);
 
-          // Add position data
           this.outputVertices.push(vec3.fromValues(
             this.tempVertices[posIdx * 3 + 0],
             this.tempVertices[posIdx * 3 + 1],
-            this.tempVertices[posIdx * 3 + 2])
-          );
+            this.tempVertices[posIdx * 3 + 2]
+          ));
 
-          // Add UV data (handle if not present in OBJ)
           if (uvIdx !== -1) {
             this.outputUVs.push(vec2.fromValues(
               this.tempUVs[uvIdx * 2 + 0],
-              this.tempUVs[uvIdx * 2 + 1])
-            );
+              this.tempUVs[uvIdx * 2 + 1]
+            ));
           } else {
-            this.outputUVs.push(vec2.fromValues(0.0, 0.0)); // Default UV if not provided
+            this.outputUVs.push(vec2.fromValues(0.0, 0.0));
           }
 
-          // Add Normal data (handle if not present in OBJ)
           if (normIdx !== -1) {
             this.outputNormals.push(vec3.fromValues(
               this.tempNormals[normIdx * 3 + 0],
               this.tempNormals[normIdx * 3 + 1],
-              this.tempNormals[normIdx * 3 + 2])
-            );
+              this.tempNormals[normIdx * 3 + 2]
+            ));
           } else {
-            // If no normal provided, add a default (e.g., [0,0,0] or calculate later)
             this.outputNormals.push(vec3.fromValues(0.0, 0.0, 0.0));
           }
           currentOutputIndex++;
         }
-        // Add the new flat index to the output indices list
         this.outputIndices.push(uniqueVertexMap.get(key)!);
       }
     }

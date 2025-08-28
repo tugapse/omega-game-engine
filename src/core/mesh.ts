@@ -4,40 +4,85 @@ import { JsonSerializable } from "../interfaces/json-serializable";
 import { JsonSerializedData } from "../interfaces/json-serialized-data";
 import { EngineCache } from "./engineCache";
 
-
-export const loadTorusPrimitive = async () => {
+/**
+  Asynchronously loads torus mesh data from the engine cache.
+ * @returns {Promise<MeshData>} - A promise that resolves with the torus mesh data.
+ */
+export const loadTorusPrimitive = async (): Promise<MeshData> => {
   return EngineCache.getMeshDataFromObj("assets/primitives/torus.obj");
-}
-export const loadCilinderPrimitive = async () => {
-  return EngineCache.getMeshDataFromObj("assets/primitives/cilinder.obj");
-}
+};
 
 /**
- * @class MeshData
- * @description Base class for geometric mesh data.
- * It stores vertex positions, normals, and UV coordinates, along with optional tangent and bitangent vectors for normal mapping.
+  Asynchronously loads cylinder mesh data from the engine cache.
+ * @returns {Promise<MeshData>} - A promise that resolves with the cylinder mesh data.
+ */
+export const loadCilinderPrimitive = async (): Promise<MeshData> => {
+  return EngineCache.getMeshDataFromObj("assets/primitives/cilinder.obj");
+};
+
+/**
+  Base class for geometric mesh data. It stores vertex positions, normals, and UV coordinates, along with optional tangent and bitangent vectors for normal mapping.
+ * @augments {JsonSerializable}
  */
 export class MeshData extends JsonSerializable {
-  public static instanciate(vertices?: vec3[], normals: vec3[] = [], uvs: vec2[] = [], indices: number[] = []) {
+  /**
+    Creates a new MeshData instance.
+    
+   * @param {vec3[]} [vertices] - The array of vertex positions.
+   * @param {vec3[]} [normals=[]] - The array of vertex normals.
+   * @param {vec2[]} [uvs=[]] - The array of texture coordinates.
+   * @param {number[]} [indices=[]] - The array of vertex indices.
+   * @returns {MeshData} - A new MeshData instance.
+   */
+  public static instanciate(vertices?: vec3[], normals: vec3[] = [], uvs: vec2[] = [], indices: number[] = []): MeshData {
     if (!vertices) vertices = [];
-    return new MeshData(vertices, normals, uvs, indices)
+    return new MeshData(vertices, normals, uvs, indices);
   }
-  public vertices: vec3[];
-  public normals: vec3[];
-  public uvs: vec2[];
-  public indices: number[];
 
+  /**
+    The array of vertex positions.
+   * @type {vec3[]}
+   */
+  public vertices: vec3[];
+  /**
+    The array of vertex normals.
+   * @type {vec3[]}
+   */
+  public normals: vec3[];
+  /**
+    The array of texture coordinates.
+   * @type {vec2[]}
+   */
+  public uvs: vec2[];
+  /**
+    The array of vertex indices.
+   * @type {number[]}
+   */
+  public indices: number[];
+  /**
+    The array of tangent vectors.
+   * @type {vec3[] | undefined}
+   */
   public tangents?: vec3[];
+  /**
+    The array of bitangent vectors.
+   * @type {vec3[] | undefined}
+   */
   public bitangents?: vec3[];
+  /**
+    The unique identifier for the mesh data.
+   * @type {string}
+   */
   public uuid: string;
 
-
-  constructor(
-    vertices: vec3[],
-    normals: vec3[] = [], // Make normals optional in constructor, as they can be generated
-    uvs: vec2[] = [],     // Make uvs optional in constructor
-    indices: number[] = [],
-  ) {
+  /**
+    Creates an instance of MeshData.
+   * @param {vec3[]} vertices - The array of vertex positions.
+   * @param {vec3[]} [normals=[]] - The array of vertex normals.
+   * @param {vec2[]} [uvs=[]] - The array of texture coordinates.
+   * @param {number[]} [indices=[]] - The array of vertex indices.
+   */
+  constructor(vertices: vec3[], normals: vec3[] = [], uvs: vec2[] = [], indices: number[] = []) {
     super();
     this.vertices = vertices;
     this.normals = normals;
@@ -47,11 +92,10 @@ export class MeshData extends JsonSerializable {
   }
 
   /**
-   * Calculates smooth normals and generates indices for the mesh based on its vertices. 📐
-   * If `this.indices` is not already set, it generates sequential indices assuming the vertices
-   * are ordered to form triangles (e.g., 3 vertices per triangle).
+    Calculates smooth normals and generates indices for the mesh based on its vertices.
    * It computes face normals and then averages them for vertex normals to create a smooth appearance.
    * The calculated normals and indices are stored directly in `this.normals` and `this.indices`.
+   * @returns {void}
    */
   public calculateNormals(): void {
     if (this.vertices.length === 0) {
@@ -61,42 +105,32 @@ export class MeshData extends JsonSerializable {
 
     const numVertices = this.vertices.length;
 
-    // Initialize normals array with zero vectors
     this.normals = Array.from({ length: numVertices }, () => vec3.create());
 
-    // Initialize arrays to store the sum of face normals for each vertex
-    // and a counter for how many faces contribute to each vertex's normal.
-    // Using vec3.create() for sums to leverage gl-matrix operations directly.
     const vertexNormalSums = Array.from({ length: numVertices }, () => vec3.create());
     const vertexNormalCounts = new Array(numVertices).fill(0);
 
-    // Iterate through triangles using indices
-    // We step by 3 because each triangle uses 3 indices.
     for (let i = 0; i < this.indices.length; i += 3) {
       const i1 = this.indices[i];
       const i2 = this.indices[i + 1];
       const i3 = this.indices[i + 2];
 
-      // Ensure indices are valid to prevent out-of-bounds access
       if (i1 >= numVertices || i2 >= numVertices || i3 >= numVertices) {
         console.warn(`Invalid index found in triangle ${Math.floor(i / 3)}: [${i1}, ${i2}, ${i3}]. Skipping triangle.`);
-        continue; // Skip to the next triangle
+        continue;
       }
 
       const p1 = this.vertices[i1];
       const p2 = this.vertices[i2];
       const p3 = this.vertices[i3];
 
-      // Calculate two edges of the triangle using gl-matrix vec3 functions
       const edge1 = vec3.sub(vec3.create(), p2, p1);
       const edge2 = vec3.sub(vec3.create(), p3, p1);
 
-      // Calculate the cross product to get the face normal
       const faceNormal = vec3.create();
       vec3.cross(faceNormal, edge1, edge2);
-      vec3.normalize(faceNormal, faceNormal); // Normalize the face normal
+      vec3.normalize(faceNormal, faceNormal);
 
-      // Add this face normal to the sum for each of the three vertices of the triangle
       vec3.add(vertexNormalSums[i1], vertexNormalSums[i1], faceNormal);
       vertexNormalCounts[i1]++;
 
@@ -107,25 +141,23 @@ export class MeshData extends JsonSerializable {
       vertexNormalCounts[i3]++;
     }
 
-    // Average the accumulated face normals for each vertex to get the smooth vertex normals
     for (let i = 0; i < numVertices; i++) {
       const sumNormal = vertexNormalSums[i];
       const count = vertexNormalCounts[i];
 
       if (count > 0) {
-        // Divide the sum by the count to get the average, then normalize
         vec3.scale(this.normals[i], sumNormal, 1 / count);
         vec3.normalize(this.normals[i], this.normals[i]);
       } else {
-        // If a vertex is not part of any triangle (e.g., isolated vertex), set its normal to zero vector
         vec3.set(this.normals[i], 0, 0, 0);
       }
     }
   }
 
   /**
-   * Inverts the direction of all normal vectors in the mesh. 🔄
+    Inverts the direction of all normal vectors in the mesh.
    * This is useful for flipping faces or correcting normal orientations.
+   * @returns {void}
    */
   public invertNormals(): void {
     if (this.normals.length === 0) {
@@ -140,8 +172,9 @@ export class MeshData extends JsonSerializable {
   }
 
   /**
-   * Calculates tangents and bitangents for the mesh and populates the instance's arrays.
+    Calculates tangents and bitangents for the mesh and populates the instance's arrays.
    * This method should be called after the mesh's vertices, normals, UVs, and indices are set.
+   * @returns {void}
    */
   public calculateTangentsAndBitangents(): void {
     if (!this.indices || this.indices.length === 0) {
@@ -157,11 +190,9 @@ export class MeshData extends JsonSerializable {
       return;
     }
 
-    // Initialize arrays with unique vec3 instances
     const tangents = Array.from({ length: this.vertices.length }, () => vec3.create());
     const bitangents = Array.from({ length: this.vertices.length }, () => vec3.create());
 
-    // Iterate over each triangle (3 indices)
     for (let i = 0; i < this.indices.length; i += 3) {
       const i1 = this.indices[i];
       const i2 = this.indices[i + 1];
@@ -175,35 +206,27 @@ export class MeshData extends JsonSerializable {
       const uv2 = this.uvs[i2];
       const uv3 = this.uvs[i3];
 
-      // Calculate triangle edges in 3D space
       const edge1 = vec3.sub(vec3.create(), p2, p1);
       const edge2 = vec3.sub(vec3.create(), p3, p1);
 
-      // Calculate UV deltas for the triangle
       const deltaUV1 = vec2.sub(vec2.create(), uv2, uv1);
       const deltaUV2 = vec2.sub(vec2.create(), uv3, uv1);
 
-      // Calculate the determinant of the UV matrix
-      const denom = (deltaUV1[0] * deltaUV2[1] - deltaUV2[0] * deltaUV1[1]);
+      const denom = deltaUV1[0] * deltaUV2[1] - deltaUV2[0] * deltaUV1[1];
 
-      // Relax the epsilon for the determinant check
       const EPSILON = 0.000001;
-      const f = (Math.abs(denom) < EPSILON) ? 0.0 : 1.0 / denom;
+      const f = Math.abs(denom) < EPSILON ? 0.0 : 1.0 / denom;
 
       const tangent = vec3.create();
       tangent[0] = f * (deltaUV2[1] * edge1[0] - deltaUV1[1] * edge2[0]);
       tangent[1] = f * (deltaUV2[1] * edge1[1] - deltaUV1[1] * edge2[1]);
       tangent[2] = f * (deltaUV2[1] * edge1[2] - deltaUV1[1] * edge2[2]);
-      // Note: Normalization will happen later after summing
 
       const bitangent = vec3.create();
       bitangent[0] = f * (-deltaUV2[0] * edge1[0] + deltaUV1[0] * edge2[0]);
       bitangent[1] = f * (-deltaUV2[0] * edge1[1] + deltaUV1[0] * edge2[1]);
       bitangent[2] = f * (-deltaUV2[0] * edge1[2] + deltaUV1[0] * edge2[2]);
-      // Note: Normalization will happen later after summing
 
-      // Accumulate tangents and bitangents for each vertex.
-      // Vertices shared by multiple triangles will have their tangents/bitangents averaged out.
       vec3.add(tangents[i1], tangents[i1], tangent);
       vec3.add(tangents[i2], tangents[i2], tangent);
       vec3.add(tangents[i3], tangents[i3], tangent);
@@ -213,27 +236,27 @@ export class MeshData extends JsonSerializable {
       vec3.add(bitangents[i3], bitangents[i3], bitangent);
     }
 
-    // After summing, orthogonalize and normalize the final vectors for each vertex
     for (let i = 0; i < this.vertices.length; ++i) {
-      const n = this.normals[i]; // Original vertex normal
-      const t = tangents[i];     // Accumulated tangent
+      const n = this.normals[i];
+      const t = tangents[i];
 
-      // Gram-Schmidt orthogonalization: make tangent orthogonal to normal
       vec3.scaleAndAdd(t, t, n, -vec3.dot(n, t));
-      vec3.normalize(t, t); // Normalize the tangent
+      vec3.normalize(t, t);
 
-      // Recalculate bitangent using cross product of normal and tangent
-      // This ensures that the TBN frame is truly orthogonal.
-      const b = bitangents[i]; // Accumulated bitangent (used as starting point for direction)
-      vec3.cross(b, n, t); // B = N x T
-      vec3.normalize(b, b); // Normalize the bitangent
+      const b = bitangents[i];
+      vec3.cross(b, n, t);
+      vec3.normalize(b, b);
     }
 
-    // Assign the calculated arrays to the MeshData instance
     this.tangents = tangents;
     this.bitangents = bitangents;
   }
 
+  /**
+    Serializes the mesh data to a JSON object.
+   * @override
+   * @returns {JsonSerializedData} - The JSON object representation.
+   */
   override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
@@ -244,10 +267,15 @@ export class MeshData extends JsonSerializable {
       indices: this.indices || [],
       tangents: this.tangents || [],
       bitangents: this.bitangents || [],
-    }
+    };
   }
 
-  override fromJson(jsonObject: any): void {
+  /**
+    Deserializes the mesh data from a JSON object.
+   * @override
+   * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
+   */
+  override fromJson(jsonObject: JsonSerializedData): void {
     this.uuid = jsonObject.uuid;
     this.vertices = jsonObject.vertices;
     this.normals = jsonObject.normals;
@@ -258,17 +286,34 @@ export class MeshData extends JsonSerializable {
   }
 }
 
+/**
+  A class that holds a reference to shared mesh data.
+ * @augments {JsonSerializable}
+ */
 export class Mesh extends JsonSerializable {
-
+  /**
+    The shared mesh data instance.
+   * @type {MeshData}
+   */
   public meshData!: MeshData;
 
+  /**
+    Serializes the mesh's reference to its mesh data to a JSON object.
+   * @override
+   * @returns {JsonSerializedData} - The JSON object representation.
+   */
   override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
       meshDataId: this.meshData.uuid,
-    }
+    };
   }
 
+  /**
+    Deserializes the mesh from a JSON object, creating a new MeshData instance if one does not exist.
+   * @override
+   * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
+   */
   override fromJson(jsonObject: JsonSerializedData): void {
     if (!this.meshData) this.meshData = new MeshData([]);
     this.meshData.fromJson(jsonObject);

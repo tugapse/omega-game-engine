@@ -3,34 +3,107 @@ import { GlEntity } from "../entities/entity";
 import { JsonSerializable } from "../interfaces/json-serializable";
 import { JsonSerializedData } from "../interfaces/json-serialized-data";
 
+/**
+  The base class for all components that define the behavior of an entity.
+ * @augments {JsonSerializable}
+ */
 export abstract class EntityBehaviour extends JsonSerializable {
-  static instanciate(args?: any): any { }
+  /**
+    A static factory method to create an instance of the behaviour.
+    
+   * @param {any} [args] - Optional arguments for instantiation.
+   * @returns {any}
+   */
+  static instanciate(args?: any): any {}
 
+  /**
+    Indicates whether the behaviour is currently active.
+   * @type {boolean}
+   */
   public active: boolean = true;
+  /**
+    The parent entity to which this behaviour is attached.
+   * @type {GlEntity}
+   */
   public parent!: GlEntity;
+  /**
+    A flag indicating if the behaviour has been initialized.
+   * @protected
+   * @type {boolean}
+   */
   protected _initialized = false;
 
-  public get transform(): Transform { return this.parent.transform; }
+  /**
+    Gets the transform component of the parent entity.
+   * @type {Transform}
+   */
+  public get transform(): Transform {
+    return this.parent.transform;
+  }
 
+  /**
+    Creates an instance of EntityBehaviour.
+   */
   constructor() {
     super();
   }
 
-  public initialize(): boolean { return this._initialized = true; }
-  public update(ellapsed: number): void { }
-  public updateEditor(ellapsed: number): void { }
-  public draw(): void { }
-  public destroy(): void { }
+  /**
+    Initializes the behaviour.
+   * @returns {boolean} - True if initialization is successful.
+   */
+  public initialize(): boolean {
+    return (this._initialized = true);
+  }
 
+  /**
+    Updates the behaviour every frame.
+   * @param {number} ellapsed - The time elapsed since the last frame in milliseconds.
+   */
+  public update(ellapsed: number): void {}
+
+  /**
+    Updates the behaviour specifically for editor mode.
+   * @param {number} ellapsed - The time elapsed since the last frame in milliseconds.
+   */
+  public updateEditor(ellapsed: number): void {}
+
+  /**
+    Draws any visual representation of the behaviour.
+   */
+  public draw(): void {}
+
+  /**
+    Cleans up resources used by the behaviour.
+   */
+  public destroy(): void {}
+
+  /**
+    Serializes the behaviour's state to a JSON object.
+   * @override
+   * @returns {JsonSerializedData} - The JSON object representation.
+   */
   public override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
-      active: this.active
-    }
-  }
-  public override fromJson(jsonObject: JsonSerializedData): void {
-    this.active = jsonObject['active'];
+      active: this.active,
+    };
   }
 
-  public clone(): EntityBehaviour | null { return null }
+  /**
+    Deserializes the behaviour's state from a JSON object.
+   * @override
+   * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
+   */
+  public override fromJson(jsonObject: JsonSerializedData): void {
+    this.active = jsonObject["active"];
+  }
+
+  /**
+    Creates a clone of the behaviour.
+   * @returns {EntityBehaviour | null} - A new instance of the behaviour or null if not implemented.
+   */
+  public clone(): EntityBehaviour | null {
+    return null;
+  }
 }

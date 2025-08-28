@@ -1,16 +1,30 @@
-
 import { mat4 } from "gl-matrix";
 import { Camera } from "../../entities/camera";
 import { ShaderUniformsEnum } from "../../enums/shader-uniforms.enum";
 import { JsonSerializedData } from "../../interfaces/json-serialized-data";
 import { RenderMeshBehaviour } from "./render-mesh-behaviour";
 
+/**
+  A specialized renderer for drawing a skybox.
+ * @augments {RenderMeshBehaviour}
+ */
 export class SkyboxRenderer extends RenderMeshBehaviour {
-
+  /**
+    Creates a new instance of the SkyboxRenderer.
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @override
+    
+   * @returns {SkyboxRenderer}
+   */
   static override instanciate(gl: WebGL2RenderingContext): SkyboxRenderer {
     return new SkyboxRenderer(gl);
   }
 
+  /**
+    Initializes the skybox renderer.
+   * @override
+   * @returns {boolean} - True if initialization is successful, otherwise false.
+   */
   override initialize(): boolean {
     if (super.initialize()) {
       this.transform.setPosition(0, 0, 0);
@@ -20,50 +34,80 @@ export class SkyboxRenderer extends RenderMeshBehaviour {
     return false;
   }
 
+  /**
+    Sets the specific WebGL settings for rendering the skybox.
+   * @protected
+   * @override
+   */
   protected override setGlSettings(): void {
     this.gl.cullFace(this.gl.FRONT);
     this.gl.depthFunc(this.gl.LEQUAL);
   }
 
+  /**
+    Draws the skybox mesh.
+   * @override
+   */
   override draw(): void {
-    if(!this.shader)return;
-
-    if (!this.mesh || !this.shader.shaderProgram) { return }
+    if (!this.shader?.shaderProgram || !this.mesh) {
+      return;
+    }
 
     this.shader.bindBuffers();
     this.shader.use();
     this.setShaderVariables();
-    this.gl.drawElements(this.gl.TRIANGLES, this.mesh.meshData.indices.length, this.gl.UNSIGNED_SHORT, 0);
+    this.gl.drawElements(
+      this.gl.TRIANGLES,
+      this.mesh.meshData.indices.length,
+      this.gl.UNSIGNED_SHORT,
+      0,
+    );
   }
 
-  override setCameraMatrices() {
-    if(!this.shader)return;
+  /**
+    Sets the camera matrices for the skybox, ensuring the skybox remains centered on the camera.
+   * @override
+   */
+  override setCameraMatrices(): void {
+    if (!this.shader?.shaderProgram) {
+      return;
+    }
 
     const camera = Camera.mainCamera;
 
-    // Create a view matrix without translation
+    // Create a view matrix without translation to keep the skybox centered
     const viewMatrixNoTranslation = mat4.clone(camera.viewMatrix);
-    // Zero out the translation components (indices 12, 13, 14 for column-major gl-matrix)
     viewMatrixNoTranslation[12] = 0;
     viewMatrixNoTranslation[13] = 0;
     viewMatrixNoTranslation[14] = 0;
 
     const mvpMatrix = mat4.create();
     this.transform.updateMatrices();
-    mat4.multiply(mvpMatrix, camera.projectionMatrix, camera.viewMatrix);
+    mat4.multiply(mvpMatrix, camera.projectionMatrix, viewMatrixNoTranslation);
     mat4.multiply(mvpMatrix, mvpMatrix, this.parent.transform.modelMatrix);
     this.shader.setMat4(ShaderUniformsEnum.U_MVP_MATRIX, mvpMatrix);
   }
 
-  override setShaderVariables() {
-    if(!this.shader)return;
-    
+  /**
+    Sets all shader variables required for rendering the skybox.
+   * @override
+   */
+  override setShaderVariables(): void {
+    if (!this.shader?.shaderProgram) {
+
+      return;
+    }
+
     this.setGlSettings();
     this.setCameraMatrices();
     this.shader.loadDataIntoShader();
   }
 
-
+  /**
+    Populates the renderer's properties from a JSON object.
+   * @param {JsonSerializedData} jsonObject - The JSON object containing the data.
+   * @override
+   */
   override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
   }

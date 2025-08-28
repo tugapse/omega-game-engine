@@ -21,23 +21,34 @@ import { Shader } from "./shaders/shader";
 import { SkyboxShader } from "./shaders/skybox-shader";
 import { UnlitShader } from "./shaders/unlit-shader";
 
+/**
+  The main entry point for the engine. This class handles the initialization of core components and dependency registration.
+ */
 export class Engine {
-
+  /**
+    Initializes the engine by registering all core dependencies.
+    
+   * @returns {void}
+   */
   public static initialize(): void {
     this.registerDependencies();
   }
 
+  /**
+    Registers all necessary classes and their instantiation methods with the SceneManager's dependency injection system.
+   * @private
+    
+   * @returns {void}
+   */
   private static registerDependencies(): void {
-
     // Entities
-    SceneManager.addDependency(GlEntity.name, GlEntity.instanciate)
+    SceneManager.addDependency(GlEntity.name, GlEntity.instanciate);
     SceneManager.addDependency(Camera.name, Camera.instanciate);
     SceneManager.addDependency(Light.name, Light.instanciate);
     SceneManager.addDependency(PointLight.name, PointLight.instanciate);
     SceneManager.addDependency(SpotLight.name, SpotLight.instanciate);
     SceneManager.addDependency(DirectionalLight.name, DirectionalLight.instanciate);
-    SceneManager.addDependency(Color.name, () => new Color())
-
+    SceneManager.addDependency(Color.name, () => new Color());
 
     // Geometry
     SceneManager.addDependency(MeshData.name, MeshData.instanciate);
@@ -47,24 +58,25 @@ export class Engine {
     SceneManager.addDependency(SkyboxPrimitive.name, SkyboxPrimitive.instanciate);
     SceneManager.addDependency(TrianglePrimitive.name, TrianglePrimitive.instanciate);
 
-    // shaders
-    SceneManager.addDependency(Shader.name, Shader.instanciate)
-    SceneManager.addDependency(SkyboxShader.name, SkyboxShader.instanciate)
-    SceneManager.addDependency(UnlitShader.name, UnlitShader.instanciate)
-    SceneManager.addDependency(LitShader.name, LitShader.instanciate)
+    // Shaders
+    SceneManager.addDependency(Shader.name, Shader.instanciate);
+    SceneManager.addDependency(SkyboxShader.name, SkyboxShader.instanciate);
+    SceneManager.addDependency(UnlitShader.name, UnlitShader.instanciate);
+    SceneManager.addDependency(LitShader.name, LitShader.instanciate);
 
-    SceneManager.addDependency(RenderMeshBehaviour.name, RenderMeshBehaviour.instanciate)
-    SceneManager.addDependency(SkyboxRenderer.name, SkyboxRenderer.instanciate)
+    // Behaviours (Renderers)
+    SceneManager.addDependency(RenderMeshBehaviour.name, RenderMeshBehaviour.instanciate);
+    SceneManager.addDependency(SkyboxRenderer.name, SkyboxRenderer.instanciate);
 
-    SceneManager.addDependency(ColorMaterial.name, ColorMaterial.instanciate)
-    SceneManager.addDependency(UnlitMaterial.name, UnlitMaterial.instanciate)
-    SceneManager.addDependency(LitMaterial.name, LitMaterial.instanciate)
-    SceneManager.addDependency(CubemapMaterial.name, CubemapMaterial.instanciate)
+    // Materials
+    SceneManager.addDependency(ColorMaterial.name, ColorMaterial.instanciate);
+    SceneManager.addDependency(UnlitMaterial.name, UnlitMaterial.instanciate);
+    SceneManager.addDependency(LitMaterial.name, LitMaterial.instanciate);
+    SceneManager.addDependency(CubemapMaterial.name, CubemapMaterial.instanciate);
 
-    //Behaviours
-    SceneManager.addDependency(CameraFlyBehaviour.name, CameraFlyBehaviour.instanciate)
+    // Other Behaviours
+    SceneManager.addDependency(CameraFlyBehaviour.name, CameraFlyBehaviour.instanciate);
 
     Shader.preFetchFunctionsGlsl();
-
   }
 }

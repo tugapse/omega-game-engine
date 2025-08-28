@@ -3,21 +3,52 @@ import { JsonSerializedData } from "../interfaces/json-serialized-data";
 import { Texture } from "../textures/texture";
 import { ColorMaterial } from "./color-material";
 
-
+/**
+  Represents a simple, unlit material that uses a color and a main texture.
+ * @augments {ColorMaterial}
+ */
 export class UnlitMaterial extends ColorMaterial {
+  /**
+    The URL for the main texture.
+   * @type {string}
+   */
   public mainTexUrl: string = "";
+  /**
+    The UV scaling factor for the main texture.
+   * @type {vec2}
+   */
   public uvScale: vec2 = vec2.fromValues(1, 1);
+  /**
+    The UV offset for the main texture.
+   * @type {vec2}
+   */
   public uvOffset: vec2 = vec2.create();
+  /**
+    The main texture object.
+   * @type {Texture}
+   */
   public mainTex!: Texture;
 
+  /**
+    Serializes the material's state to a JSON object.
+   * @override
+   * @returns {JsonSerializedData} - The JSON object representation.
+   */
   override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
       mainTexUrl: this.mainTexUrl,
       uvScale: [...this.uvScale],
-      uvOffset: [...this.uvOffset]
-    }
+      uvOffset: [...this.uvOffset],
+    };
   }
+
+  /**
+    Deserializes the material's state from a JSON object.
+   * @override
+   * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
+   * @returns {void}
+   */
   override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
     this.name = jsonObject['name'];
@@ -25,7 +56,14 @@ export class UnlitMaterial extends ColorMaterial {
     this.uvScale = jsonObject['uvScale'];
     this.uvOffset = jsonObject['uvOffset'];
   }
+
+  /**
+    Creates a new instance of UnlitMaterial.
+    
+   * @override
+   * @returns {UnlitMaterial} - A new UnlitMaterial instance.
+   */
   static override instanciate(): UnlitMaterial {
-      return new UnlitMaterial();
+    return new UnlitMaterial();
   }
 }

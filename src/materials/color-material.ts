@@ -2,24 +2,52 @@ import { Color } from "../core/color";
 import { JsonSerializable } from "../interfaces/json-serializable";
 import { JsonSerializedData } from "../interfaces/json-serialized-data";
 
+/**
+  Represents a simple material with a single color property.
+ * @augments {JsonSerializable}
+ */
 export class ColorMaterial extends JsonSerializable {
 
-  public static instanciate() { return new ColorMaterial(); }
+  /**
+    Creates a new instance of ColorMaterial.
+    
+   * @returns {ColorMaterial} - A new ColorMaterial instance.
+   */
+  public static instanciate(): ColorMaterial {
+    return new ColorMaterial();
+  }
 
+  /**
+    The name of the material.
+   * @type {string}
+   */
   public name: string = "Color Material";
+  /**
+    The color of the material.
+   * @type {Color}
+   */
   public color: Color = new Color();
 
-  override toJsonObject(): JsonSerializedData {
+  /**
+    Serializes the material's state to a JSON object.
+   * @override
+   * @returns {JsonSerializedData} - The JSON object representation.
+   */
+  public override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
       color: this.color.toJsonObject(),
-
-    }
+    };
   }
 
+  /**
+    Deserializes the material's state from a JSON object.
+   * @override
+   * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
+   * @returns {void}
+   */
   override fromJson(jsonObject: JsonSerializedData): void {
     this.name = jsonObject['name'];
     this.color = Color.createFromJsonData(jsonObject['color']);
-
   }
 }
