@@ -1,4 +1,4 @@
-import { mat4 } from "gl-matrix";
+import { mat3, mat4 } from "gl-matrix";
 import { CanvasViewport } from "../../core/canvas-viewport";
 import { Mesh } from "../../core/mesh";
 import { Camera } from "../../entities/camera";
@@ -7,7 +7,6 @@ import { ShaderUniformsEnum } from "../../enums/shader-uniforms.enum";
 import { JsonSerializedData } from "../../interfaces/json-serialized-data";
 import { Shader } from "../../shaders/shader";
 import { EntityBehaviour } from "../entity-behaviour";
-import { mat3 } from "gl-matrix";
 import { GLPrimitiveType } from "../../enums/gl-primitive-type.enum";
 
 /**
@@ -76,6 +75,7 @@ export class RendererBehaviour extends EntityBehaviour {
    * @protected
    */
   protected setGlSettings(): void {
+    if(!this.gl) return;
     this.gl.enable(this.gl.DEPTH_TEST);
     this.gl.depthFunc(this.gl.LESS);
     this.gl.enable(this.gl.BLEND);

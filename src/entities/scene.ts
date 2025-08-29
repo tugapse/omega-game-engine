@@ -6,6 +6,7 @@ import { Camera } from "./camera";
 import { GlEntity } from "./entity";
 import { Light } from "./light";
 import { SceneEntityBehaviour } from "../interfaces/scene-behaviour";
+import { Color, Colors } from "../core";
 
 /**
   Represents a scene in the 3D world, acting as a container for entities and managing the main game loop operations like update and draw.
@@ -19,6 +20,9 @@ export class Scene extends GlEntity {
    * @type {Scene}
    */
   private static _currentScene: Scene;
+  
+  public clearBufferBit: number = 16348 | 256;
+  
   /**
     Gets the currently active scene instance.
    * @readonly
@@ -37,7 +41,7 @@ export class Scene extends GlEntity {
     The background color of the scene, in RGB format.
    * @type {vec3}
    */
-  public color: vec3 = vec3.fromValues(0.2, 1, 0.2);
+  public clearColor: Color = Colors.aliceBlue;
   /**
     The tag for the scene entity.
    * @override
@@ -141,8 +145,8 @@ export class Scene extends GlEntity {
   public override draw(): void {
     if (this.destroyed || !this.gl || !Camera.mainCamera) return;
     this.behaviours.forEach(behaviour => behaviour.beforeDraw());
-    this.gl.clearColor(this.color[0], Math.sin(this.ellapsedTime) * this.color[1], this.color[2], 1.0);
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+    this.gl.clearColor(this.clearColor.r, this.clearColor.g, this.clearColor.b, 1.0);
+    this.gl.clear(this.clearBufferBit);
     for (const object of this.objects.filter(e => e.active && e.show)) {
       object.draw();
     }
