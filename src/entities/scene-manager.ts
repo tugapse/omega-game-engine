@@ -1,50 +1,16 @@
 import { MeshData } from "../core/mesh";
+import { ObjectInstanciator } from "../core/object-instanciator";
 import { Transform } from "../core/transform";
-import { JsonSerializedData } from "../interfaces/json-serialized-data";
+import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 import { Scene } from "./scene";
 
 /**
   A static class responsible for managing the loading, instantiation, and serialization of scenes and their components.
  */
 export class SceneManager {
-  /**
-    A map that stores dependency injection functions for instantiating classes.
-   * @private
-    
-   * @type {{ [key: string]: Function }}
-   */
-  private static dependecies: { [key: string]: Function } = {};
 
-  /**
-    Adds a class constructor or factory function as a dependency for instantiation.
-    
-   * @param {string} className - The name of the class.
-   * @param {Function} func - The constructor or factory function to be called for instantiation.
-   * @returns {void}
-   */
-  public static addDependency(className: string, func: Function): void {
-    SceneManager.dependecies[className] = func;
-  }
 
-  /**
-    Instantiates an object from a registered class name.
-    
-   * @param {string} className - The name of the class to instantiate.
-   * @param {any[]} [args] - Optional arguments to pass to the constructor/factory function.
-   * @returns {any} - A new instance of the specified class, or null if the class is not found.
-   */
-  public static instanciateObjectFromJsonData(className: string, args?: any[]): any {
-    if (this.dependecies[className]) {
-      if (args && args.length > 0) {
-        return this.dependecies[className](...args);
-      } else {
-        return this.dependecies[className]();
-      }
-    } else {
-      console.warn("[WANR] Class Object not found! Implement Class instancing for: ", className);
-    }
-    return null;
-  }
+
 
   /**
     Loads a scene from a JSON data object.
@@ -94,17 +60,20 @@ export class SceneManager {
    * @returns {any[]} - An array of instantiated entity objects.
    */
   private static instaciateSceneObjects(scene: Scene, objects: any, meshes: { [key: string]: MeshData }, gl: WebGL2RenderingContext): any[] {
-    const transforms: { [key: string]: Transform } = {};
+    const instanciatedTransforms: { [key: string]: Transform } = {};
 
-    const entities: any[] = objects.map((e: any) => {
-      e['entity'] = SceneManager.instanciateObjectFromJsonData(e.type);
-      const enTransform = e['entity'].transform as Transform;
-      enTransform.fromJson(e['transform']);
-      transforms[enTransform.uuid] = enTransform;
-      return e;
+    const entities: any[] = objects.map((jsonObject: JsonSerializedData) => {
+      debugger
+      jsonObject['entity'] = ObjectInstanciator.instanciateObjectFromJsonData(jsonObject.type);
+      
+      const entityTransform = jsonObject['entity'].transform as Transform;
+      entityTransform.fromJson(jsonObject['transform']);
+
+      instanciatedTransforms[entityTransform.uuid] = entityTransform;
+      return jsonObject;
     });
 
-    this.prepareTransforms(transforms, entities);
+    this.prepareTransforms(instanciatedTransforms, entities);
     objects.forEach((e: any) => {
       e.entity.scene = scene;
 
@@ -112,7 +81,7 @@ export class SceneManager {
         if (behaviourJsonData.mesh) {
           behaviourJsonData['meshData'] = meshes[behaviourJsonData.mesh.meshDataId];
         }
-        const newBehaviour = SceneManager.instanciateObjectFromJsonData(behaviourJsonData.type, [gl]);
+        const newBehaviour = ObjectInstanciator.instanciateObjectFromJsonData(behaviourJsonData.type, [gl]);
         if (newBehaviour) {
           newBehaviour.fromJson(behaviourJsonData);
           newBehaviour.parent = e.entity;

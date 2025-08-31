@@ -3,6 +3,7 @@ import { RenderMeshBehaviour } from "./behaviours/renderer/render-mesh-behaviour
 import { SkyboxRenderer } from "./behaviours/renderer/skybox-renderer";
 import { Color } from "./core/color";
 import { MeshData } from "./core/mesh";
+import { ObjectInstanciator } from "./core/object-instanciator";
 import { Camera } from "./entities/camera";
 import { GlEntity } from "./entities/entity";
 import { Light, PointLight, SpotLight, DirectionalLight } from "./entities/light";
@@ -42,40 +43,40 @@ export class Engine {
    */
   private static registerDependencies(): void {
     // Entities
-    SceneManager.addDependency(GlEntity.name, GlEntity.instanciate);
-    SceneManager.addDependency(Camera.name, Camera.instanciate);
-    SceneManager.addDependency(Light.name, Light.instanciate);
-    SceneManager.addDependency(PointLight.name, PointLight.instanciate);
-    SceneManager.addDependency(SpotLight.name, SpotLight.instanciate);
-    SceneManager.addDependency(DirectionalLight.name, DirectionalLight.instanciate);
-    SceneManager.addDependency(Color.name, () => new Color());
+    ObjectInstanciator.addDependency(GlEntity.name, GlEntity.instanciate);
+    ObjectInstanciator.addDependency(Camera.name, Camera.instanciate);
+    ObjectInstanciator.addDependency(Light.name, Light.instanciate);
+    ObjectInstanciator.addDependency(PointLight.name, PointLight.instanciate);
+    ObjectInstanciator.addDependency(SpotLight.name, SpotLight.instanciate);
+    ObjectInstanciator.addDependency(DirectionalLight.name, DirectionalLight.instanciate);
+    ObjectInstanciator.addDependency(Color.name, () => new Color());
 
     // Geometry
-    SceneManager.addDependency(MeshData.name, MeshData.instanciate);
-    SceneManager.addDependency(CubePrimitive.name, CubePrimitive.instanciate);
-    SceneManager.addDependency(QuadPrimitive.name, QuadPrimitive.instanciate);
-    SceneManager.addDependency(SpherePrimitive.name, SpherePrimitive.instanciate);
-    SceneManager.addDependency(SkyboxPrimitive.name, SkyboxPrimitive.instanciate);
-    SceneManager.addDependency(TrianglePrimitive.name, TrianglePrimitive.instanciate);
+    ObjectInstanciator.addDependency(MeshData.name, MeshData.instanciate);
+    ObjectInstanciator.addDependency(CubePrimitive.name, CubePrimitive.instanciate);
+    ObjectInstanciator.addDependency(QuadPrimitive.name, QuadPrimitive.instanciate);
+    ObjectInstanciator.addDependency(SpherePrimitive.name, SpherePrimitive.instanciate);
+    ObjectInstanciator.addDependency(SkyboxPrimitive.name, SkyboxPrimitive.instanciate);
+    ObjectInstanciator.addDependency(TrianglePrimitive.name, TrianglePrimitive.instanciate);
 
     // Shaders
-    SceneManager.addDependency(Shader.name, Shader.instanciate);
-    SceneManager.addDependency(SkyboxShader.name, SkyboxShader.instanciate);
-    SceneManager.addDependency(UnlitShader.name, UnlitShader.instanciate);
-    SceneManager.addDependency(LitShader.name, LitShader.instanciate);
+    ObjectInstanciator.addDependency(Shader.name, Shader.instanciate);
+    ObjectInstanciator.addDependency(SkyboxShader.name, SkyboxShader.instanciate);
+    ObjectInstanciator.addDependency(UnlitShader.name, UnlitShader.instanciate);
+    ObjectInstanciator.addDependency(LitShader.name, LitShader.instanciate);
 
     // Behaviours (Renderers)
-    SceneManager.addDependency(RenderMeshBehaviour.name, RenderMeshBehaviour.instanciate);
-    SceneManager.addDependency(SkyboxRenderer.name, SkyboxRenderer.instanciate);
+    ObjectInstanciator.addDependency(RenderMeshBehaviour.name, RenderMeshBehaviour.instanciate);
+    ObjectInstanciator.addDependency(SkyboxRenderer.name, SkyboxRenderer.instanciate);
 
     // Materials
-    SceneManager.addDependency(ColorMaterial.name, ColorMaterial.instanciate);
-    SceneManager.addDependency(UnlitMaterial.name, UnlitMaterial.instanciate);
-    SceneManager.addDependency(LitMaterial.name, LitMaterial.instanciate);
-    SceneManager.addDependency(CubemapMaterial.name, CubemapMaterial.instanciate);
+    ObjectInstanciator.addDependency(ColorMaterial.name, ColorMaterial.instanciate);
+    ObjectInstanciator.addDependency(UnlitMaterial.name, UnlitMaterial.instanciate);
+    ObjectInstanciator.addDependency(LitMaterial.name, LitMaterial.instanciate);
+    ObjectInstanciator.addDependency(CubemapMaterial.name, CubemapMaterial.instanciate);
 
     // Other Behaviours
-    SceneManager.addDependency(CameraFlyBehaviour.name, CameraFlyBehaviour.instanciate);
+    ObjectInstanciator.addDependency(CameraFlyBehaviour.name, CameraFlyBehaviour.instanciate);
 
     Shader.preFetchFunctionsGlsl();
   }

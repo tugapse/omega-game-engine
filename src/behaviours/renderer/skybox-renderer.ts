@@ -1,7 +1,7 @@
 import { mat4 } from "gl-matrix";
 import { Camera } from "../../entities/camera";
 import { ShaderUniformsEnum } from "../../enums/shader-uniforms.enum";
-import { JsonSerializedData } from "../../interfaces/json-serialized-data";
+import { JsonSerializedData } from "../../interfaces/json-serialized-data.interface";
 import { RenderMeshBehaviour } from "./render-mesh-behaviour";
 
 /**
@@ -9,6 +9,9 @@ import { RenderMeshBehaviour } from "./render-mesh-behaviour";
  * @augments {RenderMeshBehaviour}
  */
 export class SkyboxRenderer extends RenderMeshBehaviour {
+  
+  public override get className(): string { return "SkyboxRenderer" }
+
   /**
     Creates a new instance of the SkyboxRenderer.
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
@@ -40,8 +43,8 @@ export class SkyboxRenderer extends RenderMeshBehaviour {
    * @override
    */
   protected override setGlSettings(): void {
-    this.gl.cullFace(this.gl.FRONT);
-    this.gl.depthFunc(this.gl.LEQUAL);
+    this._gl.cullFace(this._gl.FRONT);
+    this._gl.depthFunc(this._gl.LEQUAL);
   }
 
   /**
@@ -49,17 +52,17 @@ export class SkyboxRenderer extends RenderMeshBehaviour {
    * @override
    */
   override draw(): void {
-    if (!this.shader?.shaderProgram || !this.mesh) {
+    if (!this.shader?._shaderProgram || !this.mesh) {
       return;
     }
 
     this.shader.bindBuffers();
     this.shader.use();
     this.setShaderVariables();
-    this.gl.drawElements(
-      this.gl.TRIANGLES,
+    this._gl.drawElements(
+      this._gl.TRIANGLES,
       this.mesh.meshData.indices.length,
-      this.gl.UNSIGNED_SHORT,
+      this._gl.UNSIGNED_SHORT,
       0,
     );
   }
@@ -69,7 +72,7 @@ export class SkyboxRenderer extends RenderMeshBehaviour {
    * @override
    */
   override setCameraMatrices(): void {
-    if (!this.shader?.shaderProgram) {
+    if (!this.shader?._shaderProgram) {
       return;
     }
 
@@ -93,7 +96,7 @@ export class SkyboxRenderer extends RenderMeshBehaviour {
    * @override
    */
   override setShaderVariables(): void {
-    if (!this.shader?.shaderProgram) {
+    if (!this.shader?._shaderProgram) {
 
       return;
     }

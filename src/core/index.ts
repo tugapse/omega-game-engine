@@ -5,5 +5,6 @@ export * from './engineCache';
 export * from './input';
 export * from './mesh';
 export * from './transform';
+export * from './object-instanciator';
 
 

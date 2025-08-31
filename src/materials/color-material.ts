@@ -1,12 +1,14 @@
 import { Color } from "../core/color";
-import { JsonSerializable } from "../interfaces/json-serializable";
-import { JsonSerializedData } from "../interfaces/json-serialized-data";
+import { JsonSerializable } from "../core/json-serializable";
+import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 
 /**
   Represents a simple material with a single color property.
  * @augments {JsonSerializable}
  */
 export class ColorMaterial extends JsonSerializable {
+
+  public get type(): string { return this.constructor.name; }
 
   /**
     Creates a new instance of ColorMaterial.

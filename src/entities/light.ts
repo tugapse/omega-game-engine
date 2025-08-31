@@ -3,7 +3,7 @@ import { Color } from "../core/color";
 import { Transform } from "../core/transform";
 import { Vector3 } from "../core/vector";
 import { EntityType } from "../enums/entity-type";
-import { JsonSerializedData } from "../interfaces/json-serialized-data";
+import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 import { GlEntity } from "./entity";
 
 /**

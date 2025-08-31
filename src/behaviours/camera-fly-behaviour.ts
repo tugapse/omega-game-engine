@@ -1,7 +1,7 @@
 import { quat, vec3 } from 'gl-matrix';
 import { Keybord, Mouse } from "../core/input";
 import { EntityBehaviour } from "./entity-behaviour";
-import { JsonSerializedData } from '../interfaces/json-serialized-data';
+import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
 
 /**
    CameraFlyBehaviour
@@ -16,6 +16,9 @@ import { JsonSerializedData } from '../interfaces/json-serialized-data';
  * @extends EntityBehaviour
  */
 export class CameraFlyBehaviour extends EntityBehaviour {
+
+  public override get className(): string { return "CameraFlyBehaviour" }
+
 
   /**
    * Instantiates a new CameraFlyBehaviour instance.
@@ -88,7 +91,7 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    * @protected
    */
   protected updateInput(ellapsed: number) {
-    if (!this._initialized) return;
+    if (!this._initialized || !this.parent?.transform) return;
     const transform = this.parent.transform;
 
     const accelerationDelta = this._acceleration * ellapsed;
@@ -205,7 +208,7 @@ export class CameraFlyBehaviour extends EntityBehaviour {
     this.rotationSpeed = jsonObject['rotationSpeed'];
     this.rotationDampening = jsonObject['rotationDampening'];
     if (jsonObject['moveDampening'] !== undefined) {
-        this.moveDampening = jsonObject['moveDampening'];
+      this.moveDampening = jsonObject['moveDampening'];
     }
   }
 }

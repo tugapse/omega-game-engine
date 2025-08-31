@@ -1,7 +1,7 @@
 import { vec3, mat4, quat } from 'gl-matrix';
 import { v4 as uuidv4 } from 'uuid';
-import { JsonSerializable } from '../interfaces/json-serializable';
-import { JsonSerializedData } from '../interfaces/json-serialized-data';
+import { JsonSerializable } from './json-serializable';
+import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
 
 /**
   A helper function to convert a quaternion to Euler angles in radians.

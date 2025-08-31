@@ -2,8 +2,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { EntityBehaviour } from "../behaviours/entity-behaviour";
 import { Transform } from "../core/transform";
 import { EntityType } from '../enums/entity-type';
-import { JsonSerializable } from '../interfaces/json-serializable';
-import { JsonSerializedData } from '../interfaces/json-serialized-data';
+import { JsonSerializable } from '../core/json-serializable';
+import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
 import { Scene } from "./scene";
 
 /**
@@ -19,8 +19,14 @@ export class GlEntity extends JsonSerializable {
    * @returns {GlEntity} - The newly created GlEntity instance.
    */
   public static instanciate(name: string = "Entity", transform?: Transform): GlEntity {
+    if (!transform || transform instanceof Transform == false) {
+      transform = new Transform();
+    }
     return new GlEntity(name, transform);
   }
+
+  [key: string]: any;
+  public get type(): string { return this.constructor.name; }
 
   /**
     A flag indicating if the entity has been destroyed.
@@ -58,7 +64,7 @@ export class GlEntity extends JsonSerializable {
    * @protected
    * @type {EntityBehaviour[]}
    */
-  protected behaviours: EntityBehaviour[] = [];
+  public behaviours: EntityBehaviour[] = [];
   /**
     The unique identifier for the entity.
    * @protected
@@ -121,7 +127,7 @@ export class GlEntity extends JsonSerializable {
   public update(ellapsed: number): void {
     if (!this.active) return;
     this.transform.updateMatrices();
-    for (const behaviour of this.behaviours) {
+    for (const behaviour of this.behaviours.filter(b => b.active)) {
       behaviour.update(ellapsed);
     }
   }
@@ -132,7 +138,7 @@ export class GlEntity extends JsonSerializable {
    */
   public draw(): void {
     if (!this.active) return;
-    for (const behaviour of this.behaviours) {
+    for (const behaviour of this.behaviours.filter(b => b.active)) {
       behaviour.draw();
     }
   }

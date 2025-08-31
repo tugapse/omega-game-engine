@@ -1,6 +1,6 @@
 import { vec3, vec4 } from "gl-matrix";
-import { JsonSerializable } from "../interfaces/json-serializable";
-import { JsonSerializedData } from "../interfaces/json-serialized-data";
+import { JsonSerializable } from "./json-serializable";
+import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 
 /**
   A class representing a color using RGBA values, backed by a gl-matrix vec4.

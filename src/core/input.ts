@@ -22,6 +22,18 @@ export class Mouse {
    * @type {{ x: number, y: number }}
    */
   public static mouseMovement: { x: number; y: number } = { x: 0, y: 0 };
+  /**
+    The movement delta of the mouse weel y since the last frame.
+    
+   * @type {number}
+   */
+  public static wheelX = 0;
+  /**
+  The movement delta of the mouse weel x since the last frame.
+  
+ * @type {number}
+ */
+  public static wheelY = 0;
 }
 
 /**
@@ -47,4 +59,13 @@ export class Keybord {
    * @type {{ [key: string]: boolean }}
    */
   public static keyPress: { [key: string]: boolean } = {};
+}
+
+export function cleanLastFrame(){
+  Mouse.mouseMovement.x = 0;
+  Mouse.mouseMovement.y = 0;
+  Mouse.wheelX = 0;
+  Mouse.wheelY = 0
+  Keybord.keyUp = {};
+  Keybord.keyPress = {};
 }

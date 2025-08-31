@@ -1,4 +1,5 @@
-import { JsonSerializedData } from "./json-serialized-data";
+import { SceneManager } from "../entities";
+import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 
 /**
   An abstract base class providing a common interface for objects that can be serialized to and deserialized from a JSON object.
@@ -20,5 +21,6 @@ export class JsonSerializable {
    * @param {JsonSerializedData} jsonObject - The JSON data object to deserialize from.
    * @returns {void}
    */
-  public fromJson(jsonObject: JsonSerializedData): void {}
+  public fromJson(jsonObject: JsonSerializedData): void { }
+
 }

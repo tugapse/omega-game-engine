@@ -1,30 +1,14 @@
 import { vec2, vec3 } from "gl-matrix";
 import { v4 as uuidv4 } from 'uuid';
-import { JsonSerializable } from "../interfaces/json-serializable";
-import { JsonSerializedData } from "../interfaces/json-serialized-data";
-import { EngineCache } from "./engineCache";
-
-/**
-  Asynchronously loads torus mesh data from the engine cache.
- * @returns {Promise<MeshData>} - A promise that resolves with the torus mesh data.
- */
-export const loadTorusPrimitive = async (): Promise<MeshData> => {
-  return EngineCache.getMeshDataFromObj("assets/primitives/torus.obj");
-};
-
-/**
-  Asynchronously loads cylinder mesh data from the engine cache.
- * @returns {Promise<MeshData>} - A promise that resolves with the cylinder mesh data.
- */
-export const loadCilinderPrimitive = async (): Promise<MeshData> => {
-  return EngineCache.getMeshDataFromObj("assets/primitives/cilinder.obj");
-};
+import { JsonSerializable } from "./json-serializable";
+import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
+import { IMeshData } from "../interfaces/meshData.interface";
 
 /**
   Base class for geometric mesh data. It stores vertex positions, normals, and UV coordinates, along with optional tangent and bitangent vectors for normal mapping.
  * @augments {JsonSerializable}
  */
-export class MeshData extends JsonSerializable {
+export class MeshData extends JsonSerializable implements IMeshData{
   /**
     Creates a new MeshData instance.
     

@@ -77,7 +77,7 @@ export abstract class EngineCache {
     if (!result) {
       const obj = await fetch(uri);
       const text = await obj.text();
-      result = EngineCache.objPArser.parse(text);
+      result = EngineCache.objPArser.parse(text) as MeshData;
       EngineCache.__cache.meshs[uri] = result;
     }
     return result;

@@ -1,21 +1,25 @@
 import { Transform } from "../core/transform";
 import { GlEntity } from "../entities/entity";
-import { JsonSerializable } from "../interfaces/json-serializable";
-import { JsonSerializedData } from "../interfaces/json-serialized-data";
+import { JsonSerializable } from "../core/json-serializable";
+import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 
 /**
   The base class for all components that define the behavior of an entity.
  * @augments {JsonSerializable}
  */
 export abstract class EntityBehaviour extends JsonSerializable {
+
+  public get className(): string { return "EntityBehaviour" }
+
   /**
     A static factory method to create an instance of the behaviour.
     
    * @param {any} [args] - Optional arguments for instantiation.
    * @returns {any}
    */
-  static instanciate(args?: any): any {}
+  static instanciate(args?: any): any { }
 
+  [key: string]: any;
   /**
     Indicates whether the behaviour is currently active.
    * @type {boolean}
@@ -38,7 +42,7 @@ export abstract class EntityBehaviour extends JsonSerializable {
    * @type {Transform}
    */
   public get transform(): Transform {
-    return this.parent.transform;
+    return this.parent?.transform;
   }
 
   /**
@@ -60,23 +64,23 @@ export abstract class EntityBehaviour extends JsonSerializable {
     Updates the behaviour every frame.
    * @param {number} ellapsed - The time elapsed since the last frame in milliseconds.
    */
-  public update(ellapsed: number): void {}
+  public update(ellapsed: number): void { }
 
   /**
     Updates the behaviour specifically for editor mode.
    * @param {number} ellapsed - The time elapsed since the last frame in milliseconds.
    */
-  public updateEditor(ellapsed: number): void {}
+  public updateEditor(ellapsed: number): void { }
 
   /**
     Draws any visual representation of the behaviour.
    */
-  public draw(): void {}
+  public draw(): void { }
 
   /**
     Cleans up resources used by the behaviour.
    */
-  public destroy(): void {}
+  public destroy(): void { }
 
   /**
     Serializes the behaviour's state to a JSON object.

@@ -12,6 +12,9 @@ import { GLPrimitiveType } from "../../enums/gl-primitive-type.enum";
  * @augments {RendererBehaviour}
  */
 export class RenderMeshBehaviour extends RendererBehaviour {
+
+  public override get className(): string { return "RenderMeshBehaviour" }
+
   /**
     Creates a new instance of the RenderMeshBehaviour.
    * @override
@@ -28,24 +31,20 @@ export class RenderMeshBehaviour extends RendererBehaviour {
    * @protected
    * @type {WebGLUniformLocation | null}
    */
-  protected normalMapUniformLocation: WebGLUniformLocation | null = null;
+  protected _normalMapUniformLocation: WebGLUniformLocation | null = null;
   /**
     The attribute location for the tangent vector.
    * @protected
    * @type {GLint}
    */
-  protected tangentAttributeLocation: GLint = -1;
+  protected _tangentAttributeLocation: GLint = -1;
   /**
     The attribute location for the bitangent vector.
    * @protected
    * @type {GLint}
    */
-  protected bitangentAttributeLocation: GLint = -1;
-  /**
-    A flag to enable or disable normal mapping.
-   * @type {boolean}
-   */
-  public enableNormalmaps = true;
+  protected _bitangentAttributeLocation: GLint = -1;
+
   /**
     A flag to enable or disable lighting calculations.
    * @type {boolean}
@@ -54,10 +53,10 @@ export class RenderMeshBehaviour extends RendererBehaviour {
 
   /**
     Creates an instance of RenderMeshBehaviour.
-   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @param {WebGL2RenderingContext} _gl - The WebGL2 rendering context.
    */
-  constructor(public override gl: WebGL2RenderingContext) {
-    super(gl);
+  constructor(public override _gl: WebGL2RenderingContext) {
+    super(_gl);
     this.drawPrimitiveType = GLPrimitiveType.TRIANGLES;
   }
 
@@ -66,7 +65,7 @@ export class RenderMeshBehaviour extends RendererBehaviour {
    * @override
    */
   override draw(): void {
-    if (!this.mesh || !this.shader?.shaderProgram) {
+    if (!this.mesh || !this.shader?._shaderProgram) {
       return;
     }
 
@@ -74,7 +73,7 @@ export class RenderMeshBehaviour extends RendererBehaviour {
     this.shader.bindBuffers();
     this.shader.use();
     this.setShaderVariables();
-    this.gl.drawElements(this.drawPrimitiveType, this.mesh.meshData.indices.length, this.gl.UNSIGNED_SHORT, 0);
+    this._gl.drawElements(this.drawPrimitiveType, this.mesh.meshData.indices.length, this._gl.UNSIGNED_SHORT, 0);
   }
 
   /**
@@ -85,10 +84,10 @@ export class RenderMeshBehaviour extends RendererBehaviour {
   protected override initializeShader(): void {
     super.initializeShader();
     if (!this.shader) return;
-    this.shader.buffers.normal = this.gl.createBuffer();
-    this.shader.buffers.tangent = this.gl.createBuffer();
-    this.shader.buffers.bitangent = this.gl.createBuffer();
-    this.shader.initBuffers(this.gl, this.mesh.meshData);
+    this.shader.buffers.normal = this._gl.createBuffer();
+    this.shader.buffers.tangent = this._gl.createBuffer();
+    this.shader.buffers.bitangent = this._gl.createBuffer();
+    this.shader.initBuffers(this._gl, this.mesh.meshData);
   }
 
   /**
@@ -107,12 +106,12 @@ export class RenderMeshBehaviour extends RendererBehaviour {
    * @protected
    */
   protected getNormalMapLocations(): void {
-    if (this.shader?.shaderProgram && this.enableNormalmaps) {
-      this.normalMapUniformLocation = this.gl.getUniformLocation(this.shader.shaderProgram, ShaderUniformsEnum.U_NORMAL_MAP);
-      this.worldMatrixUniformLocation = this.gl.getUniformLocation(this.shader.shaderProgram, ShaderUniformsEnum.U_WORLD_MATRIX);
-      this.worldInverseTransposeMatrixUniformLocation = this.gl.getUniformLocation(this.shader.shaderProgram, ShaderUniformsEnum.U_WORLD_INVERSE_TRANSPOSE_MATRIX);
-      this.tangentAttributeLocation = this.gl.getAttribLocation(this.shader.shaderProgram, ShaderUniformsEnum.A_TANGENT);
-      this.bitangentAttributeLocation = this.gl.getAttribLocation(this.shader.shaderProgram, ShaderUniformsEnum.A_BITANGENT);
+    if (this.shader?._shaderProgram) {
+      this._normalMapUniformLocation = this._gl.getUniformLocation(this.shader._shaderProgram, ShaderUniformsEnum.U_NORMAL_MAP);
+      this._worldMatrixUniformLocation = this._gl.getUniformLocation(this.shader._shaderProgram, ShaderUniformsEnum.U_WORLD_MATRIX);
+      this._worldInverseTransposeMatrixUniformLocation = this._gl.getUniformLocation(this.shader._shaderProgram, ShaderUniformsEnum.U_WORLD_INVERSE_TRANSPOSE_MATRIX);
+      this._tangentAttributeLocation = this._gl.getAttribLocation(this.shader._shaderProgram, ShaderUniformsEnum.A_TANGENT);
+      this._bitangentAttributeLocation = this._gl.getAttribLocation(this.shader._shaderProgram, ShaderUniformsEnum.A_BITANGENT);
     }
   }
 
@@ -121,13 +120,13 @@ export class RenderMeshBehaviour extends RendererBehaviour {
    * @protected
    */
   protected setNormalMapsInformation(): void {
-    if (!this.shader) return;
+    if (!this.shader ) return;
 
     const material = this.shader.material as LitMaterial;
-    if (material.normalTex && material.normalTex.glTexture && this.normalMapUniformLocation) {
-      this.gl.activeTexture(this.gl.TEXTURE1);
-      this.gl.bindTexture(this.gl.TEXTURE_2D, material.normalTex.glTexture);
-      this.gl.uniform1i(this.normalMapUniformLocation, 1);
+    if (material.normalTex && material.normalTex.glTexture && this._normalMapUniformLocation) {
+      this._gl.activeTexture(this._gl.TEXTURE1);
+      this._gl.bindTexture(this._gl.TEXTURE_2D, material.normalTex.glTexture);
+      this._gl.uniform1i(this._normalMapUniformLocation, 1);
     }
   }
 
@@ -174,15 +173,15 @@ export class RenderMeshBehaviour extends RendererBehaviour {
   protected loadSpotLights(spotLights: SpotLight[]): void {
     if (!this.shader) return;
 
-    const uNumSpotLightsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_numSpotLights");
-    const uSpotPositionsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_spotLightPositions[0]");
-    const uSpotDirectionsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_spotLightDirections[0]");
-    const uSpotColorsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_spotLightColors[0]");
-    const uSpotInnerConeCosLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_spotLightInnerConeCos[0]");
-    const uSpotOuterConeCosLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_spotLightOuterConeCos[0]");
-    const uSpotConstAttsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_spotLightConstantAtts[0]");
-    const uSpotLinearAttsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_spotLightLinearAtts[0]");
-    const uSpotQuadraticAttsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_spotLightQuadraticAtts[0]");
+    const uNumSpotLightsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_numSpotLights");
+    const uSpotPositionsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_spotLightPositions[0]");
+    const uSpotDirectionsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_spotLightDirections[0]");
+    const uSpotColorsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_spotLightColors[0]");
+    const uSpotInnerConeCosLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_spotLightInnerConeCos[0]");
+    const uSpotOuterConeCosLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_spotLightOuterConeCos[0]");
+    const uSpotConstAttsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_spotLightConstantAtts[0]");
+    const uSpotLinearAttsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_spotLightLinearAtts[0]");
+    const uSpotQuadraticAttsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_spotLightQuadraticAtts[0]");
 
     const spotPositionsFlat: number[] = [];
     const spotDirectionsFlat: number[] = [];
@@ -205,16 +204,16 @@ export class RenderMeshBehaviour extends RendererBehaviour {
       spotQuadraticAttsFlat.push(light.attenuation.quadratic);
     });
 
-    if (uNumSpotLightsLoc) this.gl.uniform1i(uNumSpotLightsLoc, spotLights.length);
+    if (uNumSpotLightsLoc) this._gl.uniform1i(uNumSpotLightsLoc, spotLights.length);
     if (spotLights.length > 0) {
-      if (uSpotPositionsLoc) this.gl.uniform3fv(uSpotPositionsLoc, spotPositionsFlat);
-      if (uSpotDirectionsLoc) this.gl.uniform3fv(uSpotDirectionsLoc, spotDirectionsFlat);
-      if (uSpotColorsLoc) this.gl.uniform3fv(uSpotColorsLoc, spotColorsFlat);
-      if (uSpotInnerConeCosLoc) this.gl.uniform1fv(uSpotInnerConeCosLoc, spotInnerConeCosFlat);
-      if (uSpotOuterConeCosLoc) this.gl.uniform1fv(uSpotOuterConeCosLoc, spotOuterConeCosFlat);
-      if (uSpotConstAttsLoc) this.gl.uniform1fv(uSpotConstAttsLoc, spotConstAttsFlat);
-      if (uSpotLinearAttsLoc) this.gl.uniform1fv(uSpotLinearAttsLoc, spotLinearAttsFlat);
-      if (uSpotQuadraticAttsLoc) this.gl.uniform1fv(uSpotQuadraticAttsLoc, spotQuadraticAttsFlat);
+      if (uSpotPositionsLoc) this._gl.uniform3fv(uSpotPositionsLoc, spotPositionsFlat);
+      if (uSpotDirectionsLoc) this._gl.uniform3fv(uSpotDirectionsLoc, spotDirectionsFlat);
+      if (uSpotColorsLoc) this._gl.uniform3fv(uSpotColorsLoc, spotColorsFlat);
+      if (uSpotInnerConeCosLoc) this._gl.uniform1fv(uSpotInnerConeCosLoc, spotInnerConeCosFlat);
+      if (uSpotOuterConeCosLoc) this._gl.uniform1fv(uSpotOuterConeCosLoc, spotOuterConeCosFlat);
+      if (uSpotConstAttsLoc) this._gl.uniform1fv(uSpotConstAttsLoc, spotConstAttsFlat);
+      if (uSpotLinearAttsLoc) this._gl.uniform1fv(uSpotLinearAttsLoc, spotLinearAttsFlat);
+      if (uSpotQuadraticAttsLoc) this._gl.uniform1fv(uSpotQuadraticAttsLoc, spotQuadraticAttsFlat);
     }
   }
 
@@ -226,9 +225,9 @@ export class RenderMeshBehaviour extends RendererBehaviour {
   protected loadDirectionalLights(directionalLights: DirectionalLight[]): void {
     if (!this.shader) return;
 
-    const uNumDirLightsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_numDirectionalLights");
-    const uDirDirectionsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_directionalLightDirections[0]");
-    const uDirColorsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_directionalLightColors[0]");
+    const uNumDirLightsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_numDirectionalLights");
+    const uDirDirectionsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_directionalLightDirections[0]");
+    const uDirColorsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_directionalLightColors[0]");
 
     const dirDirectionsFlat: number[] = [];
     const dirColorsFlat: number[] = [];
@@ -239,10 +238,10 @@ export class RenderMeshBehaviour extends RendererBehaviour {
       dirColorsFlat.push(...light.color.toVec3());
     });
 
-    if (uNumDirLightsLoc) this.gl.uniform1i(uNumDirLightsLoc, directionalLights.length);
+    if (uNumDirLightsLoc) this._gl.uniform1i(uNumDirLightsLoc, directionalLights.length);
     if (directionalLights.length > 0) {
-      if (uDirDirectionsLoc) this.gl.uniform3fv(uDirDirectionsLoc, dirDirectionsFlat);
-      if (uDirColorsLoc) this.gl.uniform3fv(uDirColorsLoc, dirColorsFlat);
+      if (uDirDirectionsLoc) this._gl.uniform3fv(uDirDirectionsLoc, dirDirectionsFlat);
+      if (uDirColorsLoc) this._gl.uniform3fv(uDirColorsLoc, dirColorsFlat);
     }
   }
 
@@ -254,12 +253,12 @@ export class RenderMeshBehaviour extends RendererBehaviour {
   protected loadPointLights(pointLights: PointLight[]): void {
     if (!this.shader) return;
 
-    const uNumPointLightsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_numPointLights");
-    const uPointPositionsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_pointLightPositions[0]");
-    const uPointColorsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_pointLightColors[0]");
-    const uPointConstAttsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_pointLightConstantAtts[0]");
-    const uPointLinearAttsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_pointLightLinearAtts[0]");
-    const uPointQuadraticAttsLoc = this.gl.getUniformLocation(this.shader.shaderProgram!, "u_pointLightQuadraticAtts[0]");
+    const uNumPointLightsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_numPointLights");
+    const uPointPositionsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_pointLightPositions[0]");
+    const uPointColorsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_pointLightColors[0]");
+    const uPointConstAttsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_pointLightConstantAtts[0]");
+    const uPointLinearAttsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_pointLightLinearAtts[0]");
+    const uPointQuadraticAttsLoc = this._gl.getUniformLocation(this.shader._shaderProgram!, "u_pointLightQuadraticAtts[0]");
 
     const pointPositionsFlat: number[] = [];
     const pointColorsFlat: number[] = [];
@@ -275,13 +274,13 @@ export class RenderMeshBehaviour extends RendererBehaviour {
       pointQuadraticAttsFlat.push(light.attenuation.quadratic);
     });
 
-    if (uNumPointLightsLoc) this.gl.uniform1i(uNumPointLightsLoc, pointLights.length);
+    if (uNumPointLightsLoc) this._gl.uniform1i(uNumPointLightsLoc, pointLights.length);
     if (pointLights.length > 0) {
-      if (uPointPositionsLoc) this.gl.uniform3fv(uPointPositionsLoc, pointPositionsFlat);
-      if (uPointColorsLoc) this.gl.uniform3fv(uPointColorsLoc, pointColorsFlat);
-      if (uPointConstAttsLoc) this.gl.uniform1fv(uPointConstAttsLoc, pointConstAttsFlat);
-      if (uPointLinearAttsLoc) this.gl.uniform1fv(uPointLinearAttsLoc, pointLinearAttsFlat);
-      if (uPointQuadraticAttsLoc) this.gl.uniform1fv(uPointQuadraticAttsLoc, pointQuadraticAttsFlat);
+      if (uPointPositionsLoc) this._gl.uniform3fv(uPointPositionsLoc, pointPositionsFlat);
+      if (uPointColorsLoc) this._gl.uniform3fv(uPointColorsLoc, pointColorsFlat);
+      if (uPointConstAttsLoc) this._gl.uniform1fv(uPointConstAttsLoc, pointConstAttsFlat);
+      if (uPointLinearAttsLoc) this._gl.uniform1fv(uPointLinearAttsLoc, pointLinearAttsFlat);
+      if (uPointQuadraticAttsLoc) this._gl.uniform1fv(uPointQuadraticAttsLoc, pointQuadraticAttsFlat);
     }
   }
 }

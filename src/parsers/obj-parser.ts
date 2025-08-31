@@ -1,4 +1,4 @@
-import { vec3, vec2 } from "gl-matrix";
+import { vec2, vec3 } from "gl-matrix";
 import { MeshData } from "../core/mesh";
 import { ObjFace } from "./interfaces";
 
@@ -94,7 +94,7 @@ export class ObjParser {
     }
 
     this.consolidateMeshData();
-
+    
     return new MeshData(
       this.outputVertices,
       this.outputNormals,

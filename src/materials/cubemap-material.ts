@@ -1,4 +1,4 @@
-import { JsonSerializedData } from "../interfaces/json-serialized-data";
+import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 import { CubeMapTexture } from "../textures/cubemap-texture";
 import { ColorMaterial } from "./color-material";
 

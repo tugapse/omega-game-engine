@@ -1,5 +1,5 @@
 import { ShaderUniformsEnum } from "../enums/shader-uniforms.enum";
-import { JsonSerializedData } from "../interfaces/json-serialized-data";
+import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 import { CubemapMaterial } from "../materials/cubemap-material";
 import { CubeMapTexture } from "../textures/cubemap-texture";
 import { Shader } from "./shader";
@@ -9,6 +9,9 @@ import { Shader } from "./shader";
  * @augments {Shader}
  */
 export class SkyboxShader extends Shader {
+
+  public get className(): string { return "SkyboxShader" }
+
   /**
     Creates a new instance of SkyboxShader.
     
@@ -76,7 +79,7 @@ export class SkyboxShader extends Shader {
    * @returns {void}
    */
   public override setTexture(name: string, texture: CubeMapTexture, textureIndex: number): void {
-    const location = this.gl.getUniformLocation(this.shaderProgram, name);
+    const location = this.gl.getUniformLocation(this._shaderProgram, name);
     if (location) {
       this.gl.activeTexture(this.gl.TEXTURE0 + textureIndex);
       texture.bind();

@@ -1,13 +1,12 @@
 import { vec3 } from "gl-matrix";
-import { RenderMeshBehaviour } from "../behaviours/renderer/render-mesh-behaviour";
+import { Color, Colors } from "../core";
 import { EntityType } from "../enums/entity-type";
-import { JsonSerializedData } from "../interfaces/json-serialized-data";
+import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
+import { SceneEntityBehaviour } from "../interfaces/scene-behaviour.interface";
 import { Camera } from "./camera";
 import { GlEntity } from "./entity";
 import { Light } from "./light";
-import { SceneEntityBehaviour } from "../interfaces/scene-behaviour";
-import { Color, Colors } from "../core";
-
+import { RendererBehaviour } from "../behaviours/renderer/renderer-behaviour";
 /**
   Represents a scene in the 3D world, acting as a container for entities and managing the main game loop operations like update and draw.
  * @augments {GlEntity}
@@ -20,9 +19,8 @@ export class Scene extends GlEntity {
    * @type {Scene}
    */
   private static _currentScene: Scene;
-  
-  public clearBufferBit: number = 16348 | 256;
-  
+
+
   /**
     Gets the currently active scene instance.
    * @readonly
@@ -37,6 +35,11 @@ export class Scene extends GlEntity {
    * @type {boolean}
    */
   public isRunning: boolean = false;
+  /**
+   A flag indicating whether the scene is in edit mode (inside editor).
+  * @type {boolean}
+  */
+  public inEditMode: boolean = false;
   /**
     The background color of the scene, in RGB format.
    * @type {vec3}
@@ -127,7 +130,14 @@ export class Scene extends GlEntity {
   public override update(ellapsed: number): void {
     if (this.destroyed) return;
     Camera.mainCamera.update(ellapsed);
+
+    if (!this.isRunning && this.inEditMode && this.objects?.length) {
+      const toUpdate = this.objects.filter(ob => ob.updateInEditor);
+      toUpdate.forEach(entity => entity.update(ellapsed));
+    }
+
     if (!this.isRunning) return;
+
     this.behaviours.forEach(behaviour => behaviour.beforeUpdate(ellapsed));
     this.ellapsedTime += ellapsed;
     super.update(ellapsed);
@@ -146,7 +156,7 @@ export class Scene extends GlEntity {
     if (this.destroyed || !this.gl || !Camera.mainCamera) return;
     this.behaviours.forEach(behaviour => behaviour.beforeDraw());
     this.gl.clearColor(this.clearColor.r, this.clearColor.g, this.clearColor.b, 1.0);
-    this.gl.clear(this.clearBufferBit);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     for (const object of this.objects.filter(e => e.active && e.show)) {
       object.draw();
     }
@@ -185,11 +195,9 @@ export class Scene extends GlEntity {
    */
   public setGlRenderingContext(gl: WebGL2RenderingContext): void {
     this.gl = gl;
-    this.behaviours.forEach(b => {
-      if (b instanceof RenderMeshBehaviour) {
-        const beh = b as RenderMeshBehaviour;
-        beh.gl = gl;
-      }
+    this.behaviours.forEach(behaviour => {
+      if(behaviour['setGl'])
+      behaviour.setGl(gl);
     });
   }
 
@@ -229,7 +237,7 @@ export class Scene extends GlEntity {
    */
   public override toJsonObject(): JsonSerializedData {
     const meshMaps: { [key: string]: any } = {};
-    const renderers = this.objects.filter(e => e.getBehaviour(RenderMeshBehaviour)).map(o => o.getBehaviour(RenderMeshBehaviour) as RenderMeshBehaviour);
+    const renderers = this.objects.filter(e => e.getBehaviours(RendererBehaviour)).map(o => o.getBehaviour(RendererBehaviour) as RendererBehaviour);
     for (const renderer of renderers) {
       if (renderer.mesh) {
         meshMaps[renderer.mesh.meshData.uuid] = renderer.mesh.meshData.toJsonObject();

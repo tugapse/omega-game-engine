@@ -3,17 +3,22 @@ import { CanvasViewport } from "../../core/canvas-viewport";
 import { Mesh } from "../../core/mesh";
 import { Camera } from "../../entities/camera";
 import { SceneManager } from "../../entities/scene-manager";
+import { GLPrimitiveType } from "../../enums/gl-primitive-type.enum";
 import { ShaderUniformsEnum } from "../../enums/shader-uniforms.enum";
-import { JsonSerializedData } from "../../interfaces/json-serialized-data";
+import { JsonSerializedData } from "../../interfaces/json-serialized-data.interface";
+import { IRendererBehaviour } from "../../interfaces/renderer-behaviour.interface";
 import { Shader } from "../../shaders/shader";
 import { EntityBehaviour } from "../entity-behaviour";
-import { GLPrimitiveType } from "../../enums/gl-primitive-type.enum";
+import { ObjectInstanciator } from "../../core/object-instanciator";
 
 /**
   The base class for all renderer behaviours, responsible for drawing meshes to the canvas.
  * @augments {EntityBehaviour}
  */
-export class RendererBehaviour extends EntityBehaviour {
+export class RendererBehaviour extends EntityBehaviour implements IRendererBehaviour {
+
+  public override get className(): string { return "RendererBehaviour" }
+
   /**
     The WebGL primitive type used for drawing the mesh.
    * @type {GLPrimitiveType}
@@ -41,19 +46,19 @@ export class RendererBehaviour extends EntityBehaviour {
    * @protected
    * @type {WebGLUniformLocation | null}
    */
-  protected worldMatrixUniformLocation: WebGLUniformLocation | null = null;
+  protected _worldMatrixUniformLocation: WebGLUniformLocation | null = null;
   /**
     The uniform location for the world inverse transpose matrix.
    * @protected
    * @type {WebGLUniformLocation | null}
    */
-  protected worldInverseTransposeMatrixUniformLocation: WebGLUniformLocation | null = null;
+  protected _worldInverseTransposeMatrixUniformLocation: WebGLUniformLocation | null = null;
 
   /**
     Creates an instance of RendererBehaviour.
-   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @param {WebGL2RenderingContext} _gl - The WebGL2 rendering context.
    */
-  constructor(public gl: WebGL2RenderingContext) {
+  constructor(public _gl: WebGL2RenderingContext) {
     super();
     this.mesh = new Mesh();
   }
@@ -64,7 +69,7 @@ export class RendererBehaviour extends EntityBehaviour {
    * @returns {boolean} - True if initialization is successful, otherwise false.
    */
   override initialize(): boolean {
-    if (this._initialized || !this.gl) return false;
+    if (this._initialized || !this._gl) return false;
     this.setGlSettings();
     this.initializeShader();
     return super.initialize();
@@ -75,14 +80,14 @@ export class RendererBehaviour extends EntityBehaviour {
    * @protected
    */
   protected setGlSettings(): void {
-    if(!this.gl) return;
-    this.gl.enable(this.gl.DEPTH_TEST);
-    this.gl.depthFunc(this.gl.LESS);
-    this.gl.enable(this.gl.BLEND);
-    this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
-    this.gl.enable(this.gl.CULL_FACE);
-    this.gl.cullFace(this.gl.BACK);
-    this.gl.frontFace(this.gl.CCW);
+    if (!this._gl) return;
+    this._gl.enable(this._gl.DEPTH_TEST);
+    this._gl.depthFunc(this._gl.LESS);
+    this._gl.enable(this._gl.BLEND);
+    this._gl.blendFunc(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA);
+    this._gl.enable(this._gl.CULL_FACE);
+    this._gl.cullFace(this._gl.BACK);
+    this._gl.frontFace(this._gl.CCW);
   }
 
   /**
@@ -92,9 +97,9 @@ export class RendererBehaviour extends EntityBehaviour {
   protected initializeShader(): void {
     if (!this.shader) return;
     this.shader.initialize();
-    this.shader.buffers.position = this.gl.createBuffer();
-    this.shader.buffers.uv = this.gl.createBuffer();
-    this.shader.buffers.indices = this.gl.createBuffer();
+    this.shader.buffers.position = this._gl.createBuffer();
+    this.shader.buffers.uv = this._gl.createBuffer();
+    this.shader.buffers.indices = this._gl.createBuffer();
   }
 
   /**
@@ -117,10 +122,10 @@ export class RendererBehaviour extends EntityBehaviour {
    * @protected
    */
   protected setModelWorldMatrices(): void {
-    if (this.worldMatrixUniformLocation) {
-      this.gl.uniformMatrix4fv(this.worldMatrixUniformLocation, false, new Float32Array(this.parent.transform.modelMatrix));
+    if (this._worldMatrixUniformLocation) {
+      this._gl.uniformMatrix4fv(this._worldMatrixUniformLocation, false, new Float32Array(this.parent.transform.modelMatrix));
     }
-    if (this.worldInverseTransposeMatrixUniformLocation) {
+    if (this._worldInverseTransposeMatrixUniformLocation) {
       const worldInverseTransposeMatrix = mat4.create();
       mat4.invert(worldInverseTransposeMatrix, this.parent.transform.modelMatrix);
       mat4.transpose(worldInverseTransposeMatrix, worldInverseTransposeMatrix);
@@ -128,7 +133,7 @@ export class RendererBehaviour extends EntityBehaviour {
       const normalMatrixAsMat3 = mat3.create();
       mat3.fromMat4(normalMatrixAsMat3, worldInverseTransposeMatrix);
 
-      this.gl.uniformMatrix3fv(this.worldInverseTransposeMatrixUniformLocation, false, new Float32Array(normalMatrixAsMat3));
+      this._gl.uniformMatrix3fv(this._worldInverseTransposeMatrixUniformLocation, false, new Float32Array(normalMatrixAsMat3));
     }
   }
 
@@ -167,9 +172,9 @@ export class RendererBehaviour extends EntityBehaviour {
    */
   public override fromJson(jsonObject: JsonSerializedData): void {
     const materialData = jsonObject["shader"]["material"];
-    const material = SceneManager.instanciateObjectFromJsonData(materialData.type);
+    const material = ObjectInstanciator.instanciateObjectFromJsonData(materialData.type);
     material.fromJson(materialData);
-    this.shader = SceneManager.instanciateObjectFromJsonData(jsonObject["shader"]["type"], [this.gl, material]);
+    this.shader = ObjectInstanciator.instanciateObjectFromJsonData(jsonObject["shader"]["type"], [this._gl, material]);
     this.mesh.meshData = jsonObject["meshData"];
   }
 
@@ -179,7 +184,16 @@ export class RendererBehaviour extends EntityBehaviour {
    * @param {number} ellapsed - The time elapsed since the last update in milliseconds.
    */
   override update(ellapsed: number): void {
-    this.time += ellapsed;
     super.update(ellapsed);
+    this.time += ellapsed;
+  }
+
+  /**
+     Sets this object gl instance .
+    * @override
+    * @param {WebGL2RenderingContext} gl 
+    */
+  public setGl(gl: WebGL2RenderingContext) {
+    this._gl = gl;
   }
 }

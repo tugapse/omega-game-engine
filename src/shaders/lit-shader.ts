@@ -10,6 +10,9 @@ import { Shader } from "./shader";
  * @augments {Shader}
  */
 export class LitShader extends Shader {
+
+  public get className(): string { return "LitShader" }
+
   /**
     Creates a new instance of LitShader.
     

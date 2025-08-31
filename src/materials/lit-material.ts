@@ -1,4 +1,4 @@
-import { JsonSerializedData } from "../interfaces/json-serialized-data";
+import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 import { Texture } from "../textures/texture";
 import { UnlitMaterial } from "./unlit-material";
 

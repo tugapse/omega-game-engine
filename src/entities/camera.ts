@@ -1,7 +1,7 @@
 import { mat4, vec3 } from 'gl-matrix';
 import { Transform } from "../core/transform";
 import { EntityType } from "../enums/entity-type";
-import { JsonSerializedData } from "../interfaces/json-serialized-data";
+import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 import { GlEntity } from "./entity";
 
 /**

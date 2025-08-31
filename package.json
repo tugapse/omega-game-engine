@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "build-min-js": "rollup -c",
+    "build-js:dev": "rollup -c",
+    "build-js:prod": "cross-env NODE_ENV=production rollup -c",
     "build-docs": "npx typedoc --entryPointStrategy Expand src",
     "serve-docs": "npx serve docs",
     "build-all": "npm run build && npm run build-min-js && npm run build-docs"
@@ -18,6 +19,7 @@
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.4",
+    "cross-env": "^10.0.0",
     "rollup": "^2.79.2",
     "rollup-plugin-terser": "^7.0.2",
     "typedoc": "^0.28.10"

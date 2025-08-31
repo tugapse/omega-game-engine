@@ -2,8 +2,8 @@ import { mat4, mat3, vec4, vec3, vec2 } from "gl-matrix";
 import { EngineCache } from "../core/engineCache";
 import { MeshData } from "../core/mesh";
 import { ShaderUniformsEnum } from "../enums/shader-uniforms.enum";
-import { JsonSerializable } from "../interfaces/json-serializable";
-import { JsonSerializedData } from "../interfaces/json-serialized-data";
+import { JsonSerializable } from "../core/json-serializable";
+import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 import { ColorMaterial } from "../materials/color-material";
 import { Texture } from "../textures/texture";
 import { v4 as uuidv4 } from 'uuid';
@@ -49,6 +49,9 @@ export interface WebGLBuffers {
  * @augments {JsonSerializable}
  */
 export class Shader extends JsonSerializable {
+
+  public get className(): string { return "Shader" }
+
   /**
     A map of string keys to URLs for reusable shader function files.
     
@@ -89,28 +92,32 @@ export class Shader extends JsonSerializable {
   public get uuid(): string {
     return this._uuid;
   }
+
+  public get shaderProgram(): WebGLProgram { return this._shaderProgram; }
   /**
     The compiled WebGL shader program.
    * @type {WebGLProgram}
    */
-  public shaderProgram!: WebGLProgram;
+  public _shaderProgram!: WebGLProgram;
   /**
     A flag indicating if the shader has been initialized.
    * @private
    * @type {boolean}
    */
-  private initialized: boolean = false;
+  private _initialized: boolean = false;
   /**
     The unique identifier for the shader.
    * @protected
    * @type {string}
    */
   protected _uuid: string;
+
+  public get buffers(): WebGLBuffers { return this._buffers }
   /**
     The WebGL buffers for vertex data.
    * @type {WebGLBuffers}
    */
-  public buffers: WebGLBuffers = {
+  protected _buffers: WebGLBuffers = {
     position: null,
     normal: null,
     uv: null,
@@ -141,7 +148,7 @@ export class Shader extends JsonSerializable {
    * @returns {Promise<void>}
    */
   public async initialize(): Promise<void> {
-    if (this.initialized) {
+    if (this._initialized) {
       return;
     }
     const keys: string[] = Object.keys(Shader.SHADER_FUNCTIONS);
@@ -163,8 +170,8 @@ export class Shader extends JsonSerializable {
     if (!vertexShader || !fragmentShader) {
       return;
     }
-    this.shaderProgram = this.createProgram(this.gl, vertexShader, fragmentShader) as WebGLProgram;
-    this.initialized = true;
+    this._shaderProgram = this.createProgram(this.gl, vertexShader, fragmentShader) as WebGLProgram;
+    this._initialized = true;
   }
 
   /**
@@ -233,7 +240,7 @@ export class Shader extends JsonSerializable {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(mesh.indices), gl.STATIC_DRAW);
 
-    this.buffers = buffers;
+    this._buffers = buffers;
   }
 
   /**
@@ -241,38 +248,38 @@ export class Shader extends JsonSerializable {
    * @returns {void}
    */
   public bindBuffers(): void {
-    if (!this.gl || !this.shaderProgram) return;
+    if (!this.gl || !this._shaderProgram) return;
 
-    const positionAttributeLocation = this.gl.getAttribLocation(this.shaderProgram, 'a_position');
-    if (this.buffers.position && positionAttributeLocation !== -1) {
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+    const positionAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, 'a_position');
+    if (this._buffers.position && positionAttributeLocation !== -1) {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this._buffers.position);
       this.gl.vertexAttribPointer(positionAttributeLocation, 3, this.gl.FLOAT, false, 0, 0);
       this.gl.enableVertexAttribArray(positionAttributeLocation);
     } else if (positionAttributeLocation !== -1) {
       this.gl.disableVertexAttribArray(positionAttributeLocation);
     }
 
-    const normalAttributeLocation = this.gl.getAttribLocation(this.shaderProgram, 'a_normal');
-    if (this.buffers.normal && normalAttributeLocation !== -1) {
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.normal);
+    const normalAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, 'a_normal');
+    if (this._buffers.normal && normalAttributeLocation !== -1) {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this._buffers.normal);
       this.gl.vertexAttribPointer(normalAttributeLocation, 3, this.gl.FLOAT, false, 0, 0);
       this.gl.enableVertexAttribArray(normalAttributeLocation);
     } else if (normalAttributeLocation !== -1) {
       this.gl.disableVertexAttribArray(normalAttributeLocation);
     }
 
-    const uvAttributeLocation = this.gl.getAttribLocation(this.shaderProgram, 'a_uv');
-    if (this.buffers.uv && uvAttributeLocation !== -1) {
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.uv);
+    const uvAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, 'a_uv');
+    if (this._buffers.uv && uvAttributeLocation !== -1) {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this._buffers.uv);
       this.gl.vertexAttribPointer(uvAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
       this.gl.enableVertexAttribArray(uvAttributeLocation);
     } else if (uvAttributeLocation !== -1) {
       this.gl.disableVertexAttribArray(uvAttributeLocation);
     }
 
-    const tangentAttributeLocation = this.gl.getAttribLocation(this.shaderProgram, 'a_tangent');
-    if (this.buffers.tangent && tangentAttributeLocation !== -1) {
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.tangent);
+    const tangentAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, 'a_tangent');
+    if (this._buffers.tangent && tangentAttributeLocation !== -1) {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this._buffers.tangent);
       this.gl.vertexAttribPointer(tangentAttributeLocation, 3, this.gl.FLOAT, false, 0, 0);
       this.gl.enableVertexAttribArray(tangentAttributeLocation);
     } else if (tangentAttributeLocation !== -1) {
@@ -280,9 +287,9 @@ export class Shader extends JsonSerializable {
       this.gl.disableVertexAttribArray(tangentAttributeLocation);
     }
 
-    const bitangentAttributeLocation = this.gl.getAttribLocation(this.shaderProgram, 'a_bitangent');
-    if (this.buffers.bitangent && bitangentAttributeLocation !== -1) {
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.bitangent);
+    const bitangentAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, 'a_bitangent');
+    if (this._buffers.bitangent && bitangentAttributeLocation !== -1) {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this._buffers.bitangent);
       this.gl.vertexAttribPointer(bitangentAttributeLocation, 3, this.gl.FLOAT, false, 0, 0);
       this.gl.enableVertexAttribArray(bitangentAttributeLocation);
     } else if (bitangentAttributeLocation !== -1) {
@@ -290,8 +297,8 @@ export class Shader extends JsonSerializable {
       this.gl.disableVertexAttribArray(bitangentAttributeLocation);
     }
 
-    if (this.buffers.indices) {
-      this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.buffers.indices);
+    if (this._buffers.indices) {
+      this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this._buffers.indices);
     }
   }
 
@@ -300,10 +307,10 @@ export class Shader extends JsonSerializable {
    * @returns {void}
    */
   public use(): void {
-    if (!this.shaderProgram || !this.initialized) {
+    if (!this._shaderProgram || !this._initialized) {
       return;
     }
-    this.gl.useProgram(this.shaderProgram);
+    this.gl.useProgram(this._shaderProgram);
   }
 
   /**
@@ -322,7 +329,7 @@ export class Shader extends JsonSerializable {
    * @returns {void}
    */
   public setMat4(name: string, value: mat4): void {
-    const location = this.gl.getUniformLocation(this.shaderProgram, name);
+    const location = this.gl.getUniformLocation(this._shaderProgram, name);
     if (location) {
       this.gl.uniformMatrix4fv(location, false, Float32Array.from(value));
     }
@@ -335,7 +342,7 @@ export class Shader extends JsonSerializable {
    * @returns {void}
    */
   public setMat3(name: string, value: mat3): void {
-    const location = this.gl.getUniformLocation(this.shaderProgram, name);
+    const location = this.gl.getUniformLocation(this._shaderProgram, name);
     if (location) {
       this.gl.uniformMatrix3fv(location, false, Float32Array.from(value));
     }
@@ -348,7 +355,7 @@ export class Shader extends JsonSerializable {
    * @returns {void}
    */
   public setVec4(name: string, vec: vec4): void {
-    const location = this.gl.getUniformLocation(this.shaderProgram, name);
+    const location = this.gl.getUniformLocation(this._shaderProgram, name);
     if (location) {
       this.gl.uniform4fv(location, Float32Array.from(vec));
     }
@@ -361,7 +368,7 @@ export class Shader extends JsonSerializable {
    * @returns {void}
    */
   public setVec3(name: string, vec: vec3): void {
-    const location = this.gl.getUniformLocation(this.shaderProgram, name);
+    const location = this.gl.getUniformLocation(this._shaderProgram, name);
     if (location) {
       this.gl.uniform3fv(location, Float32Array.from(vec));
     }
@@ -374,7 +381,7 @@ export class Shader extends JsonSerializable {
    * @returns {void}
    */
   public setVec2(name: string, vec: vec2): void {
-    const location = this.gl.getUniformLocation(this.shaderProgram, name);
+    const location = this.gl.getUniformLocation(this._shaderProgram, name);
     if (location) {
       this.gl.uniform2fv(location, Float32Array.from(vec));
     }
@@ -387,7 +394,7 @@ export class Shader extends JsonSerializable {
    * @returns {void}
    */
   public setFloat(name: string, num: number): void {
-    const location = this.gl.getUniformLocation(this.shaderProgram, name);
+    const location = this.gl.getUniformLocation(this._shaderProgram, name);
     if (location) {
       this.gl.uniform1f(location, num);
     }
@@ -401,7 +408,7 @@ export class Shader extends JsonSerializable {
    * @returns {void}
    */
   public setTexture(name: string, texture: Texture, textureIndex: number): void {
-    const location = this.gl.getUniformLocation(this.shaderProgram, name);
+    const location = this.gl.getUniformLocation(this._shaderProgram, name);
     if (location) {
       this.gl.activeTexture(this.gl.TEXTURE0 + textureIndex);
       this.gl.bindTexture(this.gl.TEXTURE_2D, texture.glTexture);
@@ -426,7 +433,7 @@ export class Shader extends JsonSerializable {
    * @returns {void}
    */
   public setIndices(values: number[]): void {
-    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.buffers.indices);
+    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this._buffers.indices);
     const indicesArray = new Uint16Array(values);
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indicesArray, this.gl.STATIC_DRAW);
   }
@@ -493,21 +500,21 @@ export class Shader extends JsonSerializable {
    * @returns {void}
    */
   public destroy(): void {
-    if (this.buffers.position)
-      this.gl.deleteBuffer(this.buffers.position);
-    if (this.buffers.normal)
-      this.gl.deleteBuffer(this.buffers.normal);
-    if (this.buffers.uv)
-      this.gl.deleteBuffer(this.buffers.uv);
-    if (this.buffers.tangent)
-      this.gl.deleteBuffer(this.buffers.tangent);
-    if (this.buffers.bitangent)
-      this.gl.deleteBuffer(this.buffers.bitangent);
-    if (this.buffers.indices)
-      this.gl.deleteBuffer(this.buffers.indices);
-    if (this.shaderProgram)
-      this.gl.deleteProgram(this.shaderProgram);
-    this.initialized = false;
+    if (this._buffers.position)
+      this.gl.deleteBuffer(this._buffers.position);
+    if (this._buffers.normal)
+      this.gl.deleteBuffer(this._buffers.normal);
+    if (this._buffers.uv)
+      this.gl.deleteBuffer(this._buffers.uv);
+    if (this._buffers.tangent)
+      this.gl.deleteBuffer(this._buffers.tangent);
+    if (this._buffers.bitangent)
+      this.gl.deleteBuffer(this._buffers.bitangent);
+    if (this._buffers.indices)
+      this.gl.deleteBuffer(this._buffers.indices);
+    if (this._shaderProgram)
+      this.gl.deleteProgram(this._shaderProgram);
+    this._initialized = false;
     console.debug("Shader destroyed.");
   }
 

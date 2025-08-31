@@ -8,6 +8,9 @@ import { Shader } from "./shader";
  * @augments {Shader}
  */
 export class UnlitShader extends Shader {
+
+  public get className(): string { return "UnlitShader" }
+
   /**
     Creates a new instance of UnlitShader.
     
