@@ -1,5 +1,5 @@
 import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
-import { CubeMapTexture } from "../textures/cubemap-texture";
+import { CubemapTexture } from "../textures/cubemap-texture";
 import { ColorMaterial } from "./color-material";
 
 /**
@@ -7,6 +7,8 @@ import { ColorMaterial } from "./color-material";
  * @augments {ColorMaterial}
  */
 export class CubemapMaterial extends ColorMaterial {
+
+  protected override _className = "CubemapMaterial";
 
   /**
     The URI for the right side (positive X) of the cubemap.
@@ -40,9 +42,9 @@ export class CubemapMaterial extends ColorMaterial {
   public frontSideUri: string = "assets/images/skybox/blue/front.jpeg";
   /**
     The cube map texture.
-   * @type {CubeMapTexture}
+   * @type {CubemapTexture}
    */
-  public mainTex!: CubeMapTexture;
+  public mainTex!: CubemapTexture;
 
   /**
     Deserializes the material's state from a JSON object.
@@ -51,7 +53,10 @@ export class CubemapMaterial extends ColorMaterial {
    * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
    * @returns {void}
    */
-  override fromJson(jsonObject: JsonSerializedData): void {}
+  override fromJson(jsonObject: JsonSerializedData): void {
+    super.fromJson(jsonObject);
+
+  }
 
   /**
     Serializes the material's state to a JSON object.
@@ -79,4 +84,5 @@ export class CubemapMaterial extends ColorMaterial {
   static override instanciate(): CubemapMaterial {
     return new CubemapMaterial();
   }
+  
 }

@@ -9,7 +9,7 @@ import { Shader } from "./shader";
  */
 export class UnlitShader extends Shader {
 
-  public get className(): string { return "UnlitShader" }
+   protected override _className = "UnlitShader" 
 
   /**
     Creates a new instance of UnlitShader.

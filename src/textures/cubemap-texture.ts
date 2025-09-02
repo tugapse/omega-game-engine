@@ -5,7 +5,9 @@ import { Texture } from "./texture";
  * It handles six individual images (one for each face of the cube) and combines them into a single cubemap texture object.
  * @augments {Texture}
  */
-export class CubeMapTexture extends Texture {
+export class CubemapTexture extends Texture {
+  
+   protected override _className = "CubemapTexture";
   /**
     An array to hold the HTML image elements for each of the six faces.
    * @protected

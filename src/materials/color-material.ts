@@ -8,6 +8,10 @@ import { JsonSerializedData } from "../interfaces/json-serialized-data.interface
  */
 export class ColorMaterial extends JsonSerializable {
 
+  constructor(){
+    super("ColorMaterial");
+  }
+
   public get type(): string { return this.constructor.name; }
 
   /**

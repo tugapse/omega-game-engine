@@ -1,3 +1,5 @@
+import { JsonSerializable } from "../interfaces";
+
 /**
   An enumeration of texture wrapping modes. These values correspond to WebGL constants for `TEXTURE_WRAP_S` and `TEXTURE_WRAP_T`.
  */
@@ -19,7 +21,8 @@ export enum TextureWrapMode {
 /**
   A class to manage the loading, creation, and binding of 2D textures for use in WebGL.
  */
-export class Texture {
+export class Texture extends JsonSerializable {
+
   /**
     The HTML image element that contains the texture data.
    * @protected
@@ -50,7 +53,9 @@ export class Texture {
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
    * @param {string} [textureUri] - The URI of the image to load.
    */
-  constructor(protected gl: WebGL2RenderingContext, protected textureUri?: string) {}
+  constructor(protected gl: WebGL2RenderingContext, protected textureUri?: string) {
+    super("Texture");
+  }
 
   /**
     Creates and returns a default 1x1 white texture.

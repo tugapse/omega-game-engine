@@ -1,6 +1,8 @@
+import { EntityBehaviour, RendererBehaviour } from "./behaviours";
 import { CameraFlyBehaviour } from "./behaviours/camera-fly-behaviour";
 import { RenderMeshBehaviour } from "./behaviours/renderer/render-mesh-behaviour";
 import { SkyboxRenderer } from "./behaviours/renderer/skybox-renderer";
+import { Transform } from "./core";
 import { Color } from "./core/color";
 import { MeshData } from "./core/mesh";
 import { ObjectInstanciator } from "./core/object-instanciator";
@@ -26,13 +28,21 @@ import { UnlitShader } from "./shaders/unlit-shader";
   The main entry point for the engine. This class handles the initialization of core components and dependency registration.
  */
 export class Engine {
+
+  private canvas!: HTMLCanvasElement;
   /**
     Initializes the engine by registering all core dependencies.
     
    * @returns {void}
    */
-  public static initialize(): void {
+  public initialize(canvas: HTMLCanvasElement): void {
+    this.canvas = canvas;
+    this.initializeEvents();
     this.registerDependencies();
+  }
+
+  private initializeEvents() {
+    console.debug("HAndle canvas events here");
   }
 
   /**
@@ -41,42 +51,47 @@ export class Engine {
     
    * @returns {void}
    */
-  private static registerDependencies(): void {
+  private registerDependencies(): void {
     // Entities
-    ObjectInstanciator.addDependency(GlEntity.name, GlEntity.instanciate);
-    ObjectInstanciator.addDependency(Camera.name, Camera.instanciate);
-    ObjectInstanciator.addDependency(Light.name, Light.instanciate);
-    ObjectInstanciator.addDependency(PointLight.name, PointLight.instanciate);
-    ObjectInstanciator.addDependency(SpotLight.name, SpotLight.instanciate);
-    ObjectInstanciator.addDependency(DirectionalLight.name, DirectionalLight.instanciate);
-    ObjectInstanciator.addDependency(Color.name, () => new Color());
+    ObjectInstanciator.addDependency("GlEntity", (name: string, transform?: Transform) => new GlEntity(name, transform));
+
+    
+    ObjectInstanciator.addDependency("Camera", Camera.instanciate);
+    ObjectInstanciator.addDependency("Light", Light.instanciate);
+    ObjectInstanciator.addDependency("PointLight", PointLight.instanciate);
+    ObjectInstanciator.addDependency("SpotLight", SpotLight.instanciate);
+    ObjectInstanciator.addDependency("DirectionalLight", DirectionalLight.instanciate);
+    ObjectInstanciator.addDependency("Color", () => new Color());
+    ObjectInstanciator.addDependency("Transform", () => new Transform());
 
     // Geometry
-    ObjectInstanciator.addDependency(MeshData.name, MeshData.instanciate);
-    ObjectInstanciator.addDependency(CubePrimitive.name, CubePrimitive.instanciate);
-    ObjectInstanciator.addDependency(QuadPrimitive.name, QuadPrimitive.instanciate);
-    ObjectInstanciator.addDependency(SpherePrimitive.name, SpherePrimitive.instanciate);
-    ObjectInstanciator.addDependency(SkyboxPrimitive.name, SkyboxPrimitive.instanciate);
-    ObjectInstanciator.addDependency(TrianglePrimitive.name, TrianglePrimitive.instanciate);
+    ObjectInstanciator.addDependency("MeshData", MeshData.instanciate);
+    ObjectInstanciator.addDependency("CubePrimitive", CubePrimitive.instanciate);
+    ObjectInstanciator.addDependency("QuadPrimitive", QuadPrimitive.instanciate);
+    ObjectInstanciator.addDependency("SpherePrimitive", SpherePrimitive.instanciate);
+    ObjectInstanciator.addDependency("SkyboxPrimitive", SkyboxPrimitive.instanciate);
+    ObjectInstanciator.addDependency("TrianglePrimitive", TrianglePrimitive.instanciate);
 
     // Shaders
-    ObjectInstanciator.addDependency(Shader.name, Shader.instanciate);
-    ObjectInstanciator.addDependency(SkyboxShader.name, SkyboxShader.instanciate);
-    ObjectInstanciator.addDependency(UnlitShader.name, UnlitShader.instanciate);
-    ObjectInstanciator.addDependency(LitShader.name, LitShader.instanciate);
+    ObjectInstanciator.addDependency("Shader", Shader.instanciate);
+    ObjectInstanciator.addDependency("SkyboxShader", SkyboxShader.instanciate);
+    ObjectInstanciator.addDependency("UnlitShader", UnlitShader.instanciate);
+    ObjectInstanciator.addDependency("LitShader", LitShader.instanciate);
 
     // Behaviours (Renderers)
-    ObjectInstanciator.addDependency(RenderMeshBehaviour.name, RenderMeshBehaviour.instanciate);
-    ObjectInstanciator.addDependency(SkyboxRenderer.name, SkyboxRenderer.instanciate);
+    ObjectInstanciator.addDependency("EntityBehaviour", EntityBehaviour.instanciate);
+    ObjectInstanciator.addDependency("RendererBehaviour", RendererBehaviour.instanciate);
+    ObjectInstanciator.addDependency("RenderMeshBehaviour", RenderMeshBehaviour.instanciate);
+    ObjectInstanciator.addDependency("SkyboxRenderer", SkyboxRenderer.instanciate);
 
     // Materials
-    ObjectInstanciator.addDependency(ColorMaterial.name, ColorMaterial.instanciate);
-    ObjectInstanciator.addDependency(UnlitMaterial.name, UnlitMaterial.instanciate);
-    ObjectInstanciator.addDependency(LitMaterial.name, LitMaterial.instanciate);
-    ObjectInstanciator.addDependency(CubemapMaterial.name, CubemapMaterial.instanciate);
+    ObjectInstanciator.addDependency("ColorMaterial", ColorMaterial.instanciate);
+    ObjectInstanciator.addDependency("UnlitMaterial", UnlitMaterial.instanciate);
+    ObjectInstanciator.addDependency("LitMaterial", LitMaterial.instanciate);
+    ObjectInstanciator.addDependency("CubemapMaterial", CubemapMaterial.instanciate);
 
     // Other Behaviours
-    ObjectInstanciator.addDependency(CameraFlyBehaviour.name, CameraFlyBehaviour.instanciate);
+    ObjectInstanciator.addDependency("CameraFlyBehaviour", CameraFlyBehaviour.instanciate);
 
     Shader.preFetchFunctionsGlsl();
   }

@@ -7,6 +7,8 @@ import { JsonSerializedData } from "../interfaces/json-serialized-data.interface
  * @augments {JsonSerializable}
  */
 export class Color extends JsonSerializable {
+
+  public static get className() { return "Color"; }
   /**
     Creates a new Color instance from a JSON data object.
     
@@ -16,6 +18,7 @@ export class Color extends JsonSerializable {
   public static createFromJsonData(jsonData: JsonSerializedData): Color {
     const color = new Color();
     color.fromJson(jsonData);
+    debugger
     return color;
   }
 
@@ -94,7 +97,7 @@ export class Color extends JsonSerializable {
    * @param {number} [a=1] - The alpha component.
    */
   constructor(r: number = 1, g: number = 1, b: number = 1, a: number = 1) {
-    super();
+    super("Color");
     this.vector = vec4.fromValues(r, g, b, a);
   }
 

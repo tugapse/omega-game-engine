@@ -1,7 +1,7 @@
 import { ShaderUniformsEnum } from "../enums/shader-uniforms.enum";
 import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 import { CubemapMaterial } from "../materials/cubemap-material";
-import { CubeMapTexture } from "../textures/cubemap-texture";
+import { CubemapTexture } from "../textures/cubemap-texture";
 import { Shader } from "./shader";
 
 /**
@@ -10,7 +10,7 @@ import { Shader } from "./shader";
  */
 export class SkyboxShader extends Shader {
 
-  public get className(): string { return "SkyboxShader" }
+  protected override _className = "SkyboxShader"
 
   /**
     Creates a new instance of SkyboxShader.
@@ -52,7 +52,7 @@ export class SkyboxShader extends Shader {
 
     const { rightSideUri, leftSideUri, topSideUri, bottomSideUri, backSideUri, frontSideUri } = this.material;
     if (!this.material.mainTex) {
-      this.material.mainTex = new CubeMapTexture(this.gl, [
+      this.material.mainTex = new CubemapTexture(this.gl, [
         rightSideUri, leftSideUri,
         topSideUri, bottomSideUri,
         frontSideUri, backSideUri
@@ -65,7 +65,7 @@ export class SkyboxShader extends Shader {
     this.setVec4(ShaderUniformsEnum.U_MAT_COLOR, this.material.color.toVec4());
 
     if (this.material.mainTex && this.material.mainTex.isImageLoaded) {
-      this.setTexture(ShaderUniformsEnum.U_MAIN_TEX, this.material.mainTex as CubeMapTexture, 0);
+      this.setTexture(ShaderUniformsEnum.U_MAIN_TEX, this.material.mainTex as CubemapTexture, 0);
     }
     super.loadDataIntoShader();
   }
@@ -74,27 +74,16 @@ export class SkyboxShader extends Shader {
     Binds a cubemap texture to a uniform in the shader.
    * @override
    * @param {string} name - The name of the uniform.
-   * @param {CubeMapTexture} texture - The cubemap texture object.
+   * @param {CubemapTexture} texture - The cubemap texture object.
    * @param {number} textureIndex - The texture unit index to bind to.
    * @returns {void}
    */
-  public override setTexture(name: string, texture: CubeMapTexture, textureIndex: number): void {
+  public override setTexture(name: string, texture: CubemapTexture, textureIndex: number): void {
     const location = this.gl.getUniformLocation(this._shaderProgram, name);
     if (location) {
       this.gl.activeTexture(this.gl.TEXTURE0 + textureIndex);
       texture.bind();
       this.gl.uniform1i(location, textureIndex);
     }
-  }
-
-  /**
-    Deserializes the shader's state from a JSON object.
-   * @override
-   * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
-   * @returns {void}
-   */
-  public override fromJson(jsonObject: JsonSerializedData): void {
-    super.fromJson(jsonObject);
-    this.material = jsonObject['material'] as CubemapMaterial;
   }
 }

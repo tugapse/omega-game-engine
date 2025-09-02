@@ -7,6 +7,8 @@ import { UnlitMaterial } from "./unlit-material";
  * @augments {UnlitMaterial}
  */
 export class LitMaterial extends UnlitMaterial {
+   protected override _className = "LitMaterial";
+
   /**
     The URL for the normal map texture.
    * @type {string}

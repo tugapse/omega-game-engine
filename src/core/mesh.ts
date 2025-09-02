@@ -8,7 +8,8 @@ import { IMeshData } from "../interfaces/meshData.interface";
   Base class for geometric mesh data. It stores vertex positions, normals, and UV coordinates, along with optional tangent and bitangent vectors for normal mapping.
  * @augments {JsonSerializable}
  */
-export class MeshData extends JsonSerializable implements IMeshData{
+export class MeshData extends JsonSerializable implements IMeshData {
+
   /**
     Creates a new MeshData instance.
     
@@ -67,7 +68,7 @@ export class MeshData extends JsonSerializable implements IMeshData{
    * @param {number[]} [indices=[]] - The array of vertex indices.
    */
   constructor(vertices: vec3[], normals: vec3[] = [], uvs: vec2[] = [], indices: number[] = []) {
-    super();
+    super("MeshData");
     this.vertices = vertices;
     this.normals = normals;
     this.uvs = uvs;
@@ -275,31 +276,26 @@ export class MeshData extends JsonSerializable implements IMeshData{
  * @augments {JsonSerializable}
  */
 export class Mesh extends JsonSerializable {
+  constructor() {
+    super("Mesh");
+  }
   /**
     The shared mesh data instance.
    * @type {MeshData}
    */
   public meshData!: MeshData;
 
-  /**
-    Serializes the mesh's reference to its mesh data to a JSON object.
-   * @override
-   * @returns {JsonSerializedData} - The JSON object representation.
-   */
   override toJsonObject(): JsonSerializedData {
-    return {
+    return{
       ...super.toJsonObject(),
-      meshDataId: this.meshData.uuid,
-    };
+      meshData:this.meshData.toJsonObject()
+    }
   }
 
-  /**
-    Deserializes the mesh from a JSON object, creating a new MeshData instance if one does not exist.
-   * @override
-   * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
-   */
   override fromJson(jsonObject: JsonSerializedData): void {
-    if (!this.meshData) this.meshData = new MeshData([]);
-    this.meshData.fromJson(jsonObject);
+    super.fromJson(jsonObject);
+    this.meshData = new MeshData([]);
+    this.meshData.fromJson(jsonObject.meshData);
   }
+
 }

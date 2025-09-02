@@ -48,6 +48,9 @@ export class LightConeAngles {
  * @augments {GlEntity}
  */
 export class Light extends GlEntity {
+
+  protected override _className = "Light";
+  
   /**
     The type of the entity, specifically set to LIGHT_AMBIENT.
    * @override
@@ -111,6 +114,9 @@ export class Light extends GlEntity {
  * @augments {Light}
  */
 export class DirectionalLight extends Light {
+
+   protected override _className = "DirectionalLight"; 
+
   /**
     Gets the direction of the light, derived from the transform's rotation.
    * @readonly
@@ -142,7 +148,7 @@ export class DirectionalLight extends Light {
    */
   public override toJsonObject(): JsonSerializedData {
     return {
-      ...super.toJsonObject(),
+      ...super.toJsonObject()
     };
   }
 
@@ -174,6 +180,8 @@ export class DirectionalLight extends Light {
  * @augments {Light}
  */
 export class PointLight extends Light {
+   protected override _className = "PointLight"; 
+  
   /**
     The type of the entity, specifically set to LIGHT_POINT.
    * @override
@@ -237,6 +245,9 @@ export class PointLight extends Light {
  * @augments {Light}
  */
 export class SpotLight extends Light {
+  
+   protected override _className = "PointLight"; 
+
   /**
     The type of the entity, specifically set to LIGHT_SPOT.
    * @override

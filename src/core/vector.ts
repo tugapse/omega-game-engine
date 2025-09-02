@@ -6,6 +6,9 @@ import { JsonSerializable, JsonSerializedData } from "../interfaces";
  * @augments {JsonSerializable}
  */
 export class Vector2 extends JsonSerializable {
+
+  public static get className() { return "Vector2"; }
+
   /**
     The internal gl-matrix vector.
    * @protected
@@ -56,7 +59,7 @@ export class Vector2 extends JsonSerializable {
    * @param {number} [y=0] - The y-component.
    */
   constructor(x: number = 0, y: number = 0) {
-    super();
+    super("Vector2");
     this._vec = vec2.fromValues(x, y);
   }
 
@@ -80,6 +83,7 @@ export class Vector2 extends JsonSerializable {
   override toJsonObject(): JsonSerializedData {
     return {
       type: this.constructor.name,
+      className: Vector2.className,
       x: this.x,
       y: this.y,
     };
@@ -102,6 +106,8 @@ export class Vector2 extends JsonSerializable {
  * @augments {Vector2}
  */
 export class Vector3 extends Vector2 {
+
+  protected override _className = "Vector3"
   /**
     The internal gl-matrix vector.
    * @protected
@@ -190,6 +196,7 @@ export class Vector3 extends Vector2 {
   override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
+      className: Vector3.className,
       z: this.z,
     };
   }
@@ -213,6 +220,9 @@ export class Vector3 extends Vector2 {
  * @augments {Vector3}
  */
 export class Vector4 extends Vector3 {
+
+  protected override _className = "Vector4"
+
   /**
     The internal gl-matrix vector.
    * @protected
@@ -319,6 +329,7 @@ export class Vector4 extends Vector3 {
   override toJsonObject(): JsonSerializedData {
     return {
       type: this.constructor.name,
+      className: Vector4.className,
       x: this.x,
       y: this.y,
       z: this.z,

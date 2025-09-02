@@ -11,6 +11,10 @@ import { Scene } from "./scene";
  * @augments {JsonSerializable}
  */
 export class GlEntity extends JsonSerializable {
+  
+  public get type(): string { return this.constructor.name; }
+  public static get className() { return "GLEntity"; };
+  
   /**
     Creates a new GlEntity instance with a given name and an optional transform.
     
@@ -26,7 +30,7 @@ export class GlEntity extends JsonSerializable {
   }
 
   [key: string]: any;
-  public get type(): string { return this.constructor.name; }
+  
 
   /**
     A flag indicating if the entity has been destroyed.
@@ -102,7 +106,7 @@ export class GlEntity extends JsonSerializable {
    * @param {Transform} [transform=new Transform()] - The transform component.
    */
   constructor(name: string, transform: Transform = new Transform()) {
-    super();
+    super("GlEntity");
     this.name = name;
     this.transform = transform;
     this._uuid = uuidv4();
@@ -205,7 +209,6 @@ export class GlEntity extends JsonSerializable {
    * @returns {void}
    */
   public override fromJson(jsonObject: JsonSerializedData): void {
-    if (jsonObject['type'] !== this.constructor.name) return;
     this.name = jsonObject['name'];
     this.entityType = jsonObject['entityType'] as EntityType;
     this._uuid = jsonObject['uuid'] || uuidv4();

@@ -10,6 +10,7 @@ import { IRendererBehaviour } from "../../interfaces/renderer-behaviour.interfac
 import { Shader } from "../../shaders/shader";
 import { EntityBehaviour } from "../entity-behaviour";
 import { ObjectInstanciator } from "../../core/object-instanciator";
+import { ColorMaterial as Material } from "../../materials";
 
 /**
   The base class for all renderer behaviours, responsible for drawing meshes to the canvas.
@@ -17,7 +18,11 @@ import { ObjectInstanciator } from "../../core/object-instanciator";
  */
 export class RendererBehaviour extends EntityBehaviour implements IRendererBehaviour {
 
-  public override get className(): string { return "RendererBehaviour" }
+  static override instanciate(gl:WebGL2RenderingContext) {
+    return new RendererBehaviour(gl);
+  }
+
+  protected override _className = "RendererBehaviour"
 
   /**
     The WebGL primitive type used for drawing the mesh.
@@ -172,10 +177,11 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    */
   public override fromJson(jsonObject: JsonSerializedData): void {
     const materialData = jsonObject["shader"]["material"];
-    const material = ObjectInstanciator.instanciateObjectFromJsonData(materialData.type);
-    material.fromJson(materialData);
-    this.shader = ObjectInstanciator.instanciateObjectFromJsonData(jsonObject["shader"]["type"], [this._gl, material]);
-    this.mesh.meshData = jsonObject["meshData"];
+    const material = ObjectInstanciator.instanciateObjectFromJsonData<Material>(materialData.className);
+    material!.fromJson(materialData);
+    this.shader = ObjectInstanciator.instanciateObjectFromJsonData(jsonObject.shader.className, [this._gl, material]);
+    this.shader?.fromJson(jsonObject.shader);
+    this.mesh.fromJson(jsonObject.mesh);
   }
 
   /**

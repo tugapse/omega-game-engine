@@ -9,9 +9,6 @@ import { RenderMeshBehaviour } from "./render-mesh-behaviour";
  * @augments {RenderMeshBehaviour}
  */
 export class SkyboxRenderer extends RenderMeshBehaviour {
-  
-  public override get className(): string { return "SkyboxRenderer" }
-
   /**
     Creates a new instance of the SkyboxRenderer.
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
@@ -23,6 +20,10 @@ export class SkyboxRenderer extends RenderMeshBehaviour {
     return new SkyboxRenderer(gl);
   }
 
+  constructor(gl:WebGL2RenderingContext){
+    super(gl);
+    this._className = "SkyboxRenderer";
+  }
   /**
     Initializes the skybox renderer.
    * @override

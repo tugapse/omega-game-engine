@@ -9,6 +9,8 @@ import { GlEntity } from "./entity";
  * @augments {GlEntity}
  */
 export class Camera extends GlEntity {
+  protected override _className = "Camera";
+
   /**
     The main camera instance for the scene.
    * @private

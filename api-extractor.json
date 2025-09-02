@@ -1,0 +1,15 @@
+{
+"$schema": "https://www.google.com/search?q=https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+"mainEntryPointFilePath": "<projectFolder>/dist/index.d.ts",
+"apiReport": {
+"enabled": false,
+"reportFolder": "<projectFolder>/temp/"
+},
+"docModel": {
+"enabled": false
+},
+"dtsRollup": {
+"enabled": true,
+"publicTrimmedFilePath": "<projectFolder>/dist/omega-game-engine.d.ts"
+}
+}

@@ -8,6 +8,8 @@ import { ColorMaterial } from "./color-material";
  * @augments {ColorMaterial}
  */
 export class UnlitMaterial extends ColorMaterial {
+   protected override _className = "UnlitMaterial";
+
   /**
     The URL for the main texture.
    * @type {string}

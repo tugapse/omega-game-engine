@@ -17,8 +17,6 @@ import { JsonSerializedData } from '../interfaces/json-serialized-data.interface
  */
 export class CameraFlyBehaviour extends EntityBehaviour {
 
-  public override get className(): string { return "CameraFlyBehaviour" }
-
 
   /**
    * Instantiates a new CameraFlyBehaviour instance.
@@ -74,6 +72,12 @@ export class CameraFlyBehaviour extends EntityBehaviour {
   protected _currentYaw = 0;
   /** @protected Current accumulated pitch (vertical rotation) in degrees. */
   protected _currentPitch = 0;
+
+
+  constructor(){
+    super();
+    this._className = "CameraFlyBehaviour";
+  }
 
   /**
    * Updates the camera's state based on input.

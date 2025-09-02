@@ -13,8 +13,6 @@ import { GLPrimitiveType } from "../../enums/gl-primitive-type.enum";
  */
 export class RenderMeshBehaviour extends RendererBehaviour {
 
-  public override get className(): string { return "RenderMeshBehaviour" }
-
   /**
     Creates a new instance of the RenderMeshBehaviour.
    * @override
@@ -25,6 +23,7 @@ export class RenderMeshBehaviour extends RendererBehaviour {
   static override instanciate(gl: WebGL2RenderingContext): RenderMeshBehaviour {
     return new RenderMeshBehaviour(gl);
   }
+    protected override _className = "RenderMeshBehaviour"
 
   /**
     The uniform location for the normal map texture.

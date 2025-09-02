@@ -41,6 +41,9 @@ function toEuler(out: vec3, q: quat): void {
  * @augments {JsonSerializable}
  */
 export class Transform extends JsonSerializable {
+
+  public static get className() { return "Transform"; }
+
   /**
     The local position of the transform.
    * @private
@@ -107,7 +110,7 @@ export class Transform extends JsonSerializable {
     Creates an instance of Transform.
    */
   constructor() {
-    super();
+    super("Transform");
     this._position = vec3.create();
     this._rotation = quat.create();
     this._rotationInDegrees = vec3.create();

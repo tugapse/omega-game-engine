@@ -1,7 +1,10 @@
+import { EntityBehaviour } from "../behaviours";
 import { MeshData } from "../core/mesh";
 import { ObjectInstanciator } from "../core/object-instanciator";
 import { Transform } from "../core/transform";
+import { JsonSerializable } from "../interfaces";
 import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
+import { GlEntity } from "./entity";
 import { Scene } from "./scene";
 
 /**
@@ -59,37 +62,15 @@ export class SceneManager {
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
    * @returns {any[]} - An array of instantiated entity objects.
    */
-  private static instaciateSceneObjects(scene: Scene, objects: any, meshes: { [key: string]: MeshData }, gl: WebGL2RenderingContext): any[] {
+  private static instaciateSceneObjects(scene: Scene, objects: JsonSerializable[], meshes: { [key: string]: MeshData }, gl: WebGL2RenderingContext): any[] {
     const instanciatedTransforms: { [key: string]: Transform } = {};
 
-    const entities: any[] = objects.map((jsonObject: JsonSerializedData) => {
-      debugger
-      jsonObject['entity'] = ObjectInstanciator.instanciateObjectFromJsonData(jsonObject.type);
-      
-      const entityTransform = jsonObject['entity'].transform as Transform;
-      entityTransform.fromJson(jsonObject['transform']);
-
-      instanciatedTransforms[entityTransform.uuid] = entityTransform;
-      return jsonObject;
-    });
-
-    this.prepareTransforms(instanciatedTransforms, entities);
-    objects.forEach((e: any) => {
-      e.entity.scene = scene;
-
-      e.behaviours.forEach((behaviourJsonData: any) => {
-        if (behaviourJsonData.mesh) {
-          behaviourJsonData['meshData'] = meshes[behaviourJsonData.mesh.meshDataId];
-        }
-        const newBehaviour = ObjectInstanciator.instanciateObjectFromJsonData(behaviourJsonData.type, [gl]);
-        if (newBehaviour) {
-          newBehaviour.fromJson(behaviourJsonData);
-          newBehaviour.parent = e.entity;
-          e.entity.addBehaviour(newBehaviour);
-        }
-      });
-      e.entity.fromJson(e);
-    });
+    objects.forEach((ob: JsonSerializable) => {
+      this.instanciateEntities(ob, instanciatedTransforms);
+      this.instanciateBehaviours(ob, scene, meshes, gl);
+    }
+    );
+    debugger
     return objects.map((e: any) => e.entity);
   }
 
@@ -116,5 +97,32 @@ export class SceneManager {
    */
   public static creatSceneSnapshot(scene: Scene): JsonSerializedData {
     return scene.toJsonObject();
+  }
+
+
+
+  private static instanciateBehaviours(jsonObject: JsonSerializedData, scene: Scene, meshes: { [key: string]: MeshData }, gl: WebGL2RenderingContext) {
+    jsonObject.entity.scene = scene;
+
+    jsonObject.behaviours.forEach((behaviourJsonData: any) => {
+      if (behaviourJsonData.mesh) {
+        behaviourJsonData['meshData'] = meshes[behaviourJsonData.mesh.meshDataId];
+      }
+      const newBehaviour = ObjectInstanciator.instanciateObjectFromJsonData<EntityBehaviour>(behaviourJsonData.className || behaviourJsonData.type, [gl]);
+      if (newBehaviour) {
+        newBehaviour.fromJson(behaviourJsonData);
+        newBehaviour.parent = jsonObject.entity;
+        debugger
+        jsonObject.entity.addBehaviour(newBehaviour);
+      }
+    });
+  }
+
+  private static instanciateEntities(jsonObject: JsonSerializedData, instanciatedTransforms: { [key: string]: Transform }): void {
+    const entity = new GlEntity(jsonObject['name']);
+    entity.fromJson(jsonObject);
+    instanciatedTransforms[entity.transform.uuid] = entity.transform;
+    jsonObject['entity'] = entity;
+
   }
 }

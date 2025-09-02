@@ -12,6 +12,8 @@ import { RendererBehaviour } from "../behaviours/renderer/renderer-behaviour";
  * @augments {GlEntity}
  */
 export class Scene extends GlEntity {
+  
+    protected override _className =  "Scene";
   /**
     The currently active scene instance.
    * @private
@@ -239,6 +241,7 @@ export class Scene extends GlEntity {
     const meshMaps: { [key: string]: any } = {};
     const renderers = this.objects.filter(e => e.getBehaviours(RendererBehaviour)).map(o => o.getBehaviour(RendererBehaviour) as RendererBehaviour);
     for (const renderer of renderers) {
+      if(!renderer) continue;
       if (renderer.mesh) {
         meshMaps[renderer.mesh.meshData.uuid] = renderer.mesh.meshData.toJsonObject();
       } else {
@@ -247,6 +250,7 @@ export class Scene extends GlEntity {
     }
     return {
       ...super.toJsonObject(),
+      className:Scene.className,
       objects: this.objects.map(o => o.toJsonObject()),
       meshMaps: meshMaps,
     };

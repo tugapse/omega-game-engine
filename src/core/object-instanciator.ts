@@ -36,17 +36,17 @@ export class ObjectInstanciator {
    * @param {any[]} [args] - Optional arguments to pass to the constructor/factory function.
    * @returns {any} - A new instance of the specified class, or null if the class is not found.
    */
-  public static instanciateObjectFromJsonData(className: string, args?: any[]): any {
+  public static instanciateObjectFromJsonData<T>(className: string, args?: any[]): T | undefined {
     if (this.dependecies[className]) {
       if (args && args.length > 0) {
-        return this.dependecies[className](...args);
+        return this.dependecies[className](...args) as T;
       } else {
-        return this.dependecies[className]();
+        return this.dependecies[className]() as T;
       }
     } else {
       console.warn("[warn] Class Object not found! Implement Class instancing for: ", className);
     }
-    return null;
+    return undefined;
   }
 
 }

@@ -1,13 +1,14 @@
 {
   "name": "omega-game-engine",
-  "version": "1.0.4",
+  "version": "1.0.23",
   "description": "Omega game engine library.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "build-js:dev": "rollup -c",
-    "build-js:prod": "cross-env NODE_ENV=production rollup -c",
+    "build-js": "npm run build-js:dev && npm run build-js:prod",
+    "build-js:dev": "rollup -c && api-extractor run --local --verbose",
+    "build-js:prod": "cross-env NODE_ENV=production rollup -c && api-extractor run --local --verbose",
     "build-docs": "npx typedoc --entryPointStrategy Expand src",
     "serve-docs": "npx serve docs",
     "build-all": "npm run build && npm run build-min-js && npm run build-docs"
@@ -16,6 +17,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@microsoft/api-extractor": "^7.52.11",
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.4",

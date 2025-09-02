@@ -7,6 +7,7 @@ import { JsonSerializedData } from "../interfaces/json-serialized-data.interface
 import { ColorMaterial } from "../materials/color-material";
 import { Texture } from "../textures/texture";
 import { v4 as uuidv4 } from 'uuid';
+import { ObjectInstanciator } from "../core";
 
 /**
   An interface defining the structure for WebGL buffers associated with a mesh.
@@ -50,7 +51,7 @@ export interface WebGLBuffers {
  */
 export class Shader extends JsonSerializable {
 
-  public get className(): string { return "Shader" }
+   protected override _className = "Shader"
 
   /**
     A map of string keys to URLs for reusable shader function files.
@@ -139,7 +140,7 @@ export class Shader extends JsonSerializable {
     public fragUri: string = "assets/shaders/frag/color.frag",
     public vertexUri: string = "assets/shaders/vertex/vertex.vert"
   ) {
-    super();
+    super("Shader");
     this._uuid = uuidv4();
   }
 
@@ -543,7 +544,7 @@ export class Shader extends JsonSerializable {
   public override fromJson(jsonObject: JsonSerializedData): void {
     this.fragUri = jsonObject['fragUri'];
     this.vertexUri = jsonObject['vertexUri'];
-    this.material = new ColorMaterial();
+    this.material = ObjectInstanciator.instanciateObjectFromJsonData(jsonObject.material.className) || new ColorMaterial();
     this.material.fromJson(jsonObject['material']);
   }
 }

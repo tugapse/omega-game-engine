@@ -2,14 +2,13 @@ import { Transform } from "../core/transform";
 import { GlEntity } from "../entities/entity";
 import { JsonSerializable } from "../core/json-serializable";
 import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
+import { v4 as uuidv4 } from 'uuid';
 
 /**
   The base class for all components that define the behavior of an entity.
  * @augments {JsonSerializable}
  */
-export abstract class EntityBehaviour extends JsonSerializable {
-
-  public get className(): string { return "EntityBehaviour" }
+export class EntityBehaviour extends JsonSerializable {
 
   /**
     A static factory method to create an instance of the behaviour.
@@ -17,7 +16,8 @@ export abstract class EntityBehaviour extends JsonSerializable {
    * @param {any} [args] - Optional arguments for instantiation.
    * @returns {any}
    */
-  static instanciate(args?: any): any { }
+  static instanciate(args?: any): EntityBehaviour { return new EntityBehaviour(); }
+  
 
   [key: string]: any;
   /**
@@ -37,6 +37,9 @@ export abstract class EntityBehaviour extends JsonSerializable {
    */
   protected _initialized = false;
 
+  public get uuid() { return this._uuid; }
+  protected _uuid: string;
+
   /**
     Gets the transform component of the parent entity.
    * @type {Transform}
@@ -49,7 +52,8 @@ export abstract class EntityBehaviour extends JsonSerializable {
     Creates an instance of EntityBehaviour.
    */
   constructor() {
-    super();
+    super("EntityBehaviour");
+    this._uuid = uuidv4();
   }
 
   /**
@@ -91,6 +95,7 @@ export abstract class EntityBehaviour extends JsonSerializable {
     return {
       ...super.toJsonObject(),
       active: this.active,
+      uuid: this.uuid
     };
   }
 
@@ -101,6 +106,7 @@ export abstract class EntityBehaviour extends JsonSerializable {
    */
   public override fromJson(jsonObject: JsonSerializedData): void {
     this.active = jsonObject["active"];
+    this._uuid = jsonObject['uuid'];
   }
 
   /**
