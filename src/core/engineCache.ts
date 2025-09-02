@@ -1,4 +1,6 @@
+import { ICubemapSides } from "../interfaces/cubemap.interface";
 import { ObjParser } from "../parsers/obj-parser";
+import { CubemapTexture } from "../textures";
 import { Texture } from "../textures/texture";
 import { MeshData } from "./mesh";
 
@@ -61,6 +63,26 @@ export abstract class EngineCache {
       result = new Texture(gl, uri);
       result.load();
       EngineCache.__cache.textures[uri] = result;
+    }
+    return result;
+  }
+
+  /**
+  Retrieves a Cube texture from the cache or loads and caches it if not present.
+  
+ * @param {string} uri - The URI of the texture.
+ * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+ * @returns {Texture} - The cached or newly loaded Texture instance.
+ */
+  public static getTextureCube(uris: ICubemapSides, gl: WebGL2RenderingContext): Texture {
+    const { right, left, up, bottom, front, back } = uris;
+    const key = [right, left, up, bottom, front, back].join("|");
+
+    let result = EngineCache.__cache.textures[key];
+    if (!result) {
+      result = new CubemapTexture(gl, [right, left, up, bottom, front, back]);
+      result.load();
+      EngineCache.__cache.textures[key] = result;
     }
     return result;
   }

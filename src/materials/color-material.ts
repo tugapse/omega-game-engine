@@ -42,6 +42,7 @@ export class ColorMaterial extends JsonSerializable {
   public override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
+      name:this.name,
       color: this.color.toJsonObject(),
     };
   }

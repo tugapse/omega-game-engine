@@ -38,6 +38,9 @@ export class SkyboxShader extends Shader {
   public override initialize(): Promise<void> {
     this.fragUri = "assets/shaders/frag/skybox.frag";
     this.vertexUri = "assets/shaders/vertex/skybox.vert";
+    if (!this.material.mainTex) {
+      this.material.mainTex = new CubemapTexture(this.gl);
+    }
     return super.initialize();
   }
 
@@ -50,15 +53,8 @@ export class SkyboxShader extends Shader {
   public override loadDataIntoShader(): void {
     if (!this.material) return;
 
-    const { rightSideUri, leftSideUri, topSideUri, bottomSideUri, backSideUri, frontSideUri } = this.material;
-    if (!this.material.mainTex) {
-      this.material.mainTex = new CubemapTexture(this.gl, [
-        rightSideUri, leftSideUri,
-        topSideUri, bottomSideUri,
-        frontSideUri, backSideUri
-      ]);
-      this.material.mainTex.load();
-    } else if (!this.material.mainTex.isImageLoaded) {
+    if (!this.material.mainTex.isImageLoaded) {
+      this.material.mainTex.setGL(this.gl);
       this.material.mainTex.load();
     }
 

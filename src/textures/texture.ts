@@ -1,4 +1,4 @@
-import { JsonSerializable } from "../interfaces";
+import { JsonSerializable, JsonSerializedData } from "../interfaces";
 
 /**
   An enumeration of texture wrapping modes. These values correspond to WebGL constants for `TEXTURE_WRAP_S` and `TEXTURE_WRAP_T`.
@@ -53,8 +53,12 @@ export class Texture extends JsonSerializable {
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
    * @param {string} [textureUri] - The URI of the image to load.
    */
-  constructor(protected gl: WebGL2RenderingContext, protected textureUri?: string) {
+  constructor(protected gl?: WebGL2RenderingContext, protected textureUri?: string) {
     super("Texture");
+  }
+
+  public setGL(gl: WebGL2RenderingContext) {
+    this.gl = gl;
   }
 
   /**
@@ -70,6 +74,28 @@ export class Texture extends JsonSerializable {
 
     const whitePixel = new Uint8Array([255, 255, 255, 255]);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, whitePixel);
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    const result = new Texture(gl);
+    result._glTexture = texture;
+    result._isLoaded = true;
+    return result;
+  }
+
+  public static createTexture(gl: WebGL2RenderingContext, width: number, height: number): Texture {
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    const colors = [];
+    for (let i = 0; i < width * height; i++) {
+      colors.push(255, 255, 255, 255);
+    }
+    const whitePixels = new Uint8Array(colors);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, whitePixels);
 
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -150,6 +176,7 @@ export class Texture extends JsonSerializable {
    * @returns {void}
    */
   public setTextureWrapMode(wrapMode: TextureWrapMode): void {
+    if(!this.gl) return;
     this.bind();
 
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, wrapMode);
@@ -166,6 +193,8 @@ export class Texture extends JsonSerializable {
    * @returns {void}
    */
   public bind(): void {
+    if(!this.gl) return;
+
     this.gl.bindTexture(this.gl.TEXTURE_2D, this._glTexture);
   }
 
@@ -174,6 +203,8 @@ export class Texture extends JsonSerializable {
    * @returns {void}
    */
   public unBind(): void {
+    if(!this.gl) return;
+
     this.gl.bindTexture(this.gl.TEXTURE_2D, null);
   }
 
@@ -206,5 +237,15 @@ export class Texture extends JsonSerializable {
     }
     this._image = null;
     this._isLoaded = false;
+  }
+
+  public override toJsonObject(): JsonSerializedData {
+    return {
+      ...super.toJsonObject(),
+      url: this.textureUri,
+    }
+  }
+  override fromJson(jsonObject: JsonSerializedData): void {
+    this.textureUri = jsonObject.url;
   }
 }

@@ -10,11 +10,7 @@ import { ColorMaterial } from "./color-material";
 export class UnlitMaterial extends ColorMaterial {
    protected override _className = "UnlitMaterial";
 
-  /**
-    The URL for the main texture.
-   * @type {string}
-   */
-  public mainTexUrl: string = "";
+
   /**
     The UV scaling factor for the main texture.
    * @type {vec2}
@@ -39,7 +35,7 @@ export class UnlitMaterial extends ColorMaterial {
   override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
-      mainTexUrl: this.mainTexUrl,
+      mainTex: this.mainTex.toJsonObject(),
       uvScale: [...this.uvScale],
       uvOffset: [...this.uvOffset],
     };
@@ -53,8 +49,8 @@ export class UnlitMaterial extends ColorMaterial {
    */
   override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
-    this.name = jsonObject['name'];
-    this.mainTexUrl = jsonObject['mainTexUrl'];
+    this.mainTex  = new Texture();
+    this.mainTex.fromJson(jsonObject['mainTex']);
     this.uvScale = jsonObject['uvScale'];
     this.uvOffset = jsonObject['uvOffset'];
   }

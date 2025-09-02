@@ -9,7 +9,7 @@ import { Shader } from "./shader";
  */
 export class UnlitShader extends Shader {
 
-   protected override _className = "UnlitShader" 
+  protected override _className = "UnlitShader"
 
   /**
     Creates a new instance of UnlitShader.
@@ -41,10 +41,8 @@ export class UnlitShader extends Shader {
   public override loadDataIntoShader(): void {
     if (!this.material) return;
 
-    if (!this.material.mainTex && this.material.mainTexUrl) {
-      this.material.mainTex = new Texture(this.gl, this.material.mainTexUrl);
-      this.material.mainTex.load();
-    } else if (!this.material.mainTex?.isImageLoaded && this.material.mainTexUrl) {
+      if (!this.material.mainTex.isImageLoaded) {
+      this.material.mainTex.setGL(this.gl);
       this.material.mainTex.load();
     }
 

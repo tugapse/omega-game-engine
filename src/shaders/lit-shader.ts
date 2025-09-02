@@ -71,16 +71,9 @@ export class LitShader extends Shader {
    * @returns {void}
    */
   private checkAndLoadTextures(): void {
-    if (!this.material.mainTex && this.material.mainTexUrl) {
-      this.material.mainTex = EngineCache.getTexture2D(this.material.mainTexUrl, this.gl);
-    } else if (!this.material.mainTex && !this.material.mainTexUrl) {
-      this.material.mainTex = Texture.getDefaultWhiteTexture(this.gl);
-    }
-
-    if (!this.material.normalTex && this.material.normalTexUrl) {
-      this.material.normalTex = EngineCache.getTexture2D(this.material.normalTexUrl, this.gl);
-    } else if (!this.material.normalTex && !this.material.normalTexUrl) {
-      this.material.normalTex = Texture.getDefaultWhiteTexture(this.gl);
+       if (this.material.normalTex && !this.material.normalTex.isImageLoaded) {
+      this.material.normalTex.setGL(this.gl);
+      this.material.normalTex.load();
     }
   }
 }

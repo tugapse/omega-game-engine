@@ -1,3 +1,4 @@
+import { JsonSerializedData } from "../interfaces";
 import { Texture } from "./texture";
 
 /**
@@ -6,8 +7,8 @@ import { Texture } from "./texture";
  * @augments {Texture}
  */
 export class CubemapTexture extends Texture {
-  
-   protected override _className = "CubemapTexture";
+
+  protected override _className = "CubemapTexture";
   /**
     An array to hold the HTML image elements for each of the six faces.
    * @protected
@@ -26,7 +27,7 @@ export class CubemapTexture extends Texture {
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
    * @param {string[]} [textureUris] - An array of six URIs for the cube map faces in the order: right, left, top, bottom, front, back.
    */
-  constructor(protected override gl: WebGL2RenderingContext, protected textureUris?: string[]) {
+  constructor(protected override gl?: WebGL2RenderingContext, protected textureUris?: string[]) {
     super(gl);
   }
 
@@ -88,7 +89,7 @@ export class CubemapTexture extends Texture {
    */
   public setLoadedImage(imageIndex: number, wasLoaded: boolean): void {
     this.loadedImages[imageIndex] = wasLoaded;
-    if (this.allImagesFetchedAndLoaded() && !this.isImageLoaded) {
+    if (this.allImagesFetchedAndLoaded() && !this.isImageLoaded && this.gl) {
       this.createGLTexture(this.gl);
       this._isLoaded = true;
       this._isLoading = false;
@@ -103,6 +104,8 @@ export class CubemapTexture extends Texture {
    * @returns {void}
    */
   override bind(): void {
+    if (!this.gl) return;
+
     this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, this._glTexture);
   }
 
@@ -159,5 +162,17 @@ export class CubemapTexture extends Texture {
       console.error(`Incorrect number of uris: 6 were expected but ${uris.length} were given!`);
     }
     this.textureUris = uris;
+  }
+
+  override toJsonObject(): JsonSerializedData {
+    return {
+      ...super.toJsonObject(),
+      uris: this.textureUris
+    }
+  }
+
+  override fromJson(jsonObject: JsonSerializedData): void {
+    super.fromJson(jsonObject);
+    this.textureUris = jsonObject.uris;
   }
 }

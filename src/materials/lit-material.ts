@@ -10,11 +10,6 @@ export class LitMaterial extends UnlitMaterial {
    protected override _className = "LitMaterial";
 
   /**
-    The URL for the normal map texture.
-   * @type {string}
-   */
-  public normalTexUrl: string = "";
-  /**
     The strength of specular highlights.
    * @type {number}
    */
@@ -43,7 +38,7 @@ export class LitMaterial extends UnlitMaterial {
   override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
-      normalTexUrl: this.normalTexUrl,
+      normalTex: this.normalTex.toJsonObject(),
       specularStrength: this.specularStrength,
       roughness: this.roughness,
       normalMapStrength: this.normalMapStrength,
@@ -58,7 +53,9 @@ export class LitMaterial extends UnlitMaterial {
    */
   override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
-    this.normalTexUrl = jsonObject['normalTexUrl'];
+    debugger
+    this.normalTex = new Texture();
+    this.normalTex.fromJson(jsonObject['normalTex']);
     this.roughness = jsonObject['roughness'];
     this.normalMapStrength = jsonObject['normalMapStrength'];
   }
