@@ -1,0 +1,4 @@
+package-lock.json
+api-extractor.json
+src/*
+node_modules/*
