@@ -119,7 +119,7 @@ export class SceneManager {
   }
 
   private static instanciateEntities(jsonObject: JsonSerializedData, instanciatedTransforms: { [key: string]: Transform }): void {
-    const entity = new GlEntity(jsonObject['name']);
+    const entity = ObjectInstanciator.instanciateObjectFromJsonData<GlEntity>(jsonObject.className) || new GlEntity(jsonObject.name);
     entity.fromJson(jsonObject);
     instanciatedTransforms[entity.transform.uuid] = entity.transform;
     jsonObject['entity'] = entity;

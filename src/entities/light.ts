@@ -246,7 +246,7 @@ export class PointLight extends Light {
  */
 export class SpotLight extends Light {
   
-   protected override _className = "PointLight"; 
+   protected override _className = "SpotLight"; 
 
   /**
     The type of the entity, specifically set to LIGHT_SPOT.
