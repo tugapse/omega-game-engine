@@ -3,6 +3,7 @@ import { GlEntity } from "../entities/entity";
 import { JsonSerializable } from "../core/json-serializable";
 import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 import { v4 as uuidv4 } from 'uuid';
+import { RenderLayer } from "../enums";
 
 /**
   The base class for all components that define the behavior of an entity.
@@ -25,6 +26,8 @@ export class EntityBehaviour extends JsonSerializable {
    * @type {boolean}
    */
   public active: boolean = true;
+
+  public renderLayer : RenderLayer = RenderLayer.OPAQUE;
   /**
     The parent entity to which this behaviour is attached.
    * @type {GlEntity}

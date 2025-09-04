@@ -156,14 +156,24 @@ export class Scene extends GlEntity {
    */
   public override draw(): void {
     if (this.destroyed || !this.gl || !Camera.mainCamera) return;
-    this.behaviours.forEach(behaviour => behaviour.beforeDraw());
+    this.objects.sort((a,b)=>this.sortByRenderLayer(a,b))
+    this.behaviours.filter(behaviour=>behaviour.active).forEach(behaviour => behaviour.beforeDraw());
     this.gl.clearColor(this.clearColor.r, this.clearColor.g, this.clearColor.b, 1.0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-    for (const object of this.objects.filter(e => e.active && e.show)) {
+    const objectsToDraw = this.objects.filter(e => e.active && e.show);
+    for (const object of objectsToDraw) {
       object.draw();
     }
     super.draw();
-    this.behaviours.forEach(behaviour => behaviour.afterDraw());
+    this.behaviours.filter(behaviour=>behaviour.active).forEach(behaviour => behaviour.afterDraw());
+  }
+  private sortByRenderLayer(a:GlEntity,b:GlEntity){
+    const aBeh = a.getBehaviour(RendererBehaviour);
+    const bBeh = a.getBehaviour(RendererBehaviour);
+    if(!aBeh || !bBeh){
+      return 0
+    }
+    return aBeh.renderLayer - bBeh.renderLayer;
   }
 
   /**
