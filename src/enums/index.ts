@@ -2,3 +2,8 @@ export * from './cubemap-side.enum'
 export * from './entity-type'
 export * from './shader-uniforms.enum'
 export * from './gl-primitive-type.enum'
+export * from './gl/blend';
+export * from './gl/clear-mask';
+export * from './gl/cull-face';
+export * from './gl/deph-function';
+export * from './gl/face-winding';

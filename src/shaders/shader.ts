@@ -59,8 +59,8 @@ export class Shader extends JsonSerializable {
    * @type {{ [key: string]: string }}
    */
   public static SHADER_FUNCTIONS: { [key: string]: string } = {
-    "@INCLUDE_LIGHT_FUNC": "assets/shaders/functions/light.frag",
-    "@INCLUDE_LIGHT_HEADER": "assets/shaders/functions/light-header.frag",
+    "//@INCLUDE_LIGHT_FUNC": "assets/shaders/functions/light.frag",
+    "//@INCLUDE_LIGHT_HEADER": "assets/shaders/functions/light-header.frag",
   };
 
   /**
@@ -319,6 +319,7 @@ export class Shader extends JsonSerializable {
    * @returns {void}
    */
   public loadDataIntoShader(): void {
+    if(!this.material) return;
     const material = this.material as ColorMaterial;
     this.setVec4(ShaderUniformsEnum.U_MAT_COLOR, material.color.toVec4());
   }

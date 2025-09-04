@@ -11,6 +11,11 @@ import { Shader } from "../../shaders/shader";
 import { EntityBehaviour } from "../entity-behaviour";
 import { ObjectInstanciator } from "../../core/object-instanciator";
 import { ColorMaterial as Material } from "../../materials";
+import { BlendingMode } from "../../interfaces/blend-mode";
+import { BlendingDestinationFactor, BlendingSourceFactor } from "../../enums/gl/blend";
+import { DephFunction } from "../../enums/gl/deph-function";
+import { CullFace } from "../../enums/gl/cull-face";
+import { FaceWinding } from "../../enums";
 
 /**
   The base class for all renderer behaviours, responsible for drawing meshes to the canvas.
@@ -18,7 +23,7 @@ import { ColorMaterial as Material } from "../../materials";
  */
 export class RendererBehaviour extends EntityBehaviour implements IRendererBehaviour {
 
-  static override instanciate(gl:WebGL2RenderingContext) {
+  static override instanciate(gl: WebGL2RenderingContext) {
     return new RendererBehaviour(gl);
   }
 
@@ -44,7 +49,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    * @protected
    * @type {number}
    */
-  protected time = 0;
+  protected _time = 0;
 
   /**
     The uniform location for the world matrix.
@@ -58,6 +63,19 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    * @type {WebGLUniformLocation | null}
    */
   protected _worldInverseTransposeMatrixUniformLocation: WebGLUniformLocation | null = null;
+
+  public enableCullFace = true;
+  public enableDephTest = true;
+  public enableBlend = true;
+  public writeToDephBuffer = true;
+
+  public cullFace: CullFace = CullFace.BACK;
+  public blendMode: BlendingMode = {
+    sourcefactor: BlendingSourceFactor.SRC_ALPHA,
+    destfactor: BlendingDestinationFactor.ONE_MINUS_SRC_ALPHA
+  };
+  public dephMode: DephFunction = DephFunction.Less;
+  public faceWinding: FaceWinding = FaceWinding.CounterClockwise;
 
   /**
     Creates an instance of RendererBehaviour.
@@ -86,13 +104,25 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    */
   protected setGlSettings(): void {
     if (!this._gl) return;
-    this._gl.enable(this._gl.DEPTH_TEST);
-    this._gl.depthFunc(this._gl.LESS);
-    this._gl.enable(this._gl.BLEND);
-    this._gl.blendFunc(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA);
-    this._gl.enable(this._gl.CULL_FACE);
-    this._gl.cullFace(this._gl.BACK);
-    this._gl.frontFace(this._gl.CCW);
+
+    if (this.enableDephTest) {
+      this._gl.enable(this._gl.DEPTH_TEST);
+      this._gl.depthFunc(this.dephMode);
+    }
+    else this._gl.disable(this._gl.DEPTH_TEST);
+
+    if (this.enableBlend) {
+      this._gl.enable(this._gl.BLEND);
+      this._gl.blendFunc(this.blendMode.sourcefactor, this.blendMode.destfactor);
+    } else this._gl.disable(this._gl.BLEND);
+
+    if (this.enableCullFace) {
+      this._gl.enable(this._gl.CULL_FACE);
+      this._gl.cullFace(this.cullFace);
+    } else this._gl.disable(this._gl.CULL_FACE);
+
+    this._gl.depthMask(this.writeToDephBuffer);
+    this._gl.frontFace(this.faceWinding);
   }
 
   /**
@@ -151,7 +181,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
     this.setCameraMatrices();
     this.setModelWorldMatrices();
     if (this.shader) {
-      this.shader.setFloat(ShaderUniformsEnum.U_TIME, this.time);
+      this.shader.setFloat(ShaderUniformsEnum.U_TIME, this._time);
       this.shader.setVec2(ShaderUniformsEnum.U_SCREEN_RESOLUTION, [CanvasViewport.rendererWidth, CanvasViewport.rendererHeight]);
       this.shader.loadDataIntoShader();
     }
@@ -191,7 +221,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    */
   override update(ellapsed: number): void {
     super.update(ellapsed);
-    this.time += ellapsed;
+    this._time += ellapsed;
   }
 
   /**
