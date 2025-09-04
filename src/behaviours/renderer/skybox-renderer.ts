@@ -2,13 +2,13 @@ import { mat4 } from "gl-matrix";
 import { Camera } from "../../entities/camera";
 import { ShaderUniformsEnum } from "../../enums/shader-uniforms.enum";
 import { JsonSerializedData } from "../../interfaces/json-serialized-data.interface";
-import { RenderMeshBehaviour } from "./render-mesh-behaviour";
+import { TexturedRendererBehaviour } from "./textured-renderer-behaviour";
 
 /**
   A specialized renderer for drawing a skybox.
- * @augments {RenderMeshBehaviour}
+ * @augments {TexturedRendererBehaviour}
  */
-export class SkyboxRenderer extends RenderMeshBehaviour {
+export class SkyboxRenderer extends TexturedRendererBehaviour {
   /**
     Creates a new instance of the SkyboxRenderer.
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.

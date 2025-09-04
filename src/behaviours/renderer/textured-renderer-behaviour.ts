@@ -11,19 +11,19 @@ import { GLPrimitiveType } from "../../enums/gl-primitive-type.enum";
   A renderer for mesh-based objects, providing support for normal maps and lighting.
  * @augments {RendererBehaviour}
  */
-export class RenderMeshBehaviour extends RendererBehaviour {
+export class TexturedRendererBehaviour extends RendererBehaviour {
 
   /**
-    Creates a new instance of the RenderMeshBehaviour.
+    Creates a new instance of the TexturedRendererBehaviour.
    * @override
     
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
-   * @returns {RenderMeshBehaviour}
+   * @returns {TexturedRendererBehaviour}
    */
-  static override instanciate(gl: WebGL2RenderingContext): RenderMeshBehaviour {
-    return new RenderMeshBehaviour(gl);
+  static override instanciate(gl: WebGL2RenderingContext): TexturedRendererBehaviour {
+    return new TexturedRendererBehaviour(gl);
   }
-    protected override _className = "RenderMeshBehaviour"
+    protected override _className = "TexturedRendererBehaviour"
 
   /**
     The uniform location for the normal map texture.
@@ -51,7 +51,7 @@ export class RenderMeshBehaviour extends RendererBehaviour {
   public enableLights = true;
 
   /**
-    Creates an instance of RenderMeshBehaviour.
+    Creates an instance of TexturedRendererBehaviour.
    * @param {WebGL2RenderingContext} _gl - The WebGL2 rendering context.
    */
   constructor(public override _gl: WebGL2RenderingContext) {
