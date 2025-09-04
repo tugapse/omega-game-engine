@@ -1,6 +1,6 @@
 import { vec3 } from "gl-matrix";
 import { DirectionalLight, Light, PointLight, SpotLight } from "../../entities/light";
-import { EntityType } from "../../enums/entity-type";
+import { EntityType } from "../../enums/entity-type.enum";
 import { ShaderUniformsEnum } from "../../enums/shader-uniforms.enum";
 import { LitMaterial } from "../../materials/lit-material";
 import { LitShader } from "../../shaders/lit-shader";

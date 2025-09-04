@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { EntityBehaviour } from "../behaviours/entity-behaviour";
 import { Transform } from "../core/transform";
-import { EntityType } from '../enums/entity-type';
+import { EntityType } from '../enums/entity-type.enum';
 import { JsonSerializable } from '../core/json-serializable';
 import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
 import { Scene } from "./scene";

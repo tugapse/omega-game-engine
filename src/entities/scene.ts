@@ -1,6 +1,6 @@
 import { vec3 } from "gl-matrix";
 import { Color, Colors } from "../core";
-import { EntityType } from "../enums/entity-type";
+import { EntityType } from "../enums/entity-type.enum";
 import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 import { SceneEntityBehaviour } from "../interfaces/scene-behaviour.interface";
 import { Camera } from "./camera";

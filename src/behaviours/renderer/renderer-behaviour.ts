@@ -12,9 +12,9 @@ import { EntityBehaviour } from "../entity-behaviour";
 import { ObjectInstanciator } from "../../core/object-instanciator";
 import { ColorMaterial as Material } from "../../materials";
 import { BlendingMode } from "../../interfaces/blend-mode";
-import { BlendingDestinationFactor, BlendingSourceFactor } from "../../enums/gl/blend";
-import { DephFunction } from "../../enums/gl/deph-function";
-import { CullFace } from "../../enums/gl/cull-face";
+import { BlendingDestinationFactor, BlendingSourceFactor } from "../../enums/gl/blend.enum";
+import { DephFunction } from "../../enums/gl/deph-function.enum";
+import { CullFace } from "../../enums/gl/cull-face.enum";
 import { FaceWinding } from "../../enums";
 
 /**
