@@ -64,6 +64,10 @@ export enum ShaderUniformsEnum {
     An attribute for passing tangent vectors to the shader.
    */
   A_TANGENT = "a_tangent",
+  
+  A_NORMAL = "a_normal",
+  
+  A_POSITION = "a_position",
   /**
     An attribute for passing bitangent vectors to the shader.
    */

@@ -39,20 +39,30 @@ export class UnlitShader extends Shader {
    * @returns {void}
    */
   public override loadDataIntoShader(): void {
+    
     if (!this.material) return;
-
-      if (!this.material.mainTex.isImageLoaded) {
+    
+    if (this.material.mainTex && !this.material.mainTex.isImageLoaded) {
       this.material.mainTex.setGL(this.gl);
       this.material.mainTex.load();
     }
-
+    
+    super.loadDataIntoShader();
     this.setVec4(ShaderUniformsEnum.U_MAT_COLOR, this.material.color.toVec4());
     this.setVec2(ShaderUniformsEnum.U_UV_SCALE, this.material.uvScale);
     this.setVec2(ShaderUniformsEnum.U_UV_OFFSET, this.material.uvOffset);
 
     if (this.material.mainTex && this.material.mainTex.isImageLoaded) {
+      this.material.mainTex.bind();
       this.setTexture(ShaderUniformsEnum.U_MAIN_TEX, this.material.mainTex, 0);
     }
-    super.loadDataIntoShader();
   }
+
+  override release(): void {
+    super.release();
+    if(this.material?.mainTex)
+      this.material.mainTex.unBind();
+  }
+
+
 }

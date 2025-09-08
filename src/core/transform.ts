@@ -93,12 +93,7 @@ export class Transform extends JsonSerializable {
    * @type {Transform[]}
    */
   private _children: Transform[] = [];
-  /**
-    The unique identifier for the transform.
-   * @private
-   * @type {string}
-   */
-  private _uuid: string;
+
   /**
     A flag to indicate if the matrices need to be re-calculated.
    * @private
@@ -162,13 +157,6 @@ export class Transform extends JsonSerializable {
    */
   public get parent(): Transform | null {
     return this._parent;
-  }
-  /**
-    Gets the unique identifier.
-   * @type {string}
-   */
-  public get uuid(): string {
-    return this._uuid;
   }
 
   /**

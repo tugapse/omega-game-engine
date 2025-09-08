@@ -1,3 +1,5 @@
+import { EngineCache } from "../core";
+import { Engine } from "../engine";
 import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 import { Texture } from "../textures/texture";
 import { UnlitMaterial } from "./unlit-material";
@@ -7,7 +9,7 @@ import { UnlitMaterial } from "./unlit-material";
  * @augments {UnlitMaterial}
  */
 export class LitMaterial extends UnlitMaterial {
-   protected override _className = "LitMaterial";
+  protected override _className = "LitMaterial";
 
   /**
     The strength of specular highlights.
@@ -38,7 +40,7 @@ export class LitMaterial extends UnlitMaterial {
   override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
-      normalTex: this.normalTex.toJsonObject(),
+      normalTex: this.normalTex?.toJsonObject(),
       specularStrength: this.specularStrength,
       roughness: this.roughness,
       normalMapStrength: this.normalMapStrength,
@@ -53,9 +55,10 @@ export class LitMaterial extends UnlitMaterial {
    */
   override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
-    debugger
-    this.normalTex = new Texture();
-    this.normalTex.fromJson(jsonObject['normalTex']);
+    if(jsonObject.normalTex?.url){
+      this.normalTex = EngineCache.getTexture2D(jsonObject.normalTex.url);
+      this.normalTex.fromJson(jsonObject['normalTex']);
+    }
     this.roughness = jsonObject['roughness'];
     this.normalMapStrength = jsonObject['normalMapStrength'];
   }

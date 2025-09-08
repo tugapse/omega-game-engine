@@ -58,7 +58,6 @@ export class MeshData extends JsonSerializable implements IMeshData {
     The unique identifier for the mesh data.
    * @type {string}
    */
-  public uuid: string;
 
   /**
     Creates an instance of MeshData.
@@ -73,7 +72,6 @@ export class MeshData extends JsonSerializable implements IMeshData {
     this.normals = normals;
     this.uvs = uvs;
     this.indices = indices;
-    this.uuid = uuidv4();
   }
 
   /**
@@ -261,7 +259,7 @@ export class MeshData extends JsonSerializable implements IMeshData {
    * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
    */
   override fromJson(jsonObject: JsonSerializedData): void {
-    this.uuid = jsonObject.uuid;
+    super.fromJson(jsonObject);
     this.vertices = jsonObject.vertices;
     this.normals = jsonObject.normals;
     this.uvs = jsonObject.uvs;

@@ -1,9 +1,11 @@
 import { EntityBehaviour } from "../behaviours";
+import { EngineCache } from "../core";
 import { MeshData } from "../core/mesh";
 import { ObjectInstanciator } from "../core/object-instanciator";
 import { Transform } from "../core/transform";
 import { JsonSerializable } from "../interfaces";
 import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
+import { CubemapTexture, Texture } from "../textures";
 import { GlEntity } from "./entity";
 import { Scene } from "./scene";
 
@@ -25,8 +27,9 @@ export class SceneManager {
    */
   public static loadScene(gl: WebGL2RenderingContext, jsonData: JsonSerializedData, scene?: Scene): Scene {
     scene = scene || new Scene();
-    const { meshMaps, objects } = jsonData;
+    const { meshMaps, objects, textureMaps } = jsonData;
     const meshes: { [key: string]: MeshData; } = SceneManager.instaciateSceneMeshes(meshMaps);
+    SceneManager.instaciateAndLoadSceneTextures(textureMaps, gl);
 
     jsonData['objects'] = SceneManager.instaciateSceneObjects(scene, objects, meshes, gl);
     scene.fromJson(jsonData);
@@ -34,6 +37,28 @@ export class SceneManager {
     return scene;
   }
 
+  /**
+  Instantiates mesh data objects from the scene JSON data.
+ * @private
+  
+ * @param {any} meshMaps - The raw mesh data from the JSON.
+ * @returns {{ [key: string]: MeshData }} - A map of mesh UUIDs to MeshData instances.
+ */
+  private static instaciateAndLoadSceneTextures(texturesMaps: any, gl: WebGL2RenderingContext): void {
+
+    for (const textureJsonData of Object.values(texturesMaps) as any[]) {
+      if (textureJsonData.url) {
+        EngineCache.getTexture2D(textureJsonData.url, gl);
+      } else if (textureJsonData.urls) {
+        const keys = textureJsonData.urls.split("|");
+        EngineCache.getTextureCube({
+          right: keys[0], left: keys[1],
+          up: keys[2], bottom: keys[3],
+          front: keys[4], back: keys[5],
+        }, gl);
+      }
+    }
+  }
   /**
     Instantiates mesh data objects from the scene JSON data.
    * @private
@@ -112,7 +137,6 @@ export class SceneManager {
       if (newBehaviour) {
         newBehaviour.fromJson(behaviourJsonData);
         newBehaviour.parent = jsonObject.entity;
-        debugger
         jsonObject.entity.addBehaviour(newBehaviour);
       }
     });

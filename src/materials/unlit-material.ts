@@ -2,13 +2,14 @@ import { vec2 } from "gl-matrix";
 import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 import { Texture } from "../textures/texture";
 import { ColorMaterial } from "./color-material";
+import { EngineCache } from "../core";
 
 /**
   Represents a simple, unlit material that uses a color and a main texture.
  * @augments {ColorMaterial}
  */
 export class UnlitMaterial extends ColorMaterial {
-   protected override _className = "UnlitMaterial";
+  protected override _className = "UnlitMaterial";
 
 
   /**
@@ -35,7 +36,7 @@ export class UnlitMaterial extends ColorMaterial {
   override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
-      mainTex: this.mainTex.toJsonObject(),
+      mainTex: this.mainTex?.toJsonObject(),
       uvScale: [...this.uvScale],
       uvOffset: [...this.uvOffset],
     };
@@ -49,8 +50,10 @@ export class UnlitMaterial extends ColorMaterial {
    */
   override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
-    this.mainTex  = new Texture();
-    this.mainTex.fromJson(jsonObject['mainTex']);
+    if (jsonObject.mainTex?.url) {
+      this.mainTex = EngineCache.getTexture2D(jsonObject.mainTex.url);
+      this.mainTex.fromJson(jsonObject['mainTex']);
+    }
     this.uvScale = jsonObject['uvScale'];
     this.uvOffset = jsonObject['uvOffset'];
   }

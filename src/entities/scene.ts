@@ -7,13 +7,15 @@ import { Camera } from "./camera";
 import { GlEntity } from "./entity";
 import { Light } from "./light";
 import { RendererBehaviour } from "../behaviours/renderer/renderer-behaviour";
+import { RenderLayer } from "../enums";
+import { CubemapTexture, Texture } from "../textures";
 /**
   Represents a scene in the 3D world, acting as a container for entities and managing the main game loop operations like update and draw.
  * @augments {GlEntity}
  */
 export class Scene extends GlEntity {
-  
-    protected override _className =  "Scene";
+
+  protected override _className = "Scene";
   /**
     The currently active scene instance.
    * @private
@@ -156,25 +158,46 @@ export class Scene extends GlEntity {
    */
   public override draw(): void {
     if (this.destroyed || !this.gl || !Camera.mainCamera) return;
-    this.objects.sort((a,b)=>this.sortByRenderLayer(a,b))
-    this.behaviours.filter(behaviour=>behaviour.active).forEach(behaviour => behaviour.beforeDraw());
+
+    const activeObjects = this.objects.filter(ob => ob.active && ob.show).sort((a, b) => this.sortByRenderLayer(a, b));
+    const opaqueObjects = activeObjects.filter(e => e.getBehaviour(RendererBehaviour)?.renderLayer == RenderLayer.OPAQUE);
+    const transparentObjects = activeObjects.filter(e => e.getBehaviour(RendererBehaviour)?.renderLayer == RenderLayer.TRANSPARENT);
+    const postObjects = activeObjects.filter(e => e.getBehaviour(RendererBehaviour)?.renderLayer == RenderLayer.TRANSPARENT);
+
+    opaqueObjects.sort((a, b) => this.sortByDistance(a, b));
+    transparentObjects.sort((a, b) => this.sortByDistance(a, b));
+    postObjects.sort((a, b) => this.sortByDistance(a, b));
+
+
+    this.behaviours.filter(behaviour => behaviour.active).forEach(behaviour => behaviour.beforeDraw());
+
     this.gl.clearColor(this.clearColor.r, this.clearColor.g, this.clearColor.b, 1.0);
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-    const objectsToDraw = this.objects.filter(e => e.active && e.show);
-    for (const object of objectsToDraw) {
-      object.draw();
-    }
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT | this.gl.STENCIL_BUFFER_BIT);
+
+
+    for (const object of opaqueObjects) { object.draw(); }
+    for (const object of transparentObjects) { object.draw(); }
+    for (const object of postObjects) { object.draw(); }
+
     super.draw();
-    this.behaviours.filter(behaviour=>behaviour.active).forEach(behaviour => behaviour.afterDraw());
+    this.behaviours.filter(behaviour => behaviour.active).forEach(behaviour => behaviour.afterDraw());
   }
-  private sortByRenderLayer(a:GlEntity,b:GlEntity){
+
+  private sortByRenderLayer(a: GlEntity, b: GlEntity) {
     const aBeh = a.getBehaviour(RendererBehaviour);
     const bBeh = a.getBehaviour(RendererBehaviour);
-    if(!aBeh || !bBeh){
+    if (!aBeh || !bBeh) {
       return 0
     }
     return aBeh.renderLayer - bBeh.renderLayer;
   }
+
+  protected sortByDistance(a: GlEntity, b: GlEntity) {
+    const aD = vec3.distance(a.transform.position, Camera.mainCamera.transform.position);
+    const bD = vec3.distance(b.transform.position, Camera.mainCamera.transform.position);
+    return bD - aD;
+  }
+
 
   /**
     Adds a new entity to the scene.
@@ -208,8 +231,8 @@ export class Scene extends GlEntity {
   public setGlRenderingContext(gl: WebGL2RenderingContext): void {
     this.gl = gl;
     this.behaviours.forEach(behaviour => {
-      if(behaviour['setGl'])
-      behaviour.setGl(gl);
+      if (behaviour['setGl'])
+        behaviour.setGl(gl);
     });
   }
 
@@ -249,9 +272,25 @@ export class Scene extends GlEntity {
    */
   public override toJsonObject(): JsonSerializedData {
     const meshMaps: { [key: string]: any } = {};
+    const textureMaps: { [key: string]: any } = {};
+
     const renderers = this.objects.filter(e => e.getBehaviours(RendererBehaviour)).map(o => o.getBehaviour(RendererBehaviour) as RendererBehaviour);
+
     for (const renderer of renderers) {
-      if(!renderer) continue;
+      if (!renderer) continue;
+
+      if (renderer.shader?.material) {
+        for (const key of Object.keys(renderer.shader.material)) {
+          const property = (renderer.shader.material as any)[key];
+          if (property instanceof Texture) {
+            textureMaps[property.textureUri || property.name] = property.toJsonObject();
+          } else if (property instanceof CubemapTexture) {
+            let uris = property.textureUris?.join("|");
+            textureMaps[uris || property.name] = property.toJsonObject();
+          }
+        }
+      }
+
       if (renderer.mesh) {
         meshMaps[renderer.mesh.meshData.uuid] = renderer.mesh.meshData.toJsonObject();
       } else {
@@ -260,9 +299,10 @@ export class Scene extends GlEntity {
     }
     return {
       ...super.toJsonObject(),
-      className:Scene.className,
+      className: Scene.className,
       objects: this.objects.map(o => o.toJsonObject()),
-      meshMaps: meshMaps,
+      meshMaps, 
+      textureMaps
     };
   }
 

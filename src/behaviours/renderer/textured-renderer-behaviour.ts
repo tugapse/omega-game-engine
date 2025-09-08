@@ -23,7 +23,7 @@ export class TexturedRendererBehaviour extends RendererBehaviour {
   static override instanciate(gl: WebGL2RenderingContext): TexturedRendererBehaviour {
     return new TexturedRendererBehaviour(gl);
   }
-    protected override _className = "TexturedRendererBehaviour"
+  protected override _className = "TexturedRendererBehaviour"
 
   /**
     The uniform location for the normal map texture.
@@ -69,10 +69,7 @@ export class TexturedRendererBehaviour extends RendererBehaviour {
     }
 
     this.getNormalMapLocations();
-    this.shader.bindBuffers();
-    this.shader.use();
-    this.setShaderVariables();
-    this._gl.drawElements(this.drawPrimitiveType, this.mesh.meshData.indices.length, this._gl.UNSIGNED_SHORT, 0);
+    super.draw();
   }
 
   /**
@@ -119,7 +116,7 @@ export class TexturedRendererBehaviour extends RendererBehaviour {
    * @protected
    */
   protected setNormalMapsInformation(): void {
-    if (!this.shader ) return;
+    if (!this.shader) return;
 
     const material = this.shader.material as LitMaterial;
     if (material.normalTex && material.normalTex.glTexture && this._normalMapUniformLocation) {

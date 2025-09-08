@@ -58,13 +58,15 @@ export class SkyboxShader extends Shader {
       this.material.mainTex.load();
     }
 
+    super.loadDataIntoShader();
     this.setVec4(ShaderUniformsEnum.U_MAT_COLOR, this.material.color.toVec4());
 
     if (this.material.mainTex && this.material.mainTex.isImageLoaded) {
+      this.material.mainTex.bind();
       this.setTexture(ShaderUniformsEnum.U_MAIN_TEX, this.material.mainTex as CubemapTexture, 0);
     }
-    super.loadDataIntoShader();
   }
+
 
   /**
     Binds a cubemap texture to a uniform in the shader.

@@ -10,7 +10,7 @@ import { Shader } from "./shader";
  * @augments {Shader}
  */
 export class LitShader extends Shader {
-  
+
   protected override _className = "LitShader"
 
   /**
@@ -49,6 +49,8 @@ export class LitShader extends Shader {
     if (!this.material) return;
 
     this.checkAndLoadTextures();
+    super.loadDataIntoShader();
+    
     this.setVec4(ShaderUniformsEnum.U_MAT_COLOR, this.material.color.toVec4());
     this.setVec2(ShaderUniformsEnum.U_UV_SCALE, this.material.uvScale);
     this.setVec2(ShaderUniformsEnum.U_UV_OFFSET, this.material.uvOffset);
@@ -60,9 +62,9 @@ export class LitShader extends Shader {
     this.setVec3(ShaderUniformsEnum.U_CAMERA_POSITION, Camera.mainCamera.transform.position);
 
     if (this.material.mainTex && this.material.mainTex.isImageLoaded) {
+      this.material.mainTex.bind();
       this.setTexture(ShaderUniformsEnum.U_MAIN_TEX, this.material.mainTex, 0);
     }
-    super.loadDataIntoShader();
   }
 
   /**
@@ -71,9 +73,14 @@ export class LitShader extends Shader {
    * @returns {void}
    */
   private checkAndLoadTextures(): void {
-       if (this.material.normalTex && !this.material.normalTex.isImageLoaded) {
+    if (this.material.normalTex && !this.material.normalTex.isImageLoaded) {
       this.material.normalTex.setGL(this.gl);
       this.material.normalTex.load();
-    }
+    } 
+  }
+
+  override release(): void {
+    super.release();
+    if(this.material.normalTex) this.material.normalTex.unBind();
   }
 }

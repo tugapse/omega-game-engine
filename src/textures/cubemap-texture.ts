@@ -27,7 +27,7 @@ export class CubemapTexture extends Texture {
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
    * @param {string[]} [textureUris] - An array of six URIs for the cube map faces in the order: right, left, top, bottom, front, back.
    */
-  constructor(protected override gl?: WebGL2RenderingContext, protected textureUris?: string[]) {
+  constructor(protected override gl?: WebGL2RenderingContext, public textureUris?: string[]) {
     super(gl);
   }
 

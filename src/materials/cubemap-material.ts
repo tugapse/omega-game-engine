@@ -15,7 +15,7 @@ export class CubemapMaterial extends ColorMaterial {
     The cube map texture.
    * @type {CubemapTexture}
    */
-  public  mainTex!: CubemapTexture;
+  public mainTex!: CubemapTexture;
 
   /**
     Deserializes the material's state from a JSON object.
@@ -26,8 +26,17 @@ export class CubemapMaterial extends ColorMaterial {
    */
   override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
-    this.mainTex = new CubemapTexture();
-    this.mainTex.fromJson(jsonObject.mainTex);
+    if (jsonObject.mainTex.url) {
+
+      const keys = jsonObject.mainTex.url.split("|");
+      this.mainTex = EngineCache.getTextureCube({
+        right: keys[0], left: keys[1],
+        up: keys[2], bottom: keys[3],
+        front: keys[4], back: keys[5],
+      }) as CubemapTexture;
+
+      this.mainTex.fromJson(jsonObject.mainTex);
+    }
   }
 
   /**
@@ -38,7 +47,7 @@ export class CubemapMaterial extends ColorMaterial {
   override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
-      mainTex:this.mainTex.toJsonObject()
+      mainTex: this.mainTex?.toJsonObject()
     };
   }
 
@@ -51,5 +60,5 @@ export class CubemapMaterial extends ColorMaterial {
   static override instanciate(): CubemapMaterial {
     return new CubemapMaterial();
   }
-  
+
 }

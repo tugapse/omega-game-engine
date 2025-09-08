@@ -51,7 +51,7 @@ export interface WebGLBuffers {
  */
 export class Shader extends JsonSerializable {
 
-   protected override _className = "Shader"
+  protected override _className = "Shader"
 
   /**
     A map of string keys to URLs for reusable shader function files.
@@ -251,7 +251,7 @@ export class Shader extends JsonSerializable {
   public bindBuffers(): void {
     if (!this.gl || !this._shaderProgram) return;
 
-    const positionAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, 'a_position');
+    const positionAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, ShaderUniformsEnum.A_POSITION);
     if (this._buffers.position && positionAttributeLocation !== -1) {
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this._buffers.position);
       this.gl.vertexAttribPointer(positionAttributeLocation, 3, this.gl.FLOAT, false, 0, 0);
@@ -260,7 +260,7 @@ export class Shader extends JsonSerializable {
       this.gl.disableVertexAttribArray(positionAttributeLocation);
     }
 
-    const normalAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, 'a_normal');
+    const normalAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, ShaderUniformsEnum.A_NORMAL);
     if (this._buffers.normal && normalAttributeLocation !== -1) {
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this._buffers.normal);
       this.gl.vertexAttribPointer(normalAttributeLocation, 3, this.gl.FLOAT, false, 0, 0);
@@ -278,7 +278,7 @@ export class Shader extends JsonSerializable {
       this.gl.disableVertexAttribArray(uvAttributeLocation);
     }
 
-    const tangentAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, 'a_tangent');
+    const tangentAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, ShaderUniformsEnum.A_TANGENT);
     if (this._buffers.tangent && tangentAttributeLocation !== -1) {
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this._buffers.tangent);
       this.gl.vertexAttribPointer(tangentAttributeLocation, 3, this.gl.FLOAT, false, 0, 0);
@@ -288,7 +288,7 @@ export class Shader extends JsonSerializable {
       this.gl.disableVertexAttribArray(tangentAttributeLocation);
     }
 
-    const bitangentAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, 'a_bitangent');
+    const bitangentAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, ShaderUniformsEnum.A_BITANGENT);
     if (this._buffers.bitangent && bitangentAttributeLocation !== -1) {
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this._buffers.bitangent);
       this.gl.vertexAttribPointer(bitangentAttributeLocation, 3, this.gl.FLOAT, false, 0, 0);
@@ -313,15 +313,20 @@ export class Shader extends JsonSerializable {
     }
     this.gl.useProgram(this._shaderProgram);
   }
+   
+  public release(): void { }
+
 
   /**
     Loads material data into the shader's uniforms.
    * @returns {void}
    */
   public loadDataIntoShader(): void {
-    if(!this.material) return;
+    if (!this.material) return;
     const material = this.material as ColorMaterial;
-    this.setVec4(ShaderUniformsEnum.U_MAT_COLOR, material.color.toVec4());
+    if (material)
+      this.setVec4(ShaderUniformsEnum.U_MAT_COLOR, material.color.toVec4());
+ 
   }
 
   /**
@@ -517,7 +522,6 @@ export class Shader extends JsonSerializable {
     if (this._shaderProgram)
       this.gl.deleteProgram(this._shaderProgram);
     this._initialized = false;
-    console.debug("Shader destroyed.");
   }
 
   /**
