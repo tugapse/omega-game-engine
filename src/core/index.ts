@@ -9,5 +9,6 @@ export * from './mesh';
 export * from './transform';
 export * from './object-instanciator';
 export * from './vector';
+export * from './bounding-box';
 
 

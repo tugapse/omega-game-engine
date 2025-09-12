@@ -134,15 +134,16 @@ export class Scene extends GlEntity {
   public override update(ellapsed: number): void {
     if (this.destroyed) return;
     Camera.mainCamera.update(ellapsed);
+    this.behaviours.forEach(behaviour => behaviour.beforeUpdate(ellapsed));
 
     if (!this.isRunning && this.inEditMode && this.objects?.length) {
       const toUpdate = this.objects.filter(ob => ob.updateInEditor);
       toUpdate.forEach(entity => entity.update(ellapsed));
+      this.behaviours.forEach(behaviour => behaviour.update(ellapsed));
     }
 
     if (!this.isRunning) return;
 
-    this.behaviours.forEach(behaviour => behaviour.beforeUpdate(ellapsed));
     this.ellapsedTime += ellapsed;
     super.update(ellapsed);
     for (const object of this.objects.filter(e => e.active)) {
@@ -162,11 +163,16 @@ export class Scene extends GlEntity {
     const activeObjects = this.objects.filter(ob => ob.active && ob.show).sort((a, b) => this.sortByRenderLayer(a, b));
     const opaqueObjects = activeObjects.filter(e => e.getBehaviour(RendererBehaviour)?.renderLayer == RenderLayer.OPAQUE);
     const transparentObjects = activeObjects.filter(e => e.getBehaviour(RendererBehaviour)?.renderLayer == RenderLayer.TRANSPARENT);
-    const postObjects = activeObjects.filter(e => e.getBehaviour(RendererBehaviour)?.renderLayer == RenderLayer.TRANSPARENT);
+    const preObjects = activeObjects.filter(e => e.getBehaviour(RendererBehaviour)?.renderLayer == RenderLayer.PRE_SCENE);
+    const postObjects = activeObjects.filter(e => e.getBehaviour(RendererBehaviour)?.renderLayer == RenderLayer.POST_SCENE);
+    const skyboxObjects = activeObjects.filter(e => e.getBehaviour(RendererBehaviour)?.renderLayer == RenderLayer.SKYBOX);
 
+
+    preObjects.sort((a, b) => this.sortByDistance(a, b));
+    postObjects.sort((a, b) => this.sortByDistance(a, b));
     opaqueObjects.sort((a, b) => this.sortByDistance(a, b));
     transparentObjects.sort((a, b) => this.sortByDistance(a, b));
-    postObjects.sort((a, b) => this.sortByDistance(a, b));
+    skyboxObjects.sort((a, b) => this.sortByDistance(a, b));
 
 
     this.behaviours.filter(behaviour => behaviour.active).forEach(behaviour => behaviour.beforeDraw());
@@ -174,12 +180,14 @@ export class Scene extends GlEntity {
     this.gl.clearColor(this.clearColor.r, this.clearColor.g, this.clearColor.b, 1.0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT | this.gl.STENCIL_BUFFER_BIT);
 
-
+    for (const object of preObjects) { object.draw(); }
     for (const object of opaqueObjects) { object.draw(); }
     for (const object of transparentObjects) { object.draw(); }
     for (const object of postObjects) { object.draw(); }
+    for (const object of skyboxObjects) { object.draw(); }
 
     super.draw();
+
     this.behaviours.filter(behaviour => behaviour.active).forEach(behaviour => behaviour.afterDraw());
   }
 
@@ -301,7 +309,7 @@ export class Scene extends GlEntity {
       ...super.toJsonObject(),
       className: Scene.className,
       objects: this.objects.map(o => o.toJsonObject()),
-      meshMaps, 
+      meshMaps,
       textureMaps
     };
   }

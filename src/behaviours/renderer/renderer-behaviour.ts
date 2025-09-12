@@ -219,7 +219,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    * @param {number} height - The height of the render target.
    * @returns {void}
    */
-  public setRenderTarget(texture: WebGLTexture, width: number, height: number): void {
+ public setRenderTarget(texture: WebGLTexture, width: number, height: number): void {
     if (!this._gl) return;
 
     if (!this._framebuffer) {
@@ -234,6 +234,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
       texture,
       0 // Mipmap level
     );
+
 
     if (!this._depthRenderbuffer) {
       this._depthRenderbuffer = this._gl.createRenderbuffer();
@@ -310,6 +311,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    * @returns {void}
    */
   public override fromJson(jsonObject: JsonSerializedData): void {
+    super.fromJson(jsonObject);
     const materialData = jsonObject["shader"]["material"];
     const material = ObjectInstanciator.instanciateObjectFromJsonData<Material>(materialData.className);
     material!.fromJson(materialData);

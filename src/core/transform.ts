@@ -2,9 +2,10 @@ import { vec3, mat4, quat } from 'gl-matrix';
 import { v4 as uuidv4 } from 'uuid';
 import { JsonSerializable } from './json-serializable';
 import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
+import { GlEntity } from '../entities';
 
 /**
-  A helper function to convert a quaternion to Euler angles in radians.
+ * A helper function to convert a quaternion to Euler angles in radians.
  * This function handles Gimbal lock cases and ensures a consistent conversion.
  * @param {vec3} out - The vector to store the resulting Euler angles (in radians).
  * @param {quat} q - The source quaternion.
@@ -36,7 +37,7 @@ function toEuler(out: vec3, q: quat): void {
 }
 
 /**
-  Represents the position, rotation, and scale of an object in 3D space.
+ * Represents the position, rotation, and scale of an object in 3D space.
  * It manages local and world matrices and a hierarchy with a parent and children.
  * @augments {JsonSerializable}
  */
@@ -45,64 +46,65 @@ export class Transform extends JsonSerializable {
   public static get className() { return "Transform"; }
 
   /**
-    The local position of the transform.
+   * The local position of the transform.
    * @private
    * @type {vec3}
    */
   private _position!: vec3;
   /**
-    The rotation of the transform in degrees.
+   * The rotation of the transform in degrees.
    * @private
    * @type {vec3}
    */
   private _rotationInDegrees!: vec3;
   /**
-    The rotation of the transform as a quaternion.
+   * The rotation of the transform as a quaternion.
    * @private
    * @type {quat}
    */
   private _rotation!: quat;
   /**
-    The local scale of the transform.
+   * The local scale of the transform.
    * @private
    * @type {vec3}
    */
   private _scale!: vec3;
 
   /**
-    The world-space model matrix.
+   * The world-space model matrix.
    * @private
    * @type {mat4}
    */
   private _modelMatrix!: mat4;
   /**
-    The local-space matrix relative to its parent.
+   * The local-space matrix relative to its parent.
    * @private
    * @type {mat4}
    */
   private _localMatrix!: mat4;
   /**
-    The parent transform in the hierarchy.
+   * The parent transform in the hierarchy.
    * @private
    * @type {Transform | null}
    */
   private _parent: Transform | null = null;
+
   /**
-    An array of child transforms.
+   * An array of child transforms.
    * @private
    * @type {Transform[]}
    */
   private _children: Transform[] = [];
 
   /**
-    A flag to indicate if the matrices need to be re-calculated.
+   * A flag to indicate if the matrices need to be re-calculated.
    * @private
    * @type {boolean}
    */
   private _dirty: boolean = true;
 
   /**
-    Creates an instance of Transform.
+   * Creates an instance of Transform.
    */
   constructor() {
     super("Transform");
@@ -116,43 +118,52 @@ export class Transform extends JsonSerializable {
     this._dirty = true;
   }
 
+  public parentEntity: GlEntity | null = null;
+
   /**
-    Gets the world-space model matrix.
+   * Gets the world-space model matrix.
    * @type {mat4}
    */
   public get modelMatrix(): mat4 {
     return this._modelMatrix;
   }
   /**
-    Gets the local position.
+   * Gets the local position.
    * @type {vec3}
    */
   public get position(): vec3 {
     return this._position;
   }
   /**
-    Gets the rotation in degrees.
+   * Gets the world position from the model matrix.
+   * @type {vec3}
+   */
+  public get worldPosition(): vec3 {
+    return vec3.fromValues(this._modelMatrix[12], this._modelMatrix[13], this._modelMatrix[14]);
+  }
+  /**
+   * Gets the rotation in degrees.
    * @type {vec3}
    */
   public get rotation(): vec3 {
     return this._rotationInDegrees;
   }
   /**
-    Gets the rotation as a quaternion.
+   * Gets the rotation as a quaternion.
    * @type {quat}
    */
   public get rotationInRadians(): quat {
     return this._rotation;
   }
   /**
-    Gets the local scale.
+   * Gets the local scale.
    * @type {vec3}
    */
   public get localScale(): vec3 {
     return this._scale;
   }
   /**
-    Gets the parent transform.
+   * Gets the parent transform.
    * @type {Transform | null}
    */
   public get parent(): Transform | null {
@@ -160,7 +171,7 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-    Sets the local position of the transform.
+   * Sets the local position of the transform.
    * @param {number} [x=0] - The x-coordinate.
    * @param {number} [y=0] - The y-coordinate.
    * @param {number} [z=0] - The z-coordinate.
@@ -172,7 +183,7 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-    Sets the rotation of the transform using Euler angles in degrees.
+   * Sets the rotation of the transform using Euler angles in degrees.
    * @param {number} [xDegrees=0] - The rotation around the x-axis in degrees.
    * @param {number} [yDegrees=0] - The rotation around the y-axis in degrees.
    * @param {number} [zDegrees=0] - The rotation around the z-axis in degrees.
@@ -185,7 +196,7 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-    Sets the local scale of the transform.
+   * Sets the local scale of the transform.
    * @param {number} [x=1] - The scale factor for the x-axis.
    * @param {number} [y=1] - The scale factor for the y-axis.
    * @param {number} [z=1] - The scale factor for the z-axis.
@@ -197,7 +208,7 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-    Translates the transform by a given vector.
+   * Translates the transform by a given vector.
    * @param {number} [x=0] - The x-component of the translation vector.
    * @param {number} [y=0] - The y-component of the translation vector.
    * @param {number} [z=0] - The z-component of the translation vector.
@@ -209,7 +220,7 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-    Rotates the transform by a given amount of Euler angles in degrees.
+   * Rotates the transform by a given amount of Euler angles in degrees.
    * @param {number} [xDegrees=0] - The rotation around the x-axis in degrees.
    * @param {number} [yDegrees=0] - The rotation around the y-axis in degrees.
    * @param {number} [zDegrees=0] - The rotation around the z-axis in degrees.
@@ -224,7 +235,7 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-    Scales the transform by a given amount.
+   * Scales the transform by a given amount.
    * @param {number} [x=1] - The scale factor for the x-axis.
    * @param {number} [y=1] - The scale factor for the y-axis.
    * @param {number} [z=1] - The scale factor for the z-axis.
@@ -236,7 +247,7 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-    Updates the local and world matrices based on the current position, rotation, and scale.
+   * Updates the local and world matrices based on the current position, rotation, and scale.
    * This method is recursive and updates all child transforms.
    * @returns {void}
    */
@@ -248,15 +259,16 @@ export class Transform extends JsonSerializable {
       } else {
         mat4.copy(this._modelMatrix, this._localMatrix);
       }
-      this._dirty = false;
     }
     for (const child of this._children) {
+      child.setDirty(this._dirty);
       child.updateMatrices();
     }
+    this._dirty = false;
   }
 
   /**
-    Sets the parent of the transform, managing the hierarchy.
+   * Sets the parent of the transform, managing the hierarchy.
    * @param {Transform | null} parent - The new parent transform, or null to remove the parent.
    * @returns {void}
    */
@@ -274,43 +286,44 @@ export class Transform extends JsonSerializable {
     this._dirty = true;
   }
 
+
   /**
-    Gets the right direction vector from the world matrix.
+   * Gets the right direction vector from the world matrix.
    * @type {vec3}
    */
   public get right(): vec3 {
     return vec3.fromValues(this._modelMatrix[0], this._modelMatrix[1], this._modelMatrix[2]);
   }
   /**
-    Gets the left direction vector from the world matrix.
+   * Gets the left direction vector from the world matrix.
    * @type {vec3}
    */
   public get left(): vec3 {
     return vec3.negate(vec3.create(), this.right);
   }
   /**
-    Gets the up direction vector from the world matrix.
+   * Gets the up direction vector from the world matrix.
    * @type {vec3}
    */
   public get up(): vec3 {
     return vec3.fromValues(this._modelMatrix[4], this._modelMatrix[5], this._modelMatrix[6]);
   }
   /**
-    Gets the down direction vector from the world matrix.
+   * Gets the down direction vector from the world matrix.
    * @type {vec3}
    */
   public get down(): vec3 {
     return vec3.negate(vec3.create(), this.up);
   }
   /**
-    Gets the forward direction vector from the world matrix.
+   * Gets the forward direction vector from the world matrix.
    * @type {vec3}
    */
   public get forward(): vec3 {
     return vec3.fromValues(this._modelMatrix[8], this._modelMatrix[9], this._modelMatrix[10]);
   }
   /**
-    Gets the back direction vector from the world matrix.
+   * Gets the back direction vector from the world matrix.
    * @type {vec3}
    */
   public get back(): vec3 {
@@ -318,7 +331,7 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-    Orients the transform to look at a specific target point in world space.
+   * Orients the transform to look at a specific target point in world space.
    * @param {vec3} target - The target position to look at.
    * @param {vec3} [worldUp] - An optional vector indicating the world's up direction.
    * @returns {void}
@@ -343,7 +356,7 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-    Serializes the transform's state to a JSON object.
+   * Serializes the transform's state to a JSON object.
    * @override
    * @returns {JsonSerializedData} - The JSON object representation.
    */
@@ -359,13 +372,13 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-    Deserializes the transform's state from a JSON object.
+   * Deserializes the transform's state from a JSON object.
    * @override
    * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
    * @returns {void}
    */
   public override fromJson(jsonObject: JsonSerializedData): void {
-    this._uuid = jsonObject['uuid'];
+    super.fromJson(jsonObject);
     this.setPosition(jsonObject['position'][0], jsonObject['position'][1], jsonObject['position'][2]);
     this.setRotation(jsonObject['rotation'][0], jsonObject['rotation'][1], jsonObject['rotation'][2]);
     this.setScale(jsonObject['scale'][0], jsonObject['scale'][1], jsonObject['scale'][2]);
@@ -373,7 +386,7 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-    Rotates the transform by a given quaternion.
+   * Rotates the transform by a given quaternion.
    * @param {quat} q - The quaternion to rotate by.
    * @returns {void}
    */
@@ -386,7 +399,7 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-    Sets the dirty flag of the transform, forcing a matrix recalculation.
+   * Sets the dirty flag of the transform, forcing a matrix recalculation.
    * @param {boolean} dirty - The new state of the dirty flag.
    * @returns {void}
    */
@@ -395,7 +408,7 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-    Provides a clone of the internal rotation quaternion.
+   * Provides a clone of the internal rotation quaternion.
    * @type {quat}
    */
   public get rotationQuat(): quat {
@@ -403,7 +416,7 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-    Sets the internal rotation quaternion and updates the Euler angles and dirty flag.
+   * Sets the internal rotation quaternion and updates the Euler angles and dirty flag.
    * @param {quat} newRotation - The new rotation quaternion.
    * @returns {void}
    */

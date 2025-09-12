@@ -94,7 +94,7 @@ export class Texture extends JsonSerializable {
    */
   protected _wrapT: TextureWrapMode = TextureWrapMode.CLAMP_TO_EDGE;
   /**
-   * A flag to indicate if the texture is currently bound.
+   * A flag to indicate if the texture is currently in a bound state.
    * @protected
    * @type {boolean}
    */
@@ -127,16 +127,27 @@ export class Texture extends JsonSerializable {
    * @param {Uint8Array} [color] - An optional array of color data. If not provided, a single white pixel is used.
    * @returns {Texture} A new Texture instance.
    */
-  public static create(gl: WebGL2RenderingContext, width: number, height: number, color: Uint8Array = new Uint8Array([255, 255, 255, 255])): Texture {
+  public static create(gl: WebGL2RenderingContext, width: number, height: number, color: Uint8Array | null = null): Texture {
     const texture = gl.createTexture();
+    if (!texture) {
+        console.error("Failed to create WebGL texture.");
+        return new Texture(gl);
+    }
     gl.bindTexture(TextureTarget.TEXTURE_2D, texture);
 
-    // Creates a single pixel texture with the given color
-    gl.texImage2D(TextureTarget.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+    if (color === null) {
+      gl.texImage2D(TextureTarget.TEXTURE_2D, 0, gl.RGBA8, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      
+      gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MIN_FILTER, TextureFilterMode.NEAREST);
+      gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MAG_FILTER, TextureFilterMode.NEAREST);
+    } else {
+      gl.texImage2D(TextureTarget.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
+      
+      gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MIN_FILTER, TextureFilterMode.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MAG_FILTER, TextureFilterMode.LINEAR);
+      gl.generateMipmap(TextureTarget.TEXTURE_2D);
+    }
 
-    // Set default parameters for the created texture
-    gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MIN_FILTER, TextureFilterMode.NEAREST);
-    gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MAG_FILTER, TextureFilterMode.NEAREST);
     gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_S, TextureWrapMode.CLAMP_TO_EDGE);
     gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_T, TextureWrapMode.CLAMP_TO_EDGE);
 
@@ -147,7 +158,6 @@ export class Texture extends JsonSerializable {
     result._isLoaded = true;
     return result;
   }
-
 
   /**
    * Loads an image from the provided URI and creates the WebGL texture.

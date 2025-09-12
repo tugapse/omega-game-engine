@@ -38,4 +38,8 @@ export class JsonSerializable {
     if (jsonObject.uuid) this._uuid = jsonObject.uuid;
   }
 
+  public toJSON(){
+    return this.toJsonObject();
+  }
+
 }

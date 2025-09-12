@@ -108,6 +108,7 @@ export class EntityBehaviour extends JsonSerializable {
    * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
    */
   public override fromJson(jsonObject: JsonSerializedData): void {
+    super.fromJson(jsonObject);
     this.active = jsonObject["active"];
     this._uuid = jsonObject['uuid'];
   }

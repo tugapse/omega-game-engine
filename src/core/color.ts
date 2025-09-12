@@ -125,7 +125,7 @@ export class Color extends JsonSerializable {
     this.r = jsonObject["r"];
     this.g = jsonObject["g"];
     this.b = jsonObject["b"];
-    this.a = jsonObject["b"];
+    this.a = jsonObject["a"];
   }
 
   /**

@@ -3,6 +3,19 @@ import { Keybord, Mouse } from "../core/input";
 import { EntityBehaviour } from "./entity-behaviour";
 import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
 
+
+export interface ICameraMoveKeys {
+  forward: string,
+  back: string,
+  left: string
+  right: string,
+  up: string,
+  down: string
+}
+export interface ICameraMouseButtons {
+  pan: number,
+  look: number
+}
 /**
    CameraFlyBehaviour
   
@@ -54,6 +67,20 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    */
   public moveDampening = 0.15;
 
+  public moveKeys: ICameraMoveKeys = {
+    forward: "w",
+    back: "s",
+    left: "a",
+    right: "d",
+    up: "q",
+    down: "e"
+  }
+
+  public lookMouseButtons: ICameraMouseButtons = {
+    pan: 1,
+    look: 2
+  }
+
   /**
    * The rate at which the camera accelerates to `moveSpeed`.
    * @type {number}
@@ -74,7 +101,7 @@ export class CameraFlyBehaviour extends EntityBehaviour {
   protected _currentPitch = 0;
 
 
-  constructor(){
+  constructor() {
     super();
     this._className = "CameraFlyBehaviour";
   }
@@ -100,46 +127,46 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
     const accelerationDelta = this._acceleration * ellapsed;
     const maxSpeed = this.moveSpeed;
-    const stopThreshold = 0.1; // Velocity below this will be set to 0 to prevent "creeping"
+    const stopThreshold = 0.1;
 
-    // --- Update Forward/Backward Velocity (W/S Keys) ---
-    if (Keybord.keyDown['w']) {
+    if (Keybord.keyDown[this.moveKeys.forward]) {
       this._forwardVelocity = Math.min(this._forwardVelocity + accelerationDelta, maxSpeed);
-    } else if (Keybord.keyDown['s']) {
+    } else if (Keybord.keyDown[this.moveKeys.back]) {
       this._forwardVelocity = Math.max(this._forwardVelocity - accelerationDelta, -maxSpeed);
     } else {
-      // Apply dampening when no key is pressed for smooth deceleration
       this._forwardVelocity *= (1 - this.moveDampening);
       if (Math.abs(this._forwardVelocity) < stopThreshold) {
-        this._forwardVelocity = 0; // Snap to 0 if very slow
+        this._forwardVelocity = 0;
       }
     }
 
-    // --- Update Strafe Velocity (A/D Keys) ---
-    if (Keybord.keyDown['a']) {
+    if (Keybord.keyDown[this.moveKeys.left]) {
       this._strafeVelocity = Math.min(this._strafeVelocity + accelerationDelta, maxSpeed);
-    } else if (Keybord.keyDown['d']) {
+    } else if (Keybord.keyDown[this.moveKeys.right]) {
       this._strafeVelocity = Math.max(this._strafeVelocity - accelerationDelta, -maxSpeed);
     } else {
-      // Apply dampening for smooth strafing stop
       this._strafeVelocity *= (1 - this.moveDampening);
       if (Math.abs(this._strafeVelocity) < stopThreshold) {
         this._strafeVelocity = 0;
       }
     }
 
-    // --- Update Up/Down Velocity (Q/E Keys) ---
-    if (Keybord.keyDown['q']) {
+    if (Keybord.keyDown[this.moveKeys.up]) {
       this._upVelocity = Math.max(this._upVelocity - accelerationDelta, -maxSpeed);
-    } else if (Keybord.keyDown['e']) {
+    } else if (Keybord.keyDown[this.moveKeys.down]) {
       this._upVelocity = Math.min(this._upVelocity + accelerationDelta, maxSpeed);
     } else {
-      // Apply dampening for smooth vertical stop
       this._upVelocity *= (1 - this.moveDampening);
       if (Math.abs(this._upVelocity) < stopThreshold) {
         this._upVelocity = 0;
       }
     }
+    if (Mouse.mouseButtonDown[this.lookMouseButtons.pan]) {
+      this._upVelocity += Mouse.mouseMovement.y * this.moveDampening / 2.0;
+      this._strafeVelocity += Mouse.mouseMovement.x * this.moveDampening / 2.0;
+    }
+
+    this._forwardVelocity -= Mouse.wheelY * this.moveDampening;
 
     // --- Camera Movement Logic ---
     const movementVector = vec3.create();
@@ -156,33 +183,26 @@ export class CameraFlyBehaviour extends EntityBehaviour {
       vec3.scaleAndAdd(movementVector, movementVector, worldUp, this._upVelocity);
     }
 
-    // Apply the calculated movement to the entity's position
+
     transform.translate(movementVector[0] * ellapsed, movementVector[1] * ellapsed, movementVector[2] * ellapsed);
 
-    // --- Camera Rotation Logic (Mouse Input) ---
-    // Accumulate yaw and pitch based on mouse movement
-    if (Mouse.mouseButtonDown[0]) {
+
+    if (Mouse.mouseButtonDown[this.lookMouseButtons.look]) {
       this._currentYaw += -Mouse.mouseMovement.x * this.rotationSpeed;
       this._currentPitch += Mouse.mouseMovement.y * this.rotationSpeed;
     }
 
-    // Clamp the pitch to prevent the camera from flipping upside down
     this._currentPitch = Math.max(-90, Math.min(90, this._currentPitch));
 
-    // Create a quaternion for yaw rotation around the world's Y-axis
     const yawQuat = quat.create();
     quat.fromEuler(yawQuat, 0, this._currentYaw, 0);
 
-    // Create a quaternion for pitch rotation around the camera's local X-axis
     const pitchQuat = quat.create();
     quat.fromEuler(pitchQuat, this._currentPitch, 0, 0);
 
-    // Combine yaw and pitch quaternions to get the final desired rotation,
-    // applying yaw first then pitch to maintain "roll-free" movement.
     const finalRotation = quat.create();
     quat.multiply(finalRotation, yawQuat, pitchQuat);
 
-    // Smoothly interpolate the camera's current rotation towards the target rotation
     const smoothedRotation = quat.create();
     quat.slerp(smoothedRotation, transform.rotationQuat, finalRotation, this.rotationDampening);
     transform.setRotationQuat(smoothedRotation);

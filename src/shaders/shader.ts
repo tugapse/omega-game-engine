@@ -284,7 +284,6 @@ export class Shader extends JsonSerializable {
       this.gl.vertexAttribPointer(tangentAttributeLocation, 3, this.gl.FLOAT, false, 0, 0);
       this.gl.enableVertexAttribArray(tangentAttributeLocation);
     } else if (tangentAttributeLocation !== -1) {
-      console.debug("Tangent attribute location not found");
       this.gl.disableVertexAttribArray(tangentAttributeLocation);
     }
 
@@ -294,7 +293,6 @@ export class Shader extends JsonSerializable {
       this.gl.vertexAttribPointer(bitangentAttributeLocation, 3, this.gl.FLOAT, false, 0, 0);
       this.gl.enableVertexAttribArray(bitangentAttributeLocation);
     } else if (bitangentAttributeLocation !== -1) {
-      console.debug("Bitangent attribute location not found");
       this.gl.disableVertexAttribArray(bitangentAttributeLocation);
     }
 
@@ -547,6 +545,7 @@ export class Shader extends JsonSerializable {
    * @returns {void}
    */
   public override fromJson(jsonObject: JsonSerializedData): void {
+    super.fromJson(jsonObject);
     this.fragUri = jsonObject['fragUri'];
     this.vertexUri = jsonObject['vertexUri'];
     this.material = ObjectInstanciator.instanciateObjectFromJsonData(jsonObject.material.className) || new ColorMaterial();
