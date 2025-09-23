@@ -1,4 +1,4 @@
-import { vec3 } from "gl-matrix";
+import { vec3, mat4 } from "gl-matrix";
 import { DirectionalLight, Light, PointLight, SpotLight } from "../../entities/light";
 import { EntityType } from "../../enums/entity-type.enum";
 import { ShaderUniformsEnum } from "../../enums/shader-uniforms.enum";
@@ -6,6 +6,8 @@ import { LitMaterial } from "../../materials/lit-material";
 import { LitShader } from "../../shaders/lit-shader";
 import { RendererBehaviour } from "./renderer-behaviour";
 import { GLPrimitiveType } from "../../enums/gl-primitive-type.enum";
+import { Texture } from "../../textures/texture";
+import { Transform } from "../../core";
 
 /**
   A renderer for mesh-based objects, providing support for normal maps and lighting.
@@ -50,6 +52,10 @@ export class TexturedRendererBehaviour extends RendererBehaviour {
    */
   public enableLights = true;
 
+  public get shadowMapTexture() {
+    return this.parent.scene.shadowMap;
+  };
+
   /**
     Creates an instance of TexturedRendererBehaviour.
    * @param {WebGL2RenderingContext} _gl - The WebGL2 rendering context.
@@ -67,11 +73,68 @@ export class TexturedRendererBehaviour extends RendererBehaviour {
     if (!this.mesh || !this.shader?._shaderProgram) {
       return;
     }
-
+    this.shader.use();
     this.getNormalMapLocations();
+    this.setShaderVariables();
+
+    // Set up lights and normal maps
+    this.setNormalMapsInformation();
+    this.setLightInformation();
+
+    // --- START: SHADOW MAP INTEGRATION ---
+    // Make sure the shadow map texture is set before drawing
+    if (this.shadowMapTexture && this.shadowMapTexture.glTexture) {
+      // Get the Light entity (assuming there is only one directional light for shadows)
+      const lightEntity = this.parent.scene.lights.find(obj => obj.entityType === EntityType.LIGHT_DIRECTIONAL);
+
+      if (lightEntity) {
+        const { lightMvpMatrix, lightProjectionMatrix, lightViewMatrix } = this.createLightMatrices(lightEntity.transform);
+
+        mat4.multiply(lightMvpMatrix, lightProjectionMatrix, lightViewMatrix);
+
+        this.shader.setMat4(ShaderUniformsEnum.U_LIGHT_MVP_MATRIX, lightMvpMatrix);
+
+        const textureUnit = 2; 
+        this._gl.activeTexture(this._gl.TEXTURE0 + textureUnit);
+        this._gl.bindTexture(this._gl.TEXTURE_2D, this.shadowMapTexture.glTexture);
+
+        this.shader.setInt(ShaderUniformsEnum.U_SHADOW_MAP, textureUnit);
+
+        this.shader.setFloat(ShaderUniformsEnum.U_SHADOW_BIAS, 0.0);
+      }
+    }
     super.draw();
   }
 
+  public createLightMatrices(cameraTransform: Transform, frustumSize = 50, near = 0.1, far = 100, directionDistance = 50.0) {
+    const lightDirection = vec3.normalize(vec3.create(), this.transform.forward);
+    const lightPosition = vec3.scaleAndAdd(vec3.create(), cameraTransform.position, lightDirection, -directionDistance);
+
+
+    // Calculate the light's MVP matrix
+    const lightViewMatrix = mat4.create();
+    mat4.lookAt(
+      lightViewMatrix,
+      lightPosition,
+      lightDirection,
+      [0, 1, 0]
+    );
+
+    const lightProjectionMatrix = mat4.create();
+
+    mat4.ortho(
+      lightProjectionMatrix,
+      -frustumSize,
+      frustumSize,
+      -frustumSize,
+      frustumSize,
+      near,
+      far
+    );
+
+    const lightMvpMatrix = mat4.create();
+    return { lightMvpMatrix, lightProjectionMatrix, lightViewMatrix };
+  }
   /**
     Initializes the shader and its buffers for the mesh, including normal, tangent, and bitangent data.
    * @protected

@@ -101,6 +101,8 @@ export class Scene extends GlEntity {
     return this._objects.filter(o => o instanceof Light) as Light[];
   }
 
+  public shadowMap? :Texture;
+
   /**
     Creates an instance of Scene.
    */

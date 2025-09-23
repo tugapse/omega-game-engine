@@ -117,6 +117,47 @@ export class Texture extends JsonSerializable {
   public setGL(gl: WebGL2RenderingContext): void {
     this.gl = gl;
   }
+    /**
+   * Creates a new texture specifically for depth information (e.g., for shadow mapping).
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @param {number} width - The width of the texture.
+   * @param {number} height - The height of the texture.
+   * @returns {Texture} A new Texture instance configured as a depth texture.
+   */
+  public static createDepthTexture(gl: WebGL2RenderingContext, width: number, height: number): Texture {
+    const texture = gl.createTexture();
+    if (!texture) {
+      console.error("Failed to create WebGL depth texture.");
+      return new Texture(gl);
+    }
+    gl.bindTexture(TextureTarget.TEXTURE_2D, texture);
+
+    // Use a depth-specific internal format
+    gl.texImage2D(
+      TextureTarget.TEXTURE_2D,
+      0,
+      gl.DEPTH_COMPONENT32F, // Internal format for depth (e.g., 32-bit float)
+      width,
+      height,
+      0,
+      gl.DEPTH_COMPONENT, // Format of the data you're providing
+      gl.FLOAT,           // Type of the data
+      null // No initial data
+    );
+
+    // Set filtering and wrapping modes suitable for a depth map
+    gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MIN_FILTER, TextureFilterMode.NEAREST);
+    gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MAG_FILTER, TextureFilterMode.NEAREST);
+    gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_S, TextureWrapMode.CLAMP_TO_EDGE);
+    gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_T, TextureWrapMode.CLAMP_TO_EDGE);
+
+    gl.bindTexture(TextureTarget.TEXTURE_2D, null);
+
+    const result = new Texture(gl);
+    result._glTexture = texture;
+    result._isLoaded = true;
+    return result;
+  }
 
   /**
    * Creates and returns a texture with a specified color and size.

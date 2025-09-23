@@ -410,9 +410,8 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
     if (!this.mesh || !this.shader?._shaderProgram) {
       return;
     }
-    this.shader.bindBuffers();
     this.shader.use();
-    this.setShaderVariables();
+    this.shader.bindBuffers();
     this._gl.drawElements(this.drawPrimitiveType, this.mesh.meshData.indices.length, this._gl.UNSIGNED_SHORT, 0);
   }
 

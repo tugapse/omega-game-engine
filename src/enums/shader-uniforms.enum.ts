@@ -84,4 +84,7 @@ export enum ShaderUniformsEnum {
     A uniform for passing the camera's position in world space.
    */
   U_CAMERA_POSITION = "u_cameraPosition",
+  U_LIGHT_MVP_MATRIX = "u_lightMVPMatrix",
+  U_SHADOW_MAP = "u_shadow_map",
+  U_SHADOW_BIAS = "u_shadow_bias",
 }
