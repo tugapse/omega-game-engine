@@ -1,16 +1,16 @@
-import { vec3, mat4 } from "gl-matrix";
-import { DirectionalLight, Light, PointLight, SpotLight } from "../../entities/light";
-import { EntityType } from "../../enums/entity-type.enum";
-import { ShaderUniformsEnum } from "../../enums/shader-uniforms.enum";
-import { LitMaterial } from "../../materials/lit-material";
-import { LitShader } from "../../shaders/lit-shader";
-import { RendererBehaviour } from "./renderer-behaviour";
-import { GLPrimitiveType } from "../../enums/gl-primitive-type.enum";
-import { Texture } from "../../textures/texture";
+import { mat4, vec3 } from "gl-matrix";
 import { Transform } from "../../core";
+import { Camera, Light, DirectionalLight, PointLight, SpotLight } from "../../entities";
+import { GLPrimitiveType, EntityType, ShaderUniformsEnum } from "../../enums";
+import { LitMaterial } from "../../materials";
+import { LitShader } from "../../shaders";
+import { RendererBehaviour } from "./renderer-behaviour";
 
 /**
-  A renderer for mesh-based objects, providing support for normal maps and lighting.
+ * A renderer for mesh-based objects that supports normal maps, lighting, and shadow mapping.
+ * This class extends the base RendererBehaviour to provide more advanced rendering features.
+ * It handles the setup of shader uniforms and attributes related to lighting and normal mapping,
+ * and it can render shadows by using a shadow map texture.
  * @augments {RendererBehaviour}
  */
 export class TexturedRendererBehaviour extends RendererBehaviour {
@@ -18,7 +18,7 @@ export class TexturedRendererBehaviour extends RendererBehaviour {
   /**
     Creates a new instance of the TexturedRendererBehaviour.
    * @override
-    
+
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
    * @returns {TexturedRendererBehaviour}
    */
@@ -52,6 +52,10 @@ export class TexturedRendererBehaviour extends RendererBehaviour {
    */
   public enableLights = true;
 
+  /**
+   * Gets the shadow map texture from the parent scene.
+   * @returns {Texture | null} The shadow map texture, or null if not available.
+   */
   public get shadowMapTexture() {
     return this.parent.scene.shadowMap;
   };
@@ -74,54 +78,86 @@ export class TexturedRendererBehaviour extends RendererBehaviour {
       return;
     }
     this.shader.use();
-    this.getNormalMapLocations();
-    this.setShaderVariables();
 
-    // Set up lights and normal maps
-    this.setNormalMapsInformation();
-    this.setLightInformation();
 
-    // --- START: SHADOW MAP INTEGRATION ---
-    // Make sure the shadow map texture is set before drawing
+
+
+
     if (this.shadowMapTexture && this.shadowMapTexture.glTexture) {
       // Get the Light entity (assuming there is only one directional light for shadows)
       const lightEntity = this.parent.scene.lights.find(obj => obj.entityType === EntityType.LIGHT_DIRECTIONAL);
 
       if (lightEntity) {
-        const { lightMvpMatrix, lightProjectionMatrix, lightViewMatrix } = this.createLightMatrices(lightEntity.transform);
-
-        mat4.multiply(lightMvpMatrix, lightProjectionMatrix, lightViewMatrix);
-
-        this.shader.setMat4(ShaderUniformsEnum.U_LIGHT_MVP_MATRIX, lightMvpMatrix);
-
-        const textureUnit = 2; 
-        this._gl.activeTexture(this._gl.TEXTURE0 + textureUnit);
-        this._gl.bindTexture(this._gl.TEXTURE_2D, this.shadowMapTexture.glTexture);
-
-        this.shader.setInt(ShaderUniformsEnum.U_SHADOW_MAP, textureUnit);
-
-        this.shader.setFloat(ShaderUniformsEnum.U_SHADOW_BIAS, 0.0);
+        const textureUnit = 2;
+        let { lightMvpMatrix } = this.createLightMatrices(Camera.mainCamera.transform, lightEntity.transform);
+        // We need to apply the object's model matrix to the light MVP for shadow receiving.
+        mat4.multiply(lightMvpMatrix, lightMvpMatrix, this.transform.modelMatrix);
+        this.shader.setMat4('u_lightMVPMatrix', lightMvpMatrix);
+        this.shader.setVec2('u_shadowMapSize', [this.shadowMapTexture.width,this.shadowMapTexture.height]);
+        this.shader.setTexture('u_shadowMap', this.shadowMapTexture, textureUnit);
       }
     }
+
+    // Set up lights and normal maps
+    this.getNormalMapLocations();
+    this.setNormalMapsInformation();
+    this.setLightInformation();
+    this.setShaderVariables();
     super.draw();
   }
 
-  public createLightMatrices(cameraTransform: Transform, frustumSize = 50, near = 0.1, far = 100, directionDistance = 50.0) {
-    const lightDirection = vec3.normalize(vec3.create(), this.transform.forward);
-    const lightPosition = vec3.scaleAndAdd(vec3.create(), cameraTransform.position, lightDirection, -directionDistance);
 
+  /**
+   * Calculates the view, projection, and model-view-projection matrices for a light source.
+   * These matrices are used in shadow mapping to render the scene from the light's perspective.
+   *
+   * @param {Transform} cameraTransform - The transform of the main camera.
+   * @param {Transform} lightTransform - The transform of the light source.
+   * @param {number} [frustumSize=60.0] - The size of the orthographic frustum used for the light's projection.
+   * @param {number} [near=0.1] - The near clipping plane of the light's frustum.
+   * @param {number} [far=200.0] - The far clipping plane of the light's frustum.
+   * @returns {{ lightViewMatrix: mat4, lightProjectionMatrix: mat4, lightMvpMatrix: mat4 }} An object containing the calculated matrices.
+   */
+  public createLightMatrices(
+    cameraTransform: Transform,
+    lightTransform: Transform,
+    frustumSize: number = 60.0,
+    near: number = 0.1,
+    far: number = 200.0,
+  ) {
+    // 1. Get the light's direction from the new 'lightTransform' parameter.
+    const lightDirection = vec3.normalize(vec3.create(), lightTransform.forward);
 
-    // Calculate the light's MVP matrix
-    const lightViewMatrix = mat4.create();
+    // 2. Determine the center of the light's view frustum.
+    // It is centered on the camera's position for consistent shadow coverage.
+    const frustumCenter = vec3.create();
+    vec3.copy(frustumCenter, cameraTransform.position);
+
+    // 3. Create the light's eye position by offsetting it from the frustum center.
+    const lightPosition = vec3.create();
+    vec3.scaleAndAdd(lightPosition, frustumCenter, lightDirection, -( frustumSize));
+
+    // 4. Calculate the light's view matrix using mat4.lookAt.
+    // To prevent the matrix from becoming unstable when the light is directly
+    // above or below, we calculate a stable 'up' vector.
+    let up = vec3.fromValues(0, 1, 0);
+    if (Math.abs(vec3.dot(lightDirection, up)) > 0.999) {
+      // If light direction is too close to the world up vector, use a different axis.
+      up = vec3.fromValues(0, 0, 1);
+    }
+    const lightRight = vec3.cross(vec3.create(), lightDirection, up);
+    const lightUp = vec3.cross(vec3.create(), lightRight, lightDirection);
+
+    const lightViewMatrix = mat4.create(); // Variable declared here
     mat4.lookAt(
       lightViewMatrix,
       lightPosition,
-      lightDirection,
-      [0, 1, 0]
+      frustumCenter,
+      lightUp
     );
 
-    const lightProjectionMatrix = mat4.create();
-
+    // 5. Calculate the light's projection matrix.
+    const lightProjectionMatrix = mat4.create(); // Variable declared here
     mat4.ortho(
       lightProjectionMatrix,
       -frustumSize,
@@ -132,9 +168,18 @@ export class TexturedRendererBehaviour extends RendererBehaviour {
       far
     );
 
-    const lightMvpMatrix = mat4.create();
-    return { lightMvpMatrix, lightProjectionMatrix, lightViewMatrix };
+    // 6. Calculate the final combined Light MVP Matrix.
+    const lightMvpMatrix = mat4.create(); // Variable declared here
+    mat4.multiply(lightMvpMatrix, lightProjectionMatrix, lightViewMatrix);
+
+    // 7. Return all the necessary matrices in an object.
+    return {
+      lightViewMatrix,
+      lightProjectionMatrix,
+      lightMvpMatrix
+    };
   }
+
   /**
     Initializes the shader and its buffers for the mesh, including normal, tangent, and bitangent data.
    * @protected

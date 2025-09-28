@@ -128,6 +128,20 @@ export class Shader extends JsonSerializable {
   };
 
   /**
+   * The source code for the fragment shader.
+   * If provided, this will be used instead of fetching from `fragUri`.
+   * @type {string | null}
+   */
+  public fragmentSource: string | null = null;
+
+  /**
+   * The source code for the vertex shader.
+   * If provided, this will be used instead of fetching from `vertexUri`.
+   * @type {string | null}
+   */
+  public vertexSource: string | null = null;
+
+  /**
     Creates an instance of Shader.
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
    * @param {ColorMaterial} material - The material associated with this shader.
@@ -154,8 +168,8 @@ export class Shader extends JsonSerializable {
     }
     const keys: string[] = Object.keys(Shader.SHADER_FUNCTIONS);
 
-    let vsSource = await EngineCache.loadShaderSource(this.vertexUri);
-    let fsSource = await EngineCache.loadShaderSource(this.fragUri);
+    let vsSource = this.vertexSource ?? await EngineCache.loadShaderSource(this.vertexUri);
+    let fsSource = this.fragmentSource ?? await EngineCache.loadShaderSource(this.fragUri);
     // replace keys by shader code
     for (const obkey of keys) {
       if (fsSource.includes(obkey)) {

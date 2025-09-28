@@ -99,6 +99,19 @@ export class Texture extends JsonSerializable {
    * @type {boolean}
    */
   protected _isBound: boolean = false;
+  /**
+   * The width of the texture in pixels.
+   * @protected
+   * @type {number}
+   */
+  protected _width: number = 0;
+
+  /**
+   * The height of the texture in pixels.
+   * @protected
+   * @type {number}
+   */
+  protected _height: number = 0;
 
   /**
    * Creates an instance of Texture.
@@ -156,6 +169,8 @@ export class Texture extends JsonSerializable {
     const result = new Texture(gl);
     result._glTexture = texture;
     result._isLoaded = true;
+    result._width = width;
+    result._height = height;
     return result;
   }
 
@@ -197,6 +212,8 @@ export class Texture extends JsonSerializable {
     const result = new Texture(gl);
     result._glTexture = texture;
     result._isLoaded = true;
+    result._width = width;
+    result._height = height;
     return result;
   }
 
@@ -215,6 +232,8 @@ export class Texture extends JsonSerializable {
       this._image = new Image();
       this._image.onload = () => {
         this._isLoaded = true;
+        this._width = this._image!.width;
+        this._height = this._image!.height;
         if (this.gl) {
           this.createGLTexture(this.gl);
         }
@@ -463,6 +482,24 @@ export class Texture extends JsonSerializable {
    */
   public get isImageLoaded(): boolean {
     return this._isLoaded;
+  }
+
+  /**
+   * Gets the width of the texture.
+   * @readonly
+   * @type {number}
+   */
+  public get width(): number {
+    return this._width;
+  }
+
+  /**
+   * Gets the height of the texture.
+   * @readonly
+   * @type {number}
+   */
+  public get height(): number {
+    return this._height;
   }
 
   /**
