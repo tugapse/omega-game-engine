@@ -166,14 +166,14 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    */
   protected updateMoveVelocity(ellapsed: number) {
     const accelerationDelta = this._acceleration * ellapsed;
-    const maxSpeed = Keybord.keyDown[this.moveKeys.boost] 
-      ? this.moveSpeed * this.boostMultiplier 
+    const maxSpeed = Keybord.keyDown[this.moveKeys.boost]
+      ? this.moveSpeed * this.boostMultiplier
       : this.moveSpeed;
     const stopThreshold = 0.1;
 
     this.updateForwardVelocity(accelerationDelta, maxSpeed, stopThreshold);
-    this.updateStrafeVelocity(accelerationDelta,maxSpeed,stopThreshold);
-    this.updateUpVelocity(accelerationDelta,maxSpeed,stopThreshold);
+    this.updateStrafeVelocity(accelerationDelta, maxSpeed, stopThreshold);
+    this.updateUpVelocity(accelerationDelta, maxSpeed, stopThreshold);
 
   }
 
@@ -238,7 +238,7 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    * Updates the camera's pan velocity based on mouse movement.
    * @protected
    */
-  protected updaterotationVelocity() {
+  protected updatePanVelocity() {
     if (Mouse.mouseButtonDown[this.lookMouseButtons.pan]) {
       this._upVelocity += Mouse.mouseMovement.y * this.moveDampening / 2.0;
       this._strafeVelocity += Mouse.mouseMovement.x * this.moveDampening / 2.0;
@@ -303,7 +303,7 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
     const smoothedRotation = quat.create();
     quat.slerp(smoothedRotation, transform.localRotationQuat, finalRotation, this.rotationDampening);
-    transform.setLocalRotationQuat(smoothedRotation);
+    transform.worldRotationQuat = smoothedRotation;
   }
 
   /**
@@ -317,7 +317,7 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
     this.updateMoveVelocity(ellapsed);
     this.updateScrollVelocity();
-    this.updaterotationVelocity();
+    this.updatePanVelocity();
 
     this.applyMovementVelocity(transform, ellapsed);
     this.applyRotationVelocity(transform, ellapsed);
