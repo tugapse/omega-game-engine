@@ -101,6 +101,8 @@ export class Scene extends GlEntity {
     return this._objects.filter(o => o instanceof Light) as Light[];
   }
 
+  public shadowMap? :Texture;
+
   /**
     Creates an instance of Scene.
    */
@@ -201,8 +203,8 @@ export class Scene extends GlEntity {
   }
 
   protected sortByDistance(a: GlEntity, b: GlEntity) {
-    const aD = vec3.distance(a.transform.position, Camera.mainCamera.transform.position);
-    const bD = vec3.distance(b.transform.position, Camera.mainCamera.transform.position);
+    const aD = vec3.distance(a.transform.worldPosition, Camera.mainCamera.transform.worldPosition);
+    const bD = vec3.distance(b.transform.worldPosition, Camera.mainCamera.transform.worldPosition);
     return bD - aD;
   }
 

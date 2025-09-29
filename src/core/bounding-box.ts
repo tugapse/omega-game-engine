@@ -4,6 +4,15 @@ import { JsonSerializable } from "./json-serializable";
  * Represents a 3D bounding box defined by its minimum and maximum coordinates.
  */
 export class BoundingBox extends JsonSerializable {
+  /**
+   * Creates an instance of BoundingBox.
+   * @param {number} min_x - The minimum x-coordinate of the bounding box.
+   * @param {number} max_x - The maximum x-coordinate of the bounding box.
+   * @param {number} min_y - The minimum y-coordinate of the bounding box.
+   * @param {number} max_y - The maximum y-coordinate of the bounding box.
+   * @param {number} min_z - The minimum z-coordinate of the bounding box.
+   * @param {number} max_z - The maximum z-coordinate of the bounding box.
+   */
   constructor(
 
     public min_x: number,
@@ -43,6 +52,13 @@ export class BoundingBox extends JsonSerializable {
  * Represents a 3D bounding sphere defined by its center and radius.
  */
 export class BoundingSphere extends JsonSerializable {
+  /**
+   * Creates an instance of BoundingSphere.
+   * @param {number} x - The x-coordinate of the center of the sphere.
+   * @param {number} y - The y-coordinate of the center of the sphere.
+   * @param {number} z - The z-coordinate of the center of the sphere.
+   * @param {number} radius - The radius of the sphere.
+   */
   constructor(
     public x: number,
     public y: number,

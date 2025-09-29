@@ -20,6 +20,7 @@ import { Vector2, Vector3 } from "../../core";
 
 /**
  * The base class for all renderer behaviours, responsible for drawing meshes to the canvas.
+ * This class handles the core rendering logic, including setting up WebGL states, managing shaders, and drawing meshes.
  * @augments {EntityBehaviour}
  * @implements {IRendererBehaviour}
  */
@@ -38,6 +39,11 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    */
   protected _depthRenderbuffer: WebGLRenderbuffer | null = null;
 
+  /**
+   * A static factory method to create an instance of the `RendererBehaviour`.
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @returns {RendererBehaviour} A new instance of `RendererBehaviour`.
+   */
   static override instanciate(gl: WebGL2RenderingContext) {
     return new RendererBehaviour(gl);
   }
@@ -79,21 +85,57 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    */
   protected _worldInverseTransposeMatrixUniformLocation: WebGLUniformLocation | null = null;
 
+  /**
+   * Determines if face culling is enabled.
+   * @type {boolean}
+   */
   public enableCullFace = true;
+  /**
+   * Determines if depth testing is enabled.
+   * @type {boolean}
+   */
   public enableDephTest = true;
+  /**
+   * Determines if blending is enabled.
+   * @type {boolean}
+   */
   public enableBlend = true;
+  /**
+   * Determines if writing to the depth buffer is enabled.
+   * @type {boolean}
+   */
   public writeToDephBuffer = true;
 
+  /**
+   * The face culling mode.
+   * @type {CullFace}
+   */
   public cullFace: CullFace = CullFace.BACK;
+  /**
+   * The depth testing mode.
+   * @type {DephFunction}
+   */
   public dephMode: DephFunction = DephFunction.Less;
+  /**
+   * The face winding order.
+   * @type {FaceWinding}
+   */
   public faceWinding: FaceWinding = FaceWinding.CounterClockwise;
+  /**
+   * The blending mode.
+   * @type {BlendingMode}
+   */
   public blendMode: BlendingMode = {
     sourcefactor: BlendingSourceFactor.SRC_ALPHA,
     destfactor: BlendingDestinationFactor.ONE_MINUS_SRC_ALPHA
   };
+  /**
+   * The render layer.
+   * @type {RenderLayer}
+   */
   public renderLayer: RenderLayer = RenderLayer.OPAQUE;
 
-
+  public castShadows = true;
 
   /**
    * Creates an instance of RendererBehaviour.
@@ -293,6 +335,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
 
   /**
    * Serializes the renderer's state to a JSON object.
+   * This is used for saving the scene or entity state.
    * @override
    * @returns {JsonSerializedData} The JSON object representation of the renderer.
    */
@@ -306,6 +349,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
 
   /**
    * Deserializes the renderer's state from a JSON object.
+   * This is used for loading a scene or entity state.
    * @override
    * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
    * @returns {void}
@@ -410,9 +454,8 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
     if (!this.mesh || !this.shader?._shaderProgram) {
       return;
     }
-    this.shader.bindBuffers();
     this.shader.use();
-    this.setShaderVariables();
+    this.shader.bindBuffers();
     this._gl.drawElements(this.drawPrimitiveType, this.mesh.meshData.indices.length, this._gl.UNSIGNED_SHORT, 0);
   }
 
@@ -420,18 +463,17 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
   /**
    * Updates the renderer's internal state.
    * @override
-   * @param {number} ellapsed - The time elapsed since the last update in milliseconds.
+   * @param {number} elapsed - The time elapsed since the last update in milliseconds.
    * @returns {void}
    */
-  override update(ellapsed: number): void {
-    super.update(ellapsed);
-    this._time += ellapsed;
+  override update(elapsed: number): void {
+    super.update(elapsed);
+    this._time += elapsed;
   }
 
   /**
    * Sets this object's gl instance.
-   * @override
-   * @param {WebGL2RenderingContext} gl
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
    * @returns {void}
    */
   public setGl(gl: WebGL2RenderingContext) {

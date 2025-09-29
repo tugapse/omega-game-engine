@@ -6,45 +6,58 @@ import { v4 as uuidv4 } from 'uuid';
 import { RenderLayer } from "../enums";
 
 /**
-  The base class for all components that define the behavior of an entity.
+ * Represents the base class for all components that define the behavior of an entity.
+ * This class provides the foundational structure for creating custom scripts that can be attached to entities in the scene.
+ * It includes lifecycle methods such as `initialize`, `update`, and `destroy`, as well as serialization functions.
  * @augments {JsonSerializable}
  */
 export class EntityBehaviour extends JsonSerializable {
 
   /**
-    A static factory method to create an instance of the behaviour.
-    
+   * A static factory method to create an instance of the behaviour.
+   * This method is intended to be overridden by subclasses to provide a way to create instances of the specific behaviour type.
    * @param {any} [args] - Optional arguments for instantiation.
-   * @returns {any}
+   * @returns {EntityBehaviour}
    */
   static instanciate(args?: any): EntityBehaviour { return new EntityBehaviour(); }
   
 
   [key: string]: any;
   /**
-    Indicates whether the behaviour is currently active.
+   * Indicates whether the behaviour is currently active.
+   * An inactive behaviour will not have its `update` method called.
    * @type {boolean}
    */
   public active: boolean = true;
 
+  /**
+   * The render layer this behaviour belongs to.
+   * This is used to determine the rendering order of the entity.
+   * @type {RenderLayer}
+   */
   public renderLayer : RenderLayer = RenderLayer.OPAQUE;
   /**
-    The parent entity to which this behaviour is attached.
+   * The parent entity to which this behaviour is attached.
    * @type {GlEntity}
    */
   public parent!: GlEntity;
   /**
-    A flag indicating if the behaviour has been initialized.
+   * A flag indicating if the behaviour has been initialized.
    * @protected
    * @type {boolean}
    */
   protected _initialized = false;
 
+  /**
+   * The unique identifier for this behaviour instance.
+   * @type {string}
+   */
   public get uuid() { return this._uuid; }
   protected _uuid: string;
 
   /**
-    Gets the transform component of the parent entity.
+   * Gets the transform component of the parent entity.
+   * This provides easy access to the position, rotation, and scale of the entity.
    * @type {Transform}
    */
   public get transform(): Transform {
@@ -52,7 +65,7 @@ export class EntityBehaviour extends JsonSerializable {
   }
 
   /**
-    Creates an instance of EntityBehaviour.
+   * Creates an instance of EntityBehaviour.
    */
   constructor() {
     super("EntityBehaviour");
@@ -60,7 +73,8 @@ export class EntityBehaviour extends JsonSerializable {
   }
 
   /**
-    Initializes the behaviour.
+   * Initializes the behaviour.
+   * This method is called once when the behaviour is first added to an entity.
    * @returns {boolean} - True if initialization is successful.
    */
   public initialize(): boolean {
@@ -68,29 +82,34 @@ export class EntityBehaviour extends JsonSerializable {
   }
 
   /**
-    Updates the behaviour every frame.
-   * @param {number} ellapsed - The time elapsed since the last frame in milliseconds.
+   * Updates the behaviour every frame.
+   * This method is called on every frame for active behaviours.
+   * @param {number} elapsed - The time elapsed since the last frame in seconds.
    */
-  public update(ellapsed: number): void { }
+  public update(elapsed: number): void { }
 
   /**
-    Updates the behaviour specifically for editor mode.
-   * @param {number} ellapsed - The time elapsed since the last frame in milliseconds.
+   * Updates the behaviour specifically for editor mode.
+   * This method is called on every frame when the engine is in editor mode.
+   * @param {number} elapsed - The time elapsed since the last frame in seconds.
    */
-  public updateEditor(ellapsed: number): void { }
+  public updateEditor(elapsed: number): void { }
 
   /**
-    Draws any visual representation of the behaviour.
+   * Draws any visual representation of the behaviour.
+   * This is often used for debugging purposes, such as drawing bounding boxes or other gizmos.
    */
   public draw(): void { }
 
   /**
-    Cleans up resources used by the behaviour.
+   * Cleans up resources used by the behaviour.
+   * This method is called when the behaviour is about to be destroyed.
    */
   public destroy(): void { }
 
   /**
-    Serializes the behaviour's state to a JSON object.
+   * Serializes the behaviour's state to a JSON object.
+   * This is used for saving the scene or entity state.
    * @override
    * @returns {JsonSerializedData} - The JSON object representation.
    */
@@ -103,7 +122,8 @@ export class EntityBehaviour extends JsonSerializable {
   }
 
   /**
-    Deserializes the behaviour's state from a JSON object.
+   * Deserializes the behaviour's state from a JSON object.
+   * This is used for loading a scene or entity state.
    * @override
    * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
    */
@@ -114,7 +134,8 @@ export class EntityBehaviour extends JsonSerializable {
   }
 
   /**
-    Creates a clone of the behaviour.
+   * Creates a clone of the behaviour.
+   * This method should be overridden by subclasses to implement deep cloning of the behaviour.
    * @returns {EntityBehaviour | null} - A new instance of the behaviour or null if not implemented.
    */
   public clone(): EntityBehaviour | null {

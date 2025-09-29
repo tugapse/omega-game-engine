@@ -128,6 +128,20 @@ export class Shader extends JsonSerializable {
   };
 
   /**
+   * The source code for the fragment shader.
+   * If provided, this will be used instead of fetching from `fragUri`.
+   * @type {string | null}
+   */
+  public fragmentSource: string | null = null;
+
+  /**
+   * The source code for the vertex shader.
+   * If provided, this will be used instead of fetching from `vertexUri`.
+   * @type {string | null}
+   */
+  public vertexSource: string | null = null;
+
+  /**
     Creates an instance of Shader.
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
    * @param {ColorMaterial} material - The material associated with this shader.
@@ -154,9 +168,9 @@ export class Shader extends JsonSerializable {
     }
     const keys: string[] = Object.keys(Shader.SHADER_FUNCTIONS);
 
-    let vsSource = await EngineCache.loadShaderSource(this.vertexUri);
-    let fsSource = await EngineCache.loadShaderSource(this.fragUri);
-
+    let vsSource = this.vertexSource ?? await EngineCache.loadShaderSource(this.vertexUri);
+    let fsSource = this.fragmentSource ?? await EngineCache.loadShaderSource(this.fragUri);
+    // replace keys by shader code
     for (const obkey of keys) {
       if (fsSource.includes(obkey)) {
         const url: string = Shader.SHADER_FUNCTIONS[obkey] as string;
@@ -269,7 +283,7 @@ export class Shader extends JsonSerializable {
       this.gl.disableVertexAttribArray(normalAttributeLocation);
     }
 
-    const uvAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, 'a_uv');
+    const uvAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, ShaderUniformsEnum.A_UV);
     if (this._buffers.uv && uvAttributeLocation !== -1) {
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this._buffers.uv);
       this.gl.vertexAttribPointer(uvAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
@@ -311,7 +325,7 @@ export class Shader extends JsonSerializable {
     }
     this.gl.useProgram(this._shaderProgram);
   }
-   
+
   public release(): void { }
 
 
@@ -324,7 +338,7 @@ export class Shader extends JsonSerializable {
     const material = this.material as ColorMaterial;
     if (material)
       this.setVec4(ShaderUniformsEnum.U_MAT_COLOR, material.color.toVec4());
- 
+
   }
 
   /**
@@ -404,6 +418,14 @@ export class Shader extends JsonSerializable {
       this.gl.uniform1f(location, num);
     }
   }
+
+  setInt(name: string, num: number) {
+    const location = this.gl.getUniformLocation(this._shaderProgram, name);
+    if (location) {
+      this.gl.uniform1i(location, num);
+    }
+  }
+
 
   /**
     Sets a texture uniform in the shader.

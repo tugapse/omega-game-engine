@@ -5,41 +5,47 @@ import { JsonSerializedData } from "../../interfaces/json-serialized-data.interf
 import { TexturedRendererBehaviour } from "./textured-renderer-behaviour";
 
 /**
-  A specialized renderer for drawing a skybox.
+ * A specialized renderer for drawing a skybox.
+ * This class extends `TexturedRendererBehaviour` and is responsible for rendering a large cube with a cubemap texture, creating the illusion of a sky and distant background.
  * @augments {TexturedRendererBehaviour}
  */
 export class SkyboxRenderer extends TexturedRendererBehaviour {
   /**
-    Creates a new instance of the SkyboxRenderer.
+   * Creates a new instance of the SkyboxRenderer.
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
    * @override
-    
    * @returns {SkyboxRenderer}
    */
   static override instanciate(gl: WebGL2RenderingContext): SkyboxRenderer {
     return new SkyboxRenderer(gl);
   }
 
+  /**
+   * Creates an instance of SkyboxRenderer.
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   */
   constructor(gl:WebGL2RenderingContext){
     super(gl);
     this._className = "SkyboxRenderer";
   }
   /**
-    Initializes the skybox renderer.
+   * Initializes the skybox renderer.
+   * This method sets the initial transform of the skybox to be large enough to encompass the entire scene.
    * @override
    * @returns {boolean} - True if initialization is successful, otherwise false.
    */
   override initialize(): boolean {
     if (super.initialize()) {
-      this.transform.setPosition(0, 0, 0);
-      this.transform.setScale(1000, 1000, 1000);
+      this.transform.setLocalPosition(0, 0, 0);
+      this.transform.setLocalScale(1000, 1000, 1000);
       return true;
     }
     return false;
   }
 
   /**
-    Sets the specific WebGL settings for rendering the skybox.
+   * Sets the specific WebGL settings for rendering the skybox.
+   * This method ensures that the skybox is rendered correctly by culling the front faces and using the LEQUAL depth function.
    * @protected
    * @override
    */
@@ -49,7 +55,8 @@ export class SkyboxRenderer extends TexturedRendererBehaviour {
   }
 
   /**
-    Draws the skybox mesh.
+   * Draws the skybox mesh.
+   * This method binds the shader and buffers, sets the shader variables, and draws the skybox.
    * @override
    */
   override draw(): void {
@@ -69,7 +76,8 @@ export class SkyboxRenderer extends TexturedRendererBehaviour {
   }
 
   /**
-    Sets the camera matrices for the skybox, ensuring the skybox remains centered on the camera.
+   * Sets the camera matrices for the skybox, ensuring the skybox remains centered on the camera.
+   * This is achieved by using a view matrix that has had its translation component removed.
    * @override
    */
   override setCameraMatrices(): void {
@@ -93,7 +101,8 @@ export class SkyboxRenderer extends TexturedRendererBehaviour {
   }
 
   /**
-    Sets all shader variables required for rendering the skybox.
+   * Sets all shader variables required for rendering the skybox.
+   * This method sets the GL settings, camera matrices, and loads the shader data.
    * @override
    */
   override setShaderVariables(): void {
@@ -108,7 +117,8 @@ export class SkyboxRenderer extends TexturedRendererBehaviour {
   }
 
   /**
-    Populates the renderer's properties from a JSON object.
+   * Populates the renderer's properties from a JSON object.
+   * This method is a placeholder and does not add any additional functionality beyond the base class.
    * @param {JsonSerializedData} jsonObject - The JSON object containing the data.
    * @override
    */

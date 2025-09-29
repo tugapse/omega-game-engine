@@ -99,6 +99,19 @@ export class Texture extends JsonSerializable {
    * @type {boolean}
    */
   protected _isBound: boolean = false;
+  /**
+   * The width of the texture in pixels.
+   * @protected
+   * @type {number}
+   */
+  protected _width: number = 0;
+
+  /**
+   * The height of the texture in pixels.
+   * @protected
+   * @type {number}
+   */
+  protected _height: number = 0;
 
   /**
    * Creates an instance of Texture.
@@ -116,6 +129,49 @@ export class Texture extends JsonSerializable {
    */
   public setGL(gl: WebGL2RenderingContext): void {
     this.gl = gl;
+  }
+    /**
+   * Creates a new texture specifically for depth information (e.g., for shadow mapping).
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @param {number} width - The width of the texture.
+   * @param {number} height - The height of the texture.
+   * @returns {Texture} A new Texture instance configured as a depth texture.
+   */
+  public static createDepthTexture(gl: WebGL2RenderingContext, width: number, height: number): Texture {
+    const texture = gl.createTexture();
+    if (!texture) {
+      console.error("Failed to create WebGL depth texture.");
+      return new Texture(gl);
+    }
+    gl.bindTexture(TextureTarget.TEXTURE_2D, texture);
+
+    // Use a depth-specific internal format
+    gl.texImage2D(
+      TextureTarget.TEXTURE_2D,
+      0,
+      gl.DEPTH_COMPONENT32F, // Internal format for depth (e.g., 32-bit float)
+      width,
+      height,
+      0,
+      gl.DEPTH_COMPONENT, // Format of the data you're providing
+      gl.FLOAT,           // Type of the data
+      null // No initial data
+    );
+
+    // Set filtering and wrapping modes suitable for a depth map
+    gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MIN_FILTER, TextureFilterMode.NEAREST);
+    gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MAG_FILTER, TextureFilterMode.NEAREST);
+    gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_S, TextureWrapMode.CLAMP_TO_EDGE);
+    gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_T, TextureWrapMode.CLAMP_TO_EDGE);
+
+    gl.bindTexture(TextureTarget.TEXTURE_2D, null);
+
+    const result = new Texture(gl);
+    result._glTexture = texture;
+    result._isLoaded = true;
+    result._width = width;
+    result._height = height;
+    return result;
   }
 
   /**
@@ -156,6 +212,8 @@ export class Texture extends JsonSerializable {
     const result = new Texture(gl);
     result._glTexture = texture;
     result._isLoaded = true;
+    result._width = width;
+    result._height = height;
     return result;
   }
 
@@ -174,6 +232,8 @@ export class Texture extends JsonSerializable {
       this._image = new Image();
       this._image.onload = () => {
         this._isLoaded = true;
+        this._width = this._image!.width;
+        this._height = this._image!.height;
         if (this.gl) {
           this.createGLTexture(this.gl);
         }
@@ -422,6 +482,24 @@ export class Texture extends JsonSerializable {
    */
   public get isImageLoaded(): boolean {
     return this._isLoaded;
+  }
+
+  /**
+   * Gets the width of the texture.
+   * @readonly
+   * @type {number}
+   */
+  public get width(): number {
+    return this._width;
+  }
+
+  /**
+   * Gets the height of the texture.
+   * @readonly
+   * @type {number}
+   */
+  public get height(): number {
+    return this._height;
   }
 
   /**

@@ -3,41 +3,40 @@ import { JsonSerializable } from "./json-serializable";
 import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 
 /**
-  A class representing a color using RGBA values, backed by a gl-matrix vec4.
+ * A class representing a color using RGBA values, backed by a gl-matrix vec4.
+ * This class provides methods for manipulating and converting colors.
  * @augments {JsonSerializable}
  */
 export class Color extends JsonSerializable {
 
   public static get className() { return "Color"; }
   /**
-    Creates a new Color instance from a JSON data object.
-    
+   * Creates a new Color instance from a JSON data object.
    * @param {JsonSerializedData} jsonData - The JSON object to deserialize from.
    * @returns {Color} - A new Color instance.
    */
   public static createFromJsonData(jsonData: JsonSerializedData): Color {
     const color = new Color();
     color.fromJson(jsonData);
-    debugger
     return color;
   }
 
   /**
-    The internal vector storing the color components.
+   * The internal vector storing the color components.
    * @private
    * @type {vec4}
    */
   private vector: vec4;
 
   /**
-    Gets the red component of the color.
+   * Gets the red component of the color.
    * @type {number}
    */
   public get r(): number {
     return this.vector[0];
   }
   /**
-    Sets the red component of the color.
+   * Sets the red component of the color.
    * @param {number} value - The new red value.
    */
   public set r(value: number) {
@@ -45,14 +44,14 @@ export class Color extends JsonSerializable {
   }
 
   /**
-    Gets the green component of the color.
+   * Gets the green component of the color.
    * @type {number}
    */
   public get g(): number {
     return this.vector[1];
   }
   /**
-    Sets the green component of the color.
+   * Sets the green component of the color.
    * @param {number} value - The new green value.
    */
   public set g(value: number) {
@@ -60,14 +59,14 @@ export class Color extends JsonSerializable {
   }
 
   /**
-    Gets the blue component of the color.
+   * Gets the blue component of the color.
    * @type {number}
    */
   public get b(): number {
     return this.vector[2];
   }
   /**
-    Sets the blue component of the color.
+   * Sets the blue component of the color.
    * @param {number} value - The new blue value.
    */
   public set b(value: number) {
@@ -75,14 +74,14 @@ export class Color extends JsonSerializable {
   }
 
   /**
-    Gets the alpha component of the color.
+   * Gets the alpha component of the color.
    * @type {number}
    */
   public get a(): number {
     return this.vector[3];
   }
   /**
-    Sets the alpha component of the color.
+   * Sets the alpha component of the color.
    * @param {number} value - The new alpha value.
    */
   public set a(value: number) {
@@ -90,7 +89,7 @@ export class Color extends JsonSerializable {
   }
 
   /**
-    Creates an instance of Color.
+   * Creates an instance of Color.
    * @param {number} [r=1] - The red component.
    * @param {number} [g=1] - The green component.
    * @param {number} [b=1] - The blue component.
@@ -102,7 +101,7 @@ export class Color extends JsonSerializable {
   }
 
   /**
-    Serializes the color's state to a JSON object.
+   * Serializes the color's state to a JSON object.
    * @override
    * @returns {JsonSerializedData} - The JSON object representation.
    */
@@ -117,7 +116,7 @@ export class Color extends JsonSerializable {
   }
 
   /**
-    Deserializes the color's state from a JSON object.
+   * Deserializes the color's state from a JSON object.
    * @override
    * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
    */
@@ -129,7 +128,7 @@ export class Color extends JsonSerializable {
   }
 
   /**
-    Converts the color to a gl-matrix vec3.
+   * Converts the color to a gl-matrix vec3.
    * @returns {vec3} - A new vec3 containing the RGB components.
    */
   public toVec3(): vec3 {
@@ -137,7 +136,7 @@ export class Color extends JsonSerializable {
   }
 
   /**
-    Returns the internal gl-matrix vec4.
+   * Returns the internal gl-matrix vec4.
    * @returns {vec4} - The vec4 containing the RGBA components.
    */
   public toVec4(): vec4 {
@@ -145,7 +144,7 @@ export class Color extends JsonSerializable {
   }
 
   /**
-    Creates a new Color instance with the same values.
+   * Creates a new Color instance with the same values.
    * @returns {Color} - A cloned Color instance.
    */
   public clone(): Color {
@@ -153,7 +152,7 @@ export class Color extends JsonSerializable {
   }
 
   /**
-    Sets the RGBA values of the color.
+   * Sets the RGBA values of the color.
    * @param {number} [r=1] - The red component.
    * @param {number} [g=1] - The green component.
    * @param {number} [b=1] - The blue component.
