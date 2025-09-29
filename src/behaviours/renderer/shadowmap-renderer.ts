@@ -147,7 +147,7 @@ export class ShadowMapRenderer extends TexturedRendererBehaviour {
       mat4.multiply(lightMvpMatrix, lightMvpMatrix, transform.modelMatrix); // Now it's LightProjection * LightView * Model
 
       // Set the final combined matrix on the DEPTH shader.
-      this.depthShader.setMat4("u_mvpMatrix", lightMvpMatrix);
+      this.depthShader.setMat4(ShaderUniformsEnum.U_MVP_MATRIX, lightMvpMatrix);
     }
   }
 
@@ -160,8 +160,8 @@ export class ShadowMapRenderer extends TexturedRendererBehaviour {
    * @protected
    */
   protected sortByDistance(a: GlEntity, b: GlEntity) {
-    const aD = vec3.distance(a.transform.position, this.transform.position);
-    const bD = vec3.distance(b.transform.position, this.transform.position);
+    const aD = vec3.distance(a.transform.worldPosition, this.transform.worldPosition);
+    const bD = vec3.distance(b.transform.worldPosition, this.transform.worldPosition);
     return  bD-aD;
   }
 

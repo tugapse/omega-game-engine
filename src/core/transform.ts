@@ -127,41 +127,143 @@ export class Transform extends JsonSerializable {
   public get modelMatrix(): mat4 {
     return this._modelMatrix;
   }
+
+  // --- Local Space ---
+
   /**
-   * Gets the local position.
+   * Gets the position of the transform relative to its parent.
    * @type {vec3}
    */
-  public get position(): vec3 {
+  public get localPosition(): vec3 {
     return this._position;
   }
+
   /**
-   * Gets the world position from the model matrix.
+   * Gets the rotation of the transform in Euler angles (degrees), relative to its parent.
    * @type {vec3}
    */
-  public get worldPosition(): vec3 {
-    return vec3.fromValues(this._modelMatrix[12], this._modelMatrix[13], this._modelMatrix[14]);
-  }
-  /**
-   * Gets the rotation in degrees.
-   * @type {vec3}
-   */
-  public get rotation(): vec3 {
+  public get localRotation(): vec3 {
     return this._rotationInDegrees;
   }
+
   /**
-   * Gets the rotation as a quaternion.
+   * Gets the rotation of the transform as a quaternion, relative to its parent.
    * @type {quat}
    */
-  public get rotationInRadians(): quat {
-    return this._rotation;
+  public get localRotationQuat(): quat {
+    return quat.clone(this._rotation);
   }
+
   /**
-   * Gets the local scale.
+   * Gets the scale of the transform, relative to its parent.
    * @type {vec3}
    */
   public get localScale(): vec3 {
     return this._scale;
   }
+
+  // --- World Space ---
+
+  /**
+   * Gets the absolute world-space position of the transform.
+   * @type {vec3}
+   */
+  public get worldPosition(): vec3 {
+    const out = vec3.create();
+    mat4.getTranslation(out, this._modelMatrix);
+    return out;
+  }
+
+  /**
+   * Sets the absolute world-space position of the transform.
+   * @param {vec3} newWorldPosition - The new position in world coordinates.
+   */
+  public set worldPosition(newWorldPosition: vec3) {
+    if (this._parent) {
+      const parentWorld = this._parent.modelMatrix;
+      const invParentWorld = mat4.create();
+      mat4.invert(invParentWorld, parentWorld);
+      vec3.transformMat4(this._position, newWorldPosition, invParentWorld);
+    } else {
+      vec3.copy(this._position, newWorldPosition);
+    }
+    this._dirty = true;
+  }
+
+  /**
+   * Gets the absolute world-space rotation of the transform as a quaternion.
+   * @type {quat}
+   */
+  public get worldRotationQuat(): quat {
+    const out = quat.create();
+    mat4.getRotation(out, this._modelMatrix);
+    return out;
+  }
+
+  /**
+   * Sets the absolute world-space rotation of the transform using a quaternion.
+   * @param {quat} newWorldRotation - The new rotation in world coordinates.
+   */
+  public set worldRotationQuat(newWorldRotation: quat) {
+    if (this._parent) {
+      const parentWorldRot = this._parent.worldRotationQuat;
+      const invParentWorldRot = quat.create();
+      quat.invert(invParentWorldRot, parentWorldRot);
+      quat.multiply(this._rotation, invParentWorldRot, newWorldRotation);
+    } else {
+      quat.copy(this._rotation, newWorldRotation);
+    }
+    this.updateEulerFromQuat();
+  }
+
+  /**
+   * Gets the absolute world-space rotation of the transform in Euler angles (degrees).
+   * @type {vec3}
+   */
+  public get worldRotation(): vec3 {
+    const euler = vec3.create();
+    toEuler(euler, this.worldRotationQuat);
+    vec3.scale(euler, euler, 180 / Math.PI);
+    return euler;
+  }
+
+  /**
+   * Sets the absolute world-space rotation of the transform using Euler angles (degrees).
+   * @param {vec3} newWorldRotation - The new rotation in world coordinates.
+   */
+  public set worldRotation(newWorldRotation: vec3) {
+    const q = quat.create();
+    quat.fromEuler(q, newWorldRotation[0], newWorldRotation[1], newWorldRotation[2]);
+    this.worldRotationQuat = q;
+  }
+
+  /**
+   * Gets the absolute world-space scale of the transform.
+   * Note: This can be affected by the scale of parent objects.
+   * @type {vec3}
+   */
+  public get worldScale(): vec3 {
+    const out = vec3.create();
+    mat4.getScaling(out, this._modelMatrix);
+    return out;
+  }
+
+  /**
+   * Sets the absolute world-space scale of the transform.
+   * @param {vec3} newWorldScale - The new scale in world coordinates.
+   */
+  public set worldScale(newWorldScale: vec3) {
+    if (this._parent) {
+      const parentWorldScale = this._parent.worldScale;
+      this._scale[0] = newWorldScale[0] / parentWorldScale[0];
+      this._scale[1] = newWorldScale[1] / parentWorldScale[1];
+      this._scale[2] = newWorldScale[2] / parentWorldScale[2];
+    } else {
+      vec3.copy(this._scale, newWorldScale);
+    }
+    this._dirty = true;
+  }
+
   /**
    * Gets the parent transform.
    * @type {Transform | null}
@@ -171,14 +273,14 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-   * Sets the local position of the transform.
+   * Sets the position of the transform relative to its parent.
    * @param {number} [x=0] - The x-coordinate.
    * @param {number} [y=0] - The y-coordinate.
    * @param {number} [z=0] - The z-coordinate.
    * @returns {void}
    */
-  public setPosition(x: number = 0, y: number = 0, z: number = 0): void {
-    vec3.set(this._position, x, y, z);
+  public setLocalPosition(x: number = 0, y: number = 0, z: number = 0): void {
+    vec3.set(this.localPosition, x, y, z);
     this._dirty = true;
   }
 
@@ -189,22 +291,56 @@ export class Transform extends JsonSerializable {
    * @param {number} [zDegrees=0] - The rotation around the z-axis in degrees.
    * @returns {void}
    */
-  public setRotation(xDegrees: number = 0, yDegrees: number = 0, zDegrees: number = 0): void {
-    vec3.set(this._rotationInDegrees, xDegrees, yDegrees, zDegrees);
-    quat.fromEuler(this._rotation, xDegrees, yDegrees, zDegrees);
+  public setLocalRotation(xDegrees: number = 0, yDegrees: number = 0, zDegrees: number = 0): void {
+    vec3.set(this.localRotation, xDegrees, yDegrees, zDegrees);
+    quat.fromEuler(this.localRotationQuat, xDegrees, yDegrees, zDegrees);
     this._dirty = true;
   }
 
   /**
-   * Sets the local scale of the transform.
+   * Sets the scale of the transform relative to its parent.
    * @param {number} [x=1] - The scale factor for the x-axis.
    * @param {number} [y=1] - The scale factor for the y-axis.
    * @param {number} [z=1] - The scale factor for the z-axis.
    * @returns {void}
    */
-  public setScale(x: number = 1, y: number = 1, z: number = 1): void {
-    vec3.set(this._scale, x, y, z);
+  public setLocalScale(x: number = 1, y: number = 1, z: number = 1): void {
+    vec3.set(this.localScale, x, y, z);
     this._dirty = true;
+  }
+
+  /**
+   * Sets the absolute world-space position of the transform.
+   * @param {number} [x=0] - The x-coordinate in world space.
+   * @param {number} [y=0] - The y-coordinate in world space.
+   * @param {number} [z=0] - The z-coordinate in world space.
+   * @returns {void}
+   */
+  public setWorldPosition(x: number = 0, y: number = 0, z: number = 0): void {
+    this.worldPosition = vec3.fromValues(x, y, z);
+  }
+
+  /**
+   * Sets the absolute world-space rotation of the transform using Euler angles (degrees).
+   * @param {number} [xDegrees=0] - The rotation around the x-axis in degrees.
+   * @param {number} [yDegrees=0] - The rotation around the y-axis in degrees.
+   * @param {number} [zDegrees=0] - The rotation around the z-axis in degrees.
+   * @returns {void}
+   */
+  public setWorldRotation(xDegrees: number = 0, yDegrees: number = 0, zDegrees: number = 0): void {
+    this.worldRotation = vec3.fromValues(xDegrees, yDegrees, zDegrees);
+  }
+
+  /**
+   * Sets the absolute world-space scale of the transform.
+   * Note: This can behave unexpectedly if the parent has a non-uniform scale.
+   * @param {number} [x=1] - The scale factor for the x-axis.
+   * @param {number} [y=1] - The scale factor for the y-axis.
+   * @param {number} [z=1] - The scale factor for the z-axis.
+   * @returns {void}
+   */
+  public setWorldScale(x: number = 1, y: number = 1, z: number = 1): void {
+    this.worldScale = vec3.fromValues(x, y, z);
   }
 
   /**
@@ -215,7 +351,7 @@ export class Transform extends JsonSerializable {
    * @returns {void}
    */
   public translate(x: number = 0, y: number = 0, z: number = 0): void {
-    vec3.add(this._position, this._position, vec3.fromValues(x, y, z));
+    vec3.add(this.localPosition, this.localPosition, vec3.fromValues(x, y, z));
     this._dirty = true;
   }
 
@@ -227,7 +363,7 @@ export class Transform extends JsonSerializable {
    * @returns {void}
    */
   public rotate(xDegrees: number = 0, yDegrees: number = 0, zDegrees: number = 0): void {
-    vec3.add(this._rotationInDegrees, this._rotationInDegrees, vec3.fromValues(xDegrees, yDegrees, zDegrees));
+    vec3.add(this.localRotation, this.localRotation, vec3.fromValues(xDegrees, yDegrees, zDegrees));
     const rotationToAdd = quat.create();
     quat.fromEuler(rotationToAdd, xDegrees, yDegrees, zDegrees);
     quat.multiply(this._rotation, this._rotation, rotationToAdd);
@@ -242,7 +378,7 @@ export class Transform extends JsonSerializable {
    * @returns {void}
    */
   public scale(x: number = 1, y: number = 1, z: number = 1): void {
-    vec3.multiply(this._scale, this._scale, vec3.fromValues(x, y, z));
+    vec3.multiply(this.localScale, this.localScale, vec3.fromValues(x, y, z));
     this._dirty = true;
   }
 
@@ -253,7 +389,7 @@ export class Transform extends JsonSerializable {
    */
   public updateMatrices(): void {
     if (this._dirty) {
-      mat4.fromRotationTranslationScale(this._localMatrix, this._rotation, this._position, this._scale);
+      mat4.fromRotationTranslationScale(this._localMatrix, this._rotation, this.localPosition, this.localScale);
       if (this._parent) {
         mat4.multiply(this._modelMatrix, this._parent.modelMatrix, this._localMatrix);
       } else {
@@ -337,10 +473,10 @@ export class Transform extends JsonSerializable {
    * @returns {void}
    */
   public lookAt(target: vec3, worldUp?: vec3): void {
-    const defaultWorldUp = vec3.fromValues(0, 1, 0);
-    const effectiveUp = worldUp || defaultWorldUp;
     const tempViewMatrix = mat4.create();
-    mat4.lookAt(tempViewMatrix, this._position, target, effectiveUp);
+    mat4.targetTo(tempViewMatrix, this.worldPosition, target, worldUp || vec3.fromValues(0, 1, 0));
+    this.worldRotationQuat = mat4.getRotation(quat.create(), tempViewMatrix);
+    /*
     const tempModelMatrix = mat4.create();
     mat4.invert(tempModelMatrix, tempViewMatrix);
     mat4.getRotation(this._rotation, tempModelMatrix);
@@ -352,6 +488,7 @@ export class Transform extends JsonSerializable {
     const euler = vec3.create();
     toEuler(euler, this._rotation);
     vec3.scale(this._rotationInDegrees, euler, 180 / Math.PI);
+    */
     this._dirty = true;
   }
 
@@ -365,9 +502,9 @@ export class Transform extends JsonSerializable {
       ...super.toJsonObject(),
       uuid: this.uuid,
       parent: this.parent?.uuid,
-      position: [this._position[0], this._position[1], this._position[2]],
-      rotation: [this._rotationInDegrees[0], this._rotationInDegrees[1], this._rotationInDegrees[2]],
-      scale: [this._scale[0], this._scale[1], this._scale[2]],
+      position: [this.localPosition[0], this.localPosition[1], this.localPosition[2]],
+      rotation: [this.localRotation[0], this.localRotation[1], this.localRotation[2]],
+      scale: [this.localScale[0], this.localScale[1], this.localScale[2]],
     };
   }
 
@@ -379,9 +516,9 @@ export class Transform extends JsonSerializable {
    */
   public override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
-    this.setPosition(jsonObject['position'][0], jsonObject['position'][1], jsonObject['position'][2]);
-    this.setRotation(jsonObject['rotation'][0], jsonObject['rotation'][1], jsonObject['rotation'][2]);
-    this.setScale(jsonObject['scale'][0], jsonObject['scale'][1], jsonObject['scale'][2]);
+    this.setLocalPosition(jsonObject['position'][0], jsonObject['position'][1], jsonObject['position'][2]);
+    this.setLocalRotation(jsonObject['rotation'][0], jsonObject['rotation'][1], jsonObject['rotation'][2]);
+    this.setLocalScale(jsonObject['scale'][0], jsonObject['scale'][1], jsonObject['scale'][2]);
     this._dirty = true;
   }
 
@@ -391,10 +528,8 @@ export class Transform extends JsonSerializable {
    * @returns {void}
    */
   public rotateByQuat(q: quat): void {
-    quat.multiply(this._rotation, q, this._rotation);
-    const euler = vec3.create();
-    toEuler(euler, this._rotation);
-    vec3.scale(this._rotationInDegrees, euler, 180 / Math.PI);
+    quat.multiply(this.localRotationQuat, q, this.localRotationQuat);
+    this.updateEulerFromQuat();
     this._dirty = true;
   }
 
@@ -408,23 +543,28 @@ export class Transform extends JsonSerializable {
   }
 
   /**
-   * Provides a clone of the internal rotation quaternion.
-   * @type {quat}
-   */
-  public get rotationQuat(): quat {
-    return quat.clone(this._rotation);
-  }
-
-  /**
-   * Sets the internal rotation quaternion and updates the Euler angles and dirty flag.
+   * Sets the local rotation of the transform using a quaternion.
    * @param {quat} newRotation - The new rotation quaternion.
    * @returns {void}
    */
-  public setRotationQuat(newRotation: quat): void {
-    quat.copy(this._rotation, newRotation);
-    const euler = vec3.create();
-    toEuler(euler, this._rotation);
-    vec3.scale(this._rotationInDegrees, euler, 180 / Math.PI);
+  public setLocalRotationQuat(newRotation: quat): void {
+    quat.copy(this.localRotationQuat, newRotation);
+    this.updateEulerFromQuat();
     this._dirty = true;
   }
+
+  /**
+   * Updates the internal Euler angle representation from the quaternion.
+   * @private
+   */
+  private updateEulerFromQuat(): void {
+    const euler = vec3.create();
+    toEuler(euler, this.localRotationQuat);
+    vec3.scale(this.localRotation, euler, 180 / Math.PI);
+  }
 }
+
+// Legacy property names for backward compatibility
+Object.defineProperty(Transform.prototype, "position", { get: function() { return this.localPosition; } });
+Object.defineProperty(Transform.prototype, "rotation", { get: function() { return this.localRotation; } });
+Object.defineProperty(Transform.prototype, "rotationQuat", { get: function() { return this.localRotationQuat; } });

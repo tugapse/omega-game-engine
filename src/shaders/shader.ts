@@ -283,7 +283,7 @@ export class Shader extends JsonSerializable {
       this.gl.disableVertexAttribArray(normalAttributeLocation);
     }
 
-    const uvAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, 'a_uv');
+    const uvAttributeLocation = this.gl.getAttribLocation(this._shaderProgram, ShaderUniformsEnum.A_UV);
     if (this._buffers.uv && uvAttributeLocation !== -1) {
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this._buffers.uv);
       this.gl.vertexAttribPointer(uvAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);

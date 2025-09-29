@@ -36,8 +36,8 @@ export class SkyboxRenderer extends TexturedRendererBehaviour {
    */
   override initialize(): boolean {
     if (super.initialize()) {
-      this.transform.setPosition(0, 0, 0);
-      this.transform.setScale(1000, 1000, 1000);
+      this.transform.setLocalPosition(0, 0, 0);
+      this.transform.setLocalScale(1000, 1000, 1000);
       return true;
     }
     return false;

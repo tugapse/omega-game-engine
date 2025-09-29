@@ -302,8 +302,8 @@ export class CameraFlyBehaviour extends EntityBehaviour {
     quat.multiply(finalRotation, yawQuat, pitchQuat);
 
     const smoothedRotation = quat.create();
-    quat.slerp(smoothedRotation, transform.rotationQuat, finalRotation, this.rotationDampening);
-    transform.setRotationQuat(smoothedRotation);
+    quat.slerp(smoothedRotation, transform.localRotationQuat, finalRotation, this.rotationDampening);
+    transform.setLocalRotationQuat(smoothedRotation);
   }
 
   /**

@@ -270,7 +270,7 @@ export class SpotLight extends Light {
    * @type {vec3}
    */
   public get direction(): vec3 {
-    return this.transform.rotation;
+    return this.transform.worldRotation;
   }
 
   /**

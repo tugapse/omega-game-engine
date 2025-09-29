@@ -131,7 +131,7 @@ export class TexturedRendererBehaviour extends RendererBehaviour {
     // 2. Determine the center of the light's view frustum.
     // It is centered on the camera's position for consistent shadow coverage.
     const frustumCenter = vec3.create();
-    vec3.copy(frustumCenter, cameraTransform.position);
+    vec3.copy(frustumCenter, cameraTransform.worldPosition);
 
     // 3. Create the light's eye position by offsetting it from the frustum center.
     const lightPosition = vec3.create();
@@ -297,7 +297,7 @@ export class TexturedRendererBehaviour extends RendererBehaviour {
     const spotQuadraticAttsFlat: number[] = [];
 
     spotLights.forEach((light) => {
-      spotPositionsFlat.push(...light.transform.position);
+      spotPositionsFlat.push(...light.transform.worldPosition);
       const normalizedDir = vec3.normalize(vec3.create(), light.direction);
       spotDirectionsFlat.push(...normalizedDir);
       spotColorsFlat.push(...light.color.toVec3());
@@ -371,7 +371,7 @@ export class TexturedRendererBehaviour extends RendererBehaviour {
     const pointQuadraticAttsFlat: number[] = [];
 
     pointLights.forEach((light) => {
-      pointPositionsFlat.push(...light.transform.position);
+      pointPositionsFlat.push(...light.transform.worldPosition );
       pointColorsFlat.push(...light.color.toVec3());
       pointConstAttsFlat.push(light.attenuation.constant);
       pointLinearAttsFlat.push(light.attenuation.linear);

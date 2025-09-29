@@ -131,7 +131,7 @@ export class Camera extends GlEntity {
    * @returns {void}
    */
   private updateViewMatrix(): void {
-    const cameraPosition = this.transform.position;
+    const cameraPosition = this.transform.worldPosition;
     const lookAtTarget = vec3.add(vec3.create(), cameraPosition, this.transform.forward);
     const cameraUp = this.transform.up;
     mat4.lookAt(this._viewMatrix, cameraPosition, lookAtTarget, cameraUp);
