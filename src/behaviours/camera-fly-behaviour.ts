@@ -149,6 +149,11 @@ export class CameraFlyBehaviour extends EntityBehaviour {
     this._className = "CameraFlyBehaviour";
   }
 
+  override initialize(): boolean {
+    this._currentPitch = this.transform.localRotation[0];
+    this._currentYaw = this.transform.localRotation[1];
+    return super.initialize();
+  }
   /**
    * Updates the camera's state based on input.
    * @param {number} ellapsed - The time elapsed since the last update in seconds.

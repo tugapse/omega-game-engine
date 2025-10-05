@@ -70,6 +70,7 @@ export class ShadowMapRenderer extends TexturedRendererBehaviour {
       "assets/shaders/frag/depth-only.frag",
       "assets/shaders/vertex/shadow-caster.vert"
     );
+    debugger
     this.depthShader.initialize();
 
     // This renderer doesn't draw a mesh itself, so its mesh data is empty.

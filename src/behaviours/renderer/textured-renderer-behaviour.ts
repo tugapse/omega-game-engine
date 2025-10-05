@@ -83,20 +83,22 @@ export class TexturedRendererBehaviour extends RendererBehaviour {
 
 
 
-    if (this.shadowMapTexture && this.shadowMapTexture.glTexture) {
-      // Get the Light entity (assuming there is only one directional light for shadows)
-      const lightEntity = this.parent.scene.lights.find(obj => obj.entityType === EntityType.LIGHT_DIRECTIONAL);
+    // if (this.shadowMapTexture && this.shadowMapTexture.glTexture) {
+    //   // Get the Light entity (assuming there is only one directional light for shadows)
+    //   const lightEntity = this.parent.scene.lights.find(obj => obj.entityType === EntityType.LIGHT_DIRECTIONAL);
 
-      if (lightEntity) {
-        const textureUnit = 2;
-        let { lightMvpMatrix } = this.createLightMatrices(Camera.mainCamera.transform, lightEntity.transform);
-        // We need to apply the object's model matrix to the light MVP for shadow receiving.
-        mat4.multiply(lightMvpMatrix, lightMvpMatrix, this.transform.modelMatrix);
-        this.shader.setMat4('u_lightMVPMatrix', lightMvpMatrix);
-        this.shader.setVec2('u_shadowMapSize', [this.shadowMapTexture.width,this.shadowMapTexture.height]);
-        this.shader.setTexture('u_shadowMap', this.shadowMapTexture, textureUnit);
-      }
-    }
+    //   if (lightEntity) {
+
+    //     const textureUnit = 2;
+    //     let { lightMvpMatrix } = this.createLightMatrices(Camera.mainCamera.transform, lightEntity.transform);
+    //     // We need to apply the object's model matrix to the light MVP for shadow receiving.
+    //     mat4.multiply(lightMvpMatrix, lightMvpMatrix, this.transform.modelMatrix);
+    //     this.shader.setInt('u_useShadows', 1);
+    //     this.shader.setMat4('u_lightMVPMatrix', lightMvpMatrix);
+    //     this.shader.setVec2('u_shadowMapSize', [this.shadowMapTexture.width,this.shadowMapTexture.height]);
+    //     this.shader.setTexture('u_shadowMap', this.shadowMapTexture, textureUnit);
+    //   }
+    // }
 
     // Set up lights and normal maps
     this.getNormalMapLocations();

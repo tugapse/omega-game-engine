@@ -168,8 +168,8 @@ export class Shader extends JsonSerializable {
     }
     const keys: string[] = Object.keys(Shader.SHADER_FUNCTIONS);
 
-    let vsSource = this.vertexSource ?? await EngineCache.loadShaderSource(this.vertexUri);
-    let fsSource = this.fragmentSource ?? await EngineCache.loadShaderSource(this.fragUri);
+    let vsSource = this.vertexSource || await EngineCache.loadShaderSource(this.vertexUri);
+    let fsSource = this.fragmentSource || await EngineCache.loadShaderSource(this.fragUri);
     // replace keys by shader code
     for (const obkey of keys) {
       if (fsSource.includes(obkey)) {

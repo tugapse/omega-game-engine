@@ -18,11 +18,11 @@ export class Scene extends GlEntity {
   protected override _className = "Scene";
   /**
     The currently active scene instance.
-   * @private
+   * @protected
     
    * @type {Scene}
    */
-  private static _currentScene: Scene;
+  protected static _currentScene: Scene;
 
 
   /**
@@ -68,22 +68,22 @@ export class Scene extends GlEntity {
   override entityType: number = EntityType.SCENE;
   /**
     An array of all entities within the scene.
-   * @private
+   * @protected
    * @type {GlEntity[]}
    */
-  private _objects: GlEntity[];
+  protected _objects: GlEntity[];
   /**
     The WebGL2 rendering context.
-   * @private
+   * @protected
    * @type {WebGL2RenderingContext}
    */
-  private gl!: WebGL2RenderingContext;
+  protected gl!: WebGL2RenderingContext;
   /**
     The total elapsed time since the scene started.
-   * @private
+   * @protected
    * @type {number}
    */
-  private ellapsedTime: number = 0;
+  protected ellapsedTime: number = 0;
   /**
     Gets the list of all entities in the scene.
    * @readonly
@@ -193,7 +193,7 @@ export class Scene extends GlEntity {
     this.behaviours.filter(behaviour => behaviour.active).forEach(behaviour => behaviour.afterDraw());
   }
 
-  private sortByRenderLayer(a: GlEntity, b: GlEntity) {
+  protected sortByRenderLayer(a: GlEntity, b: GlEntity) {
     const aBeh = a.getBehaviour(RendererBehaviour);
     const bBeh = a.getBehaviour(RendererBehaviour);
     if (!aBeh || !bBeh) {

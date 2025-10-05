@@ -1,4 +1,4 @@
-import { mat3, mat4 } from "gl-matrix";
+import { mat3, mat4, vec3 } from "gl-matrix";
 import { CanvasViewport } from "../../core/canvas-viewport";
 import { Mesh } from "../../core/mesh";
 import { Camera } from "../../entities/camera";
@@ -16,7 +16,7 @@ import { BlendingDestinationFactor, BlendingSourceFactor } from "../../enums/gl/
 import { DephFunction } from "../../enums/gl/deph-function.enum";
 import { CullFace } from "../../enums/gl/cull-face.enum";
 import { FaceWinding, RenderLayer } from "../../enums";
-import { Vector2, Vector3 } from "../../core";
+import { Transform, Vector2, Vector3 } from "../../core";
 
 /**
  * The base class for all renderer behaviours, responsible for drawing meshes to the canvas.
@@ -261,7 +261,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    * @param {number} height - The height of the render target.
    * @returns {void}
    */
- public setRenderTarget(texture: WebGLTexture, width: number, height: number): void {
+  public setRenderTarget(texture: WebGLTexture, width: number, height: number): void {
     if (!this._gl) return;
 
     if (!this._framebuffer) {
@@ -478,5 +478,78 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    */
   public setGl(gl: WebGL2RenderingContext) {
     this._gl = gl;
+  }
+
+  /**
+   * Calculates the view, projection, and model-view-projection matrices for a light source.
+   * These matrices are used in shadow mapping to render the scene from the light's perspective.
+   *
+   * @param {Transform} cameraTransform - The transform of the main camera.
+   * @param {Transform} lightTransform - The transform of the light source.
+   * @param {number} [frustumSize=60.0] - The size of the orthographic frustum used for the light's projection.
+   * @param {number} [near=0.1] - The near clipping plane of the light's frustum.
+   * @param {number} [far=200.0] - The far clipping plane of the light's frustum.
+   * @returns {{ lightViewMatrix: mat4, lightProjectionMatrix: mat4, lightMvpMatrix: mat4 }} An object containing the calculated matrices.
+   */
+  public createLightMatrices(
+    cameraTransform: Transform,
+    lightTransform: Transform,
+    frustumSize: number = 60.0,
+    near: number = 0.1,
+    far: number = 200.0,
+  ) {
+    // 1. Get the light's direction from the new 'lightTransform' parameter.
+    const lightDirection = vec3.normalize(vec3.create(), lightTransform.forward);
+
+    // 2. Determine the center of the light's view frustum.
+    // It is centered on the camera's position for consistent shadow coverage.
+    const frustumCenter = vec3.create();
+    vec3.copy(frustumCenter, cameraTransform.worldPosition);
+
+    // 3. Create the light's eye position by offsetting it from the frustum center.
+    const lightPosition = vec3.create();
+    vec3.scaleAndAdd(lightPosition, frustumCenter, lightDirection, -(frustumSize));
+
+    // 4. Calculate the light's view matrix using mat4.lookAt.
+    // To prevent the matrix from becoming unstable when the light is directly
+    // above or below, we calculate a stable 'up' vector.
+    let up = vec3.fromValues(0, 1, 0);
+    if (Math.abs(vec3.dot(lightDirection, up)) > 0.999) {
+      // If light direction is too close to the world up vector, use a different axis.
+      up = vec3.fromValues(0, 0, 1);
+    }
+    const lightRight = vec3.cross(vec3.create(), lightDirection, up);
+    const lightUp = vec3.cross(vec3.create(), lightRight, lightDirection);
+
+    const lightViewMatrix = mat4.create(); // Variable declared here
+    mat4.lookAt(
+      lightViewMatrix,
+      lightPosition,
+      frustumCenter,
+      lightUp
+    );
+
+    // 5. Calculate the light's projection matrix.
+    const lightProjectionMatrix = mat4.create(); // Variable declared here
+    mat4.ortho(
+      lightProjectionMatrix,
+      -frustumSize,
+      frustumSize,
+      -frustumSize,
+      frustumSize,
+      near,
+      far
+    );
+
+    // 6. Calculate the final combined Light MVP Matrix.
+    const lightMvpMatrix = mat4.create(); // Variable declared here
+    mat4.multiply(lightMvpMatrix, lightProjectionMatrix, lightViewMatrix);
+
+    // 7. Return all the necessary matrices in an object.
+    return {
+      lightViewMatrix,
+      lightProjectionMatrix,
+      lightMvpMatrix
+    };
   }
 }
