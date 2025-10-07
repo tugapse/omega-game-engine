@@ -18,7 +18,7 @@ interface StorageSpaces {
     A map for caching textures.
    * @type {{ [key: string]: Texture | CubemapTexture }}
    */
-  textures: { [key: string]: Texture|CubemapTexture };
+  textures: { [key: string]: Texture | CubemapTexture };
   /**
     A map for caching parsed mesh data.
    * @type {{ [key: string]: MeshData }}
@@ -57,14 +57,17 @@ export abstract class EngineCache {
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
    * @returns {Texture} - The cached or newly loaded Texture instance.
    */
-  public static getTexture2D( uri: string, gl?: WebGL2RenderingContext): Texture {
-    let result = EngineCache.__cache.textures[uri];
-    if (!result) {
-      result = new Texture(gl, uri);
-      result.load();
-      EngineCache.__cache.textures[uri] = result;
-    }
+  public static getTexture2D(uri: string, gl?: WebGL2RenderingContext): Texture {
+    let result = new Texture(gl, uri);
+    result.load();
     return result;
+    // let result = EngineCache.__cache.textures[uri];
+    // if (!result) {
+    //   result = new Texture(gl, uri);
+    //   EngineCache.__cache.textures[uri] = result;
+    //   result.load();
+    // }
+    // return result;
   }
 
   /**
@@ -74,7 +77,7 @@ export abstract class EngineCache {
  * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
  * @returns {Texture} - The cached or newly loaded Texture instance.
  */
-  public static getTextureCube( uris: ICubemapSides, gl?: WebGL2RenderingContext): CubemapTexture {
+  public static getTextureCube(uris: ICubemapSides, gl?: WebGL2RenderingContext): CubemapTexture {
     const { right, left, up, bottom, front, back } = uris;
     const key = [right, left, up, bottom, front, back].join("|");
 
@@ -123,5 +126,23 @@ export abstract class EngineCache {
       EngineCache.__cache.shaderCode[uri] = result;
     }
     return result;
+  }
+
+  /**
+    Clears all cached data, including textures, meshes, and shader code.
+   */
+  public static clear(): void {
+    for (const key in EngineCache.__cache.textures) {
+      const texture = EngineCache.__cache.textures[key];
+      if (texture) {
+        texture.destroy();
+      }
+    }
+
+    EngineCache.__cache = {
+      shaderCode: {},
+      textures: {},
+      meshs: {},
+    };
   }
 }

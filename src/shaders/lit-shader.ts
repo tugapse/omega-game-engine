@@ -52,8 +52,8 @@ export class LitShader extends Shader {
     super.loadDataIntoShader();
     
     this.setVec4(ShaderUniformsEnum.U_MAT_COLOR, this.material.color.toVec4());
-    this.setVec2(ShaderUniformsEnum.U_UV_SCALE, this.material.uvScale);
-    this.setVec2(ShaderUniformsEnum.U_UV_OFFSET, this.material.uvOffset);
+    this.setVec2(ShaderUniformsEnum.U_UV_SCALE, this.material.uvScale.vector);
+    this.setVec2(ShaderUniformsEnum.U_UV_OFFSET, this.material.uvOffset.vector);
 
     this.setFloat(ShaderUniformsEnum.U_SPECULAR_STRENGTH, this.material.specularStrength);
     this.setFloat(ShaderUniformsEnum.U_ROUGHNESS, Math.max(this.material.roughness, 0.01));

@@ -231,6 +231,10 @@ export class Texture extends JsonSerializable {
 
       this._image = new Image();
       this._image.onload = () => {
+        if(!this._image){
+          debugger;
+          return;
+        }
         this._isLoaded = true;
         this._width = this._image!.width;
         this._height = this._image!.height;
