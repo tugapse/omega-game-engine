@@ -1,5 +1,5 @@
 import { EngineCache } from "../core";
-import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
+import { JsonSerializedData } from "../interfaces/json-serialized-data";
 import { CubemapTexture } from "../textures/cubemap-texture";
 import { ColorMaterial } from "./color-material";
 

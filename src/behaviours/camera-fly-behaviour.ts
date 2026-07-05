@@ -1,7 +1,7 @@
 import { quat, vec3 } from 'gl-matrix';
 import { Keybord, Mouse } from "../core/input";
 import { EntityBehaviour } from "./entity-behaviour";
-import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
+import { JsonSerializedData } from '../interfaces/json-serialized-data';
 import { Transform } from '../core/transform';
 import { Camera, CameraType } from '../entities/camera';
 

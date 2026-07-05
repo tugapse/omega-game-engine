@@ -2,7 +2,7 @@ import { Scene } from "../../../entities";
 import { Shader, ShaderSources } from "../../../shaders";
 import { Texture } from "../../../textures";
 import { JsonSerializable } from "../../json-serializable";
-import { IRenderPass } from "./render-pass.interface";
+import { IRenderPass } from "../render-pass.interface";
 
 
 export class PostProcessingPass

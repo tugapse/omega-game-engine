@@ -1,7 +1,7 @@
 import { Transform } from '../core/transform';
 import { SceneEntity } from '../entities/entity';
 import { JsonSerializable } from '../core/json-serializable';
-import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
+import { JsonSerializedData } from '../interfaces/json-serialized-data';
 import { v4 as uuidv4 } from 'uuid';
 import { RenderLayer } from '../enums';
 

@@ -1,2 +1,3 @@
 export * from "./render-pipeline";
-export * from "./pass/index";
+export * from "./render-pass.interface";
+export * from "./pass";

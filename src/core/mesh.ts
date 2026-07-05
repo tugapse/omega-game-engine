@@ -1,8 +1,8 @@
 import { vec2, vec3 } from "gl-matrix";
 import { v4 as uuidv4 } from 'uuid';
 import { JsonSerializable } from "./json-serializable";
-import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
-import { IMeshData } from "../interfaces/meshData.interface";
+import { JsonSerializedData } from "../interfaces/json-serialized-data";
+import { IMeshData } from "../interfaces/meshData";
 import { BoundingBox, BoundingSphere } from "./bounding-box";
 
 /**

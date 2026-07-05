@@ -1,9 +1,6 @@
 import { Mouse, Keybord, GamepadManager } from "../core";
 import { Engine } from "../engine";
 
-
-export function cleanLastFrame() {}
-
 export class EngineEventManager {
   private engine: Engine;
   private canvas: HTMLCanvasElement;

@@ -1,6 +1,6 @@
 import { vec2 } from "gl-matrix";
 import { EngineCache, Vector2 } from "../core";
-import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
+import { JsonSerializedData } from "../interfaces/json-serialized-data";
 import { Texture } from "../textures/texture";
 import { ColorMaterial } from "./color-material";
 

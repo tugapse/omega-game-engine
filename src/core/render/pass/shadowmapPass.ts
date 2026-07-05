@@ -6,9 +6,9 @@ import { Shader, ShaderSources } from "../../../shaders";
 import { Texture } from "../../../textures";
 import { JsonSerializable } from "../../json-serializable";
 import { NumberRange } from "../../range";
-import { IRenderPass } from "./render-pass.interface";
 import { Scene, Camera } from "../../../entities";
 import { DirectionalLight } from "../../../entities/lights";
+import { IRenderPass } from "../render-pass.interface";
 
 
 export class ShadowMapPass extends JsonSerializable implements IRenderPass {

@@ -3,7 +3,7 @@ import { EngineCache } from '../core/engineCache';
 import { MeshData } from '../core/mesh';
 import { ShaderUniformsEnum } from '../enums/shader-uniforms.enum';
 import { JsonSerializable } from '../core/json-serializable';
-import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
+import { JsonSerializedData } from '../interfaces/json-serialized-data';
 import { ColorMaterial } from '../materials/color-material';
 import { Texture } from '../textures/texture';
 import { v4 as uuidv4 } from 'uuid';
