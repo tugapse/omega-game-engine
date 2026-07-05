@@ -1,6 +1,5 @@
 import { EngineCache } from "../core";
 import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
-import { Texture } from "../textures";
 import { CubemapTexture } from "../textures/cubemap-texture";
 import { ColorMaterial } from "./color-material";
 
@@ -24,18 +23,15 @@ export class CubemapMaterial extends ColorMaterial {
    * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
    * @returns {void}
    */
-  override fromJson(jsonObject: JsonSerializedData): void {
+  override async fromJson(jsonObject: JsonSerializedData): Promise<void> {
     super.fromJson(jsonObject);
-    if (jsonObject.mainTex.url) {
-
-      const keys = jsonObject.mainTex.url.split("|");
-      this.mainTex = EngineCache.getTextureCube({
+    if (jsonObject["mainTex"]?.uris) {
+      const keys = jsonObject["mainTex"].uris;
+      this.mainTex = await EngineCache.getTextureCube({
         right: keys[0], left: keys[1],
         up: keys[2], bottom: keys[3],
         front: keys[4], back: keys[5],
       }) as CubemapTexture;
-
-      this.mainTex.fromJson(jsonObject.mainTex);
     }
   }
 
@@ -53,7 +49,7 @@ export class CubemapMaterial extends ColorMaterial {
 
   /**
     Creates a new instance of CubemapMaterial.
-    
+
    * @override
    * @returns {CubemapMaterial} - A new CubemapMaterial instance.
    */

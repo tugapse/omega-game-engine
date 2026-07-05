@@ -16,18 +16,14 @@ export class ColorMaterial extends JsonSerializable {
 
   /**
     Creates a new instance of ColorMaterial.
-    
+
    * @returns {ColorMaterial} - A new ColorMaterial instance.
    */
   public static instanciate(): ColorMaterial {
     return new ColorMaterial();
   }
 
-  /**
-    The name of the material.
-   * @type {string}
-   */
-  public name: string = "Color Material";
+
   /**
     The color of the material.
    * @type {Color}
@@ -54,6 +50,7 @@ export class ColorMaterial extends JsonSerializable {
    * @returns {void}
    */
   override fromJson(jsonObject: JsonSerializedData): void {
+    super.fromJson(jsonObject);
     this.name = jsonObject['name'];
     this.color = Color.createFromJsonData(jsonObject['color']);
   }

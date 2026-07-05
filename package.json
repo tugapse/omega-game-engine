@@ -11,7 +11,7 @@
     "build-js:prod": "cross-env NODE_ENV=production rollup -c && api-extractor run --local --verbose",
     "build-docs": "npx typedoc --entryPointStrategy Expand src",
     "serve-docs": "npx serve docs",
-    "build-all": "npm run build && npm run build-min-js && npm run build-docs"
+    "build-all": "npm run build && npm run build-js && npm run build-docs"
   },
   "keywords": [],
   "author": "",

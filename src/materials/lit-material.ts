@@ -1,5 +1,4 @@
 import { EngineCache } from "../core";
-import { Engine } from "../engine";
 import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
 import { Texture } from "../textures/texture";
 import { UnlitMaterial } from "./unlit-material";
@@ -15,22 +14,34 @@ export class LitMaterial extends UnlitMaterial {
     The strength of specular highlights.
    * @type {number}
    */
-  public specularStrength: number = 1.0;
+  public specularStrength: number = 0.5;
   /**
     The roughness of the material's surface, affecting the size of specular highlights.
    * @type {number}
    */
-  public roughness: number = 0.2;
+  public roughness: number = 0.01;
+
   /**
     The intensity of the normal map effect.
    * @type {number}
    */
-  public normalMapStrength: number = 0.2;
+  public normalMapStrength: number = 0.1;
   /**
     The normal map texture object.
    * @type {Texture}
    */
-  public normalTex!: Texture;
+  public normalTex?: Texture;
+  public specularTex?: Texture;
+  public roughnessTex?: Texture;
+  public aoTex?: Texture;
+  public emissiveTex?: Texture;
+
+
+  constructor() {
+    super();
+  }
+  
+
 
   /**
     Serializes the material's state to a JSON object.
@@ -53,23 +64,31 @@ export class LitMaterial extends UnlitMaterial {
    * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
    * @returns {void}
    */
-  override fromJson(jsonObject: JsonSerializedData): void {
-    super.fromJson(jsonObject);
-    if(jsonObject.normalTex?.url){
-      this.normalTex = EngineCache.getTexture2D(jsonObject.normalTex.url);
+  override async fromJson(jsonObject: JsonSerializedData): Promise<void> {
+    await super.fromJson(jsonObject);
+    if(jsonObject["normalTex"]?.url){
+      this.normalTex = await EngineCache.getTexture2D(jsonObject["normalTex"].url);
       this.normalTex.fromJson(jsonObject['normalTex']);
     }
     this.roughness = jsonObject['roughness'];
     this.normalMapStrength = jsonObject['normalMapStrength'];
+    
   }
 
   /**
     Creates a new instance of LitMaterial.
-    
+
    * @override
    * @returns {LitMaterial} - A new LitMaterial instance.
    */
   static override instanciate(): LitMaterial {
     return new LitMaterial();
+  }
+
+  public override destroy(): void {
+    super.destroy();
+    if (this.normalTex) {
+      this.normalTex.destroy();
+    }
   }
 }

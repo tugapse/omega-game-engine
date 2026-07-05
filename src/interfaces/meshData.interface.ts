@@ -1,6 +1,5 @@
 import { vec2, vec3 } from "gl-matrix";
 import { JsonSerializable } from "../core/json-serializable";
-import { JsonSerializedData } from "./json-serialized-data.interface";
 
 /**
  * Interface for geometric mesh data. It defines the structure for storing

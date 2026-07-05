@@ -3,6 +3,7 @@ import { Keybord, Mouse } from "../core/input";
 import { EntityBehaviour } from "./entity-behaviour";
 import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
 import { Transform } from '../core/transform';
+import { Camera, CameraType } from '../entities/camera';
 
 
 /**
@@ -35,7 +36,7 @@ export interface ICameraMouseButtons {
 }
 /**
    CameraFlyBehaviour
-  
+
  * Implements a free-look camera controller, often referred to as "flycam" or "FPS camera."
  * It allows movement with W/A/S/D/Q/E keys and rotation with mouse input.
  * The movement includes smooth acceleration and deceleration, and rotation is smoothly dampened.
@@ -59,14 +60,14 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    * @type {number}
    * @default 20
    */
-  public moveSpeed = 20.5;
+  public moveSpeed = 20;
 
   /**
    * The sensitivity of mouse input for camera rotation.
    * @type {number}
-   * @default 0.8
+   * @default 3.0
    */
-  public rotationSpeed = 0.35;
+  public rotationSpeed = 5.0;
 
   /**
    * The dampening factor for rotation. A higher value means rotation snaps faster.
@@ -74,7 +75,7 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    * @type {number}
    * @default 0.4
    */
-  public rotationDampening = 0.16;
+  public rotationDampening = 0.20;
 
   /**
    * The dampening factor for movement. A higher value means movement stops faster.
@@ -82,21 +83,21 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    * @type {number}
    * @default 0.15
    */
-  public moveDampening = 0.2;
+  public moveDampening = 0.15;
 
   /**
    * The sensitivity of the mouse scroll wheel for moving forward and backward.
    * @type {number}
    * @default 1.0
    */
-  public scrollSpeed = 1.0;
+  public scrollSpeed = 1;
 
   /**
    * The multiplier applied to `moveSpeed` when the boost key is held down.
    * @type {number}
    * @default 2.0
    */
-  public boostMultiplier = 2.0;
+  public boostMultiplier = 4.0;
 
   /**
    * The key mappings for movement controls.
@@ -126,7 +127,7 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    * @type {number}
    * @default 10
    */
-  protected _acceleration = 3;
+  protected _acceleration = 4.0;
 
   /** @protected Current forward/backward velocity. */
   protected _forwardVelocity = 0;
@@ -160,7 +161,6 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    */
   override update(ellapsed: number): void {
     this.updateInput(ellapsed);
-    super.update(ellapsed);
   }
 
 
@@ -243,10 +243,10 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    * Updates the camera's pan velocity based on mouse movement.
    * @protected
    */
-  protected updatePanVelocity() {
+  protected updatePanVelocity(ellapsed:number) {
     if (Mouse.mouseButtonDown[this.lookMouseButtons.pan]) {
-      this._upVelocity += Mouse.mouseMovement.y * this.moveDampening / 2.0;
-      this._strafeVelocity += Mouse.mouseMovement.x * this.moveDampening / 2.0;
+      this._upVelocity += Mouse.mouseMovement.y * this.moveSpeed * ellapsed / 2;
+      this._strafeVelocity += Mouse.mouseMovement.x * this.moveSpeed * ellapsed / 2;
     }
   }
 
@@ -254,8 +254,8 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    * Updates the forward velocity based on mouse scroll wheel input.
    * @protected
    */
-  protected updateScrollVelocity() {
-    this._forwardVelocity -= Mouse.wheelY * this._acceleration * this.moveDampening * this.scrollSpeed;
+  protected updateScrollVelocity(ellapsed:number) {
+    this._forwardVelocity -= Mouse.wheelY * this._acceleration * this.moveDampening * this.scrollSpeed * ellapsed;
   }
 
   /**
@@ -266,16 +266,36 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    */
   protected applyMovementVelocity(transform: Transform, ellapsed: number) {
     const movementVector = vec3.create();
+    const isOrthographic = this.parent instanceof Camera && this.parent.cameraType === CameraType.ORTHOGRAPHIC;
 
-    // Scale and add movement components based on current velocities
-    if (Math.abs(this._forwardVelocity) > 0) {
-      vec3.scaleAndAdd(movementVector, movementVector, transform.forward, this._forwardVelocity);
-    }
-    if (Math.abs(this._strafeVelocity) > 0) {
-      vec3.scaleAndAdd(movementVector, movementVector, transform.right, this._strafeVelocity);
-    }
-    if (Math.abs(this._upVelocity) > 0) {
-      vec3.scaleAndAdd(movementVector, movementVector, transform.up, this._upVelocity);
+    if (isOrthographic) {
+      const camera = this.parent as Camera;
+      // In orthographic mode, moving forward/backward scales the orthoSize (zoom)
+      if (Math.abs(this._forwardVelocity) > 0) {
+        camera.orthoSize -= this._forwardVelocity * ellapsed;
+        camera.orthoSize = Math.max(0.1, camera.orthoSize); // Prevent zero or negative size
+        camera.updateProjectionMatrix();
+      }
+      
+      // Scale pan velocity proportionally to how zoomed out we are
+      const orthoPanModifier = camera.orthoSize / 10.0;
+      if (Math.abs(this._strafeVelocity) > 0) {
+        vec3.scaleAndAdd(movementVector, movementVector, transform.right, this._strafeVelocity * orthoPanModifier);
+      }
+      if (Math.abs(this._upVelocity) > 0) {
+        vec3.scaleAndAdd(movementVector, movementVector, transform.up, this._upVelocity * orthoPanModifier);
+      }
+    } else {
+      // Scale and add movement components based on current velocities
+      if (Math.abs(this._forwardVelocity) > 0) {
+        vec3.scaleAndAdd(movementVector, movementVector, transform.forward, this._forwardVelocity);
+      }
+      if (Math.abs(this._strafeVelocity) > 0) {
+        vec3.scaleAndAdd(movementVector, movementVector, transform.right, this._strafeVelocity);
+      }
+      if (Math.abs(this._upVelocity) > 0) {
+        vec3.scaleAndAdd(movementVector, movementVector, transform.up, this._upVelocity);
+      }
     }
 
 
@@ -290,9 +310,14 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    * @protected
    */
   protected applyRotationVelocity(transform: Transform, ellapsed: number) {
+    // FIXME: insert this as a msmber of this class, this was removed from camera class
+    let is2D = false;
+
     if (Mouse.mouseButtonDown[this.lookMouseButtons.look]) {
-      this._currentYaw += -Mouse.mouseMovement.x * this.rotationSpeed;
-      this._currentPitch += Mouse.mouseMovement.y * this.rotationSpeed;
+      if (!is2D) {
+        this._currentYaw += -Mouse.mouseMovement.x * this.rotationSpeed * ellapsed;
+        this._currentPitch += Mouse.mouseMovement.y * this.rotationSpeed * ellapsed;
+      }
     }
 
     this._currentPitch = Math.max(-90, Math.min(90, this._currentPitch));
@@ -321,61 +346,18 @@ export class CameraFlyBehaviour extends EntityBehaviour {
     const transform = this.parent.transform;
 
     this.updateMoveVelocity(ellapsed);
-    this.updateScrollVelocity();
-    this.updatePanVelocity();
+    this.updateScrollVelocity(ellapsed);
+    this.updatePanVelocity(ellapsed);
 
     this.applyMovementVelocity(transform, ellapsed);
     this.applyRotationVelocity(transform, ellapsed);
 
   }
+  
 
-  /**
-   * Serializes the camera's properties to a JSON object for persistence.
-   * @returns {JsonSerializedData} An object containing the serialized properties.
-   */
-  override toJsonObject(): JsonSerializedData {
-    return {
-      ...super.toJsonObject(),
-      moveSpeed: this.moveSpeed,
-      rotationSpeed: this.rotationSpeed,
-      rotationDampening: this.rotationDampening,
-      moveDampening: this.moveDampening,
-      scrollSpeed: this.scrollSpeed,
-      moveKeys: this.moveKeys,
-      boostMultiplier: this.boostMultiplier,
-      lookMouseButtons: this.lookMouseButtons,
-    };
-  }
-
-  /**
-   * Deserializes the camera's properties from a JSON object.
-   * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
-   */
-  override fromJson(jsonObject: JsonSerializedData): void {
-    super.fromJson(jsonObject); // Call superclass's fromJson first
-    if (jsonObject['moveSpeed'] !== undefined) {
-      this.moveSpeed = jsonObject['moveSpeed'];
-    }
-    if (jsonObject['rotationSpeed'] !== undefined) {
-      this.rotationSpeed = jsonObject['rotationSpeed'];
-    }
-    if (jsonObject['rotationDampening'] !== undefined) {
-      this.rotationDampening = jsonObject['rotationDampening'];
-    }
-    if (jsonObject['moveDampening'] !== undefined) {
-      this.moveDampening = jsonObject['moveDampening'];
-    }
-    if (jsonObject['scrollSpeed'] !== undefined) {
-      this.scrollSpeed = jsonObject['scrollSpeed'];
-    }
-    if (jsonObject['moveKeys'] !== undefined) {
-      this.moveKeys = jsonObject['moveKeys'];
-    }
-    if (jsonObject['boostMultiplier'] !== undefined) {
-      this.boostMultiplier = jsonObject['boostMultiplier'];
-    }
-    if (jsonObject['lookMouseButtons'] !== undefined) {
-      this.lookMouseButtons = jsonObject['lookMouseButtons'];
-    }
-  }
+  override clone(): EntityBehaviour | null {
+    const clone = new CameraFlyBehaviour();
+    clone.fromJson(this.toJsonObject());
+    return clone;
+  } 
 }

@@ -22,6 +22,12 @@ export enum ShaderUniformsEnum {
    */
   U_MVP_MATRIX = "u_mvpMatrix",
   /**
+   * The view matrix, which is used to transform vertices from world space to view space.
+   *
+   * @type {string}
+   */
+  U_VIEW_MATRIX = "u_viewMatrix",
+  /**
    * The model matrix, which is used to transform vertices from object space to world space.
    *
    * @type {string}
@@ -88,7 +94,7 @@ export enum ShaderUniformsEnum {
    *
    * @type {string}
    */
-  U_NORMAL_MAP = "u_normalMap",
+  U_NORMAL_TEX = "u_normalMap",
   /**
    * The strength value for the normal map, which can be used to control the amount of detail in a texture.
    *
@@ -259,9 +265,165 @@ export enum ShaderUniformsEnum {
    */
   U_LIGHT_MVP_MATRIX = "u_lightMVPMatrix",
   /**
+   * A flag to enable or disable shadows.
+   *
+   * @type {string}
+   */
+  U_USE_SHADOWS = "u_useShadows",
+  /**
    * The shadow map texture, which stores information about the shadows cast by objects in a scene.
    *
    * @type {string}
    */
-  U_SHADOW_MAP = "u_shadow_map"
+  U_SHADOW_MAP = "u_shadowMap",
+  /**
+   * The size of the shadow map texture.
+   *
+   * @type {string}
+   */
+  U_SHADOW_MAP_SIZE = "u_shadowMapSize",
+  /**
+   * The strength of the shadows.
+   *
+   * @type {string}
+   */
+  U_SHADOW_STRENGTH = "u_shadowStrength",
+
+  /**
+   * --- Fog ---
+   */
+  /**
+   * A flag to enable or disable fog.
+   *
+   * @type {string}
+   */
+  U_FOG_ENABLED = "u_fogEnabled",
+  /**
+   * The color of the fog.
+   *
+   * @type {string}
+   */
+  U_FOG_COLOR = "u_FogColor",
+  /**
+   * The density of the fog.
+   *
+   * @type {string}
+   */
+  U_FOG_DENSITY = "u_FogDensity",
+  /**
+   * The distance of the fog.
+   *
+   * @type {string}
+   */
+  U_FOG_DISTANCE = "u_fogDistance",
+
+  /**
+   * The type of fog (0: Linear, 1: Exp, 2: Exp2).
+   */
+  U_FOG_TYPE = "u_fogType",
+
+  /**
+   * The exponential falloff of fog based on height.
+   */
+  U_FOG_HEIGHT_FALLOFF = "u_FogHeightFalloff",
+
+  /**
+   * The baseline height where fog is at maximum density.
+   */
+  U_FOG_BASE_HEIGHT = "u_FogBaseHeight",
+
+  /**
+   * --- Skybox / Sun ---
+   */
+  /**
+   * The direction vector pointing towards the sun.
+   * @type {string}
+   */
+  U_SUN_DIRECTION = "u_sunDirection",
+  /**
+   * The color of the sun disk in the skybox.
+   * @type {string}
+   */
+  U_SUN_COLOR = "u_sunColor",
+  /**
+   * The size of the solid core of the sun.
+   * @type {string}
+   */
+  U_SUN_SIZE = "u_sunSize",
+  /**
+   * The falloff gradient size around the sun's edge.
+   * @type {string}
+   */
+  U_SUN_FALLOFF = "u_sunFalloff",
+  /**
+   * Flag to determine if sun should be computed.
+   * @type {string}
+   */
+  U_USE_SUN = "u_useSun",
+  /**
+   * The color of the sky at the zenith.
+   * @type {string}
+   */
+  U_SKY_COLOR = "u_skyColor",
+  /**
+   * The color of the sky at the horizon.
+   * @type {string}
+   */
+  U_HORIZON_COLOR = "u_horizonColor",
+  /**
+   * The color of the ground.
+   * @type {string}
+   */
+  U_GROUND_COLOR = "u_groundColor",
+  /**
+   * The exponent controlling the gradient transition.
+   * @type {string}
+   */
+  U_EXPONENT = "u_exponent",
+  /**
+   * The direction vector pointing towards the moon.
+   * @type {string}
+   */
+  U_MOON_DIRECTION = "u_moonDirection",
+  /**
+   * The color of the moon disk in the skybox.
+   * @type {string}
+   */
+  U_MOON_COLOR = "u_moonColor",
+  /**
+   * The size of the solid core of the moon.
+   * @type {string}
+   */
+  U_MOON_SIZE = "u_moonSize",
+  /**
+   * The falloff gradient size around the moon's edge.
+   * @type {string}
+   */
+  U_MOON_FALLOFF = "u_moonFalloff",
+  /**
+   * The current phase of the moon to rotate the crescent shadow.
+   * @type {string}
+   */
+  U_MOON_PHASE = "u_moonPhase",
+  /**
+   * Flag to determine if moon should be computed.
+   * @type {string}
+   */
+  U_USE_MOON = "u_useMoon",
+  U_CLOUD_SPEED = "u_cloudSpeed",
+  U_CLOUD_SEED = "u_cloudSeed",
+  U_USE_CLOUDS = "u_useClouds",
+  U_WHEATHER_CONDITION = "u_weatherCondition",
+  U_CLOUD_TILING = "u_cloudTiling",
+  U_CLOUD_SPARSITY = "u_cloudSparsity",
+  U_CLOUD_REPETITION = "u_cloudRepetition",
+  U_STAR_INTENSITY = "u_starIntensity",
+  U_STAR_SCALE = "u_starScale",
+  U_STAR_SPARSITY = "u_starSparsity",
+  U_STAR_SPEED = "u_starSpeed",
+  U_MOON_EARTHSHINE = "u_moonEarthshine",
+  U_MOON_TERMINATOR_SOFTNESS = "u_moonTerminatorSoftness",
+  U_MOON_ENABLE_ROTATION = "u_moonEnableRotation",
+  U_MOON_ROTATION_SPEED = "u_moonRotationSpeed",
+  U_USE_STARS = "u_useStars",
 }

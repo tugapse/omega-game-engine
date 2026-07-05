@@ -1,6 +1,9 @@
 // The WebGL constants are retrieved from the WebGL2RenderingContext
 // for more robust and type-safe enums.
+
+import { EngineCache } from "../core";
 import { JsonSerializable, JsonSerializedData } from "../interfaces";
+
 
 /**
  * An enumeration of WebGL texture targets.
@@ -50,7 +53,7 @@ export class Texture extends JsonSerializable {
    * @protected
    * @type {HTMLImageElement | null}
    */
-  protected _image: HTMLImageElement | null = null;
+  protected image: HTMLImageElement | null = null;
   /**
    * The WebGL texture object.
    * @protected
@@ -62,37 +65,37 @@ export class Texture extends JsonSerializable {
    * @protected
    * @type {boolean}
    */
-  protected _isLoaded: boolean = false;
+  public isLoaded: boolean = false;
   /**
    * Indicates whether the texture is currently in the process of loading.
    * @protected
    * @type {boolean}
    */
-  protected _isLoading: boolean = false;
+  public isLoading: boolean = false;
   /**
    * The minification filter.
-   * @protected
+   * @public
    * @type {TextureFilterMode}
    */
-  protected _minFilter: TextureFilterMode = TextureFilterMode.LINEAR_MIPMAP_LINEAR;
+  public minFilter: TextureFilterMode = TextureFilterMode.LINEAR_MIPMAP_LINEAR;
   /**
    * The magnification filter.
-   * @protected
+   * @public
    * @type {TextureFilterMode}
    */
-  protected _magFilter: TextureFilterMode = TextureFilterMode.LINEAR;
+  public magFilter: TextureFilterMode = TextureFilterMode.LINEAR;
   /**
    * The texture wrap mode for the S (horizontal) axis.
-   * @protected
+   * @public
    * @type {TextureWrapMode}
    */
-  protected _wrapS: TextureWrapMode = TextureWrapMode.CLAMP_TO_EDGE;
+  public wrapS: TextureWrapMode = TextureWrapMode.MIRRORED_REPEAT;
   /**
    * The texture wrap mode for the T (vertical) axis.
-   * @protected
+   * @public
    * @type {TextureWrapMode}
    */
-  protected _wrapT: TextureWrapMode = TextureWrapMode.CLAMP_TO_EDGE;
+  public wrapT: TextureWrapMode = TextureWrapMode.MIRRORED_REPEAT;
   /**
    * A flag to indicate if the texture is currently in a bound state.
    * @protected
@@ -112,6 +115,13 @@ export class Texture extends JsonSerializable {
    * @type {number}
    */
   protected _height: number = 0;
+
+  /**
+   * A promise that resolves when the texture is fully loaded.
+   * @protected
+   * @type {Promise<void> | null}
+   */
+  protected _loadPromise: Promise<void> | null = null;
 
   /**
    * Creates an instance of Texture.
@@ -168,7 +178,7 @@ export class Texture extends JsonSerializable {
 
     const result = new Texture(gl);
     result._glTexture = texture;
-    result._isLoaded = true;
+    result.isLoaded = true;
     result._width = width;
     result._height = height;
     return result;
@@ -193,16 +203,16 @@ export class Texture extends JsonSerializable {
 
     if (color === null) {
       gl.texImage2D(TextureTarget.TEXTURE_2D, 0, gl.RGBA8, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-      
+
       gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MIN_FILTER, TextureFilterMode.NEAREST);
       gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MAG_FILTER, TextureFilterMode.NEAREST);
     } else {
       gl.texImage2D(TextureTarget.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, color);
-      
+
       gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MIN_FILTER, TextureFilterMode.LINEAR_MIPMAP_LINEAR);
       gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MAG_FILTER, TextureFilterMode.LINEAR);
-      gl.generateMipmap(TextureTarget.TEXTURE_2D);
     }
+    gl.generateMipmap(TextureTarget.TEXTURE_2D);
 
     gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_S, TextureWrapMode.CLAMP_TO_EDGE);
     gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_T, TextureWrapMode.CLAMP_TO_EDGE);
@@ -211,7 +221,7 @@ export class Texture extends JsonSerializable {
 
     const result = new Texture(gl);
     result._glTexture = texture;
-    result._isLoaded = true;
+    result.isLoaded = true;
     result._width = width;
     result._height = height;
     return result;
@@ -221,37 +231,49 @@ export class Texture extends JsonSerializable {
    * Loads an image from the provided URI and creates the WebGL texture.
    * @returns {Promise<void>} A Promise that resolves when the image is fully loaded and the WebGL texture is created.
    */
-  public async load(): Promise<void> {
-    if (!this.gl || this._isLoading || this.isImageLoaded) return;
-    this._isLoading = true;
-    return new Promise((resolve, reject) => {
+  public load(): Promise<void> {
+    if (this._loadPromise) {
+      return this._loadPromise;
+    }
+
+    if (this.isLoaded) {
+      return Promise.resolve();
+    }
+
+    if (!this.gl) {
+      return Promise.reject(new Error("WebGL context not available."));
+    }
+
+    this._loadPromise = new Promise((resolve, reject) => {
       if (!this.textureUri) {
-        reject(new Error("Failed to load image. Please provide a texture URL!"));
+        return reject(new Error("Failed to load image. Please provide a texture URL!"));
       }
 
-      this._image = new Image();
-      this._image.onload = () => {
-        if(!this._image){
-          debugger;
-          return;
+      this.isLoading = true;
+      this.image = new Image();
+      this.image.onload = () => {
+        if (!this.image || !this.gl) {
+          this.isLoading = false;
+          return reject(new Error("Image or WebGL context is null after loading."));
         }
-        this._isLoaded = true;
-        this._width = this._image!.width;
-        this._height = this._image!.height;
-        if (this.gl) {
-          this.createGLTexture(this.gl);
-        }
-        this._isLoading = false;
+        this.isLoaded = true;
+        this.isLoading = false;
+        this._width = this.image.width;
+        this._height = this.image.height;
+        this.createGLTexture(this.gl);
         resolve();
       };
-      this._image.onerror = (error) => {
-        this._isLoading = false;
-        this._isLoaded = false;
-        this._image = null;
+      this.image.onerror = (error) => {
+        this.isLoading = false;
+        this.isLoaded = false;
+        this.image = null;
+        this._loadPromise = null; // Allow retrying
         reject(new Error(`Failed to load image: ${this.textureUri!}. Error: ${error}`));
       };
-      this._image.src = this.textureUri!;
+      this.image.src = this.textureUri;
     });
+
+    return this._loadPromise;
   }
 
   /**
@@ -261,14 +283,14 @@ export class Texture extends JsonSerializable {
    * @returns {void}
    */
   protected createGLTexture(gl: WebGL2RenderingContext): void {
-    if (!this._isLoaded || !this._image) {
+    if (!this.isLoaded || !this.image) {
       console.warn("Image not loaded or image data is missing. Cannot create WebGL texture.");
       return;
     }
 
     this._glTexture = gl.createTexture();
     this.bind();
-    gl.texImage2D(TextureTarget.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this._image);
+    gl.texImage2D(TextureTarget.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image);
     this.setTextureParameters();
     this.unBind();
   }
@@ -278,7 +300,7 @@ export class Texture extends JsonSerializable {
    * @returns {void}
    */
   public rebuild(): void {
-    if (!this.gl || !this._isLoaded || !this._image) {
+    if (!this.gl || !this.isLoaded || !this.image) {
       console.warn("Cannot rebuild texture. Either WebGL context, image, or loading status is invalid.");
       return;
     }
@@ -289,7 +311,7 @@ export class Texture extends JsonSerializable {
       this.gl.RGBA,
       this.gl.RGBA,
       this.gl.UNSIGNED_BYTE,
-      this._image
+      this.image
     );
     this.setTextureParameters();
     this.unBind();
@@ -303,10 +325,10 @@ export class Texture extends JsonSerializable {
   public setTextureParameters(): void {
     if (!this.gl) return;
     this.bind();
-    this.gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MIN_FILTER, this._minFilter);
-    this.gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MAG_FILTER, this._magFilter);
-    this.gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_S, this._wrapS);
-    this.gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_T, this._wrapT);
+    this.gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MIN_FILTER, this.minFilter);
+    this.gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MAG_FILTER, this.magFilter);
+    this.gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_S, this.wrapS);
+    this.gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_T, this.wrapT);
     this.gl.generateMipmap(TextureTarget.TEXTURE_2D);
     this.unBind();
   }
@@ -317,7 +339,7 @@ export class Texture extends JsonSerializable {
    * @returns {void}
    */
   public setMinFilter(filter: TextureFilterMode): void {
-    this._minFilter = filter;
+    this.minFilter = filter;
     this.setTextureParameters();
   }
 
@@ -327,7 +349,7 @@ export class Texture extends JsonSerializable {
    * @returns {void}
    */
   public setMagFilter(filter: TextureFilterMode): void {
-    this._magFilter = filter;
+    this.magFilter = filter;
     this.setTextureParameters();
   }
 
@@ -337,7 +359,7 @@ export class Texture extends JsonSerializable {
    * @returns {void}
    */
   public setWrapS(wrap: TextureWrapMode): void {
-    this._wrapS = wrap;
+    this.wrapS = wrap;
     this.setTextureParameters();
   }
 
@@ -347,7 +369,7 @@ export class Texture extends JsonSerializable {
    * @returns {void}
    */
   public setWrapT(wrap: TextureWrapMode): void {
-    this._wrapT = wrap;
+    this.wrapT = wrap;
     this.setTextureParameters();
   }
 
@@ -451,7 +473,7 @@ export class Texture extends JsonSerializable {
    * @returns {void}
    */
   public bind(): void {
-    if (!this.gl || this._isBound) {
+    if (!this.gl) {
       return;
     }
     this.gl.bindTexture(TextureTarget.TEXTURE_2D, this._glTexture);
@@ -485,7 +507,7 @@ export class Texture extends JsonSerializable {
    * @type {boolean}
    */
   public get isImageLoaded(): boolean {
-    return this._isLoaded;
+    return this.isLoaded;
   }
 
   /**
@@ -512,11 +534,12 @@ export class Texture extends JsonSerializable {
    */
   public destroy(): void {
     if (this.gl && this._glTexture) {
+      EngineCache.releaseTexture(this);
       this.gl.deleteTexture(this._glTexture);
       this._glTexture = null;
     }
-    this._image = null;
-    this._isLoaded = false;
+    this.image = null;
+    this.isLoaded = false;
   }
 
   /**
@@ -528,6 +551,10 @@ export class Texture extends JsonSerializable {
     return {
       ...super.toJsonObject(),
       url: this.textureUri,
+      minFilter: this.minFilter,
+      magFilter: this.magFilter,
+      wrapS: this.wrapS,
+      wrapT: this.wrapT,
     };
   }
 
@@ -539,6 +566,22 @@ export class Texture extends JsonSerializable {
    */
   override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
-    this.textureUri = jsonObject.url;
+    this.textureUri = jsonObject["url"];
+    if (jsonObject["minFilter"]) {
+      this.minFilter = jsonObject["minFilter"] as TextureFilterMode;
+    }
+    if (jsonObject["magFilter"]) {
+      this.magFilter = jsonObject["magFilter"] as TextureFilterMode;
+    }
+    if (jsonObject["wrapS"]) {
+      this.wrapS = jsonObject["wrapS"] as TextureWrapMode;
+    }
+    if (jsonObject["wrapT"]) {
+      this.wrapT = jsonObject["wrapT"] as TextureWrapMode;
+    }
+
+    if (this.isImageLoaded) {
+      this.setTextureParameters();
+    }
   }
 }

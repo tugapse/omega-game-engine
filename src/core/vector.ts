@@ -113,13 +113,13 @@ export class Vector3 extends Vector2 {
    * @protected
    * @type {vec3}
    */
-  protected _vec: vec3;
+  protected override _vec: vec3;
 
   /**
     Gets the internal gl-matrix vector.
    * @returns {vec3} - The internal vector instance.
    */
-  public get vector(): vec3 {
+  public override get vector(): vec3 {
     return this._vec;
   }
 
@@ -127,28 +127,28 @@ export class Vector3 extends Vector2 {
     Gets the x-component of the vector.
    * @type {number}
    */
-  public get x(): number {
+  public override get x(): number {
     return this.vector[0];
   }
   /**
     Sets the x-component of the vector.
    * @param {number} value - The new value for the x-component.
    */
-  public set x(value: number) {
+  public override set x(value: number) {
     this.vector[0] = value;
   }
   /**
     Gets the y-component of the vector.
    * @type {number}
    */
-  public get y(): number {
+  public override get y(): number {
     return this.vector[1];
   }
   /**
     Sets the y-component of the vector.
    * @param {number} value - The new value for the y-component.
    */
-  public set y(value: number) {
+  public override set y(value: number) {
     this.vector[1] = value;
   }
   /**
@@ -228,13 +228,13 @@ export class Vector4 extends Vector3 {
    * @protected
    * @type {vec4}
    */
-  protected _vec: vec4;
+  protected override _vec: vec4;
 
   /**
     Gets the internal gl-matrix vector.
    * @returns {vec4} - The internal vector instance.
    */
-  public get vector(): vec4 {
+  public override get vector(): vec4 {
     return this._vec;
   }
 
@@ -242,42 +242,42 @@ export class Vector4 extends Vector3 {
     Gets the x-component of the vector.
    * @type {number}
    */
-  public get x(): number {
+  public override get x(): number {
     return this.vector[0];
   }
   /**
     Sets the x-component of the vector.
    * @param {number} value - The new value for the x-component.
    */
-  public set x(value: number) {
+  public override set x(value: number) {
     this.vector[0] = value;
   }
   /**
     Gets the y-component of the vector.
    * @type {number}
    */
-  public get y(): number {
+  public override get y(): number {
     return this.vector[1];
   }
   /**
     Sets the y-component of the vector.
    * @param {number} value - The new value for the y-component.
    */
-  public set y(value: number) {
+  public override set y(value: number) {
     this.vector[1] = value;
   }
   /**
     Gets the z-component of the vector.
    * @type {number}
    */
-  public get z(): number {
+  public override get z(): number {
     return this.vector[2];
   }
   /**
     Sets the z-component of the vector.
    * @param {number} value - The new value for the z-component.
    */
-  public set z(value: number) {
+  public override set z(value: number) {
     this.vector[2] = value;
   }
   /**
