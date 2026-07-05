@@ -1,5 +1,6 @@
 import { vec2, vec3, vec4 } from "gl-matrix";
-import { JsonSerializable, JsonSerializedData } from "../interfaces";
+import { JsonSerializedData } from "../interfaces";
+import { JsonSerializable } from "./json-serializable";
 
 /**
   A class representing a 2D vector, backed by a gl-matrix vec2.
