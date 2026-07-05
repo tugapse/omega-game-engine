@@ -13,7 +13,7 @@ export class MeshData extends JsonSerializable implements IMeshData {
 
   /**
     Creates a new MeshData instance.
-    
+
    * @param {vec3[]} [vertices] - The array of vertex positions.
    * @param {vec3[]} [normals=[]] - The array of vertex normals.
    * @param {vec2[]} [uvs=[]] - The array of texture coordinates.
@@ -138,12 +138,12 @@ export class MeshData extends JsonSerializable implements IMeshData {
     }
   }
 
-    /**
-   * Calculates the bounding box for this mesh using its internal vertices.
-   *
-   * @returns A BoundingBox object, or null if the mesh has no vertices.
-   */
-  getBoundingBox(vertices: vec3[]): BoundingBox | null {
+  /**
+ * Calculates the bounding box for this mesh using its internal vertices.
+ *
+ * @returns A BoundingBox object, or null if the mesh has no vertices.
+ */
+  static getBoundingBox(vertices: vec3[]): BoundingBox | null {
     if (vertices.length === 0) {
       return null;
     }
@@ -180,7 +180,7 @@ export class MeshData extends JsonSerializable implements IMeshData {
    *
    * @returns A BoundingSphere object, or null if the mesh has no vertices.
    */
-  getBoundingSphere(vertices: vec3[]): BoundingSphere | null {
+  static getBoundingSphere(vertices: vec3[]): BoundingSphere | null {
     if (vertices.length === 0) {
       return null;
     }
@@ -337,12 +337,12 @@ export class MeshData extends JsonSerializable implements IMeshData {
    */
   override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
-    this.vertices = jsonObject.vertices;
-    this.normals = jsonObject.normals;
-    this.uvs = jsonObject.uvs;
-    this.indices = jsonObject.indices;
-    this.tangents = jsonObject.tangents;
-    this.bitangents = jsonObject.bitangents;
+    this.vertices = jsonObject["vertices"];
+    this.normals = jsonObject["normals"];
+    this.uvs = jsonObject["uvs"];
+    this.indices = jsonObject["indices"];
+    this.tangents = jsonObject["tangents"];
+    this.bitangents = jsonObject["bitangents"];
   }
 }
 
@@ -361,16 +361,16 @@ export class Mesh extends JsonSerializable {
   public meshData!: MeshData;
 
   override toJsonObject(): JsonSerializedData {
-    return{
+    return {
       ...super.toJsonObject(),
-      meshData:this.meshData.toJsonObject()
+      meshData: this.meshData.toJsonObject()
     }
   }
 
   override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
     this.meshData = new MeshData([]);
-    this.meshData.fromJson(jsonObject.meshData);
+    this.meshData.fromJson(jsonObject["meshData"]);
   }
 
 }

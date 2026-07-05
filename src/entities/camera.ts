@@ -1,15 +1,23 @@
 import { mat4, vec3, vec4, vec2 } from 'gl-matrix';
-import { Transform } from "../core/transform";
-import { EntityType } from "../enums/entity-type.enum";
-import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
-import { GlEntity } from "./entity";
+import { Transform } from '../core/transform';
+import { EntityType } from '../enums/entity-type.enum';
+import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
+import { SceneEntity } from './entity';
+
+/**
+ * Defines the type of projection the camera uses.
+ */
+export enum CameraType {
+  PERSPECTIVE = 0,
+  ORTHOGRAPHIC = 1,
+}
 
 /**
  * Represents a camera in the 3D scene, responsible for generating the view and projection matrices.
- * @augments {GlEntity}
+ * @augments {SceneEntity}
  */
-export class Camera extends GlEntity {
-  protected override _className = "Camera";
+export class Camera extends SceneEntity {
+  protected override _className = 'Camera';
 
   /**
    * The main camera instance for the scene.
@@ -26,6 +34,16 @@ export class Camera extends GlEntity {
     return this._mainCamera;
   }
   /**
+   * The type of projection this camera uses.
+   * @type {CameraType}
+   */
+  public cameraType: CameraType = CameraType.PERSPECTIVE;
+  /**
+   * The size of the orthographic projection (half the vertical size of the viewing volume).
+   * @type {number}
+   */
+  public orthoSize: number = 10.0;
+  /**
    * The camera's field of view in DEGREES.
    * @type {number}
    */
@@ -34,7 +52,7 @@ export class Camera extends GlEntity {
    * The distance to the near clipping plane.
    * @type {number}
    */
-  public nearPlane: number = 0.1;
+  public nearPlane: number = 0.01;
   /**
    * The distance to the far clipping plane.
    * @type {number}
@@ -62,7 +80,7 @@ export class Camera extends GlEntity {
    * @override
    * @type {string}
    */
-  public override tag: string = "Camera";
+  public override tag: string = 'Camera';
   /**
    * Gets the projection matrix.
    * @readonly
@@ -84,7 +102,7 @@ export class Camera extends GlEntity {
    * Creates an instance of Camera.
    */
   constructor() {
-    super("Camera");
+    super('Camera');
     this.entityType = EntityType.CAMERA;
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
@@ -116,13 +134,29 @@ export class Camera extends GlEntity {
    * @returns {void}
    */
   public updateProjectionMatrix(): void {
-    mat4.perspective(
-      this._projectionMatrix,
-      (this.fieldOfView * Math.PI) / 180,
-      this.aspectRatio,
-      this.nearPlane,
-      this.farPlane
-    );
+    if (this.cameraType === CameraType.PERSPECTIVE) {
+      mat4.perspective(
+        this._projectionMatrix,
+        (this.fieldOfView * Math.PI) / 180,
+        this.aspectRatio,
+        this.nearPlane,
+        this.farPlane,
+      );
+    } else {
+      const orthoLeft = -this.orthoSize * this.aspectRatio;
+      const orthoRight = this.orthoSize * this.aspectRatio;
+      const orthoBottom = -this.orthoSize;
+      const orthoTop = this.orthoSize;
+      mat4.ortho(
+        this._projectionMatrix,
+        orthoLeft,
+        orthoRight,
+        orthoBottom,
+        orthoTop,
+        -this.farPlane,
+        this.farPlane,
+      );
+    }
   }
 
   /**
@@ -132,7 +166,11 @@ export class Camera extends GlEntity {
    */
   private updateViewMatrix(): void {
     const cameraPosition = this.transform.worldPosition;
-    const lookAtTarget = vec3.add(vec3.create(), cameraPosition, this.transform.forward);
+    const lookAtTarget = vec3.add(
+      vec3.create(),
+      cameraPosition,
+      this.transform.forward,
+    );
     const cameraUp = this.transform.up;
     mat4.lookAt(this._viewMatrix, cameraPosition, lookAtTarget, cameraUp);
   }
@@ -155,14 +193,31 @@ export class Camera extends GlEntity {
    * @param {number} viewportHeight - The height of the viewport in pixels.
    * @returns {vec2} The 2D screen position in pixels.
    */
-  public worldToScreenPosition(worldPosition: vec3, viewportWidth: number, viewportHeight: number): vec2 {
+  public worldToScreenPosition(
+    worldPosition: vec3,
+    viewportWidth: number,
+    viewportHeight: number,
+  ): vec2 {
     // Combine view and projection matrices
     const viewProjectionMatrix = mat4.create();
-    mat4.multiply(viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
+    mat4.multiply(
+      viewProjectionMatrix,
+      this._projectionMatrix,
+      this._viewMatrix,
+    );
 
     // Transform the world position to clip-space
-    const clipSpacePosition = vec4.fromValues(worldPosition[0], worldPosition[1], worldPosition[2], 1.0);
-    vec4.transformMat4(clipSpacePosition, clipSpacePosition, viewProjectionMatrix);
+    const clipSpacePosition = vec4.fromValues(
+      worldPosition[0],
+      worldPosition[1],
+      worldPosition[2],
+      1.0,
+    );
+    vec4.transformMat4(
+      clipSpacePosition,
+      clipSpacePosition,
+      viewProjectionMatrix,
+    );
 
     // Perform perspective division to get normalized device coordinates (NDC)
     if (clipSpacePosition[3] === 0) {
@@ -172,7 +227,7 @@ export class Camera extends GlEntity {
     const ndcPosition = vec3.fromValues(
       clipSpacePosition[0] / clipSpacePosition[3],
       clipSpacePosition[1] / clipSpacePosition[3],
-      clipSpacePosition[2] / clipSpacePosition[3]
+      clipSpacePosition[2] / clipSpacePosition[3],
     );
 
     // Convert NDC to screen coordinates
@@ -190,23 +245,35 @@ export class Camera extends GlEntity {
    * @param {number} viewportHeight - The height of the viewport in pixels.
    * @returns {{origin: vec3, direction: vec3}} An object containing the ray's origin and direction vectors.
    */
-  public screenToWorldRay(screenPosition: vec2, viewportWidth: number, viewportHeight: number): { origin: vec3, direction: vec3 } {
+  public screenToWorldRay(
+    screenPosition: vec2,
+    viewportWidth: number,
+    viewportHeight: number,
+  ): { origin: vec3; direction: vec3 } {
     // 1. Convert screen coordinates to Normalized Device Coordinates (NDC)
     const ndcScreenX = (2.0 * screenPosition[0]) / viewportWidth - 1.0;
     const ndcScreenY = 1.0 - (2.0 * screenPosition[1]) / viewportHeight; // Y-axis inversion
 
     // 2. Create the combined view-projection matrix and its inverse
     const viewProjectionMatrix = mat4.create();
-    mat4.multiply(viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
+    mat4.multiply(
+      viewProjectionMatrix,
+      this._projectionMatrix,
+      this._viewMatrix,
+    );
     const inverseViewProjectionMatrix = mat4.create();
     mat4.invert(inverseViewProjectionMatrix, viewProjectionMatrix);
 
     // 3. Transform near and far points to world space
     const nearPointNdc = vec4.fromValues(ndcScreenX, ndcScreenY, -1.0, 1.0); // Z = -1 for the near plane
-    const farPointNdc = vec4.fromValues(ndcScreenX, ndcScreenY, 1.0, 1.0);   // Z = 1 for the far plane
+    const farPointNdc = vec4.fromValues(ndcScreenX, ndcScreenY, 1.0, 1.0); // Z = 1 for the far plane
 
     const nearPointWorld = vec4.create();
-    vec4.transformMat4(nearPointWorld, nearPointNdc, inverseViewProjectionMatrix);
+    vec4.transformMat4(
+      nearPointWorld,
+      nearPointNdc,
+      inverseViewProjectionMatrix,
+    );
 
     const farPointWorld = vec4.create();
     vec4.transformMat4(farPointWorld, farPointNdc, inverseViewProjectionMatrix);
@@ -214,18 +281,21 @@ export class Camera extends GlEntity {
     // 4. Perform perspective division
     if (nearPointWorld[3] === 0 || farPointWorld[3] === 0) {
       // Prevent division by zero
-      return { origin: vec3.fromValues(0, 0, 0), direction: vec3.fromValues(0, 0, 0) };
+      return {
+        origin: vec3.fromValues(0, 0, 0),
+        direction: vec3.fromValues(0, 0, 0),
+      };
     }
     const rayOrigin = vec3.fromValues(
       nearPointWorld[0] / nearPointWorld[3],
       nearPointWorld[1] / nearPointWorld[3],
-      nearPointWorld[2] / nearPointWorld[3]
+      nearPointWorld[2] / nearPointWorld[3],
     );
 
     const farPoint = vec3.fromValues(
       farPointWorld[0] / farPointWorld[3],
       farPointWorld[1] / farPointWorld[3],
-      farPointWorld[2] / farPointWorld[3]
+      farPointWorld[2] / farPointWorld[3],
     );
 
     // 5. Calculate the ray direction
@@ -245,8 +315,17 @@ export class Camera extends GlEntity {
    * @param {number} viewportHeight - The height of the viewport in pixels.
    * @returns {vec3} The 3D world position.
    */
-  public screenToWorldPosition(screenPosition: vec2, distance: number, viewportWidth: number, viewportHeight: number): vec3 {
-    const { origin, direction } = this.screenToWorldRay(screenPosition, viewportWidth, viewportHeight);
+  public screenToWorldPosition(
+    screenPosition: vec2,
+    distance: number,
+    viewportWidth: number,
+    viewportHeight: number,
+  ): vec3 {
+    const { origin, direction } = this.screenToWorldRay(
+      screenPosition,
+      viewportWidth,
+      viewportHeight,
+    );
     const worldPosition = vec3.create();
     vec3.scaleAndAdd(worldPosition, origin, direction, distance);
     return worldPosition;
@@ -260,9 +339,22 @@ export class Camera extends GlEntity {
    */
   public worldToClipPosition(worldPosition: vec3): vec4 {
     const viewProjectionMatrix = mat4.create();
-    mat4.multiply(viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
-    const clipSpacePosition = vec4.fromValues(worldPosition[0], worldPosition[1], worldPosition[2], 1.0);
-    vec4.transformMat4(clipSpacePosition, clipSpacePosition, viewProjectionMatrix);
+    mat4.multiply(
+      viewProjectionMatrix,
+      this._projectionMatrix,
+      this._viewMatrix,
+    );
+    const clipSpacePosition = vec4.fromValues(
+      worldPosition[0],
+      worldPosition[1],
+      worldPosition[2],
+      1.0,
+    );
+    vec4.transformMat4(
+      clipSpacePosition,
+      clipSpacePosition,
+      viewProjectionMatrix,
+    );
     return clipSpacePosition;
   }
 
@@ -274,11 +366,35 @@ export class Camera extends GlEntity {
   override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
+      cameraType: this.cameraType,
+      orthoSize: this.orthoSize,
       fieldOfView: this.fieldOfView,
       nearPlane: this.nearPlane,
       farPlane: this.farPlane,
       aspectRatio: this.aspectRatio,
     };
+  }
+
+  /**
+   * Deserializes the camera's state from a JSON object.
+   * @override
+   * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
+   * @returns {void}
+   */
+  override fromJson(jsonObject: JsonSerializedData): void {
+    super.fromJson(jsonObject);
+    if (jsonObject['cameraType'] !== undefined)
+      this.cameraType = jsonObject['cameraType'];
+    if (jsonObject['orthoSize'] !== undefined)
+      this.orthoSize = jsonObject['orthoSize'];
+    if (jsonObject['fieldOfView'] !== undefined)
+      this.fieldOfView = jsonObject['fieldOfView'];
+    if (jsonObject['nearPlane'] !== undefined)
+      this.nearPlane = jsonObject['nearPlane'];
+    if (jsonObject['farPlane'] !== undefined)
+      this.farPlane = jsonObject['farPlane'];
+    if (jsonObject['aspectRatio'] !== undefined)
+      this.aspectRatio = jsonObject['aspectRatio'];
   }
 
   /**

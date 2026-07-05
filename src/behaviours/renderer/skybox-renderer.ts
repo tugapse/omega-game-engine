@@ -1,15 +1,19 @@
 import { mat4 } from "gl-matrix";
-import { Camera } from "../../entities/camera";
-import { ShaderUniformsEnum } from "../../enums/shader-uniforms.enum";
-import { JsonSerializedData } from "../../interfaces/json-serialized-data.interface";
-import { TexturedRendererBehaviour } from "./textured-renderer-behaviour";
+import { EngineCache } from "../../core";
+import { Camera } from "../../entities";
+import { RenderLayer, ShaderUniformsEnum } from "../../enums";
+import { SkyboxMaterial } from "../../materials";
+import { CubePrimitive } from "../../primitives";
+import { SkyboxShader } from "../../shaders";
+import { MeshRendererBehaviour } from "./mesh-renderer-behaviour";
+
 
 /**
  * A specialized renderer for drawing a skybox.
- * This class extends `TexturedRendererBehaviour` and is responsible for rendering a large cube with a cubemap texture, creating the illusion of a sky and distant background.
- * @augments {TexturedRendererBehaviour}
+ * This class extends `MeshRendererBehaviour` and is responsible for rendering a large cube with a cubemap texture, creating the illusion of a sky and distant background.
+ * @augments {MeshRendererBehaviour}
  */
-export class SkyboxRenderer extends TexturedRendererBehaviour {
+export class SkyboxRenderer extends MeshRendererBehaviour {
   /**
    * Creates a new instance of the SkyboxRenderer.
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
@@ -27,7 +31,17 @@ export class SkyboxRenderer extends TexturedRendererBehaviour {
   constructor(gl:WebGL2RenderingContext){
     super(gl);
     this._className = "SkyboxRenderer";
+    this.createDefaultSkybox();
   }
+  
+  protected async createDefaultSkybox(): Promise<void> {
+    this.mesh.meshData = new CubePrimitive();
+    const material = new SkyboxMaterial();
+    this.shader = new SkyboxShader(this._gl, material);
+    this.renderLayer = RenderLayer.SKYBOX;
+    material.mainTex = await EngineCache.getWhiteTextureCube(this._gl);
+  }
+
   /**
    * Initializes the skybox renderer.
    * This method sets the initial transform of the skybox to be large enough to encompass the entire scene.
@@ -35,12 +49,15 @@ export class SkyboxRenderer extends TexturedRendererBehaviour {
    * @returns {boolean} - True if initialization is successful, otherwise false.
    */
   override initialize(): boolean {
-    if (super.initialize()) {
+    if(this.transform){
       this.transform.setLocalPosition(0, 0, 0);
       this.transform.setLocalScale(1000, 1000, 1000);
-      return true;
     }
-    return false;
+    return super.initialize()
+  }
+  
+  public get material():SkyboxMaterial {
+    return this.shader?.material as SkyboxMaterial;
   }
 
   /**
@@ -54,26 +71,6 @@ export class SkyboxRenderer extends TexturedRendererBehaviour {
     this._gl.depthFunc(this._gl.LEQUAL);
   }
 
-  /**
-   * Draws the skybox mesh.
-   * This method binds the shader and buffers, sets the shader variables, and draws the skybox.
-   * @override
-   */
-  override draw(): void {
-    if (!this.shader?._shaderProgram || !this.mesh) {
-      return;
-    }
-
-    this.shader.bindBuffers();
-    this.shader.use();
-    this.setShaderVariables();
-    this._gl.drawElements(
-      this._gl.TRIANGLES,
-      this.mesh.meshData.indices.length,
-      this._gl.UNSIGNED_SHORT,
-      0,
-    );
-  }
 
   /**
    * Sets the camera matrices for the skybox, ensuring the skybox remains centered on the camera.
@@ -100,6 +97,17 @@ export class SkyboxRenderer extends TexturedRendererBehaviour {
     this.shader.setMat4(ShaderUniformsEnum.U_MVP_MATRIX, mvpMatrix);
   }
 
+  override draw(): void {
+    if (!this.shader?._shaderProgram) {
+      return;
+    }
+    this.setGlSettings();
+    this.setCameraMatrices();
+    this.setShaderVariables();
+    super.draw();
+    this.shader?.release();
+  }
+
   /**
    * Sets all shader variables required for rendering the skybox.
    * This method sets the GL settings, camera matrices, and loads the shader data.
@@ -107,22 +115,12 @@ export class SkyboxRenderer extends TexturedRendererBehaviour {
    */
   override setShaderVariables(): void {
     if (!this.shader?._shaderProgram) {
-
       return;
     }
 
+    super.setShaderVariables();
     this.setGlSettings();
     this.setCameraMatrices();
-    this.shader.loadDataIntoShader();
   }
 
-  /**
-   * Populates the renderer's properties from a JSON object.
-   * This method is a placeholder and does not add any additional functionality beyond the base class.
-   * @param {JsonSerializedData} jsonObject - The JSON object containing the data.
-   * @override
-   */
-  override fromJson(jsonObject: JsonSerializedData): void {
-    super.fromJson(jsonObject);
-  }
 }

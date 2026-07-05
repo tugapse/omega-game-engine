@@ -1,39 +1,31 @@
-import { vec3 } from "gl-matrix";
-import { Color, Colors } from "../core";
-import { EntityType } from "../enums/entity-type.enum";
-import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
-import { SceneEntityBehaviour } from "../interfaces/scene-behaviour.interface";
-import { Camera } from "./camera";
-import { GlEntity } from "./entity";
-import { Light } from "./light";
-import { RendererBehaviour } from "../behaviours/renderer/renderer-behaviour";
-import { RenderLayer } from "../enums";
-import { CubemapTexture, Texture } from "../textures";
+import { RendererBehaviour } from '../behaviours/renderer/renderer-behaviour';
+import { Color, Colors, ObjectInstanciator, SceneFog } from '../core';
+import { RenderPipeline } from '../core/render';
+import { EntityType } from '../enums/entity-type.enum';
+import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
+import { SceneEntityBehaviour } from '../interfaces/scene-behaviour.interface';
+import { CubemapTexture, Texture } from '../textures';
+import { Camera } from './camera';
+import { SceneEntity } from './entity';
+import { Light } from './lights/light';
 /**
   Represents a scene in the 3D world, acting as a container for entities and managing the main game loop operations like update and draw.
- * @augments {GlEntity}
+ * @augments {SceneEntity}
  */
-export class Scene extends GlEntity {
+export class Scene extends SceneEntity {
+  protected override _className = 'Scene';
 
-  protected override _className = "Scene";
-  /**
-    The currently active scene instance.
-   * @private
-    
-   * @type {Scene}
-   */
-  private static _currentScene: Scene;
-
-
-  /**
-    Gets the currently active scene instance.
-   * @readonly
-    
-   * @type {Scene}
-   */
-  public static get currentScene(): Scene {
-    return this._currentScene;
+  public get shadowmap() {
+    return this._renderPipeline.shadowMap;
   }
+  public get renderPipeline() {
+    return this._renderPipeline;
+  }
+
+  public sceneFog: SceneFog;
+
+  protected _renderPipeline: RenderPipeline;
+
   /**
     A flag indicating whether the scene's update loop is running.
    * @type {boolean}
@@ -54,7 +46,7 @@ export class Scene extends GlEntity {
    * @override
    * @type {string}
    */
-  public override tag: string = "Scene";
+  public override tag: string = 'Scene';
   /**
     A collection of behaviours specific to the scene.
    * @type {SceneEntityBehaviour[]}
@@ -68,28 +60,28 @@ export class Scene extends GlEntity {
   override entityType: number = EntityType.SCENE;
   /**
     An array of all entities within the scene.
-   * @private
-   * @type {GlEntity[]}
+   * @protected
+   * @type {SceneEntity[]}
    */
-  private _objects: GlEntity[];
+  protected _objects: SceneEntity[];
   /**
     The WebGL2 rendering context.
-   * @private
+   * @protected
    * @type {WebGL2RenderingContext}
    */
-  private gl!: WebGL2RenderingContext;
+  protected gl!: WebGL2RenderingContext;
   /**
     The total elapsed time since the scene started.
-   * @private
+   * @protected
    * @type {number}
    */
-  private ellapsedTime: number = 0;
+  protected ellapsedTime: number = 0;
   /**
     Gets the list of all entities in the scene.
    * @readonly
-   * @type {GlEntity[]}
+   * @type {SceneEntity[]}
    */
-  public get objects(): GlEntity[] {
+  public get objects(): SceneEntity[] {
     return this._objects;
   }
   /**
@@ -98,21 +90,19 @@ export class Scene extends GlEntity {
    * @type {Light[]}
    */
   public get lights(): Light[] {
-    return this._objects.filter(o => o instanceof Light) as Light[];
+    return this._objects.filter((o) => o instanceof Light) as Light[];
   }
-
-  public shadowMap? :Texture;
 
   /**
     Creates an instance of Scene.
    */
   constructor() {
-    super("Scene");
+    super('Scene');
     this._objects = [];
     this.behaviours = [];
-    if (!Scene._currentScene) {
-      Scene._currentScene = this;
-    }
+    this.sceneFog = new SceneFog();
+    this._renderPipeline = new RenderPipeline();
+    this._renderPipeline.initialize(this);
   }
 
   /**
@@ -136,22 +126,22 @@ export class Scene extends GlEntity {
   public override update(ellapsed: number): void {
     if (this.destroyed) return;
     Camera.mainCamera.update(ellapsed);
-    this.behaviours.forEach(behaviour => behaviour.beforeUpdate(ellapsed));
+    this.behaviours.forEach((behaviour) => behaviour.beforeUpdate(ellapsed));
 
     if (!this.isRunning && this.inEditMode && this.objects?.length) {
-      const toUpdate = this.objects.filter(ob => ob.updateInEditor);
-      toUpdate.forEach(entity => entity.update(ellapsed));
-      this.behaviours.forEach(behaviour => behaviour.update(ellapsed));
+      const toUpdate = this.objects.filter((ob) => ob.updateInEditor);
+      toUpdate.forEach((entity) => entity.update(ellapsed));
+      this.behaviours.forEach((behaviour) => behaviour.update(ellapsed));
     }
 
     if (!this.isRunning) return;
 
     this.ellapsedTime += ellapsed;
     super.update(ellapsed);
-    for (const object of this.objects.filter(e => e.active)) {
+    for (const object of this.objects.filter((e) => e.active)) {
       object.update(ellapsed);
     }
-    this.behaviours.forEach(behaviour => behaviour.afterUpdate());
+    this.behaviours.forEach((behaviour) => behaviour.afterUpdate());
   }
 
   /**
@@ -162,63 +152,33 @@ export class Scene extends GlEntity {
   public override draw(): void {
     if (this.destroyed || !this.gl || !Camera.mainCamera) return;
 
-    const activeObjects = this.objects.filter(ob => ob.active && ob.show).sort((a, b) => this.sortByRenderLayer(a, b));
-    const opaqueObjects = activeObjects.filter(e => e.getBehaviour(RendererBehaviour)?.renderLayer == RenderLayer.OPAQUE);
-    const transparentObjects = activeObjects.filter(e => e.getBehaviour(RendererBehaviour)?.renderLayer == RenderLayer.TRANSPARENT);
-    const preObjects = activeObjects.filter(e => e.getBehaviour(RendererBehaviour)?.renderLayer == RenderLayer.PRE_SCENE);
-    const postObjects = activeObjects.filter(e => e.getBehaviour(RendererBehaviour)?.renderLayer == RenderLayer.POST_SCENE);
-    const skyboxObjects = activeObjects.filter(e => e.getBehaviour(RendererBehaviour)?.renderLayer == RenderLayer.SKYBOX);
-
-
-    preObjects.sort((a, b) => this.sortByDistance(a, b));
-    postObjects.sort((a, b) => this.sortByDistance(a, b));
-    opaqueObjects.sort((a, b) => this.sortByDistance(a, b));
-    transparentObjects.sort((a, b) => this.sortByDistance(a, b));
-    skyboxObjects.sort((a, b) => this.sortByDistance(a, b));
-
-
-    this.behaviours.filter(behaviour => behaviour.active).forEach(behaviour => behaviour.beforeDraw());
-
-    this.gl.clearColor(this.clearColor.r, this.clearColor.g, this.clearColor.b, 1.0);
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT | this.gl.STENCIL_BUFFER_BIT);
-
-    for (const object of preObjects) { object.draw(); }
-    for (const object of opaqueObjects) { object.draw(); }
-    for (const object of transparentObjects) { object.draw(); }
-    for (const object of postObjects) { object.draw(); }
-    for (const object of skyboxObjects) { object.draw(); }
-
-    super.draw();
-
-    this.behaviours.filter(behaviour => behaviour.active).forEach(behaviour => behaviour.afterDraw());
+    this._renderPipeline.draw();
   }
-
-  private sortByRenderLayer(a: GlEntity, b: GlEntity) {
-    const aBeh = a.getBehaviour(RendererBehaviour);
-    const bBeh = a.getBehaviour(RendererBehaviour);
-    if (!aBeh || !bBeh) {
-      return 0
-    }
-    return aBeh.renderLayer - bBeh.renderLayer;
-  }
-
-  protected sortByDistance(a: GlEntity, b: GlEntity) {
-    const aD = vec3.distance(a.transform.worldPosition, Camera.mainCamera.transform.worldPosition);
-    const bD = vec3.distance(b.transform.worldPosition, Camera.mainCamera.transform.worldPosition);
-    return bD - aD;
-  }
-
 
   /**
     Adds a new entity to the scene.
-   * @param {GlEntity} entity - The entity to add.
+   * @param {SceneEntity} entity - The entity to add.
    * @returns {void}
    */
-  public addEntity(entity: GlEntity): void {
+  public addEntity(entity: SceneEntity): void {
     if (this.destroyed) return;
     entity.scene = this;
     this._objects.push(entity);
     entity.initialize();
+  }
+
+  /**
+    Removes an entity from the scene.
+   * @param {SceneEntity} entity - The entity to remove.
+   * @returns {void}
+   */
+  public removeEntity(entity: SceneEntity): void {
+    if (this.destroyed) return;
+    const index = this._objects.indexOf(entity);
+    if (index !== -1) {
+      this._objects.splice(index, 1);
+      entity.destroy();
+    }
   }
 
   /**
@@ -240,10 +200,10 @@ export class Scene extends GlEntity {
    */
   public setGlRenderingContext(gl: WebGL2RenderingContext): void {
     this.gl = gl;
-    this.behaviours.forEach(behaviour => {
-      if (behaviour['setGl'])
-        behaviour.setGl(gl);
+    this.behaviours.forEach((behaviour) => {
+      if (behaviour['setGl']) behaviour['setGl'](gl);
     });
+    this._renderPipeline.setGlRenderingContext(gl);
   }
 
   /**
@@ -252,9 +212,6 @@ export class Scene extends GlEntity {
    * @returns {void}
    */
   public override destroy(): void {
-    for (const child of this.lights) {
-      child.destroy();
-    }
     for (const child of this.objects) {
       child.destroy();
     }
@@ -270,6 +227,19 @@ export class Scene extends GlEntity {
    */
   override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
+
+    if (jsonObject['renderPipeline']) {
+      const renderpipeline =
+        ObjectInstanciator.instanciateObjectFromJsonData<RenderPipeline>(
+          jsonObject['renderPipeline'].className,
+        );
+      this._renderPipeline = renderpipeline || new RenderPipeline();
+    } else {
+      this._renderPipeline = new RenderPipeline();
+    }
+    this._renderPipeline.initialize(this);
+
+    this.sceneFog.fromJson(jsonObject);
     for (const entity of jsonObject['objects']) {
       this.addEntity(entity);
     }
@@ -284,7 +254,9 @@ export class Scene extends GlEntity {
     const meshMaps: { [key: string]: any } = {};
     const textureMaps: { [key: string]: any } = {};
 
-    const renderers = this.objects.filter(e => e.getBehaviours(RendererBehaviour)).map(o => o.getBehaviour(RendererBehaviour) as RendererBehaviour);
+    const renderers = this.objects
+      .filter((e) => e.getBehaviours(RendererBehaviour))
+      .map((o) => o.getBehaviour(RendererBehaviour) as RendererBehaviour);
 
     for (const renderer of renderers) {
       if (!renderer) continue;
@@ -292,63 +264,76 @@ export class Scene extends GlEntity {
       if (renderer.shader?.material) {
         for (const key of Object.keys(renderer.shader.material)) {
           const property = (renderer.shader.material as any)[key];
-          if (property instanceof Texture) {
-            textureMaps[property.textureUri || property.name] = property.toJsonObject();
-          } else if (property instanceof CubemapTexture) {
-            let uris = property.textureUris?.join("|");
-            textureMaps[uris || property.name] = property.toJsonObject();
+          if (property instanceof CubemapTexture) {
+            textureMaps[property.textureUris?.join('|') || property.name] =
+              property.toJsonObject();
+          } else if (property instanceof Texture) {
+            textureMaps[property.textureUri || property.name] =
+              property.toJsonObject();
           }
         }
       }
 
       if (renderer.mesh) {
-        meshMaps[renderer.mesh.meshData.uuid] = renderer.mesh.meshData.toJsonObject();
+        meshMaps[renderer.mesh.meshData.uuid] =
+          renderer.mesh.meshData.toJsonObject();
       } else {
-        console.debug("No mesh for renderer", renderer);
+        console.debug('No mesh for renderer', renderer);
       }
     }
     return {
-      ...super.toJsonObject(),
-      className: Scene.className,
-      objects: this.objects.map(o => o.toJsonObject()),
+      ...this.getBaseJsonInfo(),
+      renderPipeline: this._renderPipeline.toJsonObject(),
+      sceneFog: this.sceneFog.toJsonObject(),
+      objects: this.objects.map((o) => o.toJsonObject()),
       meshMaps,
-      textureMaps
+      textureMaps,
     };
-  }
-
-  /**
-    Sets this scene as the current active scene.
-   * @returns {void}
-   */
-  public setCurrent(): void {
-    Scene._currentScene = this;
   }
 
   /**
     Retrieves an entity by its name.
    * @param {string} name - The name of the entity to find.
-   * @returns {GlEntity | undefined} - The found entity, or undefined.
+   * @returns {SceneEntity | undefined} - The found entity, or undefined.
    */
-  public getEntitieByName(name: string): GlEntity | undefined {
-    return this.objects.find(o => o.name === name);
+  public getEntitieByName(name: string): SceneEntity | undefined {
+    return this.objects.find((o) => o.name === name);
+  }
+
+  /**
+    Retrieves an entity by Classname.
+   * @param {string} name - The name of the entity class to find.
+   * @returns {SceneEntity | undefined} - The found entity, or undefined.
+   */
+  public getEntitieClassByName(className: string): SceneEntity | undefined {
+    return this.objects.find((o) => o.className === className);
+  }
+
+  /**
+    Retrieves all entity by its Classname.
+   * @param {string} className - The name of the entity class to find.
+   * @returns {SceneEntity[]} - The found entity, or undefined.
+   */
+  public getEntitiesClassByName(className: string): SceneEntity[] {
+    return this.objects.filter((o) => o.className === className);
   }
 
   /**
     Retrieves an entity by its unique identifier.
    * @param {string} uuid - The UUID of the entity to find.
-   * @returns {GlEntity | undefined} - The found entity, or undefined.
+   * @returns {SceneEntity | undefined} - The found entity, or undefined.
    */
-  public getEntitieByUuid(uuid: string): GlEntity | undefined {
-    return this.objects.find(o => o.uuid === uuid);
+  public getEntitieByUuid(uuid: string): SceneEntity | undefined {
+    return this.objects.find((o) => o.uuid === uuid);
   }
 
   /**
     Retrieves all entities with a specific tag.
    * @param {string} tag - The tag to filter by.
-   * @returns {GlEntity[]} - An array of entities with the given tag.
+   * @returns {SceneEntity[]} - An array of entities with the given tag.
    */
-  public getEntitiesByTag(tag: string): GlEntity[] {
-    return this.objects.filter(o => o.tag === tag);
+  public getEntitiesByTag(tag: string): SceneEntity[] {
+    return this.objects.filter((o) => o.tag === tag);
   }
 
   /**
@@ -357,7 +342,9 @@ export class Scene extends GlEntity {
    * @param {new (...args: any[]) => T} constructor - The constructor function of the type to filter by.
    * @returns {T[]} - An array of entities of the specified type.
    */
-  public getEntities<T extends GlEntity>(constructor: new (...args: any[]) => T): T[] {
+  public getEntities<T extends SceneEntity>(
+    constructor: new (...args: any[]) => T,
+  ): T[] {
     return this._objects.filter((o): o is T => o instanceof constructor);
   }
 }

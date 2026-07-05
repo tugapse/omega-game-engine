@@ -1,5 +1,5 @@
 export * from './entity'
-export * from './light'
 export * from './camera'
-export * from './scene-manager'
 export * from './scene'
+export * from './lights/index'
+export * from '../managers/scene-manager'

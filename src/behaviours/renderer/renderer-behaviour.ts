@@ -1,22 +1,21 @@
-import { mat3, mat4 } from "gl-matrix";
+import { mat3, mat4, vec3 } from "gl-matrix";
+import { Transform, Vector3 } from "../../core";
 import { CanvasViewport } from "../../core/canvas-viewport";
 import { Mesh } from "../../core/mesh";
-import { Camera } from "../../entities/camera";
-import { SceneManager } from "../../entities/scene-manager";
+import { ObjectInstanciator } from "../../core/object-instanciator";
+import { Camera, DirectionalLight, Light } from "../../entities";
+import { EntityType, FaceWinding, RenderLayer } from "../../enums";
 import { GLPrimitiveType } from "../../enums/gl-primitive-type.enum";
+import { BlendingDestinationFactor, BlendingSourceFactor } from "../../enums/gl/blend.enum";
+import { CullFace } from "../../enums/gl/cull-face.enum";
+import { DephFunction } from "../../enums/gl/deph-function.enum";
 import { ShaderUniformsEnum } from "../../enums/shader-uniforms.enum";
+import { BlendingMode } from "../../interfaces/blend-mode";
 import { JsonSerializedData } from "../../interfaces/json-serialized-data.interface";
 import { IRendererBehaviour } from "../../interfaces/renderer-behaviour.interface";
+import { ColorMaterial as Material } from "../../materials";
 import { Shader } from "../../shaders/shader";
 import { EntityBehaviour } from "../entity-behaviour";
-import { ObjectInstanciator } from "../../core/object-instanciator";
-import { ColorMaterial as Material } from "../../materials";
-import { BlendingMode } from "../../interfaces/blend-mode";
-import { BlendingDestinationFactor, BlendingSourceFactor } from "../../enums/gl/blend.enum";
-import { DephFunction } from "../../enums/gl/deph-function.enum";
-import { CullFace } from "../../enums/gl/cull-face.enum";
-import { FaceWinding, RenderLayer } from "../../enums";
-import { Vector2, Vector3 } from "../../core";
 
 /**
  * The base class for all renderer behaviours, responsible for drawing meshes to the canvas.
@@ -133,10 +132,10 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    * The render layer.
    * @type {RenderLayer}
    */
-  public renderLayer: RenderLayer = RenderLayer.OPAQUE;
+  public override renderLayer: RenderLayer = RenderLayer.OPAQUE;
 
   public castShadows = true;
-
+ 
   /**
    * Creates an instance of RendererBehaviour.
    * @param {WebGL2RenderingContext} _gl - The WebGL2 rendering context.
@@ -261,7 +260,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    * @param {number} height - The height of the render target.
    * @returns {void}
    */
- public setRenderTarget(texture: WebGLTexture, width: number, height: number): void {
+  public setRenderTarget(texture: WebGLTexture, width: number, height: number): void {
     if (!this._gl) return;
 
     if (!this._framebuffer) {
@@ -359,9 +358,9 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
     const materialData = jsonObject["shader"]["material"];
     const material = ObjectInstanciator.instanciateObjectFromJsonData<Material>(materialData.className);
     material!.fromJson(materialData);
-    this.shader = ObjectInstanciator.instanciateObjectFromJsonData(jsonObject.shader.className, [this._gl, material]);
-    this.shader?.fromJson(jsonObject.shader);
-    this.mesh.fromJson(jsonObject.mesh);
+    this.shader = ObjectInstanciator.instanciateObjectFromJsonData(jsonObject["shader"].className, [this._gl, material]);
+    this.shader?.fromJson(jsonObject["shader"]);
+    this.mesh.fromJson(jsonObject["mesh"]);
   }
 
   /**
@@ -369,26 +368,28 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    * This method temporarily uses a vertex buffer to upload the point's data and draws it using GL_POINTS.
    * @param {Vector3} point - The 3D coordinates of the point to draw`.
    * @returns {void}
+   * @param {number} [pointSize=10.0] - The size of the point to draw.
+   * @param {Shader} [shader=this.shader] - The shader to use for drawing.
    */
-  public drawPoint(point: Vector3): void {
-    if (!this._gl || !this.shader || !this.shader.buffers.position) {
+  public drawPoint(point: Vector3, pointSize: number = 10.0, shader: Shader = this.shader!): void {
+    if (!this._gl || !shader || !shader.buffers.position || !shader._shaderProgram) {
       console.warn("Renderer is not fully initialized. Cannot draw point.");
       return;
     }
 
     // Set the primitive type for a point
     this.drawPrimitiveType = GLPrimitiveType.POINTS;
-
     // Use the main shader and set uniforms
-    this.shader.use();
+    shader.use();
     this.setShaderVariables();
 
+    shader.setFloat('u_pointSize', pointSize);
     // Bind the vertex buffer and upload point data
-    this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this.shader.buffers.position);
+    this._gl.bindBuffer(this._gl.ARRAY_BUFFER, shader.buffers.position);
     this._gl.bufferData(this._gl.ARRAY_BUFFER, new Float32Array(point.vector), this._gl.STATIC_DRAW);
 
     // Get the position attribute location and enable it
-    const positionAttributeLocation = this._gl.getAttribLocation(this.shader._shaderProgram!, ShaderUniformsEnum.A_POSITION);
+    const positionAttributeLocation = this._gl.getAttribLocation(shader._shaderProgram, ShaderUniformsEnum.A_POSITION);
     this._gl.enableVertexAttribArray(positionAttributeLocation);
 
     // Point the attribute to the buffer
@@ -400,6 +401,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
     // Clean up
     this._gl.disableVertexAttribArray(positionAttributeLocation);
     this._gl.bindBuffer(this._gl.ARRAY_BUFFER, null);
+    shader.release()
   }
 
   /**
@@ -442,6 +444,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
     // Clean up
     this._gl.disableVertexAttribArray(positionAttributeLocation);
     this._gl.bindBuffer(this._gl.ARRAY_BUFFER, null);
+    this.shader.release();
   }
 
 
@@ -457,6 +460,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
     this.shader.use();
     this.shader.bindBuffers();
     this._gl.drawElements(this.drawPrimitiveType, this.mesh.meshData.indices.length, this._gl.UNSIGNED_SHORT, 0);
+    this.shader.release();
   }
 
 
@@ -478,5 +482,83 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    */
   public setGl(gl: WebGL2RenderingContext) {
     this._gl = gl;
+  }
+
+  /**
+   * Calculates the view, projection, and model-view-projection matrices for a light source.
+   * These matrices are used in shadow mapping to render the scene from the light's perspective.
+   *
+   * @param {Transform} cameraTransform - The transform of the main camera.
+   * @param {Light} light - The light source entity.
+   * @param {number} [frustumSize=60.0] - The size of the orthographic frustum used for the light's projection.
+   * @param {number} [near=0.1] - The near clipping plane of the light's frustum.
+   * @param {number} [far=200.0] - The far clipping plane of the light's frustum.
+   * @returns {{ lightViewMatrix: mat4, lightProjectionMatrix: mat4, lightMvpMatrix: mat4 }} An object containing the calculated matrices.
+   */
+  public createLightMatrices(
+    cameraTransform: Transform,
+    light: Light,
+    frustumSize: number = 60.0,
+    near: number = 0.1,
+    far: number = 200.0,
+  ) {
+    // 1. Get the light's direction from the light entity.
+    let lightDirection: vec3;
+    if (light.entityType === EntityType.LIGHT_DIRECTIONAL) {
+      lightDirection = (light as DirectionalLight).direction;
+    } else {
+      lightDirection = vec3.normalize(vec3.create(), light.transform.forward);
+    }
+
+    // 2. Determine the center of the light's view frustum.
+    // It is centered on the camera's position for consistent shadow coverage.
+    const frustumCenter = vec3.create();
+    vec3.copy(frustumCenter, cameraTransform.worldPosition);
+
+    // 3. Create the light's eye position by offsetting it from the frustum center.
+    const lightPosition = vec3.create();
+    vec3.scaleAndAdd(lightPosition, frustumCenter, lightDirection, -(frustumSize));
+
+    // 4. Calculate the light's view matrix using mat4.lookAt.
+    // To prevent the matrix from becoming unstable when the light is directly
+    // above or below, we calculate a stable 'up' vector.
+    let up = vec3.fromValues(0, 1, 0);
+    if (Math.abs(vec3.dot(lightDirection, up)) > 0.999) {
+      // If light direction is too close to the world up vector, use a different axis.
+      up = vec3.fromValues(0, 0, 1);
+    }
+    const lightRight = vec3.cross(vec3.create(), lightDirection, up);
+    const lightUp = vec3.cross(vec3.create(), lightRight, lightDirection);
+
+    const lightViewMatrix = mat4.create(); // Variable declared here
+    mat4.lookAt(
+      lightViewMatrix,
+      lightPosition,
+      frustumCenter,
+      lightUp
+    );
+
+    // 5. Calculate the light's projection matrix.
+    const lightProjectionMatrix = mat4.create(); // Variable declared here
+    mat4.ortho(
+      lightProjectionMatrix,
+      -frustumSize,
+      frustumSize,
+      -frustumSize,
+      frustumSize,
+      near,
+      far
+    );
+
+    // 6. Calculate the final combined Light MVP Matrix.
+    const lightMvpMatrix = mat4.create(); // Variable declared here
+    mat4.multiply(lightMvpMatrix, lightProjectionMatrix, lightViewMatrix);
+
+    // 7. Return all the necessary matrices in an object.
+    return {
+      lightViewMatrix,
+      lightProjectionMatrix,
+      lightMvpMatrix
+    };
   }
 }
