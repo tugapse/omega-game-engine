@@ -1,6 +1,6 @@
 {
   "name": "omega-game-engine",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Omega game engine library.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
