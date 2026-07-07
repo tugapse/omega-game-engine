@@ -1,29 +1,51 @@
 import { v4 as uuidV4 } from 'uuid';
 import { JsonSerializedData } from '../interfaces/json-serialized-data';
 /**
-  An abstract base class providing a common interface for objects that can be serialized to and deserialized from a JSON object.
+ * An abstract base class providing a common interface for objects that can be serialized
+ * to and deserialized from a JSON object. It includes helpers for automatic property
+ * serialization and deserialization.
  */
 export class JsonSerializable {
+  /** Allows for dynamic property access. */
   [key: string]: any;
+  /** A user-friendly name for the object instance. */
   public name: string = '';
+  /** The name of the class, used for identification during deserialization. */
   protected _className: string;
+  /** A unique identifier for this object instance. */
   protected _uuid: string;
+  /** A list of property keys to ignore during automatic serialization. */
   protected _serializationIgnoreKeys: string[];
 
+  /**
+   * Gets the class name of the object.
+   * @returns The class name.
+   */
   public get className(): string {
     return this._className;
   }
+  /**
+   * Gets the unique identifier of the object.
+   * @returns The UUID string.
+   */
   public get uuid(): string {
     return this._uuid;
   }
 
+  /**
+   * Creates an instance of JsonSerializable.
+   * @param className - The name of the class being instantiated. This is crucial for the serialization system.
+   * @throws If `className` is not provided.
+   */
   constructor(className: string) {
     if (!className) throw new Error('className is required');
     this._className = className;
     this.name = this.name;
     this._uuid = uuidV4();
     this._serializationIgnoreKeys = [
+      // Internal properties that should never be serialized.
       '_serializationIgnoreKeys',
+      // Runtime references that cannot be serialized.
       'scene',
       'parent',
     ];
@@ -66,6 +88,11 @@ export class JsonSerializable {
     return undefined;
   }
 
+  /**
+   * Creates a base JSON object with common identifying properties.
+   * @returns A `JsonSerializedData` object with `type`, `name`, `className`, and `uuid`.
+   * @protected
+   */
   protected getBaseJsonInfo(): JsonSerializedData {
     return {
       type: this.constructor.name,
@@ -74,6 +101,16 @@ export class JsonSerializable {
       uuid: this.uuid,
     };
   }
+  /**
+   * Automatically serializes the public properties of the object.
+   * It iterates over the object's keys and uses `loopAndSaveProperties` to serialize each value.
+   * Keys listed in `_serializationIgnoreKeys` are skipped.
+   *
+   * @remarks
+   * This is a helper method for subclasses to easily implement `toJsonObject`.
+   * @returns A `JsonSerializedData` object representing the object's state.
+   * @protected
+   */
   protected serializeAutomatically(): JsonSerializedData {
     const data: JsonSerializedData = {};
 
@@ -99,6 +136,12 @@ export class JsonSerializable {
     };
   }
 
+  /**
+   * Recursively populates the properties of a target object from a source JSON object.
+   * @param target - The class instance to populate.
+   * @param source - The JSON data to read from.
+   * @private
+   */
   private populateProperties(target: any, source: JsonSerializedData): void {
     for (const key in source) {
       if (!Object.prototype.hasOwnProperty.call(source, key)) continue;
@@ -132,6 +175,15 @@ export class JsonSerializable {
     }
   }
 
+  /**
+   * Automatically deserializes properties from a JSON object into the current instance.
+   * It filters out base properties and ignored keys, then uses `populateProperties` to
+   * recursively set the values on the instance.
+   *
+   * @remarks
+   * This is a helper method for subclasses to easily implement `fromJson`.
+   * @param jsonObject - The JSON data to deserialize from.
+   */
   protected deserializeAutomatically(jsonObject: JsonSerializedData): void {
     // The `super.fromJson` call should be made by the derived class before calling this helper.
     // Create a copy of the jsonObject to avoid modifying the original, and remove keys we don't want to auto-populate.
@@ -145,18 +197,18 @@ export class JsonSerializable {
   }
 
   /**
-    Serializes the object to a JSON-compatible data structure.
-   * @returns {JsonSerializedData} - A JSON data object representing the serialized state.
+   * Serializes the object to a JSON-compatible data structure.
+   * Subclasses should override this to add their specific properties.
+   * @returns A JSON data object representing the object's base state.
    */
   public toJsonObject(): JsonSerializedData {
     return this.getBaseJsonInfo();
   }
 
   /**
-    Deserializes the object from a JSON-compatible data structure.
-   * This method is intended to be overridden by subclasses to handle their specific properties.
-   * @param {JsonSerializedData} jsonObject - The JSON data object to deserialize from.
-   * @returns {void}
+   * Deserializes the object from a JSON-compatible data structure.
+   * Subclasses should override this to handle their specific properties, usually calling `super.fromJson` first.
+   * @param jsonObject - The JSON data object to deserialize from.
    */
   public fromJson(jsonObject: JsonSerializedData): void {
     this.name = jsonObject['name'];

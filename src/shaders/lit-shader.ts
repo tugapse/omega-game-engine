@@ -7,6 +7,13 @@ import { Texture } from "../textures/texture";
 import { Shader } from "./shader";
 import { ShaderSources } from "./shader-sources";
 
+/**
+ * A shader for rendering objects with physically-based lighting.
+ * It supports multiple light sources, normal mapping, and various material texture maps
+ * (specular, roughness, ambient occlusion, emissive) for a PBR-like workflow.
+ *
+ * @augments {Shader}
+ */
 export class LitShader extends Shader {
 
   protected override _className = "LitShader"
@@ -18,10 +25,23 @@ export class LitShader extends Shader {
   // Add this property to cache our generated 1x1 textures
   private _defaultTextures: { [key: string]: WebGLTexture } = {};
 
+  /**
+   * Creates a new instance of LitShader.
+   *
+   * @override
+   * @param gl - The WebGL2 rendering context.
+   * @param material - The lit material associated with this shader.
+   * @returns A new `LitShader` instance.
+   */
   public static override instanciate(gl: WebGL2RenderingContext, material: LitMaterial): LitShader {
     return new LitShader(gl, material);
   }
 
+  /**
+   * Creates an instance of LitShader.
+   * @param gl - The WebGL2 rendering context.
+   * @param material - The `LitMaterial` containing properties for this shader.
+   */
   constructor(override gl: WebGL2RenderingContext, override material: LitMaterial) {
     super(
       gl,
@@ -31,6 +51,11 @@ export class LitShader extends Shader {
     );
   }
 
+  /**
+   * Loads the lit material's properties into the shader's uniforms.
+   * This includes PBR properties like specular strength and roughness, as well as texture maps.
+   * @override
+   */
   public override loadDataIntoShader(): void {
     if (!this.material) return;
 
@@ -48,6 +73,12 @@ export class LitShader extends Shader {
     this.setVec3(ShaderUniformsEnum.U_CAMERA_POSITION, Camera.mainCamera.transform.worldPosition);
   }
 
+  /**
+   * Asynchronously checks and loads all necessary PBR textures (main, normal, specular, etc.).
+   * If a texture is not yet loaded, it binds a fallback texture for the current frame while
+   * the actual texture loads in the background.
+   * @protected
+   */
   protected async checkAndLoadTextures(): Promise<void> {
     const bindMap = async (
       tex: Texture | undefined | null,
@@ -91,6 +122,10 @@ export class LitShader extends Shader {
     this.material.emissiveTex = await bindMap(this.material.emissiveTex, "u_emissiveMap", 6, EngineCache.getBlackTexture);
   }
 
+  /**
+   * Unbinds all material textures after rendering to free up texture units.
+   * @override
+   */
   override release(): void {
     super.release();
     if (this.material.mainTex) this.material.mainTex.unBind();
@@ -101,6 +136,11 @@ export class LitShader extends Shader {
     if (this.material.emissiveTex) this.material.emissiveTex.unBind();
   }
 
+  /**
+   * Serializes the shader and its material properties to a JSON object.
+   * @override
+   * @returns The serialized JSON data.
+   */
   override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
@@ -113,11 +153,20 @@ export class LitShader extends Shader {
     }
   }
 
+  /**
+   * Deserializes the shader's state from a JSON object.
+   * @override
+   * @param jsonObject - The JSON data to deserialize from.
+   */
   override async fromJson(jsonObject: JsonSerializedData): Promise<void> {
     await super.fromJson(jsonObject);
     this.material.fromJson(jsonObject['material']);
   }
 
+  /**
+   * Deletes and cleans up all WebGL resources associated with this shader and its textures.
+   * @override
+   */
   public override destroy(): void {
     super.destroy();
     if (this.material.mainTex) this.material.mainTex.destroy();

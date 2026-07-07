@@ -1,25 +1,56 @@
 /**
+ * @module
  * Web Audio Engine Core.
  * Handles the master graph, sub-mix routing, and global effects return buses.
  * Configured for early-load graph construction with deferred gesture activation.
  */
 
 export interface AudioEngineConfig {
+  /**
+   * The desired sample rate for the AudioContext. If not provided, the browser's default will be used.
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/AudioContextOptions/sampleRate
+   */
   sampleRate?: number;
+  /**
+   * Provides a hint to the browser about the desired audio latency.
+   * 'interactive' (default) is good for games. 'balanced' and 'playback' offer higher latency for better stability.
+   * @defaultValue 'interactive'
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/AudioContextOptions/latencyHint
+   */
   latencyHint?: AudioContextLatencyCategory;
 }
 
+/**
+ * The central hub for all audio operations in the Omega engine.
+ *
+ * @remarks
+ * This class encapsulates a Web Audio API `AudioContext` and constructs a
+ * permanent, pre-configured audio routing graph upon instantiation. This graph includes:
+ * - A master output chain with dynamics compression.
+ * - Sub-mix buses for grouping sounds (e.g., synths, sound effects, music).
+ * - Global send/return effects buses for shared reverb and delay.
+ *
+ * The `AudioContext` is created in a 'suspended' state and must be activated
+ * via the `initialize()` method, typically in response to a user gesture.
+ */
 export class AudioEngine {
+  /** The underlying Web Audio API AudioContext. */
   private ctx: AudioContext;
   
   // Master Chain Nodes
+  /** The main volume control for the entire engine. */
   private masterVolumeNode!: GainNode;
+  /** A master bus compressor to prevent clipping and even out dynamics. */
   private dynamicsCompressor!: DynamicsCompressorNode;
+  /** An analyser node for visualizing the final output signal. */
   private masterAnalyser!: AnalyserNode;
 
   // Sub-mix Group Buses
+  /** A gain node for controlling the volume of all synthesizer voices. */
   private synthSubBus!: GainNode;
+  /** A gain node for controlling the volume of all sound effects. */
   private sfxSubBus!: GainNode;
+  /** A gain node for controlling the volume of all music tracks. */
   private musicSubBus!: GainNode;
 
   // Global Return FX Buses
@@ -27,6 +58,10 @@ export class AudioEngine {
   private delayReturnBus!: DelayNode;
   private delayFeedbackGain!: GainNode;
 
+  /**
+   * Creates and initializes the core audio graph.
+   * @param config - Optional configuration for the underlying `AudioContext`.
+   */
   constructor(private config: AudioEngineConfig = {}) {
     // Instantiate AudioContext immediately on class load.
     // The browser automatically initializes this in a "suspended" state
@@ -48,7 +83,9 @@ export class AudioEngine {
 
   /**
    * Activates the audio context. 
-   * Must be called inside a user gesture handler to unmute the suspended audio thread.
+   * This is required by modern browsers to start playing audio.
+   * @remarks
+   * It should be called in response to a user interaction, such as a click or key press.
    */
   public async initialize(): Promise<void> {
     if (this.ctx.state === 'suspended') {
@@ -58,6 +95,7 @@ export class AudioEngine {
 
   /**
    * Suspends the audio context thread to free up system CPU/audio hardware resources.
+   * This is useful for pausing the game or when the application is in the background.
    */
   public async suspend(): Promise<void> {
     if (this.ctx.state === 'running') {
@@ -67,6 +105,7 @@ export class AudioEngine {
 
   /**
    * Resumes the suspended audio context thread.
+   * @see {@link AudioEngine.suspend}
    */
   public async resume(): Promise<void> {
     if (this.ctx.state === 'suspended') {
@@ -77,6 +116,7 @@ export class AudioEngine {
   /**
    * Builds the main master output block:
    * Master Gain -> Dynamics Compressor -> Analyser -> Physical Audio Output
+   * @private
    */
   private buildMasterGraph(): void {
     this.masterVolumeNode = this.ctx.createGain();
@@ -100,6 +140,7 @@ export class AudioEngine {
   /**
    * Configures shared Return FX buses (Reverb and Feedback Delay).
    * Note voices send percentages of their signals to these parallel chains.
+   * @private
    */
   private buildFXReturnBuses(): void {
     const masterDest = this.masterVolumeNode;
@@ -123,6 +164,7 @@ export class AudioEngine {
 
   /**
    * Constructs isolated summing channels for categorization.
+   * @private
    */
   private buildSubMixBuses(): void {
     const masterDest = this.masterVolumeNode;
@@ -143,6 +185,10 @@ export class AudioEngine {
   /**
    * Generates a procedurally synthesized stereo impulse response buffer for the reverb unit.
    * Note: Eliminates the need to load large external impulse WAV files on startup.
+   * @param duration - The length of the reverb tail in seconds.
+   * @param decay - The rate at which the reverb tail fades.
+   * @returns An `AudioBuffer` containing the generated impulse response.
+   * @private
    */
   private generateSyntheticImpulseResponse(duration: number, decay: number): AudioBuffer {
     const sampleRate = this.ctx.sampleRate;
@@ -163,40 +209,77 @@ export class AudioEngine {
 
   // --- Utility Getters for Graph Routing ---
 
+  /**
+   * Gets the underlying `AudioContext` instance.
+   * @returns The root `AudioContext`.
+   */
   public getContext(): AudioContext {
     return this.ctx;
   }
 
+  /**
+   * Gets the master `AnalyserNode` for the final output.
+   * @returns The master `AnalyserNode`.
+   */
   public getAnalyser(): AnalyserNode {
     return this.masterAnalyser;
   }
 
+  /**
+   * Gets the sub-mix bus for synthesizer voices.
+   * @returns The `GainNode` for the synth bus.
+   */
   public getSynthBus(): GainNode {
     return this.synthSubBus;
   }
 
+  /**
+   * Gets the sub-mix bus for sound effects.
+   * @returns The `GainNode` for the SFX bus.
+   */
   public getSfxBus(): GainNode {
     return this.sfxSubBus;
   }
 
+  /**
+   * Gets the sub-mix bus for music tracks.
+   * @returns The `GainNode` for the music bus.
+   */
   public getMusicBus(): GainNode {
     return this.musicSubBus;
   }
 
+  /**
+   * Gets the global send/return bus for convolution reverb.
+   * @returns The `ConvolverNode` for the reverb bus.
+   */
   public getReverbBus(): ConvolverNode {
     return this.reverbReturnBus;
   }
 
+  /**
+   * Gets the global send/return bus for feedback delay.
+   * @returns The `DelayNode` for the delay bus.
+   */
   public getDelayBus(): DelayNode {
     return this.delayReturnBus;
   }
 
   // --- Dynamic Level Controls ---
 
+  /**
+   * Sets the master volume for the entire audio engine.
+   * @param value - A value between 0.0 (silent) and 1.0 (full volume).
+   */
   public setMasterVolume(value: number): void {
     this.masterVolumeNode.gain.setValueAtTime(Math.max(0, Math.min(1, value)), this.ctx.currentTime);
   }
 
+  /**
+   * Sets the volume for a specific sub-mix bus.
+   * @param category - The bus to modify ('synth', 'sfx', or 'music').
+   * @param value - A gain value. 1.0 is unity gain. Values can exceed 1.0 for boosting.
+   */
   public setBusVolume(category: 'synth' | 'sfx' | 'music', value: number): void {
     const targetNode = category === 'synth' ? this.synthSubBus : category === 'sfx' ? this.sfxSubBus : this.musicSubBus;
     targetNode.gain.setValueAtTime(Math.max(0, Math.min(2, value)), this.ctx.currentTime);

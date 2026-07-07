@@ -33,12 +33,18 @@ import { UnlitShader } from '../shaders/unlit-shader';
 import { ClassType } from '../enums/class-type.enum';
 import { SkyboxMaterial } from '../materials/skybox-material';
 
+/**
+ * Manages the registration of all engine classes with the `ObjectInstanciator`.
+ * This allows the engine to dynamically create instances of entities, behaviors, materials,
+ * and other objects from serialized JSON data, such as a scene file.
+ */
 export class DependencyManager {
   /**
-    Registers all necessary classes and their instantiation methods with the SceneManager's dependency injection system.
-   * @private
-
-   * @returns {void}
+   * Registers all core engine classes with the `ObjectInstanciator`.
+   * This method provides the factory functions and metadata needed for deserialization
+   * and for editor tools to discover available components.
+   *
+   * @remarks This should be called once during engine initialization.
    */
   public registerDependencies(): void {
     // Entities

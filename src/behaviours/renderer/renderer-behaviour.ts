@@ -18,21 +18,27 @@ import { Shader } from "../../shaders/shader";
 import { EntityBehaviour } from "../entity-behaviour";
 
 /**
- * The base class for all renderer behaviours, responsible for drawing meshes to the canvas.
- * This class handles the core rendering logic, including setting up WebGL states, managing shaders, and drawing meshes.
+ * The base class for all renderer behaviors, responsible for drawing meshes to the canvas.
+ * This class handles the core rendering logic, including setting up WebGL states, managing shaders,
+ * and drawing meshes. It can be extended to create more specialized renderers (e.g., `MeshRendererBehaviour`).
+ *
+ * @remarks
+ * This class provides fundamental capabilities for rendering, such as off-screen rendering passes
+ * (render-to-texture), and basic drawing primitives like points and lines.
+ *
  * @augments {EntityBehaviour}
  * @implements {IRendererBehaviour}
  */
 export class RendererBehaviour extends EntityBehaviour implements IRendererBehaviour {
 
   /**
-   * The WebGL framebuffer object used for off-screen rendering.
+   * The WebGL framebuffer object used for off-screen rendering (render-to-texture).
    * @protected
    * @type {WebGLFramebuffer | null}
    */
   protected _framebuffer: WebGLFramebuffer | null = null;
   /**
-   * The WebGL renderbuffer object for depth testing in off-screen rendering.
+   * The WebGL renderbuffer for depth testing in off-screen rendering.
    * @protected
    * @type {WebGLRenderbuffer | null}
    */
@@ -50,22 +56,22 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
   protected override _className = "RendererBehaviour"
 
   /**
-   * The WebGL primitive type used for drawing the mesh.
+   * The WebGL primitive type used for drawing the mesh (e.g., TRIANGLES, LINES).
    * @type {GLPrimitiveType}
    */
   public drawPrimitiveType: GLPrimitiveType = GLPrimitiveType.LINES;
   /**
-   * The mesh data to be rendered.
+   * The {@link Mesh} data to be rendered, containing vertices, indices, etc.
    * @type {Mesh}
    */
   public mesh!: Mesh;
   /**
-   * The shader program used for rendering.
+   * The {@link Shader} program used for rendering this object.
    * @type {Shader | undefined}
    */
   public shader?: Shader;
   /**
-   * The elapsed time since the renderer was initialized.
+   * The elapsed time since the renderer was initialized, passed to shaders as `u_time`.
    * @protected
    * @type {number}
    */
@@ -85,43 +91,43 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
   protected _worldInverseTransposeMatrixUniformLocation: WebGLUniformLocation | null = null;
 
   /**
-   * Determines if face culling is enabled.
+   * If true, enables face culling (`gl.CULL_FACE`).
    * @type {boolean}
    */
   public enableCullFace = true;
   /**
-   * Determines if depth testing is enabled.
+   * If true, enables depth testing (`gl.DEPTH_TEST`).
    * @type {boolean}
    */
   public enableDephTest = true;
   /**
-   * Determines if blending is enabled.
+   * If true, enables blending (`gl.BLEND`).
    * @type {boolean}
    */
   public enableBlend = true;
   /**
-   * Determines if writing to the depth buffer is enabled.
+   * If true, allows writing to the depth buffer. Set to false for transparent objects that shouldn't occlude others.
    * @type {boolean}
    */
   public writeToDephBuffer = true;
 
   /**
-   * The face culling mode.
+   * The face culling mode (e.g., `CullFace.BACK`).
    * @type {CullFace}
    */
   public cullFace: CullFace = CullFace.BACK;
   /**
-   * The depth testing mode.
+   * The depth testing function (e.g., `DephFunction.Less`).
    * @type {DephFunction}
    */
   public dephMode: DephFunction = DephFunction.Less;
   /**
-   * The face winding order.
+   * The winding order for front-facing polygons (e.g., `FaceWinding.CounterClockwise`).
    * @type {FaceWinding}
    */
   public faceWinding: FaceWinding = FaceWinding.CounterClockwise;
   /**
-   * The blending mode.
+   * The blending function to use when `enableBlend` is true.
    * @type {BlendingMode}
    */
   public blendMode: BlendingMode = {
@@ -129,7 +135,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
     destfactor: BlendingDestinationFactor.ONE_MINUS_SRC_ALPHA
   };
   /**
-   * The render layer.
+   * The layer this renderer belongs to, used for sorting draw calls (e.g., OPAQUE, TRANSPARENT, SKYBOX).
    * @type {RenderLayer}
    */
   public override renderLayer: RenderLayer = RenderLayer.OPAQUE;
@@ -146,7 +152,8 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
   }
 
   /**
-   * Initializes the renderer, including its WebGL settings and shader.
+   * Initializes the renderer, including its WebGL state settings and shader buffers.
+   * This is called automatically when the behaviour is added to an entity.
    * @override
    * @returns {boolean} True if initialization is successful, otherwise false.
    */
@@ -158,7 +165,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
   }
 
   /**
-   * Sets the default WebGL state for rendering.
+   * Applies the renderer's WebGL state settings (culling, depth test, blending).
    * @protected
    * @returns {void}
    */
@@ -186,7 +193,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
   }
 
   /**
-   * Initializes the shader and creates the necessary WebGL buffers.
+   * Initializes the shader and creates its associated WebGL buffers for vertex data.
    * @protected
    * @returns {void}
    */
@@ -199,7 +206,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
   }
 
   /**
-   * Sets the camera matrices (projection, view, and model-view-projection) in the shader.
+   * Calculates and sets the Model-View-Projection (MVP) matrix in the shader.
    * @protected
    * @returns {void}
    */
@@ -215,7 +222,8 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
   }
 
   /**
-   * Sets the world and world inverse transpose matrices in the shader for lighting calculations.
+   * Sets the world matrix and the world inverse transpose matrix (as a mat3) in the shader.
+   * These are primarily used for lighting calculations in world space.
    * @protected
    * @returns {void}
    */
@@ -236,7 +244,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
   }
 
   /**
-   * Sets all common shader uniforms, including matrices, time, and screen resolution.
+   * A convenience method that sets all common shader uniforms before drawing.
    * @protected
    * @returns {void}
    */
@@ -252,12 +260,12 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
   }
 
   /**
-   * Sets the current render target to a specific texture.
-   * This function creates or reuses a Framebuffer Object (FBO) and attaches the provided texture.
-   * All subsequent drawing calls will be rendered to this texture.
-   * @param {WebGLTexture} texture - The texture to which the scene will be rendered.
-   * @param {number} width - The width of the render target.
-   * @param {number} height - The height of the render target.
+   * Sets the current render target to a specific texture for off-screen rendering.
+   * This function creates or reuses a Framebuffer Object (FBO) and attaches the provided texture and a depth buffer.
+   * All subsequent drawing calls will be rendered to this texture instead of the canvas.
+   * @param texture - The texture to which the scene will be rendered.
+   * @param width - The width of the render target.
+   * @param height - The height of the render target.
    * @returns {void}
    */
   public setRenderTarget(texture: WebGLTexture, width: number, height: number): void {
@@ -298,8 +306,8 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
   }
 
   /**
-   * Clears the current render target and returns rendering to the main canvas.
-   * This function unbinds the Framebuffer Object and restores the original viewport.
+   * Unbinds the current framebuffer, causing subsequent rendering to go to the main canvas.
+   * Also restores the viewport to the canvas dimensions.
    * @returns {void}
    */
   public clearRenderTarget(): void {
@@ -310,11 +318,11 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
 
   /**
    * Starts a new rendering pass to a specific off-screen texture.
-   * This function sets up the render target and clears its contents.
-   * @param {WebGLTexture} texture - The texture to which the scene will be rendered.
-   * @param {number} width - The width of the render target.
-   * @param {number} height - The height of the render target.
-   * @param {[number, number, number, number]} [clearColor] - The color to clear the framebuffer with. Defaults to a transparent black.
+   * This function sets up the render target and clears its color and depth buffers.
+   * @param texture - The texture to which the scene will be rendered.
+   * @param width - The width of the render target.
+   * @param height - The height of the render target.
+   * @param clearColor - The color to clear the framebuffer with. Defaults to transparent black.
    * @returns {void}
    */
   public startPass(texture: WebGLTexture, width: number, height: number, clearColor: [number, number, number, number] = [0, 0, 0, 0]): void {
@@ -324,7 +332,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
   }
 
   /**
-   * Ends the current rendering pass and switches back to the default framebuffer (the canvas).
+   * Ends the current rendering pass by switching back to the default framebuffer (the canvas).
    * @returns {void}
    */
   public endPass(): void {
@@ -334,7 +342,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
 
   /**
    * Serializes the renderer's state to a JSON object.
-   * This is used for saving the scene or entity state.
+   * This is used for saving and loading scene or entity state.
    * @override
    * @returns {JsonSerializedData} The JSON object representation of the renderer.
    */
@@ -348,7 +356,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
 
   /**
    * Deserializes the renderer's state from a JSON object.
-   * This is used for loading a scene or entity state.
+   * This is used for loading scene or entity state.
    * @override
    * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
    * @returns {void}
@@ -365,11 +373,10 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
 
   /**
    * Draws a single point at the specified coordinates using the current shader.
-   * This method temporarily uses a vertex buffer to upload the point's data and draws it using GL_POINTS.
-   * @param {Vector3} point - The 3D coordinates of the point to draw`.
-   * @returns {void}
-   * @param {number} [pointSize=10.0] - The size of the point to draw.
-   * @param {Shader} [shader=this.shader] - The shader to use for drawing.
+   * This is a utility method for debugging and visualization.
+   * @param point - The 3D coordinates of the point to draw.
+   * @param pointSize - The size of the point in pixels.
+   * @param shader - The shader to use for drawing. Defaults to the renderer's main shader.
    */
   public drawPoint(point: Vector3, pointSize: number = 10.0, shader: Shader = this.shader!): void {
     if (!this._gl || !shader || !shader.buffers.position || !shader._shaderProgram) {
@@ -406,10 +413,9 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
 
   /**
    * Draws a line between two specified coordinates using the current shader.
-   * This method temporarily uses a vertex buffer to upload the line's data and draws it using GL_LINES.
-   * @param {Vector3} start - The 3D coordinates of the line's starting point, e.g., `[x, y, z]`.
-   * @param {Vector3} end - The 3D coordinates of the line's ending point, e.g., `[x, y, z]`.
-   * @returns {void}
+   * This is a utility method for debugging and visualization.
+   * @param start - The 3D coordinates of the line's starting point.
+   * @param end - The 3D coordinates of the line's ending point.
    */
   public drawLine(start: Vector3, end: Vector3): void {
     if (!this._gl || !this.shader || !this.shader.buffers.position) {
@@ -449,7 +455,8 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
 
 
   /**
-   * Draws the mesh to the canvas.
+   * The main draw call for this renderer. It binds the shader and its buffers,
+   * then issues a `drawElements` call to render the mesh.
    * @override
    * @returns {void}
    */
@@ -465,7 +472,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
 
 
   /**
-   * Updates the renderer's internal state.
+   * Updates the renderer's internal state, primarily the elapsed time uniform.
    * @override
    * @param {number} elapsed - The time elapsed since the last update in milliseconds.
    * @returns {void}
@@ -476,7 +483,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
   }
 
   /**
-   * Sets this object's gl instance.
+   * Sets this object's WebGL rendering context.
    * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
    * @returns {void}
    */
@@ -488,12 +495,12 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    * Calculates the view, projection, and model-view-projection matrices for a light source.
    * These matrices are used in shadow mapping to render the scene from the light's perspective.
    *
-   * @param {Transform} cameraTransform - The transform of the main camera.
-   * @param {Light} light - The light source entity.
-   * @param {number} [frustumSize=60.0] - The size of the orthographic frustum used for the light's projection.
-   * @param {number} [near=0.1] - The near clipping plane of the light's frustum.
-   * @param {number} [far=200.0] - The far clipping plane of the light's frustum.
-   * @returns {{ lightViewMatrix: mat4, lightProjectionMatrix: mat4, lightMvpMatrix: mat4 }} An object containing the calculated matrices.
+   * @param cameraTransform - The transform of the main camera, used to center the shadow frustum.
+   * @param light - The light source entity (e.g., a `DirectionalLight`).
+   * @param frustumSize - The size of the orthographic frustum used for the light's projection.
+   * @param near - The near clipping plane of the light's frustum.
+   * @param far - The far clipping plane of the light's frustum.
+   * @returns An object containing the `lightViewMatrix`, `lightProjectionMatrix`, and combined `lightMvpMatrix`.
    */
   public createLightMatrices(
     cameraTransform: Transform,

@@ -9,16 +9,19 @@ import { SceneEntity } from '../entities/entity';
 import { Scene } from '../entities/scene';
 
 /**
-  A static class responsible for managing the loading, instantiation, and serialization of scenes and their components.
+ * A static class responsible for managing the loading, instantiation, and serialization of scenes and their components.
+ * It acts as the main entry point for converting a JSON representation of a scene into a live, interactive scene graph.
  */
 export class SceneManager {
   /**
-    Loads a scene from a JSON data object.
-
-   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
-   * @param {JsonSerializedData} jsonData - The JSON data representing the scene.
-   * @param {Scene} [scene] - An optional existing Scene instance to load into.
-   * @returns {Scene} - The loaded or newly created Scene instance.
+   * Asynchronously loads a scene from a JSON data object.
+   * This method orchestrates the entire deserialization process, including instantiating meshes,
+   * loading textures, creating entities, and attaching behaviors.
+   *
+   * @param gl - The WebGL2 rendering context.
+   * @param jsonData - The JSON data representing the scene.
+   * @param scene - An optional existing `Scene` instance to load into. If not provided, a new one is created.
+   * @returns A promise that resolves with the loaded or newly created `Scene` instance.
    */
   public static async loadScene(
     gl: WebGL2RenderingContext,
@@ -46,12 +49,12 @@ export class SceneManager {
   }
 
   /**
-  Instantiates mesh data objects from the scene JSON data.
- * @private
-
- * @param {any} meshMaps - The raw mesh data from the JSON.
- * @returns {{ [key: string]: MeshData }} - A map of mesh UUIDs to MeshData instances.
- */
+   * Asynchronously loads all textures defined in the scene's JSON data.
+   * It handles both 2D textures and cubemaps, populating the `EngineCache`.
+   * @param texturesMaps - The raw texture data from the JSON.
+   * @param gl - The WebGL2 rendering context.
+   * @private
+   */
   private static async instaciateAndLoadSceneTextures(
     texturesMaps: any,
     gl: WebGL2RenderingContext,
@@ -76,11 +79,10 @@ export class SceneManager {
     }
   }
   /**
-    Instantiates mesh data objects from the scene JSON data.
+   * Instantiates all `MeshData` objects from the scene's JSON data.
+   * @param meshMaps - The raw mesh data from the JSON.
+   * @returns A map of mesh UUIDs to their corresponding `MeshData` instances.
    * @private
-
-   * @param {any} meshMaps - The raw mesh data from the JSON.
-   * @returns {{ [key: string]: MeshData }} - A map of mesh UUIDs to MeshData instances.
    */
   private static instaciateSceneMeshes(meshMaps: any): {
     [key: string]: MeshData;
@@ -96,14 +98,13 @@ export class SceneManager {
   }
 
   /**
-    Instantiates and initializes all entities and their behaviours in the scene.
+   * Instantiates all entities and their behaviors from the scene's JSON data.
+   * @param scene - The scene instance to which objects will belong.
+   * @param objects - The raw entity data from the JSON.
+   * @param meshes - A map of instantiated meshes, used to link renderers to their geometry.
+   * @param gl - The WebGL2 rendering context.
+   * @returns An array of the newly instantiated `SceneEntity` objects.
    * @private
-
-   * @param {Scene} scene - The scene instance.
-   * @param {any} objects - The raw entity data from the JSON.
-   * @param {{ [key: string]: MeshData }} meshes - A map of instantiated meshes.
-   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
-   * @returns {any[]} - An array of instantiated entity objects.
    */
   private static instaciateSceneObjects(
     scene: Scene,
@@ -122,11 +123,9 @@ export class SceneManager {
   }
 
   /**
-    Links parent and child transforms based on their UUIDs.
-
-   * @param {{ [key: string]: Transform }} transforms - A map of all instantiated transforms.
-   * @param {any} entities - An array of raw entity data.
-   * @returns {void}
+   * Links parent and child transforms based on their UUIDs to reconstruct the scene hierarchy.
+   * @param transforms - A map of all instantiated transforms, indexed by their UUIDs.
+   * @param entities - An array of raw entity data containing parent-child relationships.
    */
   static prepareTransforms(
     transforms: { [key: string]: Transform },
@@ -140,15 +139,22 @@ export class SceneManager {
   }
 
   /**
-    Creates a snapshot of the current scene state in a serializable format.
-
-   * @param {Scene} scene - The scene to snapshot.
-   * @returns {JsonSerializedData} - A JSON data object representing the scene.
+   * Creates a snapshot of the current scene state in a serializable JSON format.
+   * @param scene - The scene to snapshot.
+   * @returns A JSON data object representing the entire scene.
    */
   public static creatSceneSnapshot(scene: Scene): JsonSerializedData {
     return scene.toJsonObject();
   }
 
+  /**
+   * Instantiates all behaviors for a given entity from the JSON data.
+   * @param jsonObject - The JSON data for a single entity.
+   * @param scene - The parent scene.
+   * @param meshes - The map of available mesh data.
+   * @param gl - The WebGL2 rendering context.
+   * @private
+   */
   private static instanciateBehaviours(
     jsonObject: JsonSerializedData,
     scene: Scene,
@@ -182,6 +188,12 @@ export class SceneManager {
     });
   }
 
+  /**
+   * Instantiates a single `SceneEntity` and its `Transform` from JSON data.
+   * @param jsonObject - The JSON data for the entity.
+   * @param instanciatedTransforms - A map to store the newly created transform for later hierarchy linking.
+   * @private
+   */
   private static instanciateEntity(
     jsonObject: JsonSerializedData,
     instanciatedTransforms: { [key: string]: Transform },

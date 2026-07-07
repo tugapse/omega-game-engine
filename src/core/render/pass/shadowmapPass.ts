@@ -10,22 +10,39 @@ import { Scene, Camera } from "../../../entities";
 import { DirectionalLight } from "../../../entities/lights";
 import { IRenderPass } from "../render-pass.interface";
 
-
+/**
+ * A render pass dedicated to generating a shadow map from the perspective of a directional light.
+ *
+ * @remarks
+ * This pass renders the scene's geometry into a high-resolution depth texture.
+ * The rendering is done from the viewpoint of the primary directional light source.
+ * The resulting depth texture (the "shadow map") can then be sampled by other shaders
+ * (e.g., `LitShader`) to determine if a fragment is in shadow.
+ */
 export class ShadowMapPass extends JsonSerializable implements IRenderPass {
   private gl: WebGL2RenderingContext;
   private depthShader: Shader;
   private framebuffer!: WebGLFramebuffer | null;
 
+  /** A configurable range to control the final strength or darkness of the shadows. */
   public shadowstrength: NumberRange = new NumberRange(0.4, 0.0, 1.0, 0.0001);
+  /** The depth texture that stores the shadow map. */
   public shadowmapTexture: Texture;
+  /** The resolution (width and height) of the shadow map texture. Higher values produce sharper shadows at a performance cost. */
   public static shadowMapSize = 4096;
+  /** A flag to enable or disable this pass. If disabled, no shadows will be rendered. */
   public enabled = true;
 
+  /**
+   * Creates an instance of ShadowMapPass.
+   * @param gl - The WebGL2 rendering context.
+   */
   constructor(gl: WebGL2RenderingContext) {
     super('ShadowMapPass');
     this.gl = gl;
 
-    // 1. Initialize self-contained Depth Texture
+    // Initialize a self-contained depth texture. This texture will store depth values
+    // from the light's point of view.
     this.shadowmapTexture = Texture.createDepthTexture(
       this.gl,
       ShadowMapPass.shadowMapSize,
@@ -33,6 +50,8 @@ export class ShadowMapPass extends JsonSerializable implements IRenderPass {
     );
     this.gl.bindTexture(this.gl.TEXTURE_2D, this.shadowmapTexture.glTexture);
     this.gl.texParameteri(
+      // Enable hardware comparison mode for the depth texture. This allows shaders
+      // to perform a depth comparison directly on the texture lookup (PCF).
       this.gl.TEXTURE_2D,
       this.gl.TEXTURE_COMPARE_MODE,
       this.gl.COMPARE_REF_TO_TEXTURE,
@@ -44,7 +63,7 @@ export class ShadowMapPass extends JsonSerializable implements IRenderPass {
     );
     this.gl.bindTexture(this.gl.TEXTURE_2D, null);
 
-    // 2. Dedicated lightweight depth shader
+    // A dedicated, lightweight shader that only writes depth information.
     this.depthShader = new Shader(
       gl,
       null as any,
@@ -54,10 +73,18 @@ export class ShadowMapPass extends JsonSerializable implements IRenderPass {
     this.depthShader.initialize();
   }
 
+  /**
+   * Sets the WebGL rendering context for the pass.
+   * @param gl - The WebGL2 rendering context.
+   */
   setGl(gl: WebGL2RenderingContext): void {
     this.gl = gl;
   }
 
+  /**
+   * Lazily creates and returns the framebuffer object for off-screen rendering.
+   * @private
+   */
   private getOrCreateFramebuffer(): WebGLFramebuffer {
     if (!this.framebuffer) {
       this.framebuffer = this.gl.createFramebuffer();
@@ -65,12 +92,21 @@ export class ShadowMapPass extends JsonSerializable implements IRenderPass {
     return this.framebuffer!;
   }
 
+  /**
+   * Initializes the render pass by creating the necessary framebuffer.
+   */
   public initialize(): void {
     if (!this.framebuffer) {
       this.framebuffer = this.gl.createFramebuffer();
     }
   }
 
+  /**
+   * Executes the shadow map rendering pass.
+   * It renders all shadow-casting objects from the perspective of the main directional light
+   * into the depth texture.
+   * @param scene - The scene containing the objects and lights to render.
+   */
   public execute(scene: Scene): void {
     if (
       !this.enabled ||
@@ -93,7 +129,7 @@ export class ShadowMapPass extends JsonSerializable implements IRenderPass {
       return;
     }
 
-    // --- Off-screen Light Pass Start ---
+    // 1. Bind the framebuffer and attach the depth texture as the render target.
     const fb = this.getOrCreateFramebuffer();
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, fb);
     this.gl.framebufferTexture2D(
@@ -103,6 +139,7 @@ export class ShadowMapPass extends JsonSerializable implements IRenderPass {
       this.shadowmapTexture.glTexture,
       0,
     );
+    // We don't need to write to a color buffer, only the depth buffer.
     this.gl.drawBuffers([this.gl.NONE]);
 
     const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
@@ -112,6 +149,7 @@ export class ShadowMapPass extends JsonSerializable implements IRenderPass {
       return;
     }
 
+    // 2. Set the viewport to the size of the shadow map and clear the depth buffer.
     this.gl.viewport(
       0,
       0,
@@ -124,7 +162,7 @@ export class ShadowMapPass extends JsonSerializable implements IRenderPass {
 
     this.depthShader.use();
 
-    // Loop through casters directly
+    // 3. Find all objects in the scene that are flagged to cast shadows.
     const shadowCasters = scene.objects.filter(
       (obj) =>
         obj.active &&
@@ -132,12 +170,14 @@ export class ShadowMapPass extends JsonSerializable implements IRenderPass {
         obj.getBehaviour(RendererBehaviour)?.castShadows,
     );
 
+    // 4. Render each shadow caster into the depth map.
     for (const entity of shadowCasters) {
       const renderer = entity.getBehaviour(RendererBehaviour);
       if (!renderer || !renderer.shader) continue;
 
+      // Use front-face culling to prevent "shadow acne" by creating a small bias.
       this.gl.enable(this.gl.CULL_FACE);
-      this.gl.cullFace(this.gl.FRONT); // Cull front faces for depth map to prevent acne
+      this.gl.cullFace(this.gl.FRONT);
 
       const posLoc = this.gl.getAttribLocation(
         this.depthShader._shaderProgram,
@@ -157,7 +197,7 @@ export class ShadowMapPass extends JsonSerializable implements IRenderPass {
         renderer.shader.buffers.indices,
       );
 
-      // Recalculate Light MVP matrices per entity using lightweight function
+      // Calculate the Model-View-Projection matrix from the light's perspective for this object.
       const { lightMvpMatrix } = renderer.createLightMatrices(
         Camera.mainCamera.transform,
         lightEntity,
@@ -171,7 +211,7 @@ export class ShadowMapPass extends JsonSerializable implements IRenderPass {
       );
 
       this.depthShader.setMat4(
-        ShaderUniformsEnum.U_MODEL_MATRIX, // Matches u_modelMatrix in shadow-caster.vert
+        ShaderUniformsEnum.U_MODEL_MATRIX,
         modelLightMvpMatrix,
       );
       this.depthShader.loadDataIntoShader();
@@ -186,11 +226,14 @@ export class ShadowMapPass extends JsonSerializable implements IRenderPass {
       if (posLoc !== -1) this.gl.disableVertexAttribArray(posLoc);
     }
 
-    // --- Cleanup Pass ---
+    // 5. Unbind the framebuffer, returning rendering to the default canvas or next pass target.
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     this.depthShader.release();
   }
 
+  /**
+   * Clears the shadow map texture. This is useful if shadows are disabled to ensure old data isn't used.
+   */
   public clearShadowMap(): void {
     const fb = this.getOrCreateFramebuffer();
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, fb);
@@ -205,18 +248,35 @@ export class ShadowMapPass extends JsonSerializable implements IRenderPass {
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
   }
 
+  /**
+   * Cleans up and deletes the WebGL resources (texture, shader, framebuffer) used by this pass.
+   */
   public cleanup(): void {
     this.shadowmapTexture.destroy();
     this.depthShader.destroy();
     if (this.framebuffer) this.gl.deleteFramebuffer(this.framebuffer);
   }
 
+  /**
+   * Called when the viewport resizes. This pass is not affected by screen size, as the shadow map
+   * has a fixed resolution.
+   * @param width - The new viewport width.
+   * @param height - The new viewport height.
+   */
   public resize(width: number, height: number): void {}
 
+  /**
+   * Serializes the pass's state to a JSON object.
+   * @returns The serialized JSON data.
+   */
   public override toJsonObject(): JsonSerializedData {
     return this.serializeAutomatically();
   }
   
+  /**
+   * Deserializes the pass's state from a JSON object.
+   * @param jsonObject - The JSON data to deserialize from.
+   */
   public override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
     this.deserializeAutomatically(jsonObject);

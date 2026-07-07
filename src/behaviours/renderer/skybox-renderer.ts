@@ -10,15 +10,16 @@ import { MeshRendererBehaviour } from "./mesh-renderer-behaviour";
 
 /**
  * A specialized renderer for drawing a skybox.
- * This class extends `MeshRendererBehaviour` and is responsible for rendering a large cube with a cubemap texture, creating the illusion of a sky and distant background.
+ * This class extends {@link MeshRendererBehaviour} and is responsible for rendering a large cube with a cubemap texture,
+ * creating the illusion of a sky and distant background. It is typically rendered last with depth testing enabled but depth writing disabled.
+ *
  * @augments {MeshRendererBehaviour}
  */
 export class SkyboxRenderer extends MeshRendererBehaviour {
   /**
    * Creates a new instance of the SkyboxRenderer.
-   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @param gl - The WebGL2 rendering context.
    * @override
-   * @returns {SkyboxRenderer}
    */
   static override instanciate(gl: WebGL2RenderingContext): SkyboxRenderer {
     return new SkyboxRenderer(gl);
@@ -26,7 +27,7 @@ export class SkyboxRenderer extends MeshRendererBehaviour {
 
   /**
    * Creates an instance of SkyboxRenderer.
-   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @param gl - The WebGL2 rendering context.
    */
   constructor(gl:WebGL2RenderingContext){
     super(gl);
@@ -34,6 +35,11 @@ export class SkyboxRenderer extends MeshRendererBehaviour {
     this.createDefaultSkybox();
   }
   
+  /**
+   * Asynchronously creates and assigns a default skybox setup.
+   * This includes a cube mesh, a `SkyboxMaterial`, a `SkyboxShader`, and a default white cubemap texture.
+   * @protected
+   */
   protected async createDefaultSkybox(): Promise<void> {
     this.mesh.meshData = new CubePrimitive();
     const material = new SkyboxMaterial();
@@ -44,9 +50,9 @@ export class SkyboxRenderer extends MeshRendererBehaviour {
 
   /**
    * Initializes the skybox renderer.
-   * This method sets the initial transform of the skybox to be large enough to encompass the entire scene.
+   * This method sets the initial transform of the skybox to be large enough to encompass the entire scene
+   * and ensures it is centered at the origin.
    * @override
-   * @returns {boolean} - True if initialization is successful, otherwise false.
    */
   override initialize(): boolean {
     if(this.transform){
@@ -56,13 +62,18 @@ export class SkyboxRenderer extends MeshRendererBehaviour {
     return super.initialize()
   }
   
+  /**
+   * Gets the `SkyboxMaterial` associated with this renderer's shader.
+   * @returns The skybox material instance.
+   */
   public get material():SkyboxMaterial {
     return this.shader?.material as SkyboxMaterial;
   }
 
   /**
    * Sets the specific WebGL settings for rendering the skybox.
-   * This method ensures that the skybox is rendered correctly by culling the front faces and using the LEQUAL depth function.
+   * This method ensures that the skybox is rendered correctly by culling the front faces (since the camera is inside the cube)
+   * and using the `LEQUAL` depth function to ensure it is drawn behind all other objects.
    * @protected
    * @override
    */
@@ -74,7 +85,8 @@ export class SkyboxRenderer extends MeshRendererBehaviour {
 
   /**
    * Sets the camera matrices for the skybox, ensuring the skybox remains centered on the camera.
-   * This is achieved by using a view matrix that has had its translation component removed.
+   * This is achieved by using a view matrix that has had its translation component removed, effectively
+   * making the skybox follow the camera's rotation but not its position.
    * @override
    */
   override setCameraMatrices(): void {
@@ -97,6 +109,10 @@ export class SkyboxRenderer extends MeshRendererBehaviour {
     this.shader.setMat4(ShaderUniformsEnum.U_MVP_MATRIX, mvpMatrix);
   }
 
+  /**
+   * Overrides the default draw call to apply skybox-specific GL settings and shader variables.
+   * @override
+   */
   override draw(): void {
     if (!this.shader?._shaderProgram) {
       return;
@@ -110,7 +126,7 @@ export class SkyboxRenderer extends MeshRendererBehaviour {
 
   /**
    * Sets all shader variables required for rendering the skybox.
-   * This method sets the GL settings, camera matrices, and loads the shader data.
+   * This method orchestrates setting the GL state and camera matrices before passing control to the base class.
    * @override
    */
   override setShaderVariables(): void {

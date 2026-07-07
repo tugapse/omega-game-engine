@@ -2,7 +2,7 @@ import { JsonSerializedData } from "../interfaces";
 import { Texture } from "./texture";
 
 /**
-  A class for managing the loading, creation, and binding of a cubemap texture for use in WebGL.
+ * A class for managing the loading, creation, and binding of a cubemap texture for use in WebGL.
  * It handles six individual images (one for each face of the cube) and combines them into a single cubemap texture object.
  * @augments {Texture}
  */
@@ -11,38 +11,36 @@ export class CubemapTexture extends Texture {
   protected override _className = "CubemapTexture";
 
   /**
-   * Flag indicating if this texture is a procedurally generated white fallback cubemap.
-   * @type {boolean}
+   * A flag indicating if this texture is a procedurally generated white fallback cubemap.
+   * @defaultValue `false`
    */
   public isWhiteCubemap: boolean = false;
 
   /**
-    An array to hold the HTML image elements for each of the six faces.
+   * An array to hold the `HTMLImageElement` for each of the six faces.
    * @protected
-   * @type {HTMLImageElement[]}
    */
   protected imagesData: HTMLImageElement[] = [];
   /**
-    An array to track the loading status of each individual face image.
+   * An array to track the loading status of each individual face image.
    * @private
-   * @type {(boolean | null)[]}
    */
   private loadedImages: (boolean | null)[] = [null, null, null, null, null, null];
 
   /**
-    Creates an instance of CubeMapTexture.
-   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
-   * @param {string[]} [textureUris] - An array of six URIs for the cube map faces in the order: right, left, top, bottom, front, back.
+   * Creates an instance of CubemapTexture.
+   * @param gl - The WebGL2 rendering context.
+   * @param textureUris - An array of six URIs for the cube map faces in the order: right, left, top, bottom, front, back.
    */
   constructor(protected override gl?: WebGL2RenderingContext, public textureUris?: string[]) {
     super(gl);
   }
 
   /**
-   * Creates a 1x1 cubemap texture filled with white pixels for each face.
+   * Creates a 1x1 white cubemap texture.
    * This is useful as a default or fallback cubemap.
-   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
-   * @returns {CubemapTexture} A new CubemapTexture instance containing the white pixels.
+   * @param gl - The WebGL2 rendering context.
+   * @returns A new `CubemapTexture` instance containing the white pixels.
    */
   public static createWhiteCubemap(gl: WebGL2RenderingContext): CubemapTexture {
     const result = new CubemapTexture(gl);
@@ -53,8 +51,9 @@ export class CubemapTexture extends Texture {
   }
 
   /**
-   * Generates a 1x1 white pixel for each face and assigns the GL texture.
-   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * Generates a 1x1 white pixel for each face and creates the underlying WebGL texture.
+   * @param gl - The WebGL2 rendering context.
+   * @private
    */
   private generateWhiteCubemap(gl: WebGL2RenderingContext): void {
     this._glTexture = gl.createTexture();
@@ -94,9 +93,9 @@ export class CubemapTexture extends Texture {
   }
 
   /**
-    Loads all six images from their respective URLs.
+   * Asynchronously loads all six images from their respective URLs.
    * @override
-   * @returns {Promise<void>} - A Promise that resolves when all images are loaded.
+   * @returns A promise that resolves when all images are loaded successfully.
    */
   public override async load(): Promise<void> {
     if (this.isLoading || this.isImageLoaded) return;
@@ -139,28 +138,27 @@ export class CubemapTexture extends Texture {
   }
 
   /**
-    Checks if all images have been successfully fetched and loaded.
+   * Checks if all images have been successfully fetched and loaded.
    * @protected
-   * @returns {boolean} - True if all images are loaded, otherwise false.
+   * @returns `true` if all images are loaded, otherwise `false`.
    */
   protected allImagesFetchedAndLoaded(): boolean {
     return this.loadedImages.filter(e => e === true).length === this.textureUris?.length;
   }
 
   /**
-    Checks if all image fetch operations have completed, regardless of success.
+   * Checks if all image fetch operations have completed, regardless of success.
    * @protected
-   * @returns {boolean} - True if all fetch attempts are done, otherwise false.
+   * @returns `true` if all fetch attempts are done, otherwise `false`.
    */
   protected allImagesFetched(): boolean {
     return this.loadedImages.filter(e => e == null).length === 0;
   }
 
   /**
-    Updates the loading status of a single image and triggers the creation of the WebGL texture if all images are loaded.
-   * @param {number} imageIndex - The index of the image that has finished loading.
-   * @param {boolean} wasLoaded - A boolean indicating if the image loaded successfully.
-   * @returns {void}
+   * Updates the loading status of a single image. If all images are loaded, it triggers the creation of the WebGL texture.
+   * @param imageIndex - The index of the image that has finished loading.
+   * @param wasLoaded - A boolean indicating if the image loaded successfully.
    */
   public setLoadedImage(imageIndex: number, wasLoaded: boolean): void {
     this.loadedImages[imageIndex] = wasLoaded;
@@ -174,9 +172,8 @@ export class CubemapTexture extends Texture {
   }
 
   /**
-    Binds the cubemap texture to the `TEXTURE_CUBE_MAP` target.
+   * Binds the cubemap texture to the `TEXTURE_CUBE_MAP` target.
    * @override
-   * @returns {void}
    */
   override bind(): void {
     if (!this.gl) return;
@@ -185,11 +182,10 @@ export class CubemapTexture extends Texture {
   }
 
   /**
-    Creates the WebGLTexture object from the six loaded images.
+   * Creates the WebGLTexture object from the six loaded images and uploads them to the GPU.
    * @protected
    * @override
-   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
-   * @returns {void}
+   * @param gl - The WebGL2 rendering context.
    */
   protected override createGLTexture(gl: WebGL2RenderingContext): void {
     this._glTexture = gl.createTexture();
@@ -229,9 +225,8 @@ export class CubemapTexture extends Texture {
   }
 
   /**
-    Sets the URIs for the six faces of the cubemap texture.
-   * @param {string[]} uris - An array of six URIs.
-   * @returns {void}
+   * Sets the URIs for the six faces of the cubemap texture.
+   * @param uris - An array of six URIs.
    */
   public setTextureUris(uris: string[]): void {
     if (uris?.length !== 6) {
@@ -240,6 +235,11 @@ export class CubemapTexture extends Texture {
     this.textureUris = uris;
   }
 
+  /**
+   * Serializes the cubemap's state to a JSON object.
+   * @override
+   * @returns The serialized JSON data.
+   */
   override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
@@ -248,6 +248,11 @@ export class CubemapTexture extends Texture {
     }
   }
 
+  /**
+   * Deserializes the cubemap's state from a JSON object.
+   * @override
+   * @param jsonObject - The JSON data to deserialize from.
+   */
   override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
     this.textureUris = jsonObject["uris"];

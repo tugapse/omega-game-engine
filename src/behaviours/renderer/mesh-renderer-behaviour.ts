@@ -13,10 +13,19 @@ import { LitShader } from '../../shaders';
 import { RendererBehaviour } from './renderer-behaviour';
 
 /**
- * A renderer for mesh-based objects that supports normal maps, lighting, and shadow mapping.
- * This class extends the base RendererBehaviour to provide more advanced rendering features.
+ * A renderer for mesh-based objects that supports advanced lighting, normal maps, and shadow mapping.
+ * This class extends the base {@link RendererBehaviour} to provide more advanced rendering features
+ * suitable for physically-based rendering (PBR) style lighting.
+ *
+ * @remarks
+ * It manages the communication of complex data to the GPU, including multiple light sources,
+ * various material texture maps (normal, specular, AO, etc.), and shadow map information.
+ * It also handles fallback textures for materials that are missing certain maps.
+ *
+ * @augments {RendererBehaviour}
  */
 export class MeshRendererBehaviour extends RendererBehaviour {
+  /** @inheritdoc */
   static override instanciate(
     gl: WebGL2RenderingContext,
   ): MeshRendererBehaviour {
@@ -24,8 +33,13 @@ export class MeshRendererBehaviour extends RendererBehaviour {
   }
   protected override _className = 'MeshRendererBehaviour';
 
-  // --- PER-OBJECT PERMANENT BUFFERS TO ELIMINATE GC CHURN ---
+  /** The maximum number of lights of each type (directional, point, spot) that can influence an object in a single pass. */
   private static readonly MAX_LIGHT_PASS = 16;
+  /**
+   * Pre-allocated buffers and scratch variables to avoid memory allocation (and subsequent garbage collection)
+   * within the render loop. This is a critical performance optimization.
+   * @private
+   */
   private readonly _vec3Scratch = vec3.create();
   private readonly _mvpScratch = mat4.create();
 
@@ -89,27 +103,46 @@ export class MeshRendererBehaviour extends RendererBehaviour {
   // Cache for our generated 1x1 fallback textures
   private _defaultTextures: { [key: string]: WebGLTexture } = {};
 
+  /** If true, this object will be affected by shadows cast from other objects. */
   public receiveShadows = true;
 
+  /**
+   * Gets the global shadow map texture from the scene.
+   * @returns The shadow map texture or undefined if not available.
+   */
   public get shadowMapTexture() {
     return this.parent.scene.shadowmap?.shadowmapTexture;
   }
 
+  /**
+   * Gets the scene's fog configuration object.
+   * @returns The {@link SceneFog} instance.
+   */
   public get fog() {
     return this.parent.scene['sceneFog'] as SceneFog;
   }
 
+  /**
+   * Creates an instance of MeshRendererBehaviour.
+   * @param _gl - The WebGL2 rendering context.
+   */
   constructor(public override _gl: WebGL2RenderingContext) {
     super(_gl);
     this.drawPrimitiveType = GLPrimitiveType.TRIANGLES;
   }
 
+  /**
+   * Overrides the base draw method to set up and pass lighting, shadow, and fog information to the shader
+   * before rendering the mesh.
+   * @override
+   */
   override draw(): void {
     if (!this.mesh || !this.shader?._shaderProgram) {
       return;
     }
     this.shader.use();
 
+    // Shadow Mapping Setup
     if (this.shader instanceof LitShader) {
       this.shader.setInt(ShaderUniformsEnum.U_USE_SHADOWS, 0);
       if (this.shadowMapTexture && this.shadowMapTexture.glTexture) {
@@ -152,6 +185,7 @@ export class MeshRendererBehaviour extends RendererBehaviour {
       this.setShaderVariables();
     }
 
+    // Camera and Fog Setup
     const viewMatrix = Camera.mainCamera.viewMatrix;
     this.shader.setMat4(ShaderUniformsEnum.U_VIEW_MATRIX, viewMatrix);
 
@@ -185,6 +219,11 @@ export class MeshRendererBehaviour extends RendererBehaviour {
     this.shadowMapTexture?.unBind();
   }
 
+  /**
+   * Initializes the shader and its associated buffers, including buffers for normals, tangents, and bitangents
+   * which are required for normal mapping.
+   * @protected
+   */
   protected override initializeShader(): void {
     super.initializeShader();
     if (!this.shader) return;
@@ -194,6 +233,11 @@ export class MeshRendererBehaviour extends RendererBehaviour {
     this.shader.initBuffers(this._gl, this.mesh.meshData);
   }
 
+  /**
+   * Sets the shader uniforms related to lighting and material properties.
+   * @protected
+   * @override
+   */
   protected override setShaderVariables(): void {
     this.shader!.setFloat(
       ShaderUniformsEnum.U_SHADOW_STRENGTH,
@@ -203,6 +247,10 @@ export class MeshRendererBehaviour extends RendererBehaviour {
     this.setNormalMapsInformation();
   }
 
+  /**
+   * Caches the uniform and attribute locations from the shader program for faster access.
+   * @protected
+   */
   protected getNormalMapLocations(): void {
     if (this.shader?._shaderProgram) {
       this._normalMapUniformLocation = this._gl.getUniformLocation(
@@ -246,7 +294,13 @@ export class MeshRendererBehaviour extends RendererBehaviour {
     }
   }
 
-  // Generates and caches the exact mathematical 1x1 pixels needed for missing maps
+  /**
+   * Generates and caches 1x1 fallback textures for materials that are missing specific maps.
+   * This prevents shader errors and ensures predictable rendering. For example, a missing normal map
+   * will be replaced by a flat normal color, and a missing emissive map by a black pixel.
+   * @param type - The type of fallback texture to generate ('white', 'black', or 'normal').
+   * @returns The generated `WebGLTexture`.
+   */
   protected getDefaultTexture(
     type: 'white' | 'black' | 'normal',
   ): WebGLTexture {
@@ -288,6 +342,14 @@ export class MeshRendererBehaviour extends RendererBehaviour {
     return tex;
   }
 
+  /**
+   * A helper function to bind a texture to a specific texture unit and uniform location,
+   * using a fallback texture if the provided map is missing.
+   * @param mapData - The material texture map.
+   * @param location - The uniform location for the texture sampler.
+   * @param unit - The texture unit to activate.
+   * @param fallbackType - The type of fallback texture to use if `mapData` is invalid.
+   */
   protected bindMap(
     mapData: any,
     location: WebGLUniformLocation | null,
@@ -308,6 +370,11 @@ export class MeshRendererBehaviour extends RendererBehaviour {
     this._gl.uniform1i(location, unit);
   }
 
+  /**
+   * Binds all material texture maps (normal, specular, roughness, AO, emissive) to their
+   * respective texture units and shader samplers, using fallbacks where necessary.
+   * @protected
+   */
   protected setNormalMapsInformation(): void {
     if (!this.shader) return;
     this.getNormalMapLocations();
@@ -342,6 +409,11 @@ export class MeshRendererBehaviour extends RendererBehaviour {
     );
   }
 
+  /**
+   * Gathers all active lights from the scene and passes their properties (color, intensity)
+   * to the shader.
+   * @protected
+   */
   protected setLightInformation(): void {
     if (this.shader instanceof LitShader) {
       const lights = this.parent.scene.lights.filter(
@@ -367,6 +439,11 @@ export class MeshRendererBehaviour extends RendererBehaviour {
     }
   }
 
+  /**
+   * Sorts lights by type and delegates them to the appropriate loading function.
+   * @param sceneLights - An array of all active lights in the scene.
+   * @protected
+   */
   protected createLightObjectInfo(sceneLights: Light[]): void {
     const directionalLights: DirectionalLight[] = sceneLights.filter(
       (e) => e.entityType === EntityType.LIGHT_DIRECTIONAL,
@@ -383,6 +460,11 @@ export class MeshRendererBehaviour extends RendererBehaviour {
     this.loadSpotLights(spotLights);
   }
 
+  /**
+   * Loads spot light data into pre-allocated arrays and uploads them to the GPU.
+   * @param spotLights - An array of active spot lights.
+   * @protected
+   */
   protected loadSpotLights(spotLights: SpotLight[]): void {
     if (!this.shader) return;
 
@@ -495,6 +577,11 @@ export class MeshRendererBehaviour extends RendererBehaviour {
     }
   }
 
+  /**
+   * Loads directional light data into pre-allocated arrays and uploads them to the GPU.
+   * @param directionalLights - An array of active directional lights.
+   * @protected
+   */
   protected loadDirectionalLights(directionalLights: DirectionalLight[]): void {
     if (!this.shader) return;
 
@@ -545,6 +632,11 @@ export class MeshRendererBehaviour extends RendererBehaviour {
     }
   }
 
+  /**
+   * Loads point light data into pre-allocated arrays and uploads them to the GPU.
+   * @param pointLights - An array of active point lights.
+   * @protected
+   */
   protected loadPointLights(pointLights: PointLight[]): void {
     if (!this.shader) return;
 

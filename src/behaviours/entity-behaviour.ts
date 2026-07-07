@@ -7,14 +7,16 @@ import { RenderLayer } from '../enums';
 
 /**
  * Represents the base class for all components that define the behavior of an entity.
- * This class provides the foundational structure for creating custom scripts that can be attached to entities in the scene.
- * It includes lifecycle methods such as `initialize`, `update`, and `destroy`, as well as serialization functions.
+ *
+ * @remarks
+ * This class provides the foundational structure for creating custom scripts (behaviors) that can be attached to entities in the scene.
+ * It includes lifecycle methods such as `initialize`, `update`, and `destroy`, as well as serialization and cloning capabilities.
  * @augments {JsonSerializable}
  */
 export class EntityBehaviour extends JsonSerializable {
   /**
    * A static factory method to create an instance of the behaviour.
-   * This method is intended to be overridden by subclasses to provide a way to create instances of the specific behaviour type.
+   * This method should be overridden by subclasses to provide a way to create instances of the specific behaviour type.
    * @param {any} [args] - Optional arguments for instantiation.
    * @returns {EntityBehaviour}
    */
@@ -26,25 +28,26 @@ export class EntityBehaviour extends JsonSerializable {
   /**
    * Indicates whether the behaviour is currently active.
    * An inactive behaviour will not have its `update` method called.
-   * @type {boolean}
+   * @defaultValue `true`
    */
   public active: boolean = true;
 
   /**
    * The render layer this behaviour belongs to.
-   * This is used to determine the rendering order of the entity.
-   * @type {RenderLayer}
+   * This is used by the rendering pipeline to sort objects (e.g., for transparency).
+   * @see {RenderLayer}
+   * @defaultValue `RenderLayer.OPAQUE`
    */
   public renderLayer: RenderLayer = RenderLayer.OPAQUE;
   /**
    * The parent entity to which this behaviour is attached.
-   * @type {SceneEntity}
+   * This is set automatically when the behavior is added to an entity.
    */
   public parent!: SceneEntity;
   /**
    * A flag indicating if the behaviour has been initialized.
+   * @defaultValue `false`
    * @protected
-   * @type {boolean}
    */
   protected _initialized = false;
 
@@ -52,6 +55,7 @@ export class EntityBehaviour extends JsonSerializable {
    * Gets the transform component of the parent entity.
    * This provides easy access to the position, rotation, and scale of the entity.
    * @type {Transform}
+   * @readonly
    */
   public get transform(): Transform {
     return this.parent?.transform;
@@ -73,7 +77,8 @@ export class EntityBehaviour extends JsonSerializable {
   /**
    * Initializes the behaviour.
    * This method is called once when the behaviour is first added to an entity.
-   * @returns {boolean} - True if initialization is successful.
+   * Subclasses should call `super.initialize()` and can override this to perform one-time setup.
+   * @returns `true` if initialization is successful.
    */
   public initialize(): boolean {
     return (this._initialized = true);
@@ -82,14 +87,14 @@ export class EntityBehaviour extends JsonSerializable {
   /**
    * Updates the behaviour every frame.
    * This method is called on every frame for active behaviours.
-   * @param {number} elapsed - The time elapsed since the last frame in seconds.
+   * @param elapsed - The time elapsed since the last frame in seconds.
    */
   public update(elapsed: number): void {}
 
   /**
    * Updates the behaviour specifically for editor mode.
    * This method is called on every frame when the engine is in editor mode.
-   * @param {number} elapsed - The time elapsed since the last frame in seconds.
+   * @param elapsed - The time elapsed since the last frame in seconds.
    */
   public updateEditor(elapsed: number): void {}
 
@@ -109,7 +114,7 @@ export class EntityBehaviour extends JsonSerializable {
    * Serializes the behaviour's state to a JSON object.
    * This is used for saving the scene or entity state.
    * @override
-   * @returns {JsonSerializedData} - The JSON object representation.
+   * @returns The JSON object representation of the behavior.
    */
   public override toJsonObject(): JsonSerializedData {
     return {
@@ -123,7 +128,7 @@ export class EntityBehaviour extends JsonSerializable {
    * Deserializes the behaviour's state from a JSON object.
    * This is used for loading a scene or entity state.
    * @override
-   * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
+   * @param jsonObject - The JSON object to deserialize from.
    */
   public override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
@@ -134,7 +139,7 @@ export class EntityBehaviour extends JsonSerializable {
   /**
    * Creates a clone of the behaviour.
    * This method should be overridden by subclasses to implement deep cloning of the behaviour.
-   * @returns {EntityBehaviour | null} - A new instance of the behaviour or null if not implemented.
+   * @returns A new instance of the behaviour, or `null` if cloning is not supported.
    */
   public clone(): EntityBehaviour | null {
     return null;
