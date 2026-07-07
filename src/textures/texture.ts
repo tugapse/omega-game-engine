@@ -1,8 +1,8 @@
 // The WebGL constants are retrieved from the WebGL2RenderingContext
 // for more robust and type-safe enums.
 
-import { EngineCache } from "../core";
-import { JsonSerializable, JsonSerializedData } from "../interfaces";
+import { EngineCache, JsonSerializable } from "../core";
+import { JsonSerializedData } from "../interfaces";
 
 
 /**

@@ -1,11 +1,11 @@
 import { JsonSerializable } from "../../json-serializable";
-import { IRenderPass } from "./render-pass.interface";
 import { CameraUBO } from "../../camera-ubo";
 import { RendererBehaviour } from "../../../behaviours";
 import { Scene, Camera } from "../../../entities";
 import { RenderLayer } from "../../../enums";
 import { JsonSerializedData } from "../../../interfaces";
 import { vec3 } from "gl-matrix";
+import { IRenderPass } from "../render-pass.interface";
 
 export class GeometryPass extends JsonSerializable implements IRenderPass {
   private gl: WebGL2RenderingContext;

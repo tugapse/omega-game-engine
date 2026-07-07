@@ -1,7 +1,7 @@
 import { mat4, quat, vec3 } from 'gl-matrix';
 import { v4 as uuidv4 } from 'uuid';
 import { SceneEntity } from '../entities';
-import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
+import { JsonSerializedData } from '../interfaces/json-serialized-data';
 import { JsonSerializable } from './json-serializable';
 import { Vector3 } from './vector';
 

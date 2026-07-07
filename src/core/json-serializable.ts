@@ -1,5 +1,5 @@
 import { v4 as uuidV4 } from 'uuid';
-import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
+import { JsonSerializedData } from '../interfaces/json-serialized-data';
 /**
   An abstract base class providing a common interface for objects that can be serialized to and deserialized from a JSON object.
  */

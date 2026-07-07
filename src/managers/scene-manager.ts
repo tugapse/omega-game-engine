@@ -1,10 +1,9 @@
 import { EntityBehaviour } from '../behaviours';
-import { EngineCache } from '../core';
+import { EngineCache, JsonSerializable } from '../core';
 import { MeshData } from '../core/mesh';
 import { ObjectInstanciator } from '../core/object-instanciator';
 import { Transform } from '../core/transform';
-import { JsonSerializable } from '../interfaces';
-import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
+import { JsonSerializedData } from '../interfaces/json-serialized-data';
 import { CubemapTexture, Texture } from '../textures';
 import { SceneEntity } from '../entities/entity';
 import { Scene } from '../entities/scene';

@@ -1,3 +1,5 @@
+export * from './bounding-box';
+export * from './camera-ubo';
 export * from './canvas-viewport';
 export * from './color';
 export * from './colors';
@@ -6,12 +8,9 @@ export * from './event-emitter';
 export * from './input';
 export * from './json-serializable';
 export * from './mesh';
-export * from './transform';
 export * from './object-instanciator';
-export * from './vector';
-export * from './bounding-box';
-export * from './scene-fog';
 export * from './range';
-export * from './camera-ubo';
 export * from './scene-fog';
-
+export * from './transform';
+export * from './vector';
+export * from './render';

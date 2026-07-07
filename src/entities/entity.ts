@@ -2,7 +2,7 @@ import { EntityBehaviour } from '../behaviours/entity-behaviour';
 import { JsonSerializable } from '../core/json-serializable';
 import { Transform } from '../core/transform';
 import { EntityType } from '../enums/entity-type.enum';
-import { JsonSerializedData } from '../interfaces/json-serialized-data.interface';
+import { JsonSerializedData } from '../interfaces/json-serialized-data';
 
 /**
   The base class for all entities within the engine. It manages a transform, a collection of behaviours, and the entity's state within a scene.

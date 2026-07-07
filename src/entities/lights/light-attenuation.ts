@@ -1,4 +1,5 @@
-import { JsonSerializable, JsonSerializedData } from "../../interfaces";
+import { JsonSerializable } from "../../core";
+import { JsonSerializedData } from "../../interfaces";
 
 /**
   Defines the properties for light attenuation, controlling how light intensity diminishes with distance.

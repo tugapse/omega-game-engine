@@ -1,4 +1,5 @@
-import { JsonSerializable, JsonSerializedData } from "../../interfaces";
+import { JsonSerializable } from "../../core";
+import { JsonSerializedData } from "../../interfaces";
 
 /**
   Defines the properties for the cone angles of a spotlight.

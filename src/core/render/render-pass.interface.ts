@@ -1,4 +1,4 @@
-import { Scene } from "../../../entities/scene";
+import { Scene } from "../../entities";
 
 export interface IRenderPass {
   name:string;

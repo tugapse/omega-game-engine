@@ -1,6 +1,6 @@
 import { Color } from "../core/color";
 import { JsonSerializable } from "../core/json-serializable";
-import { JsonSerializedData } from "../interfaces/json-serialized-data.interface";
+import { JsonSerializedData } from "../interfaces/json-serialized-data";
 
 /**
   Represents a simple material with a single color property.

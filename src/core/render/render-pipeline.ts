@@ -6,7 +6,8 @@ import { CameraUBO } from "../camera-ubo";
 import { CanvasViewport } from "../canvas-viewport";
 import { JsonSerializable } from "../json-serializable";
 import { ObjectInstanciator } from "../object-instanciator";
-import { ShadowMapPass, GeometryPass, PostProcessingPass, IRenderPass } from "./pass";
+import { ShadowMapPass, GeometryPass, PostProcessingPass } from "./pass";
+import { IRenderPass } from "./render-pass.interface";
 
 export class RenderPipeline extends JsonSerializable {
   static instanciate() {

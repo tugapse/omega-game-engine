@@ -1,8 +1,5 @@
-import { ICubemapSides } from '../interfaces/cubemap.interface';
+import { ICubemapSides } from '../interfaces/cubemap';
 import { ObjParser } from '../parsers/obj-parser';
-import { ShaderUniformsEnum } from '../enums';
-import { LitShader } from '../shaders';
-import { LitMaterial } from '../materials';
 import { CubemapTexture } from '../textures';
 import { Texture } from '../textures/texture';
 import { MeshData } from './mesh';
@@ -90,6 +87,13 @@ export abstract class EngineCache {
     }
     await result.load();
     return result;
+    // let result = EngineCache.__cache.textures[uri];
+    // if (!result) {
+    //   result = new Texture(gl, uri);
+    //   EngineCache.__cache.textures[uri] = result;
+    //   result.load();
+    // }
+    // return result;
   }
 
   /**

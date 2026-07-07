@@ -3,7 +3,7 @@ import { UnlitMaterial } from "../../../materials";
 import { Shader, UnlitShader, ShaderSources } from "../../../shaders";
 import { Texture } from "../../../textures";
 import { JsonSerializable } from "../../json-serializable";
-import { IRenderPass } from "./render-pass.interface";
+import { IRenderPass } from "../render-pass.interface";
 
 
 export class ScreenBlitPass extends JsonSerializable implements IRenderPass {
