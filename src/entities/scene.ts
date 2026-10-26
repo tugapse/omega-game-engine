@@ -125,7 +125,9 @@ export class Scene extends SceneEntity {
    */
   public override update(ellapsed: number): void {
     if (this.destroyed) return;
-    Camera.mainCamera.update(ellapsed);
+    
+    Camera.mainCamera && Camera.mainCamera.update(ellapsed);
+    
     this.behaviours.forEach((behaviour) => behaviour.beforeUpdate(ellapsed));
 
     if (!this.isRunning && this.inEditMode && this.objects?.length) {
@@ -137,7 +139,6 @@ export class Scene extends SceneEntity {
     if (!this.isRunning) return;
 
     this.ellapsedTime += ellapsed;
-    super.update(ellapsed);
     for (const object of this.objects.filter((e) => e.active)) {
       object.update(ellapsed);
     }
