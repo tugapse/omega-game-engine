@@ -1,0 +1,111 @@
+{
+  "component": {
+    "name": "GeometryPass",
+    "source_path": "/core/render/pass/geometry.ts",
+    "doc_path": "/core/render/pass/geometry.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "GeometryPass is a core rendering service implementing IRenderPass, responsible for drawing all visible scene geometry. It orchestrates the rendering pipeline by sorting objects based on their RenderLayer and distance from the camera. The drawing sequence is strictly enforced as Opaque -> Skybox -> Transparent, ensuring correct visual layering, especially for transparent objects drawn back-to-front."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/pass/geometry.ts#GeometryPass",
+      "label": "Class",
+      "name": "GeometryPass",
+      "signature": "class GeometryPass extends JsonSerializable implements IRenderPass"
+    },
+    {
+      "id": "/core/render/pass/geometry.ts#execute",
+      "label": "Method",
+      "name": "execute",
+      "signature": "execute(scene: Scene): void"
+    },
+    {
+      "id": "/core/render/pass/geometry.ts#cleanup",
+      "label": "Method",
+      "name": "cleanup",
+      "signature": "cleanup(): void"
+    },
+    {
+      "id": "/core/render/pass/geometry.ts#resize",
+      "label": "Method",
+      "name": "resize",
+      "signature": "resize(width: number, height: number): void"
+    },
+    {
+      "id": "/core/render/pass/geometry.ts#setGl",
+      "label": "Method",
+      "name": "setGl",
+      "signature": "setGl(gl: WebGL2RenderingContext): void"
+    },
+    {
+      "id": "/core/render/pass/geometry.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/core/render/pass/geometry.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/core/render/pass/geometry.ts#ubo",
+      "label": "Variable",
+      "name": "ubo",
+      "signature": "private ubo!: CameraUBO;"
+    },
+    {
+      "id": "/core/render/pass/geometry.ts#gl",
+      "label": "Variable",
+      "name": "gl",
+      "signature": "private gl: WebGL2RenderingContext;"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/pass/geometry.ts",
+      "target": "/core/render/pass/json-serializable.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/geometry.ts",
+      "target": "/core/render/camera-ubo.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/geometry.ts",
+      "target": "/core/behaviours.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/geometry.ts",
+      "target": "/core/entities.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/geometry.ts",
+      "target": "/core/enums.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/geometry.ts",
+      "target": "/core/interfaces.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/geometry.ts",
+      "target": "/core/render-pass.interface.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

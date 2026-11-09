@@ -1,0 +1,80 @@
+{
+  "component": {
+    "name": "ObjParser",
+    "source_path": "/parsers/obj-parser.ts",
+    "doc_path": "/parsers/obj-parser.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "ObjParser is a specialized service responsible for ingesting raw Wavefront .obj file content and transforming it into a structured, WebGL-ready MeshData object. It parses geometric primitives like vertices (v), texture coordinates (vt), and normals (vn), while also handling face definitions (f) and triangulating N-gons. The core logic consolidates geometry by de-duplicating vertices based on the unique combination of position, UV, and normal indices before outputting the final indexed buffers."
+  },
+  "graph_nodes": [
+    {
+      "id": "/parsers/obj-parser.ts#ObjParser",
+      "label": "Class",
+      "name": "ObjParser",
+      "signature": ""
+    },
+    {
+      "id": "/parsers/obj-parser.ts#parse",
+      "label": "Method",
+      "name": "parse",
+      "signature": "parse(objContent: string): MeshData"
+    },
+    {
+      "id": "/parsers/obj-parser.ts#resetParser",
+      "label": "Method",
+      "name": "resetParser",
+      "signature": "resetParser(): void"
+    },
+    {
+      "id": "/parsers/obj-parser.ts#parseVertex",
+      "label": "Method",
+      "name": "parseVertex",
+      "signature": "parseVertex(parts: string[]): void"
+    },
+    {
+      "id": "/parsers/obj-parser.ts#parseUV",
+      "label": "Method",
+      "name": "parseUV",
+      "signature": "parseUV(parts: string[]): void"
+    },
+    {
+      "id": "/parsers/obj-parser.ts#parseNormal",
+      "label": "Method",
+      "name": "parseNormal",
+      "signature": "parseNormal(parts: string[]): void"
+    },
+    {
+      "id": "/parsers/obj-parser.ts#parseFace",
+      "label": "Method",
+      "name": "parseFace",
+      "signature": "parseFace(parts: string[]): void"
+    },
+    {
+      "id": "/parsers/obj-parser.ts#consolidateMeshData",
+      "label": "Method",
+      "name": "consolidateMeshData",
+      "signature": "consolidateMeshData(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/parsers/obj-parser.ts",
+      "target": "/core/mesh.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/parsers/obj-parser.ts",
+      "target": "/parsers/interfaces.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

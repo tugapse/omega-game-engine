@@ -1,0 +1,61 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/enums/index.ts",
+    "doc_path": "/enums/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module serves as a central facade for aggregating and exporting strongly-typed enumeration constants used across the entire engine. It consolidates definitions from various submodules, such as gl, class-type, and entity-type, providing a single, canonical entry point for type access. Architecturally, it functions as a public data model layer interface, ensuring consistency in type definitions throughout the application."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/index.ts#index",
+      "label": "Module",
+      "name": "index",
+      "signature": "export * from './gl';"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/enums/index.ts",
+      "target": "/enums/gl.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/index.ts",
+      "target": "/enums/class-type.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/index.ts",
+      "target": "/enums/cubemap-side.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/index.ts",
+      "target": "/enums/entity-type.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/index.ts",
+      "target": "/enums/gl-primitive-type.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/index.ts",
+      "target": "/enums/render-layer.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/index.ts",
+      "target": "/enums/shader-uniforms.enum.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

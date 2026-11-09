@@ -1,0 +1,127 @@
+{
+  "component": {
+    "name": "SkyboxRenderer",
+    "source_path": "/behaviours/renderer/skybox-renderer.ts",
+    "doc_path": "/behaviours/renderer/skybox-renderer.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "SkyboxRenderer is a specialized rendering behaviour extending MeshRendererBehaviour, dedicated to drawing a large cube mesh textured with a cubemap to simulate an infinite background sky. It overrides GL settings to cull front faces and uses LEQUAL depth testing to ensure correct layering behind scene geometry. Crucially, it modifies the camera's view matrix by zeroing translation components to keep the skybox centered relative to the camera's rotation, independent of its position."
+  },
+  "graph_nodes": [
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#SkyboxRenderer",
+      "label": "Class",
+      "name": "SkyboxRenderer",
+      "signature": "class SkyboxRenderer extends MeshRendererBehaviour"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(gl: WebGL2RenderingContext): SkyboxRenderer"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(gl:WebGL2RenderingContext)"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#createDefaultSkybox",
+      "label": "Method",
+      "name": "createDefaultSkybox",
+      "signature": "protected async createDefaultSkybox(): Promise<void>"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "override initialize(): boolean"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#material",
+      "label": "Property",
+      "name": "material",
+      "signature": "public get material():SkyboxMaterial"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#setGlSettings",
+      "label": "Method",
+      "name": "setGlSettings",
+      "signature": "protected override setGlSettings(): void"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#setCameraMatrices",
+      "label": "Method",
+      "name": "setCameraMatrices",
+      "signature": "override setCameraMatrices(): void"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#draw",
+      "label": "Method",
+      "name": "draw",
+      "signature": "override draw(): void"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#setShaderVariables",
+      "label": "Method",
+      "name": "setShaderVariables",
+      "signature": "override setShaderVariables(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/core/engine-cache.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/entities/camera.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/enums/render-layer.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/enums/shader-uniforms-enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/materials/skybox-material.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/primitives/cube-primitive.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/shaders/skybox-shader.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/gl-matrix.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

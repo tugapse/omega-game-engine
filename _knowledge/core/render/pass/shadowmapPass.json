@@ -1,0 +1,121 @@
+{
+  "component": {
+    "name": "ShadowMapPass",
+    "source_path": "/core/render/pass/shadowmapPass.ts",
+    "doc_path": "/core/render/pass/shadowmapPass.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "ShadowMapPass is a specialized rendering service responsible for generating depth maps from the perspective of a directional light source. It implements IRenderPass, utilizing a dedicated WebGL2Framebuffer and depth texture to capture scene geometry depth. Its core logic involves iterating over shadow-casting objects, setting up the light's MVP matrix, and drawing depth-only geometry while enabling front-face culling to mitigate shadow acne."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/pass/shadowmapPass.ts#ShadowMapPass",
+      "label": "Class",
+      "name": "ShadowMapPass",
+      "signature": "constructor(gl: WebGL2RenderingContext)"
+    },
+    {
+      "id": "/core/render/pass/shadowmapPass.ts#shadowstrength",
+      "label": "Variable",
+      "name": "shadowstrength",
+      "signature": "NumberRange"
+    },
+    {
+      "id": "/core/render/pass/shadowmapPass.ts#shadowmapTexture",
+      "label": "Variable",
+      "name": "shadowmapTexture",
+      "signature": "Texture"
+    },
+    {
+      "id": "/core/render/pass/shadowmapPass.ts#shadowMapSize",
+      "label": "Variable",
+      "name": "shadowMapSize",
+      "signature": "static Property"
+    },
+    {
+      "id": "/core/render/pass/shadowmapPass.ts#enabled",
+      "label": "Variable",
+      "name": "enabled",
+      "signature": "Boolean"
+    },
+    {
+      "id": "/core/render/pass/shadowmapPass.ts#setGl",
+      "label": "Method",
+      "name": "setGl",
+      "signature": "setGl(gl: WebGL2RenderingContext): void"
+    },
+    {
+      "id": "/core/render/pass/shadowmapPass.ts#getOrCreateFramebuffer",
+      "label": "Method",
+      "name": "getOrCreateFramebuffer",
+      "signature": "getOrCreateFramebuffer(): WebGLFramebuffer"
+    },
+    {
+      "id": "/core/render/pass/shadowmapPass.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "initialize(): void"
+    },
+    {
+      "id": "/core/render/pass/shadowmapPass.ts#execute",
+      "label": "Method",
+      "name": "execute",
+      "signature": "execute(scene: Scene): void"
+    },
+    {
+      "id": "/core/render/pass/shadowmapPass.ts#clearShadowMap",
+      "label": "Method",
+      "name": "clearShadowMap",
+      "signature": "clearShadowMap(): void"
+    },
+    {
+      "id": "/core/render/pass/shadowmapPass.ts#cleanup",
+      "label": "Method",
+      "name": "cleanup",
+      "signature": "cleanup(): void"
+    },
+    {
+      "id": "/core/render/pass/shadowmapPass.ts#resize",
+      "label": "Method",
+      "name": "resize",
+      "signature": "resize(width: number, height: number): void"
+    },
+    {
+      "id": "/core/render/pass/shadowmapPass.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/core/render/pass/shadowmapPass.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/pass/shadowmapPass.ts",
+      "target": "/core/render/pass/shadowmapPass.json",
+      "relation": "implements"
+    },
+    {
+      "source": "/core/render/pass/shadowmapPass.ts",
+      "target": "/core/render/pass/shadowmapPass.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/core/render/pass/shadowmapPass.ts",
+      "target": "/core/render/pass/shadowmapPass.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

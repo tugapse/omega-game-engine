@@ -1,0 +1,51 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/materials/index.ts",
+    "doc_path": "/materials/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as a central facade for the engine's material system, aggregating and exporting all available material implementations. It provides a unified entry point, allowing higher-level systems to access specific material types like color or lit materials without needing to know their internal directory structure. Architecturally, it promotes loose coupling by serving as a single point of dependency for the rendering pipeline's material management layer."
+  },
+  "graph_nodes": [
+    {
+      "id": "/materials/index.ts#index",
+      "label": "Module",
+      "name": "index",
+      "signature": "export *"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/materials/index.ts",
+      "target": "/materials/color-material.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/index.ts",
+      "target": "/materials/lit-material.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/index.ts",
+      "target": "/materials/unlit-material.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/index.ts",
+      "target": "/materials/cubemap-material.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/index.ts",
+      "target": "/materials/skybox-material.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

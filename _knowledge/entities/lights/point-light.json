@@ -1,0 +1,92 @@
+{
+  "component": {
+    "name": "PointLight",
+    "source_path": "/entities/lights/point-light.ts",
+    "doc_path": "/entities/lights/point-light.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "PointLight models a light source emitting uniformly in all directions from a fixed 3D point. It inherits from Light and encapsulates physical properties like color and attenuation. The class manages serialization via toJsonObject and fromJson, ensuring correct persistence of its specific light decay behavior. It provides a static factory method, instanciate, for easy instantiation."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/lights/point-light.ts#PointLight",
+      "label": "Class",
+      "name": "PointLight",
+      "signature": ""
+    },
+    {
+      "id": "/entities/lights/point-light.ts#entityType",
+      "label": "Variable",
+      "name": "entityType",
+      "signature": ""
+    },
+    {
+      "id": "/entities/lights/point-light.ts#attenuation",
+      "label": "Variable",
+      "name": "attenuation",
+      "signature": ""
+    },
+    {
+      "id": "/entities/lights/point-light.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(name: string)"
+    },
+    {
+      "id": "/entities/lights/point-light.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/entities/lights/point-light.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/entities/lights/point-light.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static instanciate(name?: string, transform?: Transform): PointLight"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/lights/point-light.ts",
+      "target": "/core/color.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/point-light.ts",
+      "target": "/core/transform.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/point-light.ts",
+      "target": "/enums/entity-type.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/point-light.ts",
+      "target": "/interfaces/json-serialized-data.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/point-light.ts",
+      "target": "/lights/light.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/point-light.ts",
+      "target": "/lights/light-attenuation.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

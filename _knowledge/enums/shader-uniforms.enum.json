@@ -1,0 +1,523 @@
+{
+  "component": {
+    "name": "ShaderUniformsEnum",
+    "source_path": "/enums/shader-uniforms.enum.ts",
+    "doc_path": "/enums/shader-uniforms.enum.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines ShaderUniformsEnum, a TypeScript enumeration that serves as a centralized contract for referencing uniform and attribute names used in GLSL shaders. Its primary role is to enforce consistency between application logic (JavaScript/TypeScript) and the low-level rendering pipeline. It maps descriptive constant names to their exact string representations required by the GPU, preventing runtime errors from typos. It acts as a critical data contract layer for the rendering subsystem."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/shader-uniforms.enum.ts#ShaderUniformsEnum",
+      "label": "Type",
+      "name": "ShaderUniformsEnum",
+      "signature": "enum ShaderUniformsEnum"
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_TIME",
+      "label": "Variable",
+      "name": "U_TIME",
+      "signature": "U_TIME = \"u_time\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SCREEN_RESOLUTION",
+      "label": "Variable",
+      "name": "U_SCREEN_RESOLUTION",
+      "signature": "U_SCREEN_RESOLUTION = \"u_screenResolution\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_MVP_MATRIX",
+      "label": "Variable",
+      "name": "U_MVP_MATRIX",
+      "signature": "U_MVP_MATRIX = \"u_mvpMatrix\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_VIEW_MATRIX",
+      "label": "Variable",
+      "name": "U_VIEW_MATRIX",
+      "signature": "U_VIEW_MATRIX = \"u_viewMatrix\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_MODEL_MATRIX",
+      "label": "Variable",
+      "name": "U_MODEL_MATRIX",
+      "signature": "U_MODEL_MATRIX = \"u_modelMatrix\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_NORMAL_MATRIX",
+      "label": "Variable",
+      "name": "U_NORMAL_MATRIX",
+      "signature": "U_NORMAL_MATRIX = \"u_normalMatrix\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_WORLD_MATRIX",
+      "label": "Variable",
+      "name": "U_WORLD_MATRIX",
+      "signature": "U_WORLD_MATRIX = \"u_worldMatrix\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_WORLD_INVERSE_TRANSPOSE_MATRIX",
+      "label": "Variable",
+      "name": "U_WORLD_INVERSE_TRANSPOSE_MATRIX",
+      "signature": "U_WORLD_INVERSE_TRANSPOSE_MATRIX = \"u_worldInverseTransposeMatrix\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_MAT_COLOR",
+      "label": "Variable",
+      "name": "U_MAT_COLOR",
+      "signature": "U_MAT_COLOR = \"u_matColor\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_UV_SCALE",
+      "label": "Variable",
+      "name": "U_UV_SCALE",
+      "signature": "U_UV_SCALE = \"u_uvScale\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_UV_OFFSET",
+      "label": "Variable",
+      "name": "U_UV_OFFSET",
+      "signature": "U_UV_OFFSET = \"u_uvOffset\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SPECULAR_STRENGTH",
+      "label": "Variable",
+      "name": "U_SPECULAR_STRENGTH",
+      "signature": "U_SPECULAR_STRENGTH = \"u_specularStrength\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_ROUGHNESS",
+      "label": "Variable",
+      "name": "U_ROUGHNESS",
+      "signature": "U_ROUGHNESS = \"u_roughness\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_MAIN_TEX",
+      "label": "Variable",
+      "name": "U_MAIN_TEX",
+      "signature": "U_MAIN_TEX = \"u_mainTex\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_NORMAL_TEX",
+      "label": "Variable",
+      "name": "U_NORMAL_TEX",
+      "signature": "U_NORMAL_TEX = \"u_normalMap\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_NORMAL_MAP_STRENGTH",
+      "label": "Variable",
+      "name": "U_NORMAL_MAP_STRENGTH",
+      "signature": "U_NORMAL_MAP_STRENGTH = \"u_normalMapStrength\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_CAMERA_POSITION",
+      "label": "Variable",
+      "name": "U_CAMERA_POSITION",
+      "signature": "U_CAMERA_POSITION = \"u_cameraPosition\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#A_POSITION",
+      "label": "Variable",
+      "name": "A_POSITION",
+      "signature": "A_POSITION = \"a_position\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#A_NORMAL",
+      "label": "Variable",
+      "name": "A_NORMAL",
+      "signature": "A_NORMAL = \"a_normal\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#A_UV",
+      "label": "Variable",
+      "name": "A_UV",
+      "signature": "A_UV = \"a_uv\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#A_TANGENT",
+      "label": "Variable",
+      "name": "A_TANGENT",
+      "signature": "A_TANGENT = \"a_tangent\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#A_BITANGENT",
+      "label": "Variable",
+      "name": "A_BITANGENT",
+      "signature": "A_BITANGENT = \"a_bitangent\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_AMBIENT_LIGHT",
+      "label": "Variable",
+      "name": "U_AMBIENT_LIGHT",
+      "signature": "U_AMBIENT_LIGHT = \"u_ambientLight\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_NUM_DIRECTIONAL_LIGHTS",
+      "label": "Variable",
+      "name": "U_NUM_DIRECTIONAL_LIGHTS",
+      "signature": "U_NUM_DIRECTIONAL_LIGHTS = \"u_numDirectionalLights\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_DIRECTIONAL_LIGHT_DIRECTIONS",
+      "label": "Variable",
+      "name": "U_DIRECTIONAL_LIGHT_DIRECTIONS",
+      "signature": "U_DIRECTIONAL_LIGHT_DIRECTIONS = \"u_directionalLightDirections[0]\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_DIRECTIONAL_LIGHT_COLORS",
+      "label": "Variable",
+      "name": "U_DIRECTIONAL_LIGHT_COLORS",
+      "signature": "U_DIRECTIONAL_LIGHT_COLORS = \"u_directionalLightColors[0]\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_NUM_POINT_LIGHTS",
+      "label": "Variable",
+      "name": "U_NUM_POINT_LIGHTS",
+      "signature": "U_NUM_POINT_LIGHTS = \"u_numPointLights\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_POINT_LIGHT_POSITIONS",
+      "label": "Variable",
+      "name": "U_POINT_LIGHT_POSITIONS",
+      "signature": "U_POINT_LIGHT_POSITIONS = \"u_pointLightPositions[0]\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_POINT_LIGHT_COLORS",
+      "label": "Variable",
+      "name": "U_POINT_LIGHT_COLORS",
+      "signature": "U_POINT_LIGHT_COLORS = \"u_pointLightColors[0]\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_POINT_LIGHT_CONSTANT_ATTS",
+      "label": "Variable",
+      "name": "U_POINT_LIGHT_CONSTANT_ATTS",
+      "signature": "U_POINT_LIGHT_CONSTANT_ATTS = \"u_pointLightConstantAtts[0]\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_POINT_LIGHT_LINEAR_ATTS",
+      "label": "Variable",
+      "name": "U_POINT_LIGHT_LINEAR_ATTS",
+      "signature": "U_POINT_LIGHT_LINEAR_ATTS = \"u_pointLightLinearAtts[0]\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_POINT_LIGHT_QUADRATIC_ATTS",
+      "label": "Variable",
+      "name": "U_POINT_LIGHT_QUADRATIC_ATTS",
+      "signature": "U_POINT_LIGHT_QUADRATIC_ATTS = \"u_pointLightQuadraticAtts[0]\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_NUM_SPOT_LIGHTS",
+      "label": "Variable",
+      "name": "U_NUM_SPOT_LIGHTS",
+      "signature": "U_NUM_SPOT_LIGHTS = \"u_numSpotLights\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SPOT_LIGHT_POSITIONS",
+      "label": "Variable",
+      "name": "U_SPOT_LIGHT_POSITIONS",
+      "signature": "U_SPOT_LIGHT_POSITIONS = \"u_spotLightPositions[0]\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SPOT_LIGHT_DIRECTIONS",
+      "label": "Variable",
+      "name": "U_SPOT_LIGHT_DIRECTIONS",
+      "signature": "U_SPOT_LIGHT_DIRECTIONS = \"u_spotLightDirections[0]\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SPOT_LIGHT_COLORS",
+      "label": "Variable",
+      "name": "U_SPOT_LIGHT_COLORS",
+      "signature": "U_SPOT_LIGHT_COLORS = \"u_spotLightColors[0]\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SPOT_LIGHT_INNER_CONE_COS",
+      "label": "Variable",
+      "name": "U_SPOT_LIGHT_INNER_CONE_COS",
+      "signature": "U_SPOT_LIGHT_INNER_CONE_COS = \"u_spotLightInnerConeCos[0]\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SPOT_LIGHT_OUTER_CONE_COS",
+      "label": "Variable",
+      "name": "U_SPOT_LIGHT_OUTER_CONE_COS",
+      "signature": "U_SPOT_LIGHT_OUTER_CONE_COS = \"u_spotLightOuterConeCos[0]\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SPOT_LIGHT_CONSTANT_ATTS",
+      "label": "Variable",
+      "name": "U_SPOT_LIGHT_CONSTANT_ATTS",
+      "signature": "U_SPOT_LIGHT_CONSTANT_ATTS = \"u_spotLightConstantAtts[0]\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SPOT_LIGHT_LINEAR_ATTS",
+      "label": "Variable",
+      "name": "U_SPOT_LIGHT_LINEAR_ATTS",
+      "signature": "U_SPOT_LIGHT_LINEAR_ATTS = \"u_spotLightLinearAtts[0]\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SPOT_LIGHT_QUADRATIC_ATTS",
+      "label": "Variable",
+      "name": "U_SPOT_LIGHT_QUADRATIC_ATTS",
+      "signature": "U_SPOT_LIGHT_QUADRATIC_ATTS = \"u_spotLightQuadraticAtts[0]\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_LIGHT_MVP_MATRIX",
+      "label": "Variable",
+      "name": "U_LIGHT_MVP_MATRIX",
+      "signature": "U_LIGHT_MVP_MATRIX = \"u_lightMVPMatrix\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_USE_SHADOWS",
+      "label": "Variable",
+      "name": "U_USE_SHADOWS",
+      "signature": "U_USE_SHADOWS = \"u_useShadows\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SHADOW_MAP",
+      "label": "Variable",
+      "name": "U_SHADOW_MAP",
+      "signature": "U_SHADOW_MAP = \"u_shadowMap\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SHADOW_MAP_SIZE",
+      "label": "Variable",
+      "name": "U_SHADOW_MAP_SIZE",
+      "signature": "U_SHADOW_MAP_SIZE = \"u_shadowMapSize\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SHADOW_STRENGTH",
+      "label": "Variable",
+      "name": "U_SHADOW_STRENGTH",
+      "signature": "U_SHADOW_STRENGTH = \"u_shadowStrength\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_FOG_ENABLED",
+      "label": "Variable",
+      "name": "U_FOG_ENABLED",
+      "signature": "U_FOG_ENABLED = \"u_fogEnabled\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_FOG_COLOR",
+      "label": "Variable",
+      "name": "U_FOG_COLOR",
+      "signature": "U_FOG_COLOR = \"u_FogColor\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_FOG_DENSITY",
+      "label": "Variable",
+      "name": "U_FOG_DENSITY",
+      "signature": "U_FOG_DENSITY = \"u_FogDensity\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_FOG_DISTANCE",
+      "label": "Variable",
+      "name": "U_FOG_DISTANCE",
+      "signature": "U_FOG_DISTANCE = \"u_fogDistance\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_FOG_TYPE",
+      "label": "Variable",
+      "name": "U_FOG_TYPE",
+      "signature": "U_FOG_TYPE = \"u_fogType\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_FOG_HEIGHT_FALLOFF",
+      "label": "Variable",
+      "name": "U_FOG_HEIGHT_FALLOFF",
+      "signature": "U_FOG_HEIGHT_FALLOFF = \"u_FogHeightFalloff\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_FOG_BASE_HEIGHT",
+      "label": "Variable",
+      "name": "U_FOG_BASE_HEIGHT",
+      "signature": "U_FOG_BASE_HEIGHT = \"u_FogBaseHeight\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SUN_DIRECTION",
+      "label": "Variable",
+      "name": "U_SUN_DIRECTION",
+      "signature": "U_SUN_DIRECTION = \"u_sunDirection\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SUN_COLOR",
+      "label": "Variable",
+      "name": "U_SUN_COLOR",
+      "signature": "U_SUN_COLOR = \"u_sunColor\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SUN_SIZE",
+      "label": "Variable",
+      "name": "U_SUN_SIZE",
+      "signature": "U_SUN_SIZE = \"u_sunSize\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SUN_FALLOFF",
+      "label": "Variable",
+      "name": "U_SUN_FALLOFF",
+      "signature": "U_SUN_FALLOFF = \"u_sunFalloff\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_USE_SUN",
+      "label": "Variable",
+      "name": "U_USE_SUN",
+      "signature": "U_USE_SUN = \"u_useSun\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_SKY_COLOR",
+      "label": "Variable",
+      "name": "U_SKY_COLOR",
+      "signature": "U_SKY_COLOR = \"u_skyColor\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_HORIZON_COLOR",
+      "label": "Variable",
+      "name": "U_HORIZON_COLOR",
+      "signature": "U_HORIZON_COLOR = \"u_horizonColor\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_GROUND_COLOR",
+      "label": "Variable",
+      "name": "U_GROUND_COLOR",
+      "signature": "U_GROUND_COLOR = \"u_groundColor\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_EXPONENT",
+      "label": "Variable",
+      "name": "U_EXPONENT",
+      "signature": "U_EXPONENT = \"u_exponent\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_MOON_DIRECTION",
+      "label": "Variable",
+      "name": "U_MOON_DIRECTION",
+      "signature": "U_MOON_DIRECTION = \"u_moonDirection\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_MOON_COLOR",
+      "label": "Variable",
+      "name": "U_MOON_COLOR",
+      "signature": "U_MOON_COLOR = \"u_moonColor\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_MOON_SIZE",
+      "label": "Variable",
+      "name": "U_MOON_SIZE",
+      "signature": "U_MOON_SIZE = \"u_moonSize\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_MOON_FALLOFF",
+      "label": "Variable",
+      "name": "U_MOON_FALLOFF",
+      "signature": "U_MOON_FALLOFF = \"u_moonFalloff\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_MOON_PHASE",
+      "label": "Variable",
+      "name": "U_MOON_PHASE",
+      "signature": "U_MOON_PHASE = \"u_moonPhase\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_USE_MOON",
+      "label": "Variable",
+      "name": "U_USE_MOON",
+      "signature": "U_USE_MOON = \"u_useMoon\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_CLOUD_SPEED",
+      "label": "Variable",
+      "name": "U_CLOUD_SPEED",
+      "signature": "U_CLOUD_SPEED = \"u_cloudSpeed\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_CLOUD_SEED",
+      "label": "Variable",
+      "name": "U_CLOUD_SEED",
+      "signature": "U_CLOUD_SEED = \"u_cloudSeed\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_USE_CLOUDS",
+      "label": "Variable",
+      "name": "U_USE_CLOUDS",
+      "signature": "U_USE_CLOUDS = \"u_useClouds\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_WHEATHER_CONDITION",
+      "label": "Variable",
+      "name": "U_WHEATHER_CONDITION",
+      "signature": "U_WHEATHER_CONDITION = \"u_weatherCondition\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_CLOUD_TILING",
+      "label": "Variable",
+      "name": "U_CLOUD_TILING",
+      "signature": "U_CLOUD_TILING = \"u_cloudTiling\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_CLOUD_SPARSITY",
+      "label": "Variable",
+      "name": "U_CLOUD_SPARSITY",
+      "signature": "U_CLOUD_SPARSITY = \"u_cloudSparsity\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_CLOUD_REPETITION",
+      "label": "Variable",
+      "name": "U_CLOUD_REPETITION",
+      "signature": "U_CLOUD_REPETITION = \"u_cloudRepetition\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_STAR_INTENSITY",
+      "label": "Variable",
+      "name": "U_STAR_INTENSITY",
+      "signature": "U_STAR_INTENSITY = \"u_starIntensity\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_STAR_SCALE",
+      "label": "Variable",
+      "name": "U_STAR_SCALE",
+      "signature": "U_STAR_SCALE = \"u_starScale\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_STAR_SPARSITY",
+      "label": "Variable",
+      "name": "U_STAR_SPARSITY",
+      "signature": "U_STAR_SPARSITY = \"u_starSparsity\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_STAR_SPEED",
+      "label": "Variable",
+      "name": "U_STAR_SPEED",
+      "signature": "U_STAR_SPEED = \"u_starSpeed\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_MOON_EARTHSHINE",
+      "label": "Variable",
+      "name": "U_MOON_EARTHSHINE",
+      "signature": "U_MOON_EARTHSHINE = \"u_moonEarthshine\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_MOON_TERMINATOR_SOFTNESS",
+      "label": "Variable",
+      "name": "U_MOON_TERMINATOR_SOFTNESS",
+      "signature": "U_MOON_TERMINATOR_SOFTNESS = \"u_moonTerminatorSoftness\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_MOON_ENABLE_ROTATION",
+      "label": "Variable",
+      "name": "U_MOON_ENABLE_ROTATION",
+      "signature": "U_MOON_ENABLE_ROTATION = \"u_moonEnableRotation\""
+    },
+    {
+      "id": "/enums/shader-uniforms.enum.ts#U_MOON_ROTATION_SPEED",
+      "label": "Variable",
+      "name": "U_MOON_ROTATION_SPEED",
+      "signature": "U_MOON_ROTATION_SPEED = \"u_moonRotationSpeed\""
+    }
+  ],
+  "graph_edges": [],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

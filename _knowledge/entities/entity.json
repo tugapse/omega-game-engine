@@ -1,0 +1,135 @@
+{
+  "component": {
+    "name": "SceneEntity",
+    "source_path": "/entities/entity.ts",
+    "doc_path": "/entities/entity.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "SceneEntity is the core data model representing any object within the game engine's scene graph. It encapsulates identity, spatial data via Transform, and dynamic logic through attached EntityBehaviour instances. It manages the lifecycle (initialize, update, destroy) and provides serialization capabilities using JsonSerializable. It acts as the central hub for entity state management and interaction within the engine's runtime system."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/entity.ts#SceneEntity",
+      "label": "Class",
+      "name": "SceneEntity",
+      "signature": "class SceneEntity extends JsonSerializable"
+    },
+    {
+      "id": "/entities/entity.ts#SceneEntity.type",
+      "label": "Getter",
+      "name": "type",
+      "signature": "get type(): string"
+    },
+    {
+      "id": "/entities/entity.ts#SceneEntity.className",
+      "label": "Static Property",
+      "name": "className",
+      "signature": "static get className(): string"
+    },
+    {
+      "id": "/entities/entity.ts#SceneEntity.instanciate",
+      "label": "Static Method",
+      "name": "instanciate",
+      "signature": "static instanciate(name: string = 'Entity', transform?: Transform): SceneEntity"
+    },
+    {
+      "id": "/entities/entity.ts#SceneEntity.addBehaviour",
+      "label": "Method",
+      "name": "addBehaviour",
+      "signature": "addBehaviour(behaviour: EntityBehaviour): void"
+    },
+    {
+      "id": "/entities/entity.ts#SceneEntity.removeBehaviour",
+      "label": "Method",
+      "name": "removeBehaviour",
+      "signature": "removeBehaviour(behaviour: EntityBehaviour): void"
+    },
+    {
+      "id": "/entities/entity.ts#SceneEntity.getBehaviours",
+      "label": "Method",
+      "name": "getBehaviours",
+      "signature": "getBehaviours<T extends EntityBehaviour>(constructor: new (...args: any[]) => T): T[]"
+    },
+    {
+      "id": "/entities/entity.ts#SceneEntity.getBehaviour",
+      "label": "Method",
+      "name": "getBehaviour",
+      "signature": "getBehaviour<T extends EntityBehaviour>(constructor: new (...args: any[]) => T): T | undefined"
+    },
+    {
+      "id": "/entities/entity.ts#SceneEntity.fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "override fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/entities/entity.ts#SceneEntity.toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/entities/entity.ts#SceneEntity.clone",
+      "label": "Method",
+      "name": "clone",
+      "signature": "clone(): SceneEntity"
+    },
+    {
+      "id": "/entities/entity.ts#SceneEntity.initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "initialize(): void"
+    },
+    {
+      "id": "/entities/entity.ts#SceneEntity.update",
+      "label": "Method",
+      "name": "update",
+      "signature": "update(ellapsed: number): void"
+    },
+    {
+      "id": "/entities/entity.ts#SceneEntity.draw",
+      "label": "Method",
+      "name": "draw",
+      "signature": "draw(): void"
+    },
+    {
+      "id": "/entities/entity.ts#SceneEntity.destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "destroy(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/entity.ts",
+      "target": "/entities/entity-behaviour.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/entity.ts",
+      "target": "/core/json-serializable.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/entity.ts",
+      "target": "/core/transform.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/entity.ts",
+      "target": "/enums/entity-type.enum.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/entity.ts",
+      "target": "/interfaces/json-serialized-data.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

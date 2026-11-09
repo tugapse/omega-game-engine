@@ -1,0 +1,76 @@
+{
+  "component": {
+    "name": "UnlitShader",
+    "source_path": "/shaders/unlit-shader.ts",
+    "doc_path": "/shaders/unlit-shader.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "UnlitShader is a specialized class inheriting from Shader, designed to render objects without applying any lighting calculations. It manages the rendering pipeline by loading intrinsic material properties like base color, UV scale, and offset into WebGL uniforms. The component ensures texture readiness via checkAndLoadTextures, binding the main texture before rendering, and handles resource cleanup in its release method."
+  },
+  "graph_nodes": [
+    {
+      "id": "/shaders/unlit-shader.ts#UnlitShader",
+      "label": "Class",
+      "name": "UnlitShader",
+      "signature": ""
+    },
+    {
+      "id": "/shaders/unlit-shader.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(gl: WebGL2RenderingContext, material: UnlitMaterial): UnlitShader"
+    },
+    {
+      "id": "/shaders/unlit-shader.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(gl: WebGL2RenderingContext, material: UnlitMaterial)"
+    },
+    {
+      "id": "/shaders/unlit-shader.ts#loadDataIntoShader",
+      "label": "Method",
+      "name": "loadDataIntoShader",
+      "signature": "override async loadDataIntoShader(): Promise<void>"
+    },
+    {
+      "id": "/shaders/unlit-shader.ts#checkAndLoadTextures",
+      "label": "Method",
+      "name": "checkAndLoadTextures",
+      "signature": "protected async checkAndLoadTextures(): Promise<void>"
+    },
+    {
+      "id": "/shaders/unlit-shader.ts#release",
+      "label": "Method",
+      "name": "release",
+      "signature": "override release(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/shaders/unlit-shader.ts",
+      "target": "/enums/shader-uniforms.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/unlit-shader.ts",
+      "target": "/materials/unlit-material.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/unlit-shader.ts",
+      "target": "/shaders/shader.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/unlit-shader.ts",
+      "target": "/shaders/shader-sources.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

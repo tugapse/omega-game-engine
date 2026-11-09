@@ -1,0 +1,129 @@
+{
+  "component": {
+    "name": "PostProcessingPass",
+    "source_path": "/core/render/pass/retro-filter.ts",
+    "doc_path": "/core/render/pass/retro-filter.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "PostProcessingPass implements the retro filter effect within the rendering pipeline, adhering to the IRenderPass interface. It manages WebGL resources, specifically initializing a Shader for fullscreen quad rendering. The execute method applies visual distortions like chromatic aberration and flickering by manipulating uniforms such as u_time and u_distortionStrength on the input texture. It is responsible for integrating the final rendered texture into the aesthetic post-processing stage."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/pass/retro-filter.ts#PostProcessingPass",
+      "label": "Class",
+      "name": "PostProcessingPass",
+      "signature": "class PostProcessingPass extends JsonSerializable implements IRenderPass"
+    },
+    {
+      "id": "/core/render/pass/retro-filter.ts#gl",
+      "label": "Variable",
+      "name": "gl",
+      "signature": "WebGL2RenderingContext"
+    },
+    {
+      "id": "/core/render/pass/retro-filter.ts#postShader",
+      "label": "Variable",
+      "name": "postShader",
+      "signature": "Shader"
+    },
+    {
+      "id": "/core/render/pass/retro-filter.ts#emptyVAO",
+      "label": "Variable",
+      "name": "emptyVAO",
+      "signature": "WebGLVertexArrayObject"
+    },
+    {
+      "id": "/core/render/pass/retro-filter.ts#enabled",
+      "label": "Variable",
+      "name": "enabled",
+      "signature": "boolean"
+    },
+    {
+      "id": "/core/render/pass/retro-filter.ts#timeAccumulator",
+      "label": "Variable",
+      "name": "timeAccumulator",
+      "signature": "number"
+    },
+    {
+      "id": "/core/render/pass/retro-filter.ts#inputTexture",
+      "label": "Variable",
+      "name": "inputTexture",
+      "signature": "Texture | null"
+    },
+    {
+      "id": "/core/render/pass/retro-filter.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(gl: WebGL2RenderingContext)"
+    },
+    {
+      "id": "/core/render/pass/retro-filter.ts#cleanup",
+      "label": "Method",
+      "name": "cleanup",
+      "signature": "cleanup(): void"
+    },
+    {
+      "id": "/core/render/pass/retro-filter.ts#setGl",
+      "label": "Method",
+      "name": "setGl",
+      "signature": "setGl(gl: WebGL2RenderingContext): void"
+    },
+    {
+      "id": "/core/render/pass/retro-filter.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "initialize(gl: WebGL2RenderingContext): void"
+    },
+    {
+      "id": "/core/render/pass/retro-filter.ts#setInputTexture",
+      "label": "Method",
+      "name": "setInputTexture",
+      "signature": "setInputTexture(texture: Texture | null): void"
+    },
+    {
+      "id": "/core/render/pass/retro-filter.ts#execute",
+      "label": "Method",
+      "name": "execute",
+      "signature": "execute(scene: Scene): void"
+    },
+    {
+      "id": "/core/render/pass/retro-filter.ts#resize",
+      "label": "Method",
+      "name": "resize",
+      "signature": "resize(width: number, height: number): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/pass/retro-filter.ts",
+      "target": "/core/entities.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/retro-filter.ts",
+      "target": "/core/shaders.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/retro-filter.ts",
+      "target": "/core/textures.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/retro-filter.ts",
+      "target": "/core/json-serializable.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/retro-filter.ts",
+      "target": "/core/render/pass/render-pass.interface.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

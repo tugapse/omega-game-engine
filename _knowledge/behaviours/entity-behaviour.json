@@ -1,0 +1,148 @@
+{
+  "component": {
+    "name": "EntityBehaviour",
+    "source_path": "/behaviours/entity-behaviour.ts",
+    "doc_path": "/behaviours/entity-behaviour.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "EntityBehaviour is the abstract base class defining the lifecycle and behavior framework for all scripts attached to SceneEntity objects within the engine. It enforces standard methods like initialize, update, and destroy, while integrating with the ECS pattern. It manages state persistence via JsonSerializable hooks and provides spatial awareness through access to the parent entity's Transform component."
+  },
+  "graph_nodes": [
+    {
+      "id": "/behaviours/entity-behaviour.ts#EntityBehaviour",
+      "label": "Class",
+      "name": "EntityBehaviour",
+      "signature": "class EntityBehaviour extends JsonSerializable"
+    },
+    {
+      "id": "/behaviours/entity-behaviour.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static instanciate(args?: any): EntityBehaviour"
+    },
+    {
+      "id": "/behaviours/entity-behaviour.ts#active",
+      "label": "Variable",
+      "name": "active",
+      "signature": "public active: boolean"
+    },
+    {
+      "id": "/behaviours/entity-behaviour.ts#renderLayer",
+      "label": "Variable",
+      "name": "renderLayer",
+      "signature": "public renderLayer: RenderLayer"
+    },
+    {
+      "id": "/behaviours/entity-behaviour.ts#parent",
+      "label": "Variable",
+      "name": "parent",
+      "signature": "public parent!: SceneEntity"
+    },
+    {
+      "id": "/behaviours/entity-behaviour.ts#_initialized",
+      "label": "Variable",
+      "name": "_initialized",
+      "signature": "protected _initialized = false"
+    },
+    {
+      "id": "/behaviours/entity-behaviour.ts#transform",
+      "label": "Method",
+      "name": "transform",
+      "signature": "public get transform(): Transform"
+    },
+    {
+      "id": "/behaviours/entity-behaviour.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor()"
+    },
+    {
+      "id": "/behaviours/entity-behaviour.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "public initialize(): boolean"
+    },
+    {
+      "id": "/behaviours/entity-behaviour.ts#update",
+      "label": "Method",
+      "name": "update",
+      "signature": "public update(elapsed: number): void"
+    },
+    {
+      "id": "/behaviours/entity-behaviour.ts#updateEditor",
+      "label": "Method",
+      "name": "updateEditor",
+      "signature": "public updateEditor(elapsed: number): void"
+    },
+    {
+      "id": "/behaviours/entity-behaviour.ts#draw",
+      "label": "Method",
+      "name": "draw",
+      "signature": "public draw(): void"
+    },
+    {
+      "id": "/behaviours/entity-behaviour.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "public destroy(): void"
+    },
+    {
+      "id": "/behaviours/entity-behaviour.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "public override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/behaviours/entity-behaviour.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "public override fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/behaviours/entity-behaviour.ts#clone",
+      "label": "Method",
+      "name": "clone",
+      "signature": "public clone(): EntityBehaviour | null"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/behaviours/entity-behaviour.ts",
+      "target": "/core/json-serializable.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/entity-behaviour.ts",
+      "target": "/entities/entity.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/entity-behaviour.ts",
+      "target": "/core/transform.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/entity-behaviour.ts",
+      "target": "/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/entity-behaviour.ts",
+      "target": "/enums/render-layer.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/entity-behaviour.ts",
+      "target": "/uuid/index.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "uuid"
+    ],
+    "has_side_effects": true
+  }
+}

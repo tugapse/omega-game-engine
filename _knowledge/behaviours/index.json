@@ -1,0 +1,51 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/behaviours/index.ts",
+    "doc_path": "/behaviours/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module serves as a central API facade for the engine's behaviour system, aggregating various behaviour modules into a unified interface. Its primary role is to consolidate functionality related to entity control and rendering behaviours, allowing consumers easy access to disparate sub-modules. Architecturally, it promotes modularity by grouping related behaviours like rendering and entity control into a single importable namespace."
+  },
+  "graph_nodes": [
+    {
+      "id": "/behaviours/index.ts#index",
+      "label": "Module",
+      "name": "index",
+      "signature": "export *"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/behaviours/index.ts",
+      "target": "/renderer/renderer-behaviour.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/index.ts",
+      "target": "/renderer/mesh-renderer-behaviour.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/index.ts",
+      "target": "/renderer/skybox-renderer.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/index.ts",
+      "target": "/entity-behaviour.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/index.ts",
+      "target": "/camera-fly-behaviour.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

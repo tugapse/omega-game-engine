@@ -1,0 +1,39 @@
+{
+  "component": {
+    "name": "TrianglePrimitive",
+    "source_path": "/primitives/triangle-primitive.ts",
+    "doc_path": "/primitives/triangle-primitive.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "TrianglePrimitive is a concrete implementation of a 2D triangle primitive, inheriting from MeshData. It encapsulates fixed geometric datavertices, normals, UVs, and indicesto represent a canonical triangle centered at the origin on the XY-plane. Its constructor pre-configures these arrays, providing a ready-to-use asset for rendering systems. It serves as a fundamental, self-contained data model within the rendering pipeline."
+  },
+  "graph_nodes": [
+    {
+      "id": "/primitives/triangle-primitive.ts#TrianglePrimitive",
+      "label": "Class",
+      "name": "TrianglePrimitive",
+      "signature": "constructor()"
+    },
+    {
+      "id": "/primitives/triangle-primitive.ts#MeshData",
+      "label": "Class",
+      "name": "MeshData",
+      "signature": "constructor(vertices: vec3[], normals: vec3[], uvs: vec2[], indices: number[])"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/primitives/triangle-primitive.ts",
+      "target": "/core/mesh.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

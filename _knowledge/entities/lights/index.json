@@ -1,0 +1,56 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/entities/lights/index.ts",
+    "doc_path": "/entities/lights/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as a facade or barrel file for the entire light system within the engine. Its primary role is to consolidate and export a unified public API, allowing consumers to import specific light implementations like PointLight or SpotLight from a single entry point. It aggregates functionality from various light types and related concepts, ensuring a clean, predictable interface for the rest of the application."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/lights/index.ts#module",
+      "label": "Module",
+      "name": "module",
+      "signature": "export *"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/lights/index.ts",
+      "target": "/entities/lights/directional-light.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/index.ts",
+      "target": "/entities/lights/light-attenuation.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/index.ts",
+      "target": "/entities/lights/light-cone.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/index.ts",
+      "target": "/entities/lights/light.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/index.ts",
+      "target": "/entities/lights/point-light.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/index.ts",
+      "target": "/entities/lights/spot-light.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

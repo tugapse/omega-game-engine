@@ -1,0 +1,253 @@
+{
+  "component": {
+    "name": "Shader",
+    "source_path": "/shaders/shader.ts",
+    "doc_path": "/shaders/shader.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The Shader class serves as the core GPU resource manager, handling the entire lifecycle of WebGL shaders. It asynchronously loads GLSL source code, processes modular includes via SHADER_FUNCTIONS, compiles, and links vertex/fragment shaders into a usable WebGLProgram. It manages geometry data by creating and binding WebGLBuffers derived from MeshData, and provides extensive methods for setting uniforms and managing rendering state."
+  },
+  "graph_nodes": [
+    {
+      "id": "/shaders/shader.ts#Shader",
+      "label": "Class",
+      "name": "Shader",
+      "signature": "constructor(gl: WebGL2RenderingContext, material: ColorMaterial, fragUri: string = ShaderSources.frag.color, vertexUri: string = ShaderSources.vertex.default)"
+    },
+    {
+      "id": "/shaders/shader.ts#WebGLBuffers",
+      "label": "Interface",
+      "name": "WebGLBuffers",
+      "signature": "interface WebGLBuffers { position: WebGLBuffer | null; normal: WebGLBuffer | null; uv: WebGLBuffer | null; tangent: WebGLBuffer | null; bitangent: WebGLBuffer | null; indices: WebGLBuffer | null; }"
+    },
+    {
+      "id": "/shaders/shader.ts#SHADER_FUNCTIONS",
+      "label": "Variable",
+      "name": "SHADER_FUNCTIONS",
+      "signature": "{ [key: string]: string }"
+    },
+    {
+      "id": "/shaders/shader.ts#preFetchFunctionsGlsl",
+      "label": "Method",
+      "name": "preFetchFunctionsGlsl",
+      "signature": "static preFetchFunctionsGlsl(): void"
+    },
+    {
+      "id": "/shaders/shader.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static instanciate(gl: WebGL2RenderingContext, material: ColorMaterial): Shader"
+    },
+    {
+      "id": "/shaders/shader.ts#shaderProgram",
+      "label": "Getter",
+      "name": "shaderProgram",
+      "signature": "get shaderProgram(): WebGLProgram"
+    },
+    {
+      "id": "/shaders/shader.ts#initialized",
+      "label": "Getter",
+      "name": "initialized",
+      "signature": "get initialized(): boolean"
+    },
+    {
+      "id": "/shaders/shader.ts#buffers",
+      "label": "Getter",
+      "name": "buffers",
+      "signature": "get buffers(): WebGLBuffers"
+    },
+    {
+      "id": "/shaders/shader.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "async initialize(): Promise<boolean>"
+    },
+    {
+      "id": "/shaders/shader.ts#initBuffers",
+      "label": "Method",
+      "name": "initBuffers",
+      "signature": "initBuffers(gl: WebGL2RenderingContext, mesh: MeshData): void"
+    },
+    {
+      "id": "/shaders/shader.ts#bindBuffers",
+      "label": "Method",
+      "name": "bindBuffers",
+      "signature": "bindBuffers(): void"
+    },
+    {
+      "id": "/shaders/shader.ts#use",
+      "label": "Method",
+      "name": "use",
+      "signature": "use(): void"
+    },
+    {
+      "id": "/shaders/shader.ts#release",
+      "label": "Method",
+      "name": "release",
+      "signature": "release(): void"
+    },
+    {
+      "id": "/shaders/shader.ts#loadDataIntoShader",
+      "label": "Method",
+      "name": "loadDataIntoShader",
+      "signature": "loadDataIntoShader(): void"
+    },
+    {
+      "id": "/shaders/shader.ts#setMat4",
+      "label": "Method",
+      "name": "setMat4",
+      "signature": "setMat4(name: string, value: mat4): void"
+    },
+    {
+      "id": "/shaders/shader.ts#setMat3",
+      "label": "Method",
+      "name": "setMat3",
+      "signature": "setMat3(name: string, value: mat3): void"
+    },
+    {
+      "id": "/shaders/shader.ts#setVec4",
+      "label": "Method",
+      "name": "setVec4",
+      "signature": "setVec4(name: string, vec: vec4): void"
+    },
+    {
+      "id": "/shaders/shader.ts#setVec3",
+      "label": "Method",
+      "name": "setVec3",
+      "signature": "setVec3(name: string, vec: vec3): void"
+    },
+    {
+      "id": "/shaders/shader.ts#setVec2",
+      "label": "Method",
+      "name": "setVec2",
+      "signature": "setVec2(name: string, vec: vec2): void"
+    },
+    {
+      "id": "/shaders/shader.ts#setFloat",
+      "label": "Method",
+      "name": "setFloat",
+      "signature": "setFloat(name: string, num: number): void"
+    },
+    {
+      "id": "/shaders/shader.ts#setInt",
+      "label": "Method",
+      "name": "setInt",
+      "signature": "setInt(name: string, num: number): void"
+    },
+    {
+      "id": "/shaders/shader.ts#setTexture",
+      "label": "Method",
+      "name": "setTexture",
+      "signature": "setTexture(name: string, texture: Texture, textureIndex: number): void"
+    },
+    {
+      "id": "/shaders/shader.ts#setBuffer",
+      "label": "Method",
+      "name": "setBuffer",
+      "signature": "setBuffer(buffer: WebGLBuffer, values: vec3[]): void"
+    },
+    {
+      "id": "/shaders/shader.ts#setIndices",
+      "label": "Method",
+      "name": "setIndices",
+      "signature": "setIndices(values: number[]): void"
+    },
+    {
+      "id": "/shaders/shader.ts#recompile",
+      "label": "Method",
+      "name": "recompile",
+      "signature": "recompile(): void"
+    },
+    {
+      "id": "/shaders/shader.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "destroy(): void"
+    },
+    {
+      "id": "/shaders/shader.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/shaders/shader.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/shaders/shader.ts#compileShader",
+      "label": "Method",
+      "name": "compileShader",
+      "signature": "private compileShader(gl: WebGL2RenderingContext, type: number, source: string, uri: string): WebGLShader | null"
+    },
+    {
+      "id": "/shaders/shader.ts#createProgram",
+      "label": "Method",
+      "name": "createProgram",
+      "signature": "private createProgram(gl: WebGL2RenderingContext, vertexShader: WebGLShader, fragmentShader: WebGLShader): WebGLProgram | null"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/shaders/shader.ts",
+      "target": "/src/core/engineCache.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/shader.ts",
+      "target": "/src/core/mesh.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/shader.ts",
+      "target": "/src/enums/shader-uniforms.enum.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/shader.ts",
+      "target": "/src/core/json-serializable.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/shader.ts",
+      "target": "/src/interfaces/json-serialized-data.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/shader.ts",
+      "target": "/src/materials/color-material.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/shader.ts",
+      "target": "/src/textures/texture.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/shader.ts",
+      "target": "/src/core/object-instanciator.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/shader.ts",
+      "target": "/src/shaders/shader-sources.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/shader.ts",
+      "target": "/src/shaders/shader.md",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix",
+      "uuid"
+    ],
+    "has_side_effects": true
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "component": {
+    "name": "MeshRendererBehaviour",
+    "source_path": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+    "doc_path": "/behaviours/renderer/mesh-renderer-behaviour.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "MeshRendererBehaviour is a specialized renderer responsible for drawing complex 3D geometry utilizing Physically Based Rendering (PBR) techniques. It manages the entire rendering pipeline for mesh entities, including setting up shadow maps, handling advanced lighting calculations (directional, point, spot), and integrating material properties like normal, roughness, and AO maps. It heavily relies on WebGL2 context manipulation and caches performance-critical data structures to ensure efficient rendering performance."
+  },
+  "graph_nodes": [
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#MeshRendererBehaviour",
+      "label": "Class",
+      "name": "MeshRendererBehaviour",
+      "signature": "class MeshRendererBehaviour extends RendererBehaviour"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(gl: WebGL2RenderingContext): MeshRendererBehaviour"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#draw",
+      "label": "Method",
+      "name": "draw",
+      "signature": "override draw(): void"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#initializeShader",
+      "label": "Method",
+      "name": "initializeShader",
+      "signature": "protected override initializeShader(): void"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#setShaderVariables",
+      "label": "Method",
+      "name": "setShaderVariables",
+      "signature": "protected override setShaderVariables(): void"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#getNormalMapLocations",
+      "label": "Method",
+      "name": "getNormalMapLocations",
+      "signature": "protected getNormalMapLocations(): void"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#getDefaultTexture",
+      "label": "Method",
+      "name": "getDefaultTexture",
+      "signature": "protected getDefaultTexture(type: 'white' | 'black' | 'normal'): WebGLTexture"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#bindMap",
+      "label": "Method",
+      "name": "bindMap",
+      "signature": "protected bindMap(mapData: any, location: WebGLUniformLocation | null, unit: number, fallbackType: 'white' | 'black' | 'normal'): void"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#setNormalMapsInformation",
+      "label": "Method",
+      "name": "setNormalMapsInformation",
+      "signature": "protected setNormalMapsInformation(): void"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#setLightInformation",
+      "label": "Method",
+      "name": "setLightInformation",
+      "signature": "protected setLightInformation(): void"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#createLightObjectInfo",
+      "label": "Method",
+      "name": "createLightObjectInfo",
+      "signature": "protected createLightObjectInfo(sceneLights: Light[]): void"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#loadSpotLights",
+      "label": "Method",
+      "name": "loadSpotLights",
+      "signature": "protected loadSpotLights(spotLights: SpotLight[]): void"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#loadDirectionalLights",
+      "label": "Method",
+      "name": "loadDirectionalLights",
+      "signature": "protected loadDirectionalLights(directionalLights: DirectionalLight[]): void"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#loadPointLights",
+      "label": "Method",
+      "name": "loadPointLights",
+      "signature": "protected loadPointLights(pointLights: PointLight[]): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/behaviours/renderer/renderer-behaviour.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/core/engine-cache.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/core/scene-fog.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/entities/camera.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/entities/directional-light.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/entities/light.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/entities/point-light.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/entities/spot-light.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/enums/entity-type.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/enums/gl-primitive-type.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/enums/shader-uniforms-enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/materials/lit-material.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/shaders/lit-shader.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

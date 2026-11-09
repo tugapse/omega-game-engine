@@ -1,0 +1,39 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/core/render/pass/index.ts",
+    "doc_path": "/core/render/pass/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as the primary facade for the rendering pipeline subsystem, aggregating specialized rendering logic into a unified interface. It serves as the entry point for accessing various rendering stages, including filtering, screen manipulation, shadow mapping, and geometry processing. Architecturally, it consolidates exports from several specialized pass modules to provide a coherent namespace for engine consumers."
+  },
+  "graph_nodes": [],
+  "graph_edges": [
+    {
+      "source": "/core/render/pass/index.ts",
+      "target": "/core/render/pass/retro-filter.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/index.ts",
+      "target": "/core/render/pass/screen-blit.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/index.ts",
+      "target": "/core/render/pass/shadowmapPass.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/index.ts",
+      "target": "/core/render/pass/geometry.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

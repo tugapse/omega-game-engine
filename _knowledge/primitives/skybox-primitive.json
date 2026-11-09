@@ -1,0 +1,45 @@
+{
+  "component": {
+    "name": "SkyboxPrimitive",
+    "source_path": "/primitives/skybox-primitive.ts",
+    "doc_path": "/primitives/skybox-primitive.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "SkyboxPrimitive is a specialized class extending CubePrimitive, designed exclusively for rendering skybox geometry. Its primary role is to enforce skybox-specific initialization, such as defaulting the cube size to 2.0, overriding the base instantiation logic. It manages the geometry required for a background cube primitive within the rendering subsystem. This component ensures correct setup for background rendering elements."
+  },
+  "graph_nodes": [
+    {
+      "id": "/primitives/skybox-primitive.ts#SkyboxPrimitive",
+      "label": "Class",
+      "name": "SkyboxPrimitive",
+      "signature": "class SkyboxPrimitive extends CubePrimitive"
+    },
+    {
+      "id": "/primitives/skybox-primitive.ts#SkyboxPrimitive.instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(vertices?: vec3[], normals?: vec3[], uvs?: vec2[], indices?: number[]): CubePrimitive"
+    },
+    {
+      "id": "/primitives/skybox-primitive.ts#SkyboxPrimitive",
+      "label": "Constructor",
+      "name": "constructor",
+      "signature": "constructor(size: number = 2.0)"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/primitives/skybox-primitive.ts",
+      "target": "/primitives/cube-primitive.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

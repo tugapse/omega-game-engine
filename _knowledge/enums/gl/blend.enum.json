@@ -1,0 +1,39 @@
+{
+  "component": {
+    "name": "blend.enum",
+    "source_path": "/enums/gl/blend.enum.ts",
+    "doc_path": "/enums/gl/blend.enum.json",
+    "type": "utility"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines type-safe enumerations for controlling blending factors within a WebGL rendering pipeline. It encapsulates constants like SRC_ALPHA, ONE, and ZERO, mapping them directly to numerical constants provided by the WebGL2RenderingContext. Its primary role is to provide a low-level, explicit configuration utility for managing how source and destination colors interact during framebuffer operations."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/gl/blend.enum.ts#BlendingSourceFactor",
+      "label": "Enum",
+      "name": "BlendingSourceFactor",
+      "signature": "export enum BlendingSourceFactor {"
+    },
+    {
+      "id": "/enums/gl/blend.enum.ts#BlendingDestinationFactor",
+      "label": "Enum",
+      "name": "BlendingDestinationFactor",
+      "signature": "export enum BlendingDestinationFactor {"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/enums/gl/blend.enum.ts",
+      "target": "/WebGL2RenderingContext",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "WebGL2RenderingContext"
+    ],
+    "has_side_effects": false
+  }
+}

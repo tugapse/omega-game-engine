@@ -1,0 +1,113 @@
+{
+  "component": {
+    "name": "AudioCache",
+    "source_path": "/audio/audio-cache.ts",
+    "doc_path": "/audio/audio-cache.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "AudioCache is a core service responsible for managing audio assets, providing both in-memory caching for low-latency sound effects and background streaming for long tracks. It abstracts the Web Audio API, utilizing an LRU eviction policy to manage memory usage against a configurable byte limit. The class handles asset loading via fetch, decoding, and provides specific methods for stream management using HTMLAudioElement."
+  },
+  "graph_nodes": [
+    {
+      "id": "/audio/audio-cache.ts#AudioCache",
+      "label": "Class",
+      "name": "AudioCache",
+      "signature": "constructor(audioContext: AudioContext, config: CacheConfig)"
+    },
+    {
+      "id": "/audio/audio-cache.ts#CacheConfig",
+      "label": "Interface",
+      "name": "CacheConfig",
+      "signature": "useLRU: boolean; maxCacheBytes: number;"
+    },
+    {
+      "id": "/audio/audio-cache.ts#load",
+      "label": "Method",
+      "name": "load",
+      "signature": "async load(id: string, relativeUrl: string): Promise<AudioBuffer>"
+    },
+    {
+      "id": "/audio/audio-cache.ts#get",
+      "label": "Method",
+      "name": "get",
+      "signature": "get(id: string): AudioBuffer"
+    },
+    {
+      "id": "/audio/audio-cache.ts#register",
+      "label": "Method",
+      "name": "register",
+      "signature": "register(id: string, buffer: AudioBuffer): void"
+    },
+    {
+      "id": "/audio/audio-cache.ts#has",
+      "label": "Method",
+      "name": "has",
+      "signature": "has(id: string): boolean"
+    },
+    {
+      "id": "/audio/audio-cache.ts#unload",
+      "label": "Method",
+      "name": "unload",
+      "signature": "unload(id: string): void"
+    },
+    {
+      "id": "/audio/audio-cache.ts#clear",
+      "label": "Method",
+      "name": "clear",
+      "signature": "clear(): void"
+    },
+    {
+      "id": "/audio/audio-cache.ts#setLRU",
+      "label": "Method",
+      "name": "setLRU",
+      "signature": "setLRU(enabled: boolean): void"
+    },
+    {
+      "id": "/audio/audio-cache.ts#createStream",
+      "label": "Method",
+      "name": "createStream",
+      "signature": "createStream(id: string, relativeUrl: string, outputNode: AudioNode): HTMLAudioElement"
+    },
+    {
+      "id": "/audio/audio-cache.ts#destroyStream",
+      "label": "Method",
+      "name": "destroyStream",
+      "signature": "destroyStream(id: string): void"
+    },
+    {
+      "id": "/audio/audio-cache.ts#updateAccess",
+      "label": "Method",
+      "name": "updateAccess",
+      "signature": "private updateAccess(id: string): void"
+    },
+    {
+      "id": "/audio/audio-cache.ts#evictToFit",
+      "label": "Method",
+      "name": "evictToFit",
+      "signature": "private evictToFit(incomingBytes: number): void"
+    },
+    {
+      "id": "/audio/audio-cache.ts#estimateBufferSize",
+      "label": "Method",
+      "name": "estimateBufferSize",
+      "signature": "private estimateBufferSize(buffer: AudioBuffer): number"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/audio/audio-cache.ts",
+      "target": "/audio/audio-cache.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "AudioContext",
+      "HTMLAudioElement",
+      "AudioNode"
+    ],
+    "has_side_effects": true
+  }
+}

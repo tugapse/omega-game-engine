@@ -1,0 +1,55 @@
+{
+  "component": {
+    "name": "BoundingBox",
+    "source_path": "/core/bounding-box.ts",
+    "doc_path": "/core/bounding-box.json",
+    "type": "model"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines core geometric primitives for 3D spatial representation, specifically the BoundingBox and BoundingSphere. BoundingBox implements an Axis-Aligned Bounding Box (AABB) using min/max coordinates, providing derived properties like width, height, and depth. Both structures inherit from JsonSerializable, making them essential, serializable data models for collision detection and spatial partitioning within the engine's geometry and physics subsystems."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/bounding-box.ts#BoundingBox",
+      "label": "Class",
+      "name": "BoundingBox",
+      "signature": "constructor(min_x: number, max_x: number, min_y: number, max_y: number, min_z: number, max_z: number)"
+    },
+    {
+      "id": "/core/bounding-box.ts#BoundingSphere",
+      "label": "Class",
+      "name": "BoundingSphere",
+      "signature": "constructor(x: number, y: number, z: number, radius: number)"
+    },
+    {
+      "id": "/core/bounding-box.ts#BoundingBox.width",
+      "label": "Method",
+      "name": "width",
+      "signature": "get width(): number"
+    },
+    {
+      "id": "/core/bounding-box.ts#BoundingBox.height",
+      "label": "Method",
+      "name": "height",
+      "signature": "get height(): number"
+    },
+    {
+      "id": "/core/bounding-box.ts#BoundingBox.depth",
+      "label": "Method",
+      "name": "depth",
+      "signature": "get depth(): number"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/bounding-box.ts",
+      "target": "/core/json-serializable.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

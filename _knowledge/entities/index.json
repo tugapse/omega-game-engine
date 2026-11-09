@@ -1,0 +1,46 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/entities/index.ts",
+    "doc_path": "/entities/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as the primary facade for the entire entity subsystem, consolidating exports from various core entity definitions. It centralizes access to fundamental building blocks such as lights, cameras, generic entities, and scenes. Architecturally, it promotes clean dependency management by providing a single, unified import point for the application's data model components."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/index.ts#module",
+      "label": "Module",
+      "name": "module",
+      "signature": "export *"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/index.ts",
+      "target": "/entities/lights.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/index.ts",
+      "target": "/entities/camera.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/index.ts",
+      "target": "/entities/entity.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/index.ts",
+      "target": "/entities/scene.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

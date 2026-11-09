@@ -1,0 +1,150 @@
+{
+  "component": {
+    "name": "Camera",
+    "source_path": "/entities/camera.ts",
+    "doc_path": "/entities/camera.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The Camera class manages the 3D rendering view by calculating the necessary view and projection matrices. It supports both PERSPECTIVE and ORTHOGRAPHIC projection modes, handling coordinate transformations between world space and 2D screen space. It acts as a core scene entity, providing methods for raycasting (screenToWorldRay) and state serialization/deserialization."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/camera.ts#CameraType",
+      "label": "Type",
+      "name": "CameraType",
+      "signature": "PERSPECTIVE | ORTHOGRAPHIC"
+    },
+    {
+      "id": "/entities/camera.ts#Camera",
+      "label": "Class",
+      "name": "Camera",
+      "signature": "constructor()"
+    },
+    {
+      "id": "/entities/camera.ts#mainCamera",
+      "label": "Static Property",
+      "name": "mainCamera",
+      "signature": "static get mainCamera(): Camera"
+    },
+    {
+      "id": "/entities/camera.ts#cameraType",
+      "label": "Property",
+      "name": "cameraType",
+      "signature": "public cameraType: CameraType"
+    },
+    {
+      "id": "/entities/camera.ts#orthoSize",
+      "label": "Property",
+      "name": "orthoSize",
+      "signature": "public orthoSize: number"
+    },
+    {
+      "id": "/entities/camera.ts#fieldOfView",
+      "label": "Property",
+      "name": "fieldOfView",
+      "signature": "public fieldOfView: number"
+    },
+    {
+      "id": "/entities/camera.ts#nearPlane",
+      "label": "Property",
+      "name": "nearPlane",
+      "signature": "public nearPlane: number"
+    },
+    {
+      "id": "/entities/camera.ts#farPlane",
+      "label": "Property",
+      "name": "farPlane",
+      "signature": "public farPlane: number"
+    },
+    {
+      "id": "/entities/camera.ts#aspectRatio",
+      "label": "Property",
+      "name": "aspectRatio",
+      "signature": "public aspectRatio: number"
+    },
+    {
+      "id": "/entities/camera.ts#projectionMatrix",
+      "label": "Getter",
+      "name": "projectionMatrix",
+      "signature": "get projectionMatrix(): mat4"
+    },
+    {
+      "id": "/entities/camera.ts#viewMatrix",
+      "label": "Getter",
+      "name": "viewMatrix",
+      "signature": "get viewMatrix(): mat4"
+    },
+    {
+      "id": "/entities/camera.ts#worldToScreenPosition",
+      "label": "Method",
+      "name": "worldToScreenPosition",
+      "signature": "worldToScreenPosition(worldPosition: vec3, viewportWidth: number, viewportHeight: number): vec2"
+    },
+    {
+      "id": "/entities/camera.ts#screenToWorldRay",
+      "label": "Method",
+      "name": "screenToWorldRay",
+      "signature": "screenToWorldRay(screenPosition: vec2, viewportWidth: number, viewportHeight: number): {origin: vec3, direction: vec3}"
+    },
+    {
+      "id": "/entities/camera.ts#screenToWorldPosition",
+      "label": "Method",
+      "name": "screenToWorldPosition",
+      "signature": "screenToWorldPosition(screenPosition: vec2, distance: number, viewportWidth: number, viewportHeight: number): vec3"
+    },
+    {
+      "id": "/entities/camera.ts#worldToClipPosition",
+      "label": "Method",
+      "name": "worldToClipPosition",
+      "signature": "worldToClipPosition(worldPosition: vec3): vec4"
+    },
+    {
+      "id": "/entities/camera.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/entities/camera.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/entities/camera.ts#instanciate",
+      "label": "Static Method",
+      "name": "instanciate",
+      "signature": "static instanciate(name?: string, transform?: Transform): Camera"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/camera.ts",
+      "target": "/entities/entity.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/entities/camera.ts",
+      "target": "/core/transform.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/entities/camera.ts",
+      "target": "/enums/entity-type.enum.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/entities/camera.ts",
+      "target": "/interfaces/json-serialized-data.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

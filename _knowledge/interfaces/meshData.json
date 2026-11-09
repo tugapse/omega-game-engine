@@ -1,0 +1,98 @@
+{
+  "component": {
+    "name": "IMeshData",
+    "source_path": "/interfaces/meshData.ts",
+    "doc_path": "/interfaces/meshData.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "IMeshData defines the canonical data structure for representing 3D geometric meshes within the application's rendering pipeline. It encapsulates core attributes such as vertex positions, normals, UV coordinates, and connectivity indices. The interface mandates methods for performing essential geometric calculations, including normal computation, tangent/bitangent derivation, and normal inversion, ensuring data consistency across rendering systems."
+  },
+  "graph_nodes": [
+    {
+      "id": "/interfaces/meshData.ts#IMeshData",
+      "label": "Interface",
+      "name": "IMeshData",
+      "signature": "extends JsonSerializable"
+    },
+    {
+      "id": "/interfaces/meshData.ts#vertices",
+      "label": "Variable",
+      "name": "vertices",
+      "signature": "vec3[]"
+    },
+    {
+      "id": "/interfaces/meshData.ts#normals",
+      "label": "Variable",
+      "name": "normals",
+      "signature": "vec3[]"
+    },
+    {
+      "id": "/interfaces/meshData.ts#uvs",
+      "label": "Variable",
+      "name": "uvs",
+      "signature": "vec2[]"
+    },
+    {
+      "id": "/interfaces/meshData.ts#indices",
+      "label": "Variable",
+      "name": "indices",
+      "signature": "number[]"
+    },
+    {
+      "id": "/interfaces/meshData.ts#tangents",
+      "label": "Variable",
+      "name": "tangents",
+      "signature": "vec3[] | undefined"
+    },
+    {
+      "id": "/interfaces/meshData.ts#bitangents",
+      "label": "Variable",
+      "name": "bitangents",
+      "signature": "vec3[] | undefined"
+    },
+    {
+      "id": "/interfaces/meshData.ts#uuid",
+      "label": "Variable",
+      "name": "uuid",
+      "signature": "string"
+    },
+    {
+      "id": "/interfaces/meshData.ts#calculateNormals",
+      "label": "Method",
+      "name": "calculateNormals",
+      "signature": "calculateNormals(): void"
+    },
+    {
+      "id": "/interfaces/meshData.ts#invertNormals",
+      "label": "Method",
+      "name": "invertNormals",
+      "signature": "invertNormals(): void"
+    },
+    {
+      "id": "/interfaces/meshData.ts#calculateTangentsAndBitangents",
+      "label": "Method",
+      "name": "calculateTangentsAndBitangents",
+      "signature": "calculateTangentsAndBitangents(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/interfaces/meshData.ts",
+      "target": "/core/json-serializable.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/interfaces/meshData.ts",
+      "target": "/gl-matrix",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

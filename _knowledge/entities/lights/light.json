@@ -1,0 +1,70 @@
+{
+  "component": {
+    "name": "Light",
+    "source_path": "/entities/lights/light.ts",
+    "doc_path": "/entities/lights/light.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The Light class serves as the foundational base model for all light sources within the rendering engine, inheriting from SceneEntity. It encapsulates core properties like color and intensity, providing a standardized structure for light entities. It implements a controlled factory pattern via the static 'instanciate' method for safe instantiation. This class ensures architectural consistency across specialized light subclasses."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/lights/light.ts#Light",
+      "label": "Class",
+      "name": "Light",
+      "signature": ""
+    },
+    {
+      "id": "/entities/lights/light.ts#entityType",
+      "label": "Variable",
+      "name": "entityType",
+      "signature": ""
+    },
+    {
+      "id": "/entities/lights/light.ts#color",
+      "label": "Variable",
+      "name": "color",
+      "signature": ""
+    },
+    {
+      "id": "/entities/lights/light.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(name: string)"
+    },
+    {
+      "id": "/entities/lights/light.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(name?: string, transform?: Transform): Light"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/lights/light.ts",
+      "target": "/entities/entity.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/entities/lights/light.ts",
+      "target": "/core/color.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/light.ts",
+      "target": "/core/transform.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/light.ts",
+      "target": "/enums/entity-type.enum.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

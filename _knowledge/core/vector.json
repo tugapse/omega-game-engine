@@ -1,0 +1,97 @@
+{
+  "component": {
+    "name": "Vector2",
+    "source_path": "/core/vector.ts",
+    "doc_path": "/core/vector.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines a hierarchy of mathematical vector classes (Vector2, Vector3, Vector4) built upon the gl-matrix library. Its primary role is to provide a strongly typed, object-oriented interface over raw vector data, ensuring safe manipulation of positional and directional data. It implements serialization and deserialization methods to seamlessly integrate with JSON persistence layers, making it a core data model element."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/vector.ts#Vector2",
+      "label": "Class",
+      "name": "Vector2",
+      "signature": "constructor(x: number = 0, y: number = 0)"
+    },
+    {
+      "id": "/core/vector.ts#Vector2.x",
+      "label": "Getter/Setter",
+      "name": "x",
+      "signature": "get x(): number"
+    },
+    {
+      "id": "/core/vector.ts#Vector2.y",
+      "label": "Getter/Setter",
+      "name": "y",
+      "signature": "get y(): number"
+    },
+    {
+      "id": "/core/vector.ts#Vector2.set",
+      "label": "Method",
+      "name": "set",
+      "signature": "set(x: number = 0, y: number = 0): void"
+    },
+    {
+      "id": "/core/vector.ts#Vector3",
+      "label": "Class",
+      "name": "Vector3",
+      "signature": "constructor(x: number = 0, y: number = 0, z: number = 0)"
+    },
+    {
+      "id": "/core/vector.ts#Vector3.z",
+      "label": "Getter/Setter",
+      "name": "z",
+      "signature": "get z(): number"
+    },
+    {
+      "id": "/core/vector.ts#Vector3.set",
+      "label": "Method",
+      "name": "set",
+      "signature": "set(x: number = 0, y: number = 0, z: number = 0): void"
+    },
+    {
+      "id": "/core/vector.ts#Vector4",
+      "label": "Class",
+      "name": "Vector4",
+      "signature": "constructor(x: number = 0, y: number = 0, z: number = 0, w: number = 0)"
+    },
+    {
+      "id": "/core/vector.ts#Vector4.w",
+      "label": "Getter/Setter",
+      "name": "w",
+      "signature": "get w(): number"
+    },
+    {
+      "id": "/core/vector.ts#Vector4.set",
+      "label": "Method",
+      "name": "set",
+      "signature": "set(x: number = 0, y: number = 0, z: number = 0, w: number = 0): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/vector.ts",
+      "target": "/core/vector.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/vector.ts",
+      "target": "/interfaces.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/vector.ts",
+      "target": "/json-serializable.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "component": {
+    "name": "MtlParser",
+    "source_path": "/parsers/mtl-parser.ts",
+    "doc_path": "/parsers/mtl-parser.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "MtlParser is a dedicated service responsible for ingesting and structuring raw Wavefront .mtl file content. It implements a state machine to iterate over lines, identifying material definitions (`newmtl`) and setting specific properties like color (`Kd`, `Ka`), numeric values (`Ns`, `d`), and texture maps (`map_Kd`). The primary output is a structured object, ParsedMtlData, containing all materials keyed by name, ensuring data is ready for rendering pipelines."
+  },
+  "graph_nodes": [
+    {
+      "id": "/parsers/mtl-parser.ts#MtlParser",
+      "label": "Class",
+      "name": "MtlParser",
+      "signature": "class MtlParser"
+    },
+    {
+      "id": "/parsers/mtl-parser.ts#parsedMaterials",
+      "label": "Variable",
+      "name": "parsedMaterials",
+      "signature": "private parsedMaterials: ParsedMtlData = {}"
+    },
+    {
+      "id": "/parsers/mtl-parser.ts#currentMaterial",
+      "label": "Variable",
+      "name": "currentMaterial",
+      "signature": "private currentMaterial: MtlMaterial | null = null"
+    },
+    {
+      "id": "/parsers/mtl-parser.ts#parse",
+      "label": "Method",
+      "name": "parse",
+      "signature": "public parse(mtlContent: string): ParsedMtlData"
+    },
+    {
+      "id": "/parsers/mtl-parser.ts#resetParser",
+      "label": "Method",
+      "name": "resetParser",
+      "signature": "private resetParser(): void"
+    },
+    {
+      "id": "/parsers/mtl-parser.ts#handleNewMaterial",
+      "label": "Method",
+      "name": "handleNewMaterial",
+      "signature": "private handleNewMaterial(name: string): void"
+    },
+    {
+      "id": "/parsers/mtl-parser.ts#setNumericProperty",
+      "label": "Method",
+      "name": "setNumericProperty",
+      "signature": "private setNumericProperty(propertyName: keyof MtlMaterial, parts: string[], invert: boolean = false): void"
+    },
+    {
+      "id": "/parsers/mtl-parser.ts#setColorProperty",
+      "label": "Method",
+      "name": "setColorProperty",
+      "signature": "private setColorProperty(propertyName: keyof MtlMaterial, parts: string[]): void"
+    },
+    {
+      "id": "/parsers/mtl-parser.ts#setTextureMapProperty",
+      "label": "Method",
+      "name": "setTextureMapProperty",
+      "signature": "private setTextureMapProperty(propertyName: keyof MtlMaterial, parts: string[]): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/parsers/mtl-parser.ts",
+      "target": "/parsers/interfaces.md",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

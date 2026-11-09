@@ -1,0 +1,25 @@
+{
+  "component": {
+    "name": "ICubemapSides",
+    "source_path": "/interfaces/cubemap.ts",
+    "doc_path": "/interfaces/cubemap.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the ICubemapSides interface, which serves as a strongly-typed contract for managing cubemap texture paths. It mandates the presence of six specific directional string references: right, left, up, bottom, front, and back. Its primary architectural role is to standardize data access for rendering and asset loading services across the engine. It functions purely as a data structure definition without implementing complex logic or side effects."
+  },
+  "graph_nodes": [
+    {
+      "id": "/interfaces/cubemap.ts#ICubemapSides",
+      "label": "Interface",
+      "name": "ICubemapSides",
+      "signature": "export interface ICubemapSides { right: string, left: string, up: string, bottom: string, front: string, back: string }"
+    }
+  ],
+  "graph_edges": [],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

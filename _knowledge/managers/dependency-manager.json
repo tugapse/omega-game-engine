@@ -1,0 +1,174 @@
+{
+  "component": {
+    "name": "DependencyManager",
+    "source_path": "/managers/dependency-manager.ts",
+    "doc_path": "/managers/dependency-manager.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The DependencyManager is a critical bootstrapping service responsible for centralizing the registration of all core engine components, including Entities, Materials, Primitives, and Shaders. It populates the ObjectInstanciator with necessary factory functions and metadata, enabling dynamic object instantiation from serialized scene data. Its primary function is bridging the gap between named data and live runtime objects, ensuring correct construction during deserialization."
+  },
+  "graph_nodes": [
+    {
+      "id": "/managers/dependency-manager.ts#DependencyManager",
+      "label": "Class",
+      "name": "DependencyManager",
+      "signature": "registerDependencies(): void"
+    },
+    {
+      "id": "/managers/dependency-manager.ts#registerDependencies",
+      "label": "Method",
+      "name": "registerDependencies",
+      "signature": "registerDependencies(): void"
+    },
+    {
+      "id": "/managers/dependency-manager.ts#ObjectInstanciator",
+      "label": "Class",
+      "name": "ObjectInstanciator",
+      "signature": "addDependency(name: string, factory: Function, metadata: object): void"
+    },
+    {
+      "id": "/managers/dependency-manager.ts#Shader",
+      "label": "Class",
+      "name": "Shader",
+      "signature": "preFetchFunctionsGlsl(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../behaviours/entity-behaviour.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../behaviours/mesh-renderer-behaviour.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../behaviours/renderer-behaviour.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../behaviours/camera-fly-behaviour.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../behaviours/renderer/skybox-renderer.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../entities/entity.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../entities/camera.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../entities/lights.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../core/transform.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../core/color.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../core/mesh.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../core/object-instanciator.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../primitives/cube-primitive.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../primitives/quad-primitive.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../primitives/sphere-primitive.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../primitives/skybox-primitive.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../primitives/triangle-primitive.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../shaders/shader.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../shaders/skybox-shader.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../shaders/unlit-shader.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../shaders/lit-shader.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../materials/color-material.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../materials/cubemap-material.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../materials/lit-material.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../materials/unlit-material.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/../materials/skybox-material.md",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

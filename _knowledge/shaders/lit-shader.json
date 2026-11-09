@@ -1,0 +1,114 @@
+{
+  "component": {
+    "name": "LitShader",
+    "source_path": "/shaders/lit-shader.ts",
+    "doc_path": "/shaders/lit-shader.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "LitShader is a specialized rendering component inheriting from Shader, responsible for implementing Physically-Based Rendering (PBR) lighting calculations. It manages the complex interaction between material properties (color, roughness, specular) and the rendering pipeline by loading data into WebGL uniforms. Its core functionality includes asynchronous texture loading via checkAndLoadTextures, ensuring rendering continuity even when resources are loading, and managing the lifecycle of associated textures."
+  },
+  "graph_nodes": [
+    {
+      "id": "/shaders/lit-shader.ts#LitShader",
+      "label": "Class",
+      "name": "LitShader",
+      "signature": "class LitShader extends Shader"
+    },
+    {
+      "id": "/shaders/lit-shader.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(gl: WebGL2RenderingContext, material: LitMaterial): LitShader"
+    },
+    {
+      "id": "/shaders/lit-shader.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(gl: WebGL2RenderingContext, material: LitMaterial)"
+    },
+    {
+      "id": "/shaders/lit-shader.ts#loadDataIntoShader",
+      "label": "Method",
+      "name": "loadDataIntoShader",
+      "signature": "override loadDataIntoShader(): void"
+    },
+    {
+      "id": "/shaders/lit-shader.ts#checkAndLoadTextures",
+      "label": "Method",
+      "name": "checkAndLoadTextures",
+      "signature": "protected async checkAndLoadTextures(): Promise<void>"
+    },
+    {
+      "id": "/shaders/lit-shader.ts#release",
+      "label": "Method",
+      "name": "release",
+      "signature": "override release(): void"
+    },
+    {
+      "id": "/shaders/lit-shader.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/shaders/lit-shader.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "override async fromJson(jsonObject: JsonSerializedData): Promise<void>"
+    },
+    {
+      "id": "/shaders/lit-shader.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "public override destroy(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/shaders/lit-shader.ts",
+      "target": "/core/engineCache.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/lit-shader.ts",
+      "target": "/entities/camera.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/lit-shader.ts",
+      "target": "/enums/shader-uniforms.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/lit-shader.ts",
+      "target": "/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/lit-shader.ts",
+      "target": "/materials/lit-material.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/lit-shader.ts",
+      "target": "/textures/texture.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/lit-shader.ts",
+      "target": "/shaders/shader.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/lit-shader.ts",
+      "target": "/shaders/shader-sources.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

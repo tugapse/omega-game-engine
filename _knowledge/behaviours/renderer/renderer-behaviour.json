@@ -1,0 +1,345 @@
+{
+  "component": {
+    "name": "RendererBehaviour",
+    "source_path": "/behaviours/renderer/renderer-behaviour.ts",
+    "doc_path": "/behaviours/renderer/renderer-behaviour.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "RendererBehaviour is the core engine component managing the entire rendering pipeline for an entity. It abstracts WebGL complexities, handling state setup (culling, depth, blending), shader management, and executing draw calls for meshes. It supports advanced features like render-to-texture via Framebuffer Objects and provides utility methods for drawing basic primitives like points and lines."
+  },
+  "graph_nodes": [
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#RendererBehaviour",
+      "label": "Class",
+      "name": "RendererBehaviour",
+      "signature": "class RendererBehaviour extends EntityBehaviour implements IRendererBehaviour"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(gl: WebGL2RenderingContext): RendererBehaviour"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#drawPrimitiveType",
+      "label": "Property",
+      "name": "drawPrimitiveType",
+      "signature": "public drawPrimitiveType: GLPrimitiveType"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#mesh",
+      "label": "Property",
+      "name": "mesh",
+      "signature": "public mesh!: Mesh"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#shader",
+      "label": "Property",
+      "name": "shader",
+      "signature": "public shader?: Shader"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#enableCullFace",
+      "label": "Property",
+      "name": "enableCullFace",
+      "signature": "public enableCullFace = true"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#enableDephTest",
+      "label": "Property",
+      "name": "enableDephTest",
+      "signature": "public enableDephTest = true"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#enableBlend",
+      "label": "Property",
+      "name": "enableBlend",
+      "signature": "public enableBlend = true"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#writeToDephBuffer",
+      "label": "Property",
+      "name": "writeToDephBuffer",
+      "signature": "public writeToDephBuffer = true"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#cullFace",
+      "label": "Property",
+      "name": "cullFace",
+      "signature": "public cullFace: CullFace"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#dephMode",
+      "label": "Property",
+      "name": "dephMode",
+      "signature": "public dephMode: DephFunction"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#faceWinding",
+      "label": "Property",
+      "name": "faceWinding",
+      "signature": "public faceWinding: FaceWinding"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#blendMode",
+      "label": "Property",
+      "name": "blendMode",
+      "signature": "public blendMode: BlendingMode"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#renderLayer",
+      "label": "Property",
+      "name": "renderLayer",
+      "signature": "public override renderLayer: RenderLayer"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#castShadows",
+      "label": "Property",
+      "name": "castShadows",
+      "signature": "public castShadows = true"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "override initialize(): boolean"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#setGlSettings",
+      "label": "Method",
+      "name": "setGlSettings",
+      "signature": "protected setGlSettings(): void"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#initializeShader",
+      "label": "Method",
+      "name": "initializeShader",
+      "signature": "protected initializeShader(): void"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#setCameraMatrices",
+      "label": "Method",
+      "name": "setCameraMatrices",
+      "signature": "protected setCameraMatrices(): void"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#setModelWorldMatrices",
+      "label": "Method",
+      "name": "setModelWorldMatrices",
+      "signature": "protected setModelWorldMatrices(): void"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#setShaderVariables",
+      "label": "Method",
+      "name": "setShaderVariables",
+      "signature": "protected setShaderVariables(): void"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#setRenderTarget",
+      "label": "Method",
+      "name": "setRenderTarget",
+      "signature": "public setRenderTarget(texture: WebGLTexture, width: number, height: number): void"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#clearRenderTarget",
+      "label": "Method",
+      "name": "clearRenderTarget",
+      "signature": "public clearRenderTarget(): void"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#startPass",
+      "label": "Method",
+      "name": "startPass",
+      "signature": "public startPass(texture: WebGLTexture, width: number, height: number, clearColor: [number, number, number, number] = [0, 0, 0, 0]): void"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#endPass",
+      "label": "Method",
+      "name": "endPass",
+      "signature": "public endPass(): void"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "public override fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#drawPoint",
+      "label": "Method",
+      "name": "drawPoint",
+      "signature": "public drawPoint(point: Vector3, pointSize: number = 10.0, shader: Shader = this.shader!): void"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#drawLine",
+      "label": "Method",
+      "name": "drawLine",
+      "signature": "public drawLine(start: Vector3, end: Vector3): void"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#draw",
+      "label": "Method",
+      "name": "draw",
+      "signature": "override draw(): void"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#update",
+      "label": "Method",
+      "name": "update",
+      "signature": "override update(elapsed: number): void"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#setGl",
+      "label": "Method",
+      "name": "setGl",
+      "signature": "public setGl(gl: WebGL2RenderingContext): void"
+    },
+    {
+      "id": "/behaviours/renderer/renderer-behaviour.ts#createLightMatrices",
+      "label": "Method",
+      "name": "createLightMatrices",
+      "signature": "public createLightMatrices(cameraTransform: Transform, light: Light, frustumSize: number = 60.0, near: number = 0.1, far: number = 200.0): {lightViewMatrix: mat4, lightProjectionMatrix: mat4, lightMvpMatrix: mat4}"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/behaviours/entity-behaviour.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/interfaces/renderer-behaviour.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/core/mesh.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/shaders/shader.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/core/canvas-viewport.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/core/transform.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/core/vector3.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/core/object-instanciator.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/entities/camera.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/entities/directional-light.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/entities/light.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/enums/entity-type.enum.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/enums/face-winding.enum.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/enums/render-layer.enum.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/enums/gl-primitive-type.enum.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/enums/gl/blend.enum.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/enums/gl/cull-face.enum.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/enums/gl/deph-function.enum.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/enums/shader-uniforms.enum.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/interfaces/blend-mode.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/interfaces/json-serialized-data.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/interfaces/renderer-behaviour.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/materials/color-material.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/shaders/shader.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/renderer-behaviour.ts",
+      "target": "/behaviours/entity-behaviour.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/shaders/index.ts",
+    "doc_path": "/shaders/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as a central barrel file for the shader system, providing a unified entry point for consuming various shader modules within the rendering pipeline. It aggregates and exports specific shader implementations, including unlit, lit, skybox, and general shader sources. Architecturally, it serves as a public interface layer, consolidating rendering logic from multiple specialized files into one accessible location."
+  },
+  "graph_nodes": [],
+  "graph_edges": [
+    {
+      "source": "/shaders/index.ts",
+      "target": "/shaders/shader.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/index.ts",
+      "target": "/shaders/unlit-shader.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/index.ts",
+      "target": "/shaders/lit-shader.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/index.ts",
+      "target": "/shaders/skybox-shader.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/index.ts",
+      "target": "/shaders/shader-sources.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

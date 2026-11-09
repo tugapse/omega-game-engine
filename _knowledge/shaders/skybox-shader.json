@@ -1,0 +1,126 @@
+{
+  "component": {
+    "name": "SkyboxShader",
+    "source_path": "/shaders/skybox-shader.ts",
+    "doc_path": "/shaders/skybox-shader.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "SkyboxShader is a specialized rendering component inheriting from Shader, responsible for managing procedural sky rendering pipelines. It encapsulates logic for generating dynamic atmospheric effects like sun, moon, clouds, and stars, while also supporting blending with a static cubemap texture. It exposes numerous public configuration properties to allow external systems to control visual parameters in real-time via its API. The core functionality involves loading data into shader uniforms using WebGL2 context interactions."
+  },
+  "graph_nodes": [
+    {
+      "id": "/shaders/skybox-shader.ts#SkyboxShader",
+      "label": "Class",
+      "name": "SkyboxShader",
+      "signature": "class SkyboxShader extends Shader"
+    },
+    {
+      "id": "/shaders/skybox-shader.ts#instanciate",
+      "label": "Static Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(gl: WebGL2RenderingContext, material: SkyboxMaterial): SkyboxShader"
+    },
+    {
+      "id": "/shaders/skybox-shader.ts#material",
+      "label": "Property",
+      "name": "material",
+      "signature": "public declare material: SkyboxMaterial"
+    },
+    {
+      "id": "/shaders/skybox-shader.ts#sun",
+      "label": "Property",
+      "name": "sun",
+      "signature": "public sun = { ... }"
+    },
+    {
+      "id": "/shaders/skybox-shader.ts#moon",
+      "label": "Property",
+      "name": "moon",
+      "signature": "public moon = { ... }"
+    },
+    {
+      "id": "/shaders/skybox-shader.ts#clouds",
+      "label": "Property",
+      "name": "clouds",
+      "signature": "public clouds = { ... }"
+    },
+    {
+      "id": "/shaders/skybox-shader.ts#stars",
+      "label": "Property",
+      "name": "stars",
+      "signature": "public stars = { ... }"
+    },
+    {
+      "id": "/shaders/skybox-shader.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "public override initialize(): Promise<boolean>"
+    },
+    {
+      "id": "/shaders/skybox-shader.ts#loadDataIntoShader",
+      "label": "Method",
+      "name": "loadDataIntoShader",
+      "signature": "public override async loadDataIntoShader(): Promise<void>"
+    },
+    {
+      "id": "/shaders/skybox-shader.ts#setTexture",
+      "label": "Method",
+      "name": "setTexture",
+      "signature": "public override setTexture(name: string, texture: CubemapTexture, textureIndex: number): void"
+    },
+    {
+      "id": "/shaders/skybox-shader.ts#release",
+      "label": "Method",
+      "name": "release",
+      "signature": "override release(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/shaders/skybox-shader.ts",
+      "target": "/shaders/shader.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/skybox-shader.ts",
+      "target": "/core/vector3.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/skybox-shader.ts",
+      "target": "/core/color.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/skybox-shader.ts",
+      "target": "/enums/shader-uniforms-enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/skybox-shader.ts",
+      "target": "/materials/cubemap-material.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/skybox-shader.ts",
+      "target": "/materials/skybox-material.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/skybox-shader.ts",
+      "target": "/textures/cubemap-texture.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/shaders/skybox-shader.ts",
+      "target": "/shaders/shader-sources.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

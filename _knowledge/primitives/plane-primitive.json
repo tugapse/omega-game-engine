@@ -1,0 +1,39 @@
+{
+  "component": {
+    "name": "PlanePrimitive",
+    "source_path": "/primitives/plane-primitive.ts",
+    "doc_path": "/primitives/plane-primitive.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "PlanePrimitive is a class inheriting from MeshData responsible for procedurally generating a flat, grid-based mesh. It constructs vertices, normals (fixed to (0, 1, 0)), and UV coordinates based on a specified resolution. The geometry is centered at the origin and oriented parallel to the XZ-plane, making it ideal for ground or large surface representations in the 3D scene."
+  },
+  "graph_nodes": [
+    {
+      "id": "/primitives/plane-primitive.ts#PlanePrimitive",
+      "label": "Class",
+      "name": "PlanePrimitive",
+      "signature": "constructor(resolution: number = 1)"
+    },
+    {
+      "id": "/primitives/plane-primitive.ts#MeshData",
+      "label": "Class",
+      "name": "MeshData",
+      "signature": "constructor(...args: any[])"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/primitives/plane-primitive.ts",
+      "target": "/core/mesh.ts",
+      "relation": "extends"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

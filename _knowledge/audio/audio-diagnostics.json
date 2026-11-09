@@ -1,0 +1,102 @@
+{
+  "component": {
+    "name": "AudioEngineDiagnostics",
+    "source_path": "/audio/audio-diagnostics.ts",
+    "doc_path": "/audio/audio-diagnostics.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component provides a comprehensive diagnostic suite for the Omega audio engine, designed to verify the integrity of the entire audio stack. It orchestrates tests covering core initialization, memory caching via AudioCache, voice synthesis routing, and high-precision timing using SequencerClock. The primary method, runDiagnosticSuite, executes these checks sequentially, logging results to the console for developer debugging."
+  },
+  "graph_nodes": [
+    {
+      "id": "/audio/audio-diagnostics.ts#AudioEngineDiagnostics",
+      "label": "Class",
+      "name": "AudioEngineDiagnostics",
+      "signature": "constructor(engine: AudioEngine, cache: AudioCache, clock: SequencerClock, factory: VoiceFactory)"
+    },
+    {
+      "id": "/audio/audio-diagnostics.ts#runDiagnosticSuite",
+      "label": "Method",
+      "name": "runDiagnosticSuite",
+      "signature": "async runDiagnosticSuite(): Promise<void>"
+    },
+    {
+      "id": "/audio/audio-diagnostics.ts#testCoreInitialization",
+      "label": "Method",
+      "name": "testCoreInitialization",
+      "signature": "private async testCoreInitialization(): Promise<void>"
+    },
+    {
+      "id": "/audio/audio-diagnostics.ts#testProceduralCacheRegistration",
+      "label": "Method",
+      "name": "testProceduralCacheRegistration",
+      "signature": "private testProceduralCacheRegistration(): void"
+    },
+    {
+      "id": "/audio/audio-diagnostics.ts#testSynthVoiceTriggers",
+      "label": "Method",
+      "name": "testSynthVoiceTriggers",
+      "signature": "private testSynthVoiceTriggers(): void"
+    },
+    {
+      "id": "/audio/audio-diagnostics.ts#testSamplerVoiceTriggers",
+      "label": "Method",
+      "name": "testSamplerVoiceTriggers",
+      "signature": "private testSamplerVoiceTriggers(): void"
+    },
+    {
+      "id": "/audio/audio-diagnostics.ts#testSequencerClockAccuracy",
+      "label": "Method",
+      "name": "testSequencerClockAccuracy",
+      "signature": "private testSequencerClockAccuracy(): Promise<void>"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/audio/audio-diagnostics.ts",
+      "target": "/audio/audio-cache.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/audio/audio-diagnostics.ts",
+      "target": "/audio/audio-engine.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/audio/audio-diagnostics.ts",
+      "target": "/audio/sequencer-clock.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/audio/audio-diagnostics.ts",
+      "target": "/audio/voice-factory.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/audio/audio-diagnostics.ts",
+      "target": "/audio/audio-engine.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/audio/audio-diagnostics.ts",
+      "target": "/audio/audio-cache.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/audio/audio-diagnostics.ts",
+      "target": "/audio/sequencer-clock.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/audio/audio-diagnostics.ts",
+      "target": "/audio/voice-factory.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

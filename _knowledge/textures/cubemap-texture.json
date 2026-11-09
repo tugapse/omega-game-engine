@@ -1,0 +1,102 @@
+{
+  "component": {
+    "name": "CubemapTexture",
+    "source_path": "/textures/cubemap-texture.ts",
+    "doc_path": "/textures/cubemap-texture.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "CubemapTexture manages the lifecycle of a WebGL cubemap, abstracting the loading of six individual face images into a single GPU texture. It inherits from Texture and handles asynchronous loading via promises, supporting both external URI loading and immediate generation of a white fallback cubemap. The class integrates serialization methods to persist its state, including URIs and the white cubemap flag, making it a specialized resource manager for rendering pipelines."
+  },
+  "graph_nodes": [
+    {
+      "id": "/textures/cubemap-texture.ts#CubemapTexture",
+      "label": "Class",
+      "name": "CubemapTexture",
+      "signature": "constructor(protected override gl?: WebGL2RenderingContext, public textureUris?: string[])"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#CubemapTexture.createWhiteCubemap",
+      "label": "Method",
+      "name": "createWhiteCubemap",
+      "signature": "static createWhiteCubemap(gl: WebGL2RenderingContext): CubemapTexture"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#CubemapTexture.generateWhiteCubemap",
+      "label": "Method",
+      "name": "generateWhiteCubemap",
+      "signature": "private generateWhiteCubemap(gl: WebGL2RenderingContext): void"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#CubemapTexture.load",
+      "label": "Method",
+      "name": "load",
+      "signature": "public override async load(): Promise<void>"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#CubemapTexture.allImagesFetchedAndLoaded",
+      "label": "Method",
+      "name": "allImagesFetchedAndLoaded",
+      "signature": "protected allImagesFetchedAndLoaded(): boolean"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#CubemapTexture.allImagesFetched",
+      "label": "Method",
+      "name": "allImagesFetched",
+      "signature": "protected allImagesFetched(): boolean"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#CubemapTexture.setLoadedImage",
+      "label": "Method",
+      "name": "setLoadedImage",
+      "signature": "public setLoadedImage(imageIndex: number, wasLoaded: boolean): void"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#CubemapTexture.bind",
+      "label": "Method",
+      "name": "bind",
+      "signature": "override bind(): void"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#CubemapTexture.createGLTexture",
+      "label": "Method",
+      "name": "createGLTexture",
+      "signature": "protected override createGLTexture(gl: WebGL2RenderingContext): void"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#CubemapTexture.setTextureUris",
+      "label": "Method",
+      "name": "setTextureUris",
+      "signature": "public setTextureUris(uris: string[]): void"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#CubemapTexture.toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#CubemapTexture.fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "override fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/textures/cubemap-texture.ts",
+      "target": "/textures/texture.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/textures/cubemap-texture.ts",
+      "target": "/interfaces/json-serialized-data.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

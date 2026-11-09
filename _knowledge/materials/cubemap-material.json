@@ -1,0 +1,70 @@
+{
+  "component": {
+    "name": "CubemapMaterial",
+    "source_path": "/materials/cubemap-material.ts",
+    "doc_path": "/materials/cubemap-material.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "CubemapMaterial extends ColorMaterial to specifically handle materials utilizing cube map textures for rendering environments or skyboxes. Its core responsibility is managing the lifecycle of the CubemapTexture, loading it asynchronously via EngineCache using six provided URIs during deserialization. It provides standard serialization/deserialization methods to persist its state within the engine's data structures."
+  },
+  "graph_nodes": [
+    {
+      "id": "/materials/cubemap-material.ts#CubemapMaterial",
+      "label": "Class",
+      "name": "CubemapMaterial",
+      "signature": "class CubemapMaterial extends ColorMaterial"
+    },
+    {
+      "id": "/materials/cubemap-material.ts#mainTex",
+      "label": "Variable",
+      "name": "mainTex",
+      "signature": "public mainTex!: CubemapTexture;"
+    },
+    {
+      "id": "/materials/cubemap-material.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "override async fromJson(jsonObject: JsonSerializedData): Promise<void>"
+    },
+    {
+      "id": "/materials/cubemap-material.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/materials/cubemap-material.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(): CubemapMaterial"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/materials/cubemap-material.ts",
+      "target": "/materials/color-material.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/materials/cubemap-material.ts",
+      "target": "/core.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/cubemap-material.ts",
+      "target": "/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/cubemap-material.ts",
+      "target": "/textures/cubemap-texture.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

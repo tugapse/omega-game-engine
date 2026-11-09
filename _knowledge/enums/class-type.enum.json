@@ -1,0 +1,85 @@
+{
+  "component": {
+    "name": "class-type",
+    "source_path": "/enums/class-type.enum.ts",
+    "doc_path": "/enums/class-type.enum.json",
+    "type": "enum"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the strongly typed enumeration, ClassType, which serves as the canonical vocabulary for classifying core architectural elements within the engine. It provides fixed, unambiguous identifiers for types such as Entity, Material, Shader, and Scene. This enum is fundamental to the engine's serialization, reflection, and runtime type-checking systems across various modules."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/class-type.enum.ts#ClassType",
+      "label": "Type",
+      "name": "ClassType",
+      "signature": "export enum ClassType { ... }"
+    },
+    {
+      "id": "/enums/class-type.enum.ts#EntityBehaviour",
+      "label": "Type",
+      "name": "EntityBehaviour",
+      "signature": "EntityBehaviour = \"EntityBehaviour\""
+    },
+    {
+      "id": "/enums/class-type.enum.ts#RenderBehaviour",
+      "label": "Type",
+      "name": "RenderBehaviour",
+      "signature": "RenderBehaviour = \"RenderBehaviour\""
+    },
+    {
+      "id": "/enums/class-type.enum.ts#RenderPipeline",
+      "label": "Type",
+      "name": "RenderPipeline",
+      "signature": "RenderPipeline = \"RenderPipeline\""
+    },
+    {
+      "id": "/enums/class-type.enum.ts#Material",
+      "label": "Type",
+      "name": "Material",
+      "signature": "Material = \"Material\""
+    },
+    {
+      "id": "/enums/class-type.enum.ts#Shader",
+      "label": "Type",
+      "name": "Shader",
+      "signature": "Shader = \"Shader\""
+    },
+    {
+      "id": "/enums/class-type.enum.ts#Light",
+      "label": "Type",
+      "name": "Light",
+      "signature": "Light = \"Light\""
+    },
+    {
+      "id": "/enums/class-type.enum.ts#Entity",
+      "label": "Type",
+      "name": "Entity",
+      "signature": "Entity = \"Entity\""
+    },
+    {
+      "id": "/enums/class-type.enum.ts#Scene",
+      "label": "Type",
+      "name": "Scene",
+      "signature": "Scene = \"Scene\""
+    },
+    {
+      "id": "/enums/class-type.enum.ts#Transform",
+      "label": "Type",
+      "name": "Transform",
+      "signature": "Transform = \"Transform\""
+    },
+    {
+      "id": "/enums/class-type.enum.ts#Mesh",
+      "label": "Type",
+      "name": "Mesh",
+      "signature": "Mesh = \"Mesh\""
+    }
+  ],
+  "graph_edges": [],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

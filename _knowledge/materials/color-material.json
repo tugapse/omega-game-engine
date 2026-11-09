@@ -1,0 +1,65 @@
+{
+  "component": {
+    "name": "ColorMaterial",
+    "source_path": "/materials/color-material.ts",
+    "doc_path": "/materials/color-material.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "ColorMaterial is a concrete class implementing JsonSerializable, designed to encapsulate a material defined solely by a Color property. Its primary role is managing the state persistence of this color, allowing it to be reliably serialized into a JsonSerializedData object and reconstructed from it. It acts as a data model component within the material system, integrating Color and JsonSerializedData contracts."
+  },
+  "graph_nodes": [
+    {
+      "id": "/materials/color-material.ts#ColorMaterial",
+      "label": "Class",
+      "name": "ColorMaterial",
+      "signature": ""
+    },
+    {
+      "id": "/materials/color-material.ts#instanciate",
+      "label": "Function",
+      "name": "instanciate",
+      "signature": "public static instanciate(): ColorMaterial"
+    },
+    {
+      "id": "/materials/color-material.ts#color",
+      "label": "Variable",
+      "name": "color",
+      "signature": ""
+    },
+    {
+      "id": "/materials/color-material.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "public override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/materials/color-material.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "override fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/materials/color-material.ts",
+      "target": "/core/color.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/color-material.ts",
+      "target": "/core/json-serializable.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/color-material.ts",
+      "target": "/interfaces/json-serialized-data.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

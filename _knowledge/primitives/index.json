@@ -1,0 +1,86 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/primitives/index.ts",
+    "doc_path": "/primitives/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as a public facade for the entire geometric primitive subsystem, consolidating exports from various shape definitions. Its primary role is to provide a unified interface, allowing consumers to easily access fundamental shapes like cubes, spheres, and triangles without needing specific submodule paths. Architecturally, it serves as a barrel file, centralizing access to all core primitive types within the engine."
+  },
+  "graph_nodes": [
+    {
+      "id": "/primitives/index.ts#export",
+      "label": "Module",
+      "name": "export",
+      "signature": "export * from './cube-primitive'"
+    },
+    {
+      "id": "/primitives/index.ts#export",
+      "label": "Module",
+      "name": "export",
+      "signature": "export * from './quad-primitive'"
+    },
+    {
+      "id": "/primitives/index.ts#export",
+      "label": "Module",
+      "name": "export",
+      "signature": "export * from './skybox-primitive'"
+    },
+    {
+      "id": "/primitives/index.ts#export",
+      "label": "Module",
+      "name": "export",
+      "signature": "export * from './sphere-primitive'"
+    },
+    {
+      "id": "/primitives/index.ts#export",
+      "label": "Module",
+      "name": "export",
+      "signature": "export * from './triangle-primitive'"
+    },
+    {
+      "id": "/primitives/index.ts#export",
+      "label": "Module",
+      "name": "export",
+      "signature": "export * from './plane-primitive'"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/primitives/index.ts",
+      "target": "/primitives/cube-primitive.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/primitives/index.ts",
+      "target": "/primitives/quad-primitive.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/primitives/index.ts",
+      "target": "/primitives/skybox-primitive.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/primitives/index.ts",
+      "target": "/primitives/sphere-primitive.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/primitives/index.ts",
+      "target": "/primitives/triangle-primitive.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/primitives/index.ts",
+      "target": "/primitives/plane-primitive.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

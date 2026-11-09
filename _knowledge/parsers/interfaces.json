@@ -1,0 +1,51 @@
+{
+  "component": {
+    "name": "interfaces",
+    "source_path": "/parsers/interfaces.ts",
+    "doc_path": "/parsers/interfaces.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the canonical data structures (interfaces) for geometry and material data parsed from 3D file formats like OBJ and MTL. It acts as the core data model layer, dictating the shape of data passed between file parsing services and rendering pipelines. It provides specific contracts for consolidated mesh data (ParsedObjData), individual faces (ObjFace), and material definitions (MtlMaterial). The interfaces ensure type safety across the application boundary for graphics API consumption."
+  },
+  "graph_nodes": [
+    {
+      "id": "/parsers/interfaces.ts#ParsedObjData",
+      "label": "Interface",
+      "name": "ParsedObjData",
+      "signature": "interface ParsedObjData { vertices: number[]; normals: number[]; uvs: number[]; indices: number[]; }"
+    },
+    {
+      "id": "/parsers/interfaces.ts#ObjFace",
+      "label": "Interface",
+      "name": "ObjFace",
+      "signature": "interface ObjFace { positions: number[]; uvs: number[]; normals: number[]; }"
+    },
+    {
+      "id": "/parsers/interfaces.ts#MtlMaterial",
+      "label": "Interface",
+      "name": "MtlMaterial",
+      "signature": "interface MtlMaterial { name: string; Ns?: number; Ka?: vec4; Kd?: vec4; Ks?: vec4; Ke?: vec4; Ni?: number; d?: number; illum?: number; map_Kd?: string; map_Ks?: string; map_Bump?: string; }"
+    },
+    {
+      "id": "/parsers/interfaces.ts#ParsedMtlData",
+      "label": "Interface",
+      "name": "ParsedMtlData",
+      "signature": "interface ParsedMtlData { [materialName: string]: MtlMaterial; }"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/parsers/interfaces.ts",
+      "target": "/gl-matrix",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

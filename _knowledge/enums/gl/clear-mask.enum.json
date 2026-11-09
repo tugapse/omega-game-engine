@@ -1,0 +1,57 @@
+{
+  "component": {
+    "name": "ClearMask",
+    "source_path": "/enums/gl/clear-mask.enum.ts",
+    "doc_path": "/enums/gl/clear-mask.enum.json",
+    "type": "utility"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the ClearMask enum, which encapsulates bit flags essential for managing rendering buffer states in WebGL. It provides named constants for clearing the color, depth, and stencil buffers. The enum facilitates precise control over rendering pipeline initialization by allowing developers to combine buffer clear operations using bitwise OR logic."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/gl/clear-mask.enum.ts#ClearMask",
+      "label": "Type",
+      "name": "ClearMask",
+      "signature": "enum"
+    },
+    {
+      "id": "/enums/gl/clear-mask.enum.ts#Color",
+      "label": "Variable",
+      "name": "Color",
+      "signature": "WebGL2RenderingContext.COLOR_BUFFER_BIT"
+    },
+    {
+      "id": "/enums/gl/clear-mask.enum.ts#Depth",
+      "label": "Variable",
+      "name": "Depth",
+      "signature": "WebGL2RenderingContext.DEPTH_BUFFER_BIT"
+    },
+    {
+      "id": "/enums/gl/clear-mask.enum.ts#Stencil",
+      "label": "Variable",
+      "name": "Stencil",
+      "signature": "WebGL2RenderingContext.STENCIL_BUFFER_BIT"
+    },
+    {
+      "id": "/enums/gl/clear-mask.enum.ts#ColorAndDepth",
+      "label": "Variable",
+      "name": "ColorAndDepth",
+      "signature": "WebGL2RenderingContext.COLOR_BUFFER_BIT | WebGL2RenderingContext.DEPTH_BUFFER_BIT"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/enums/gl/clear-mask.enum.ts",
+      "target": "/enums/gl/clear-mask.enum.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "WebGL2RenderingContext"
+    ],
+    "has_side_effects": false
+  }
+}

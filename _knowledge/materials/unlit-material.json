@@ -1,0 +1,90 @@
+{
+  "component": {
+    "name": "UnlitMaterial",
+    "source_path": "/materials/unlit-material.ts",
+    "doc_path": "/materials/unlit-material.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "UnlitMaterial is a specialized class inheriting from ColorMaterial, designed to render surfaces without complex lighting calculations. It manages visual representation by combining a base color with an optional main texture, controlled via uvScale and uvOffset properties. Its core functionality includes serialization to JSON and asynchronous deserialization, which fetches textures from EngineCache. The component also provides a resource cleanup method, destroy(), to release texture resources."
+  },
+  "graph_nodes": [
+    {
+      "id": "/materials/unlit-material.ts#UnlitMaterial",
+      "label": "Class",
+      "name": "UnlitMaterial",
+      "signature": "class UnlitMaterial extends ColorMaterial"
+    },
+    {
+      "id": "/materials/unlit-material.ts#uvScale",
+      "label": "Variable",
+      "name": "uvScale",
+      "signature": "public uvScale: Vector2 = new Vector2(1, 1)"
+    },
+    {
+      "id": "/materials/unlit-material.ts#uvOffset",
+      "label": "Variable",
+      "name": "uvOffset",
+      "signature": "public uvOffset: Vector2 = new Vector2(0,0)"
+    },
+    {
+      "id": "/materials/unlit-material.ts#mainTex",
+      "label": "Variable",
+      "name": "mainTex",
+      "signature": "public mainTex!: Texture"
+    },
+    {
+      "id": "/materials/unlit-material.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/materials/unlit-material.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "override async fromJson(jsonObject: JsonSerializedData): Promise<void>"
+    },
+    {
+      "id": "/materials/unlit-material.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(): UnlitMaterial"
+    },
+    {
+      "id": "/materials/unlit-material.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "public destroy(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/materials/unlit-material.ts",
+      "target": "/core.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/unlit-material.ts",
+      "target": "/interfaces/json-serialized-data.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/unlit-material.ts",
+      "target": "/textures/texture.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/unlit-material.ts",
+      "target": "/color-material.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

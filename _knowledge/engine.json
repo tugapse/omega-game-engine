@@ -1,0 +1,89 @@
+{
+  "component": {
+    "name": "Engine",
+    "source_path": "/engine.ts",
+    "doc_path": "/engine.json",
+    "type": "controller"
+  },
+  "vector_memory": {
+    "semantic_summary": "The Engine class serves as the central controller orchestrating the entire application lifecycle. It manages the initialization sequence, dependency resolution via DependencyManager, and the core game loop execution. It maintains state regarding focus and manages the lifecycle of the currently active Scene, delegating update and render calls to it. This component acts as the primary service layer for the application."
+  },
+  "graph_nodes": [
+    {
+      "id": "/engine.ts#Engine",
+      "label": "Class",
+      "name": "Engine",
+      "signature": "constructor()"
+    },
+    {
+      "id": "/engine.ts#currentScene",
+      "label": "Getter",
+      "name": "currentScene",
+      "signature": "get currentScene(): Scene"
+    },
+    {
+      "id": "/engine.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "initialize(canvas: HTMLCanvasElement): void"
+    },
+    {
+      "id": "/engine.ts#registerDependencies",
+      "label": "Method",
+      "name": "registerDependencies",
+      "signature": "registerDependencies(): void"
+    },
+    {
+      "id": "/engine.ts#loadScene",
+      "label": "Method",
+      "name": "loadScene",
+      "signature": "loadScene(scene: Scene): void"
+    },
+    {
+      "id": "/engine.ts#update",
+      "label": "Method",
+      "name": "update",
+      "signature": "update(deltaTime: number): void"
+    },
+    {
+      "id": "/engine.ts#render",
+      "label": "Method",
+      "name": "render",
+      "signature": "render(): void"
+    },
+    {
+      "id": "/engine.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "destroy(): void"
+    },
+    {
+      "id": "/engine.ts#handleFocusChange",
+      "label": "Method",
+      "name": "handleFocusChange",
+      "signature": "handleFocusChange(isFocused: boolean): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/engine.ts",
+      "target": "/src/entities/scene.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/engine.ts",
+      "target": "/src/managers/dependency-manager.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/engine.ts",
+      "target": "/src/managers/engine-event-manager.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

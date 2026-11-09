@@ -1,0 +1,55 @@
+{
+  "component": {
+    "name": "RenderLayer",
+    "source_path": "/enums/render-layer.enum.ts",
+    "doc_path": "/enums/render-layer.enum.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the RenderLayer enum, which establishes a strict, ordered hierarchy for the application's rendering pipeline. It provides standardized, immutable constants to categorize drawing operations, ensuring correct visual sequencing. The enum dictates the draw call order, ranging from PRE_SCENE to SKYBOX, and is fundamental to the core rendering loop logic."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/render-layer.enum.ts#RenderLayer",
+      "label": "Type",
+      "name": "RenderLayer",
+      "signature": "enum RenderLayer"
+    },
+    {
+      "id": "/enums/render-layer.enum.ts#PRE_SCENE",
+      "label": "Type",
+      "name": "PRE_SCENE",
+      "signature": "1"
+    },
+    {
+      "id": "/enums/render-layer.enum.ts#OPAQUE",
+      "label": "Type",
+      "name": "OPAQUE",
+      "signature": "2"
+    },
+    {
+      "id": "/enums/render-layer.enum.ts#TRANSPARENT",
+      "label": "Type",
+      "name": "TRANSPARENT",
+      "signature": "3"
+    },
+    {
+      "id": "/enums/render-layer.enum.ts#POST_SCENE",
+      "label": "Type",
+      "name": "POST_SCENE",
+      "signature": "4"
+    },
+    {
+      "id": "/enums/render-layer.enum.ts#SKYBOX",
+      "label": "Type",
+      "name": "SKYBOX",
+      "signature": "5"
+    }
+  ],
+  "graph_edges": [],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "component": {
+    "name": "DephFunction",
+    "source_path": "/enums/gl/deph-function.enum.ts",
+    "doc_path": "/enums/gl/deph-function.enum.json",
+    "type": "utility"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the DephFunction enum, which serves as a strongly typed abstraction layer for depth testing modes in WebGL rendering. It maps symbolic constants (like Less, Greater) to the underlying integer constants provided by WebGL2RenderingContext. Its primary role is to standardize depth comparison logic across the rendering pipeline, enhancing code readability and maintainability by insulating consumers from raw WebGL API values."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/gl/deph-function.enum.ts#DephFunction",
+      "label": "Enum",
+      "name": "DephFunction",
+      "signature": "enum DephFunction"
+    },
+    {
+      "id": "/enums/gl/deph-function.enum.ts#Less",
+      "label": "Enum Member",
+      "name": "Less",
+      "signature": "Less = WebGL2RenderingContext.LESS"
+    },
+    {
+      "id": "/enums/gl/deph-function.enum.ts#LessOrEqual",
+      "label": "Enum Member",
+      "name": "LessOrEqual",
+      "signature": "LessOrEqual = WebGL2RenderingContext.LEQUAL"
+    },
+    {
+      "id": "/enums/gl/deph-function.enum.ts#Greater",
+      "label": "Enum Member",
+      "name": "Greater",
+      "signature": "Greater = WebGL2RenderingContext.GREATER"
+    },
+    {
+      "id": "/enums/gl/deph-function.enum.ts#GreaterOrEqual",
+      "label": "Enum Member",
+      "name": "GreaterOrEqual",
+      "signature": "GreaterOrEqual = WebGL2RenderingContext.GEQUAL"
+    },
+    {
+      "id": "/enums/gl/deph-function.enum.ts#Equal",
+      "label": "Enum Member",
+      "name": "Equal",
+      "signature": "Equal = WebGL2RenderingContext.EQUAL"
+    },
+    {
+      "id": "/enums/gl/deph-function.enum.ts#Always",
+      "label": "Enum Member",
+      "name": "Always",
+      "signature": "Always = WebGL2RenderingContext.ALWAYS"
+    },
+    {
+      "id": "/enums/gl/deph-function.enum.ts#Never",
+      "label": "Enum Member",
+      "name": "Never",
+      "signature": "Never = WebGL2RenderingContext.NEVER"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/enums/gl/deph-function.enum.ts",
+      "target": "/enums/gl/deph-function.enum.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "WebGL2RenderingContext"
+    ],
+    "has_side_effects": false
+  }
+}

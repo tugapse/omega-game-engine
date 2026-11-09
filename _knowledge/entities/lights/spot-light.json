@@ -1,0 +1,93 @@
+{
+  "component": {
+    "name": "SpotLight",
+    "source_path": "/entities/lights/spot-light.ts",
+    "doc_path": "/entities/lights/spot-light.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "SpotLight is a concrete implementation of a light source that emits light in a defined conical shape, inheriting from the base Light class. It encapsulates specific properties like coneAngles and attenuation, managing its state through serialization methods. Its primary role is to provide directional lighting capabilities within the rendering system, deriving its direction from the entity's transform forward vector."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/lights/spot-light.ts#SpotLight",
+      "label": "Class",
+      "name": "SpotLight",
+      "signature": "class SpotLight extends Light"
+    },
+    {
+      "id": "/entities/lights/spot-light.ts#toLightDirection",
+      "label": "Getter",
+      "name": "toLightDirection",
+      "signature": "get toLightDirection(): vec3"
+    },
+    {
+      "id": "/entities/lights/spot-light.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(name: string)"
+    },
+    {
+      "id": "/entities/lights/spot-light.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/entities/lights/spot-light.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/entities/lights/spot-light.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static instanciate(name?: string, transform?: Transform): SpotLight"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/lights/spot-light.ts",
+      "target": "/entities/lights/light.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/spot-light.ts",
+      "target": "/core/color.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/spot-light.ts",
+      "target": "/core/transform.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/spot-light.ts",
+      "target": "/enums/entity-type.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/spot-light.ts",
+      "target": "/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/spot-light.ts",
+      "target": "/entities/lights/light-attenuation.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/spot-light.ts",
+      "target": "/entities/lights/light-cone.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

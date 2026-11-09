@@ -1,0 +1,25 @@
+{
+  "component": {
+    "name": "CubeMapSide",
+    "source_path": "/enums/cubemap-side.enum.ts",
+    "doc_path": "/enums/cubemap-side.enum.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the CubeMapSide enumeration, which serves as a strongly typed reference for the six faces of a cube map texture. It maps symbolic names (RIGHT, LEFT, TOP, BOTTOM, FRONT, BACK) to specific integer indices (0 through 5) required by WebGL. Its primary role is to ensure consistent and readable referencing when managing cube map textures within the rendering pipeline."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/cubemap-side.enum.ts#CubeMapSide",
+      "label": "Type",
+      "name": "CubeMapSide",
+      "signature": "enum"
+    }
+  ],
+  "graph_edges": [],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

@@ -1,0 +1,883 @@
+{
+  "component": {
+    "name": "Colors",
+    "source_path": "/core/colors.ts",
+    "doc_path": "/core/colors.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component, the Colors class, acts as a static registry facade for predefined color constants within the application. It provides type-safe, immediate access to hundreds of named colors (e.g., 'red', 'darkSlateBlue') by returning pre-instantiated Color objects. Its primary architectural role is to centralize color definitions, ensuring consistency across the entire codebase by acting as a canonical lookup table for RGB/RGBA values."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/colors.ts#Colors",
+      "label": "Class",
+      "name": "Colors",
+      "signature": "abstract class Colors"
+    },
+    {
+      "id": "/core/colors.ts#white",
+      "label": "Getter",
+      "name": "white",
+      "signature": "public static get white(): Color"
+    },
+    {
+      "id": "/core/colors.ts#black",
+      "label": "Getter",
+      "name": "black",
+      "signature": "public static get black(): Color"
+    },
+    {
+      "id": "/core/colors.ts#red",
+      "label": "Getter",
+      "name": "red",
+      "signature": "public static get red(): Color"
+    },
+    {
+      "id": "/core/colors.ts#green",
+      "label": "Getter",
+      "name": "green",
+      "signature": "public static get green(): Color"
+    },
+    {
+      "id": "/core/colors.ts#blue",
+      "label": "Getter",
+      "name": "blue",
+      "signature": "public static get blue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#yellow",
+      "label": "Getter",
+      "name": "yellow",
+      "signature": "public static get yellow(): Color"
+    },
+    {
+      "id": "/core/colors.ts#cyan",
+      "label": "Getter",
+      "name": "cyan",
+      "signature": "public static get cyan(): Color"
+    },
+    {
+      "id": "/core/colors.ts#magenta",
+      "label": "Getter",
+      "name": "magenta",
+      "signature": "public static get magenta(): Color"
+    },
+    {
+      "id": "/core/colors.ts#gray",
+      "label": "Getter",
+      "name": "gray",
+      "signature": "public static get gray(): Color"
+    },
+    {
+      "id": "/core/colors.ts#grey",
+      "label": "Getter",
+      "name": "grey",
+      "signature": "public static get grey(): Color"
+    },
+    {
+      "id": "/core/colors.ts#clear",
+      "label": "Getter",
+      "name": "clear",
+      "signature": "public static get clear(): Color"
+    },
+    {
+      "id": "/core/colors.ts#transparent",
+      "label": "Getter",
+      "name": "transparent",
+      "signature": "public static get transparent(): Color"
+    },
+    {
+      "id": "/core/colors.ts#cornflowerBlue",
+      "label": "Getter",
+      "name": "cornflowerBlue",
+      "signature": "public static get cornflowerBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#aliceBlue",
+      "label": "Getter",
+      "name": "aliceBlue",
+      "signature": "public static get aliceBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#antiqueWhite",
+      "label": "Getter",
+      "name": "antiqueWhite",
+      "signature": "public static get antiqueWhite(): Color"
+    },
+    {
+      "id": "/core/colors.ts#aqua",
+      "label": "Getter",
+      "name": "aqua",
+      "signature": "public static get aqua(): Color"
+    },
+    {
+      "id": "/core/colors.ts#aquamarine",
+      "label": "Getter",
+      "name": "aquamarine",
+      "signature": "public static get aquamarine(): Color"
+    },
+    {
+      "id": "/core/colors.ts#azure",
+      "label": "Getter",
+      "name": "azure",
+      "signature": "public static get azure(): Color"
+    },
+    {
+      "id": "/core/colors.ts#beige",
+      "label": "Getter",
+      "name": "beige",
+      "signature": "public static get beige(): Color"
+    },
+    {
+      "id": "/core/colors.ts#bisque",
+      "label": "Getter",
+      "name": "bisque",
+      "signature": "public static get bisque(): Color"
+    },
+    {
+      "id": "/core/colors.ts#blanchedAlmond",
+      "label": "Getter",
+      "name": "blanchedAlmond",
+      "signature": "public static get blanchedAlmond(): Color"
+    },
+    {
+      "id": "/core/colors.ts#blueViolet",
+      "label": "Getter",
+      "name": "blueViolet",
+      "signature": "public static get blueViolet(): Color"
+    },
+    {
+      "id": "/core/colors.ts#brown",
+      "label": "Getter",
+      "name": "brown",
+      "signature": "public static get brown(): Color"
+    },
+    {
+      "id": "/core/colors.ts#burlyWood",
+      "label": "Getter",
+      "name": "burlyWood",
+      "signature": "public static get burlyWood(): Color"
+    },
+    {
+      "id": "/core/colors.ts#cadetBlue",
+      "label": "Getter",
+      "name": "cadetBlue",
+      "signature": "public static get cadetBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#chartreuse",
+      "label": "Getter",
+      "name": "chartreuse",
+      "signature": "public static get chartreuse(): Color"
+    },
+    {
+      "id": "/core/colors.ts#chocolate",
+      "label": "Getter",
+      "name": "chocolate",
+      "signature": "public static get chocolate(): Color"
+    },
+    {
+      "id": "/core/colors.ts#coral",
+      "label": "Getter",
+      "name": "coral",
+      "signature": "public static get coral(): Color"
+    },
+    {
+      "id": "/core/colors.ts#crimson",
+      "label": "Getter",
+      "name": "crimson",
+      "signature": "public static get crimson(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkBlue",
+      "label": "Getter",
+      "name": "darkBlue",
+      "signature": "public static get darkBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkCyan",
+      "label": "Getter",
+      "name": "darkCyan",
+      "signature": "public static get darkCyan(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkGoldenrod",
+      "label": "Getter",
+      "name": "darkGoldenrod",
+      "signature": "public static get darkGoldenrod(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkGray",
+      "label": "Getter",
+      "name": "darkGray",
+      "signature": "public static get darkGray(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkGreen",
+      "label": "Getter",
+      "name": "darkGreen",
+      "signature": "public static get darkGreen(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkKhaki",
+      "label": "Getter",
+      "name": "darkKhaki",
+      "signature": "public static get darkKhaki(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkMagenta",
+      "label": "Getter",
+      "name": "darkMagenta",
+      "signature": "public static get darkMagenta(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkOliveGreen",
+      "label": "Getter",
+      "name": "darkOliveGreen",
+      "signature": "public static get darkOliveGreen(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkOrange",
+      "label": "Getter",
+      "name": "darkOrange",
+      "signature": "public static get darkOrange(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkOrchid",
+      "label": "Getter",
+      "name": "darkOrchid",
+      "signature": "public static get darkOrchid(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkRed",
+      "label": "Getter",
+      "name": "darkRed",
+      "signature": "public static get darkRed(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkSalmon",
+      "label": "Getter",
+      "name": "darkSalmon",
+      "signature": "public static get darkSalmon(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkSeaGreen",
+      "label": "Getter",
+      "name": "darkSeaGreen",
+      "signature": "public static get darkSeaGreen(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkSlateBlue",
+      "label": "Getter",
+      "name": "darkSlateBlue",
+      "signature": "public static get darkSlateBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkSlateGray",
+      "label": "Getter",
+      "name": "darkSlateGray",
+      "signature": "public static get darkSlateGray(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkTurquoise",
+      "label": "Getter",
+      "name": "darkTurquoise",
+      "signature": "public static get darkTurquoise(): Color"
+    },
+    {
+      "id": "/core/colors.ts#darkViolet",
+      "label": "Getter",
+      "name": "darkViolet",
+      "signature": "public static get darkViolet(): Color"
+    },
+    {
+      "id": "/core/colors.ts#deepPink",
+      "label": "Getter",
+      "name": "deepPink",
+      "signature": "public static get deepPink(): Color"
+    },
+    {
+      "id": "/core/colors.ts#deepSkyBlue",
+      "label": "Getter",
+      "name": "deepSkyBlue",
+      "signature": "public static get deepSkyBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#dimGray",
+      "label": "Getter",
+      "name": "dimGray",
+      "signature": "public static get dimGray(): Color"
+    },
+    {
+      "id": "/core/colors.ts#dodgerBlue",
+      "label": "Getter",
+      "name": "dodgerBlue",
+      "signature": "public static get dodgerBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#firebrick",
+      "label": "Getter",
+      "name": "firebrick",
+      "signature": "public static get firebrick(): Color"
+    },
+    {
+      "id": "/core/colors.ts#floralWhite",
+      "label": "Getter",
+      "name": "floralWhite",
+      "signature": "public static get floralWhite(): Color"
+    },
+    {
+      "id": "/core/colors.ts#forestGreen",
+      "label": "Getter",
+      "name": "forestGreen",
+      "signature": "public static get forestGreen(): Color"
+    },
+    {
+      "id": "/core/colors.ts#fuchsia",
+      "label": "Getter",
+      "name": "fuchsia",
+      "signature": "public static get fuchsia(): Color"
+    },
+    {
+      "id": "/core/colors.ts#gainsboro",
+      "label": "Getter",
+      "name": "gainsboro",
+      "signature": "public static get gainsboro(): Color"
+    },
+    {
+      "id": "/core/colors.ts#ghostWhite",
+      "label": "Getter",
+      "name": "ghostWhite",
+      "signature": "public static get ghostWhite(): Color"
+    },
+    {
+      "id": "/core/colors.ts#gold",
+      "label": "Getter",
+      "name": "gold",
+      "signature": "public static get gold(): Color"
+    },
+    {
+      "id": "/core/colors.ts#goldenrod",
+      "label": "Getter",
+      "name": "goldenrod",
+      "signature": "public static get goldenrod(): Color"
+    },
+    {
+      "id": "/core/colors.ts#greenYellow",
+      "label": "Getter",
+      "name": "greenYellow",
+      "signature": "public static get greenYellow(): Color"
+    },
+    {
+      "id": "/core/colors.ts#honeydew",
+      "label": "Getter",
+      "name": "honeydew",
+      "signature": "public static get honeydew(): Color"
+    },
+    {
+      "id": "/core/colors.ts#hotPink",
+      "label": "Getter",
+      "name": "hotPink",
+      "signature": "public static get hotPink(): Color"
+    },
+    {
+      "id": "/core/colors.ts#indianRed",
+      "label": "Getter",
+      "name": "indianRed",
+      "signature": "public static get indianRed(): Color"
+    },
+    {
+      "id": "/core/colors.ts#indigo",
+      "label": "Getter",
+      "name": "indigo",
+      "signature": "public static get indigo(): Color"
+    },
+    {
+      "id": "/core/colors.ts#ivory",
+      "label": "Getter",
+      "name": "ivory",
+      "signature": "public static get ivory(): Color"
+    },
+    {
+      "id": "/core/colors.ts#khaki",
+      "label": "Getter",
+      "name": "khaki",
+      "signature": "public static get khaki(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lavender",
+      "label": "Getter",
+      "name": "lavender",
+      "signature": "public static get lavender(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lavenderBlush",
+      "label": "Getter",
+      "name": "lavenderBlush",
+      "signature": "public static get lavenderBlush(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lawnGreen",
+      "label": "Getter",
+      "name": "lawnGreen",
+      "signature": "public static get lawnGreen(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lemonChiffon",
+      "label": "Getter",
+      "name": "lemonChiffon",
+      "signature": "public static get lemonChiffon(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lightBlue",
+      "label": "Getter",
+      "name": "lightBlue",
+      "signature": "public static get lightBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lightCoral",
+      "label": "Getter",
+      "name": "lightCoral",
+      "signature": "public static get lightCoral(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lightCyan",
+      "label": "Getter",
+      "name": "lightCyan",
+      "signature": "public static get lightCyan(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lightGoldenrodYellow",
+      "label": "Getter",
+      "name": "lightGoldenrodYellow",
+      "signature": "public static get lightGoldenrodYellow(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lightGray",
+      "label": "Getter",
+      "name": "lightGray",
+      "signature": "public static get lightGray(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lightGreen",
+      "label": "Getter",
+      "name": "lightGreen",
+      "signature": "public static get lightGreen(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lightPink",
+      "label": "Getter",
+      "name": "lightPink",
+      "signature": "public static get lightPink(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lightSalmon",
+      "label": "Getter",
+      "name": "lightSalmon",
+      "signature": "public static get lightSalmon(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lightSeaGreen",
+      "label": "Getter",
+      "name": "lightSeaGreen",
+      "signature": "public static get lightSeaGreen(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lightSkyBlue",
+      "label": "Getter",
+      "name": "lightSkyBlue",
+      "signature": "public static get lightSkyBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lightSlateGray",
+      "label": "Getter",
+      "name": "lightSlateGray",
+      "signature": "public static get lightSlateGray(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lightSteelBlue",
+      "label": "Getter",
+      "name": "lightSteelBlue",
+      "signature": "public static get lightSteelBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lightYellow",
+      "label": "Getter",
+      "name": "lightYellow",
+      "signature": "public static get lightYellow(): Color"
+    },
+    {
+      "id": "/core/colors.ts#lime",
+      "label": "Getter",
+      "name": "lime",
+      "signature": "public static get lime(): Color"
+    },
+    {
+      "id": "/core/colors.ts#limeGreen",
+      "label": "Getter",
+      "name": "limeGreen",
+      "signature": "public static get limeGreen(): Color"
+    },
+    {
+      "id": "/core/colors.ts#linen",
+      "label": "Getter",
+      "name": "linen",
+      "signature": "public static get linen(): Color"
+    },
+    {
+      "id": "/core/colors.ts#maroon",
+      "label": "Getter",
+      "name": "maroon",
+      "signature": "public static get maroon(): Color"
+    },
+    {
+      "id": "/core/colors.ts#mediumAquamarine",
+      "label": "Getter",
+      "name": "mediumAquamarine",
+      "signature": "public static get mediumAquamarine(): Color"
+    },
+    {
+      "id": "/core/colors.ts#mediumBlue",
+      "label": "Getter",
+      "name": "mediumBlue",
+      "signature": "public static get mediumBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#mediumOrchid",
+      "label": "Getter",
+      "name": "mediumOrchid",
+      "signature": "public static get mediumOrchid(): Color"
+    },
+    {
+      "id": "/core/colors.ts#mediumPurple",
+      "label": "Getter",
+      "name": "mediumPurple",
+      "signature": "public static get mediumPurple(): Color"
+    },
+    {
+      "id": "/core/colors.ts#mediumSeaGreen",
+      "label": "Getter",
+      "name": "mediumSeaGreen",
+      "signature": "public static get mediumSeaGreen(): Color"
+    },
+    {
+      "id": "/core/colors.ts#mediumSlateBlue",
+      "label": "Getter",
+      "name": "mediumSlateBlue",
+      "signature": "public static get mediumSlateBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#mediumSpringGreen",
+      "label": "Getter",
+      "name": "mediumSpringGreen",
+      "signature": "public static get mediumSpringGreen(): Color"
+    },
+    {
+      "id": "/core/colors.ts#mediumTurquoise",
+      "label": "Getter",
+      "name": "mediumTurquoise",
+      "signature": "public static get mediumTurquoise(): Color"
+    },
+    {
+      "id": "/core/colors.ts#mediumVioletRed",
+      "label": "Getter",
+      "name": "mediumVioletRed",
+      "signature": "public static get mediumVioletRed(): Color"
+    },
+    {
+      "id": "/core/colors.ts#midnightBlue",
+      "label": "Getter",
+      "name": "midnightBlue",
+      "signature": "public static get midnightBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#mintCream",
+      "label": "Getter",
+      "name": "mintCream",
+      "signature": "public static get mintCream(): Color"
+    },
+    {
+      "id": "/core/colors.ts#mistyRose",
+      "label": "Getter",
+      "name": "mistyRose",
+      "signature": "public static get mistyRose(): Color"
+    },
+    {
+      "id": "/core/colors.ts#moccasin",
+      "label": "Getter",
+      "name": "moccasin",
+      "signature": "public static get moccasin(): Color"
+    },
+    {
+      "id": "/core/colors.ts#navajoWhite",
+      "label": "Getter",
+      "name": "navajoWhite",
+      "signature": "public static get navajoWhite(): Color"
+    },
+    {
+      "id": "/core/colors.ts#navy",
+      "label": "Getter",
+      "name": "navy",
+      "signature": "public static get navy(): Color"
+    },
+    {
+      "id": "/core/colors.ts#oldLace",
+      "label": "Getter",
+      "name": "oldLace",
+      "signature": "public static get oldLace(): Color"
+    },
+    {
+      "id": "/core/colors.ts#olive",
+      "label": "Getter",
+      "name": "olive",
+      "signature": "public static get olive(): Color"
+    },
+    {
+      "id": "/core/colors.ts#oliveDrab",
+      "label": "Getter",
+      "name": "oliveDrab",
+      "signature": "public static get oliveDrab(): Color"
+    },
+    {
+      "id": "/core/colors.ts#orange",
+      "label": "Getter",
+      "name": "orange",
+      "signature": "public static get orange(): Color"
+    },
+    {
+      "id": "/core/colors.ts#orangeRed",
+      "label": "Getter",
+      "name": "orangeRed",
+      "signature": "public static get orangeRed(): Color"
+    },
+    {
+      "id": "/core/colors.ts#orchid",
+      "label": "Getter",
+      "name": "orchid",
+      "signature": "public static get orchid(): Color"
+    },
+    {
+      "id": "/core/colors.ts#paleGoldenrod",
+      "label": "Getter",
+      "name": "paleGoldenrod",
+      "signature": "public static get paleGoldenrod(): Color"
+    },
+    {
+      "id": "/core/colors.ts#paleGreen",
+      "label": "Getter",
+      "name": "paleGreen",
+      "signature": "public static get paleGreen(): Color"
+    },
+    {
+      "id": "/core/colors.ts#paleTurquoise",
+      "label": "Getter",
+      "name": "paleTurquoise",
+      "signature": "public static get paleTurquoise(): Color"
+    },
+    {
+      "id": "/core/colors.ts#paleVioletRed",
+      "label": "Getter",
+      "name": "paleVioletRed",
+      "signature": "public static get paleVioletRed(): Color"
+    },
+    {
+      "id": "/core/colors.ts#papayaWhip",
+      "label": "Getter",
+      "name": "papayaWhip",
+      "signature": "public static get papayaWhip(): Color"
+    },
+    {
+      "id": "/core/colors.ts#peachPuff",
+      "label": "Getter",
+      "name": "peachPuff",
+      "signature": "public static get peachPuff(): Color"
+    },
+    {
+      "id": "/core/colors.ts#peru",
+      "label": "Getter",
+      "name": "peru",
+      "signature": "public static get peru(): Color"
+    },
+    {
+      "id": "/core/colors.ts#pink",
+      "label": "Getter",
+      "name": "pink",
+      "signature": "public static get pink(): Color"
+    },
+    {
+      "id": "/core/colors.ts#plum",
+      "label": "Getter",
+      "name": "plum",
+      "signature": "public static get plum(): Color"
+    },
+    {
+      "id": "/core/colors.ts#powderBlue",
+      "label": "Getter",
+      "name": "powderBlue",
+      "signature": "public static get powderBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#purple",
+      "label": "Getter",
+      "name": "purple",
+      "signature": "public static get purple(): Color"
+    },
+    {
+      "id": "/core/colors.ts#rosyBrown",
+      "label": "Getter",
+      "name": "rosyBrown",
+      "signature": "public static get rosyBrown(): Color"
+    },
+    {
+      "id": "/core/colors.ts#royalBlue",
+      "label": "Getter",
+      "name": "royalBlue",
+      "signature": "public static get royalBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#saddleBrown",
+      "label": "Getter",
+      "name": "saddleBrown",
+      "signature": "public static get saddleBrown(): Color"
+    },
+    {
+      "id": "/core/colors.ts#salmon",
+      "label": "Getter",
+      "name": "salmon",
+      "signature": "public static get salmon(): Color"
+    },
+    {
+      "id": "/core/colors.ts#sandyBrown",
+      "label": "Getter",
+      "name": "sandyBrown",
+      "signature": "public static get sandyBrown(): Color"
+    },
+    {
+      "id": "/core/colors.ts#seaGreen",
+      "label": "Getter",
+      "name": "seaGreen",
+      "signature": "public static get seaGreen(): Color"
+    },
+    {
+      "id": "/core/colors.ts#seaShell",
+      "label": "Getter",
+      "name": "seaShell",
+      "signature": "public static get seaShell(): Color"
+    },
+    {
+      "id": "/core/colors.ts#sienna",
+      "label": "Getter",
+      "name": "sienna",
+      "signature": "public static get sienna(): Color"
+    },
+    {
+      "id": "/core/colors.ts#silver",
+      "label": "Getter",
+      "name": "silver",
+      "signature": "public static get silver(): Color"
+    },
+    {
+      "id": "/core/colors.ts#skyBlue",
+      "label": "Getter",
+      "name": "skyBlue",
+      "signature": "public static get skyBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#slateBlue",
+      "label": "Getter",
+      "name": "slateBlue",
+      "signature": "public static get slateBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#slateGray",
+      "label": "Getter",
+      "name": "slateGray",
+      "signature": "public static get slateGray(): Color"
+    },
+    {
+      "id": "/core/colors.ts#snow",
+      "label": "Getter",
+      "name": "snow",
+      "signature": "public static get snow(): Color"
+    },
+    {
+      "id": "/core/colors.ts#springGreen",
+      "label": "Getter",
+      "name": "springGreen",
+      "signature": "public static get springGreen(): Color"
+    },
+    {
+      "id": "/core/colors.ts#steelBlue",
+      "label": "Getter",
+      "name": "steelBlue",
+      "signature": "public static get steelBlue(): Color"
+    },
+    {
+      "id": "/core/colors.ts#tan",
+      "label": "Getter",
+      "name": "tan",
+      "signature": "public static get tan(): Color"
+    },
+    {
+      "id": "/core/colors.ts#teal",
+      "label": "Getter",
+      "name": "teal",
+      "signature": "public static get teal(): Color"
+    },
+    {
+      "id": "/core/colors.ts#thistle",
+      "label": "Getter",
+      "name": "thistle",
+      "signature": "public static get thistle(): Color"
+    },
+    {
+      "id": "/core/colors.ts#tomato",
+      "label": "Getter",
+      "name": "tomato",
+      "signature": "public static get tomato(): Color"
+    },
+    {
+      "id": "/core/colors.ts#turquoise",
+      "label": "Getter",
+      "name": "turquoise",
+      "signature": "public static get turquoise(): Color"
+    },
+    {
+      "id": "/core/colors.ts#violet",
+      "label": "Getter",
+      "name": "violet",
+      "signature": "public static get violet(): Color"
+    },
+    {
+      "id": "/core/colors.ts#wheat",
+      "label": "Getter",
+      "name": "wheat",
+      "signature": "public static get wheat(): Color"
+    },
+    {
+      "id": "/core/colors.ts#whiteSmoke",
+      "label": "Getter",
+      "name": "whiteSmoke",
+      "signature": "public static get whiteSmoke(): Color"
+    },
+    {
+      "id": "/core/colors.ts#yellowGreen",
+      "label": "Getter",
+      "name": "yellowGreen",
+      "signature": "public static get yellowGreen(): Color"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/colors.ts",
+      "target": "/core/color.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

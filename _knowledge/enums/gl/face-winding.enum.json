@@ -1,0 +1,45 @@
+{
+  "component": {
+    "name": "FaceWinding",
+    "source_path": "/enums/gl/face-winding.enum.ts",
+    "doc_path": "/enums/gl/face-winding.enum.json",
+    "type": "utility"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the strongly-typed enumeration `FaceWinding` to manage geometric orientation conventions in 3D rendering. It encapsulates the two fundamental winding orders: CounterClockwise (CCW) and Clockwise (CW). Its primary role is to provide a canonical, type-safe constant for rendering pipelines, ensuring consistency with underlying graphics APIs like WebGL. It acts as a low-level configuration constant for vertex ordering."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/gl/face-winding.enum.ts#FaceWinding",
+      "label": "Type",
+      "name": "FaceWinding",
+      "signature": "enum FaceWinding"
+    },
+    {
+      "id": "/enums/gl/face-winding.enum.ts#CounterClockwise",
+      "label": "Variable",
+      "name": "CounterClockwise",
+      "signature": "CounterClockwise = WebGL2RenderingContext.CCW"
+    },
+    {
+      "id": "/enums/gl/face-winding.enum.ts#Clockwise",
+      "label": "Variable",
+      "name": "Clockwise",
+      "signature": "Clockwise = WebGL2RenderingContext.CW"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/enums/gl/face-winding.enum.ts",
+      "target": "/enums/gl/face-winding.enum.md",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "WebGL2RenderingContext"
+    ],
+    "has_side_effects": false
+  }
+}

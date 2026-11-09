@@ -1,0 +1,55 @@
+{
+  "component": {
+    "name": "ClassMetadata",
+    "source_path": "/interfaces/class-metadata.ts",
+    "doc_path": "/interfaces/class-metadata.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the ClassMetadata interface, which serves as a standardized contract for describing any class within the system. It encapsulates essential metadata, including the class's name, its operational type, and its physical location within the application structure. This interface is crucial for engine components responsible for reflection, loading, and routing to maintain consistent class management."
+  },
+  "graph_nodes": [
+    {
+      "id": "/interfaces/class-metadata.ts#ClassMetadata",
+      "label": "Interface",
+      "name": "ClassMetadata",
+      "signature": "interface ClassMetadata { name: string; type: ClassType; path: string; description?: string; }"
+    },
+    {
+      "id": "/interfaces/class-metadata.ts#name",
+      "label": "Variable",
+      "name": "name",
+      "signature": "string"
+    },
+    {
+      "id": "/interfaces/class-metadata.ts#type",
+      "label": "Variable",
+      "name": "type",
+      "signature": "ClassType"
+    },
+    {
+      "id": "/interfaces/class-metadata.ts#path",
+      "label": "Variable",
+      "name": "path",
+      "signature": "string"
+    },
+    {
+      "id": "/interfaces/class-metadata.ts#description",
+      "label": "Variable",
+      "name": "description",
+      "signature": "string?"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/interfaces/class-metadata.ts",
+      "target": "/enums/class-type.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

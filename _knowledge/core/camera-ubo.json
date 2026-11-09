@@ -1,0 +1,69 @@
+{
+  "component": {
+    "name": "CameraUBO",
+    "source_path": "/core/camera-ubo.ts",
+    "doc_path": "/core/camera-ubo.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "CameraUBO is a service class designed to manage a WebGL Uniform Buffer Object (UBO) for efficient camera matrix sharing. It centralizes the view and projection matrices into a single GPU buffer, significantly reducing per-draw call overhead in rendering pipelines. The class initializes the buffer, binds it to a fixed point, and provides an update method to synchronize CPU-side matrix data to the GPU every frame."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/camera-ubo.ts#CameraUBO",
+      "label": "Class",
+      "name": "CameraUBO",
+      "signature": ""
+    },
+    {
+      "id": "/core/camera-ubo.ts#BINDING_POINT",
+      "label": "Variable",
+      "name": "BINDING_POINT",
+      "signature": ""
+    },
+    {
+      "id": "/core/camera-ubo.ts#gl",
+      "label": "Variable",
+      "name": "gl",
+      "signature": ""
+    },
+    {
+      "id": "/core/camera-ubo.ts#ubo",
+      "label": "Variable",
+      "name": "ubo",
+      "signature": ""
+    },
+    {
+      "id": "/core/camera-ubo.ts#data",
+      "label": "Variable",
+      "name": "data",
+      "signature": ""
+    },
+    {
+      "id": "/core/camera-ubo.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(gl: WebGL2RenderingContext)"
+    },
+    {
+      "id": "/core/camera-ubo.ts#update",
+      "label": "Method",
+      "name": "update",
+      "signature": "update(viewMatrix: mat4, projectionMatrix: mat4): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/camera-ubo.ts",
+      "target": "/core/camera-ubo.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

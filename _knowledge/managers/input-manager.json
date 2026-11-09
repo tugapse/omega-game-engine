@@ -1,0 +1,130 @@
+{
+  "component": {
+    "name": "InputManager",
+    "source_path": "/managers/input-manager.ts",
+    "doc_path": "/managers/input-manager.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The InputManager class serves as the primary input service layer, abstracting raw browser DOM events (keyboard, mouse, focus) into standardized engine states. It initializes by attaching listeners to the canvas and window, translating low-level events into updates for the static Mouse and Keyboard state classes. Its core responsibility is bridging the browser event system with the core engine logic, managing focus states, and ensuring input consistency across the application."
+  },
+  "graph_nodes": [
+    {
+      "id": "/managers/input-manager.ts#InputManager",
+      "label": "Class",
+      "name": "InputManager",
+      "signature": "constructor(engine: Engine, canvas: HTMLCanvasElement)"
+    },
+    {
+      "id": "/managers/input-manager.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "initialize(): void"
+    },
+    {
+      "id": "/managers/input-manager.ts#onEngineContextMenu",
+      "label": "Method",
+      "name": "onEngineContextMenu",
+      "signature": "onEngineContextMenu(event: MouseEvent): void"
+    },
+    {
+      "id": "/managers/input-manager.ts#onEngineKeyDown",
+      "label": "Method",
+      "name": "onEngineKeyDown",
+      "signature": "onEngineKeyDown(event: KeyboardEvent): void"
+    },
+    {
+      "id": "/managers/input-manager.ts#onEngineKeyUp",
+      "label": "Method",
+      "name": "onEngineKeyUp",
+      "signature": "onEngineKeyUp(event: KeyboardEvent): void"
+    },
+    {
+      "id": "/managers/input-manager.ts#onEngineMouseMove",
+      "label": "Method",
+      "name": "onEngineMouseMove",
+      "signature": "onEngineMouseMove(event: MouseEvent): void"
+    },
+    {
+      "id": "/managers/input-manager.ts#onEngineMouseDown",
+      "label": "Method",
+      "name": "onEngineMouseDown",
+      "signature": "onEngineMouseDown(event: MouseEvent): void"
+    },
+    {
+      "id": "/managers/input-manager.ts#onEngineMouseUp",
+      "label": "Method",
+      "name": "onEngineMouseUp",
+      "signature": "onEngineMouseUp(event: MouseEvent): void"
+    },
+    {
+      "id": "/managers/input-manager.ts#onEngineMouseLeave",
+      "label": "Method",
+      "name": "onEngineMouseLeave",
+      "signature": "onEngineMouseLeave(): void"
+    },
+    {
+      "id": "/managers/input-manager.ts#onEngineFocus",
+      "label": "Method",
+      "name": "onEngineFocus",
+      "signature": "onEngineFocus(): void"
+    },
+    {
+      "id": "/managers/input-manager.ts#onEngineBlur",
+      "label": "Method",
+      "name": "onEngineBlur",
+      "signature": "onEngineBlur(): void"
+    },
+    {
+      "id": "/managers/input-manager.ts#onEngineMouseScroll",
+      "label": "Method",
+      "name": "onEngineMouseScroll",
+      "signature": "onEngineMouseScroll(event: WheelEvent): void"
+    },
+    {
+      "id": "/managers/input-manager.ts#onEngineVisibilityChange",
+      "label": "Method",
+      "name": "onEngineVisibilityChange",
+      "signature": "onEngineVisibilityChange(): void"
+    },
+    {
+      "id": "/managers/input-manager.ts#onEngineWindowFocus",
+      "label": "Method",
+      "name": "onEngineWindowFocus",
+      "signature": "onEngineWindowFocus(): void"
+    },
+    {
+      "id": "/managers/input-manager.ts#onEngineWindowBlur",
+      "label": "Method",
+      "name": "onEngineWindowBlur",
+      "signature": "onEngineWindowBlur(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/managers/input-manager.ts",
+      "target": "/managers/input-manager.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/input-manager.ts",
+      "target": "/engine.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/managers/input-manager.ts",
+      "target": "/core/keyboard.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/managers/input-manager.ts",
+      "target": "/core/mouse.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

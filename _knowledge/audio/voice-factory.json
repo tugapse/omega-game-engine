@@ -1,0 +1,79 @@
+{
+  "component": {
+    "name": "VoiceFactory",
+    "source_path": "/audio/voice-factory.ts",
+    "doc_path": "/audio/voice-factory.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The VoiceFactory class serves as the core audio engine service responsible for dynamically constructing and scheduling transient sound events, or 'voices.' It abstracts Web Audio API complexity by providing methods to trigger synthesizers, noise generators, and sample playback. It manages the creation of standardized processing graphs, including envelopes, filters, and panning, while routing signals to global effects buses like reverb and delay."
+  },
+  "graph_nodes": [
+    {
+      "id": "/audio/voice-factory.ts#VoiceTriggerOptions",
+      "label": "Interface",
+      "name": "VoiceTriggerOptions",
+      "signature": "interface VoiceTriggerOptions { frequency: number; duration: number; startTime: number; volume?: number; pan?: number; cutoff?: number; reverbMix?: number; delayMix?: number; distortionMix?: number; chorusMix?: number; glideTime?: number; lfoRate?: number; lfoDepth?: number; }"
+    },
+    {
+      "id": "/audio/voice-factory.ts#VoiceFactory",
+      "label": "Class",
+      "name": "VoiceFactory",
+      "signature": "class VoiceFactory { constructor(audioContext: AudioContext, audioCache: AudioCache, routingDestination: AudioNode, reverbBus?: AudioNode, delayBus?: AudioNode) {} }"
+    },
+    {
+      "id": "/audio/voice-factory.ts#triggerSynthVoice",
+      "label": "Method",
+      "name": "triggerSynthVoice",
+      "signature": "triggerSynthVoice(waveform: OscillatorType, note: any, startTime: number, prevFrequency?: number): OscillatorNode"
+    },
+    {
+      "id": "/audio/voice-factory.ts#triggerNoiseVoice",
+      "label": "Method",
+      "name": "triggerNoiseVoice",
+      "signature": "triggerNoiseVoice(note: any, startTime: number): AudioBufferSourceNode"
+    },
+    {
+      "id": "/audio/voice-factory.ts#triggerSamplerVoice",
+      "label": "Method",
+      "name": "triggerSamplerVoice",
+      "signature": "triggerSamplerVoice(sampleId: string, note: any, startTime: number, rootFrequency?: number): AudioBufferSourceNode"
+    },
+    {
+      "id": "/audio/voice-factory.ts#createSubGraph",
+      "label": "Method",
+      "name": "createSubGraph",
+      "signature": "createSubGraph(note: any, startTime: number, duration: number, isNoise?: boolean): AudioNode"
+    },
+    {
+      "id": "/audio/voice-factory.ts#routeParallelSends",
+      "label": "Method",
+      "name": "routeParallelSends",
+      "signature": "routeParallelSends(note: any, sourceNode: AudioNode, startTime: number): void"
+    },
+    {
+      "id": "/audio/voice-factory.ts#getWhiteNoiseBuffer",
+      "label": "Method",
+      "name": "getWhiteNoiseBuffer",
+      "signature": "getWhiteNoiseBuffer(): AudioBuffer"
+    },
+    {
+      "id": "/audio/voice-factory.ts#makeDistortionCurve",
+      "label": "Method",
+      "name": "makeDistortionCurve",
+      "signature": "makeDistortionCurve(amount: number): Float32Array<ArrayBuffer>"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/audio/voice-factory.ts",
+      "target": "/audio/audio-cache.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

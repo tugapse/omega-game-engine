@@ -1,0 +1,168 @@
+{
+  "component": {
+    "name": "ShaderSources",
+    "source_path": "/shaders/shader-sources.ts",
+    "doc_path": "/shaders/shader-sources.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "ShaderSources is a static utility class that centralizes and registers all file paths for vertex and fragment shaders used across the application. It acts as a single source of truth for asset loading within the rendering pipeline. It provides two read-only maps, 'frag' and 'vertex', mapping descriptive shader names to their specific asset locations. This abstraction prevents hardcoding shader paths throughout the codebase, significantly improving maintainability."
+  },
+  "graph_nodes": [
+    {
+      "id": "/shaders/shader-sources.ts#ShaderSources",
+      "label": "Class",
+      "name": "ShaderSources",
+      "signature": ""
+    },
+    {
+      "id": "/shaders/shader-sources.ts#ShaderSources.frag",
+      "label": "Variable",
+      "name": "frag",
+      "signature": ""
+    },
+    {
+      "id": "/shaders/shader-sources.ts#ShaderSources.vertex",
+      "label": "Variable",
+      "name": "vertex",
+      "signature": ""
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/editor/entity-picker.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/editor/handle/handle.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/editor/picker/entity.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/frag/color.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/frag/default-lit.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/frag/default-unlit.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/frag/depth-only.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/frag/screen-blit.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/frag/skybox.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/functions/fog.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/functions/functions.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/functions/light-header.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/functions/light.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/functions/light_old.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/post-processing/retro.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/tools/bitangent.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/tools/normal.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/tools/tangent.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/tools/uv.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/editor/handle/handle.vert",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/editor/picker/entity.vert",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/vertex/default.vert",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/vertex/fullscreen.vert",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/vertex/screen-quad.vert",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/vertex/shadow-caster.vert",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/shader-sources.ts",
+      "target": "/assets/shaders/vertex/skybox.vert",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

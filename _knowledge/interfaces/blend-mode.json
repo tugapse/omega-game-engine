@@ -1,0 +1,53 @@
+{
+  "component": {
+    "name": "blend-mode",
+    "source_path": "/interfaces/blend-mode.ts",
+    "doc_path": "/interfaces/blend-mode.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This interface defines the BlendingMode structure, serving as a critical data contract within the rendering subsystem. It encapsulates the necessary factorssourcefactor and destfactorthat govern how two colors or values interact during a graphics blending operation. It ensures consistent application of blending parameters derived from the blend.enum for shader state management."
+  },
+  "graph_nodes": [
+    {
+      "id": "/interfaces/blend-mode.ts#BlendingMode",
+      "label": "Interface",
+      "name": "BlendingMode",
+      "signature": "interface BlendingMode { sourcefactor: BlendingSourceFactor; destfactor: BlendingDestinationFactor; }"
+    },
+    {
+      "id": "/interfaces/blend-mode.ts#BlendingSourceFactor",
+      "label": "Type",
+      "name": "BlendingSourceFactor",
+      "signature": "import { BlendingSourceFactor, BlendingDestinationFactor } from \"../enums/gl/blend.enum\";"
+    },
+    {
+      "id": "/interfaces/blend-mode.ts#BlendingDestinationFactor",
+      "label": "Type",
+      "name": "BlendingDestinationFactor",
+      "signature": "import { BlendingSourceFactor, BlendingDestinationFactor } from \"../enums/gl/blend.enum\";"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/interfaces/blend-mode.ts",
+      "target": "/interfaces/blend-mode.ts#BlendingSourceFactor",
+      "relation": "uses"
+    },
+    {
+      "source": "/interfaces/blend-mode.ts",
+      "target": "/interfaces/blend-mode.ts#BlendingDestinationFactor",
+      "relation": "uses"
+    },
+    {
+      "source": "/interfaces/blend-mode.ts",
+      "target": "/../enums/gl/blend.enum",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

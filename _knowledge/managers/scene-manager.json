@@ -1,0 +1,124 @@
+{
+  "component": {
+    "name": "SceneManager",
+    "source_path": "/managers/scene-manager.ts",
+    "doc_path": "/managers/scene-manager.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "SceneManager is a static service layer responsible for the complete lifecycle management of scene data, bridging static JSON definitions to the live runtime state. It orchestrates complex deserialization pipelines, including mesh instantiation, asynchronous texture loading, and entity/behavior population. Its core functions are loading scenes from JSON and creating serializable snapshots of the current scene state."
+  },
+  "graph_nodes": [
+    {
+      "id": "/managers/scene-manager.ts#SceneManager",
+      "label": "Class",
+      "name": "SceneManager",
+      "signature": "export class SceneManager"
+    },
+    {
+      "id": "/managers/scene-manager.ts#loadScene",
+      "label": "Method",
+      "name": "loadScene",
+      "signature": "public static async loadScene(gl: WebGL2RenderingContext, jsonData: JsonSerializedData, scene?: Scene): Promise<Scene>"
+    },
+    {
+      "id": "/managers/scene-manager.ts#instaciateAndLoadSceneTextures",
+      "label": "Method",
+      "name": "instaciateAndLoadSceneTextures",
+      "signature": "private static async instaciateAndLoadSceneTextures(texturesMaps: any, gl: WebGL2RenderingContext): Promise<void>"
+    },
+    {
+      "id": "/managers/scene-manager.ts#instaciateSceneMeshes",
+      "label": "Method",
+      "name": "instaciateSceneMeshes",
+      "signature": "private static instaciateSceneMeshes(meshMaps: any): { [key: string]: MeshData }"
+    },
+    {
+      "id": "/managers/scene-manager.ts#instaciateSceneObjects",
+      "label": "Method",
+      "name": "instaciateSceneObjects",
+      "signature": "private static instaciateSceneObjects(scene: Scene, objects: JsonSerializable[], meshes: { [key: string]: MeshData }, gl: WebGL2RenderingContext): any[]"
+    },
+    {
+      "id": "/managers/scene-manager.ts#prepareTransforms",
+      "label": "Method",
+      "name": "prepareTransforms",
+      "signature": "static prepareTransforms(transforms: { [key: string]: Transform }, entities: any): void"
+    },
+    {
+      "id": "/managers/scene-manager.ts#creatSceneSnapshot",
+      "label": "Method",
+      "name": "creatSceneSnapshot",
+      "signature": "public static creatSceneSnapshot(scene: Scene): JsonSerializedData"
+    },
+    {
+      "id": "/managers/scene-manager.ts#instanciateBehaviours",
+      "label": "Method",
+      "name": "instanciateBehaviours",
+      "signature": "private static instanciateBehaviours(jsonObject: JsonSerializedData, scene: Scene, meshes: { [key: string]: MeshData }, gl: WebGL2RenderingContext): void"
+    },
+    {
+      "id": "/managers/scene-manager.ts#instanciateEntity",
+      "label": "Method",
+      "name": "instanciateEntity",
+      "signature": "private static instanciateEntity(jsonObject: JsonSerializedData, instanciatedTransforms: { [key: string]: Transform }): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/managers/scene-manager.ts",
+      "target": "/core/engine-cache.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/scene-manager.ts",
+      "target": "/core/object-instanciator.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/scene-manager.ts",
+      "target": "/entities/scene.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/scene-manager.ts",
+      "target": "/core/mesh.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/scene-manager.ts",
+      "target": "/behaviours/entity-behaviour.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/scene-manager.ts",
+      "target": "/core/transform.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/scene-manager.ts",
+      "target": "/interfaces/json-serialized-data.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/scene-manager.ts",
+      "target": "/textures/cubemap-texture.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/scene-manager.ts",
+      "target": "/textures/texture.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/scene-manager.ts",
+      "target": "/entities/entity.md",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

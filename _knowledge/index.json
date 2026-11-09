@@ -1,0 +1,84 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/index.ts",
+    "doc_path": "/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as the root facade or barrel file for the entire engine codebase. Its primary role is to consolidate and expose all major subsystems, utilities, and core components under a single, unified namespace. It aggregates functionality from specialized domains such as audio, core, entities, and engine. This pattern simplifies the import structure for consumers by providing a centralized access point to the entire system."
+  },
+  "graph_nodes": [],
+  "graph_edges": [
+    {
+      "source": "/index.ts",
+      "target": "/audio.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/behaviours.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/core.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/entities.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/enums.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/interfaces.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/managers.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/materials.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/parsers.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/primitives.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/shaders.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/textures.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/engine.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

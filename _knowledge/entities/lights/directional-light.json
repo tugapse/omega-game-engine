@@ -1,0 +1,67 @@
+{
+  "component": {
+    "name": "DirectionalLight",
+    "source_path": "/entities/lights/directional-light.ts",
+    "doc_path": "/entities/lights/directional-light.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "DirectionalLight models a light source originating from a distant point, such as the sun, inheriting from the base Light class. Its core function is to calculate and expose the normalized direction vector, which is derived from the light's transform's forward or back vector. It manages properties like color and includes a static factory method for instantiation, ensuring adherence to the engine's lighting data model."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/lights/directional-light.ts#DirectionalLight",
+      "label": "Class",
+      "name": "DirectionalLight",
+      "signature": "class DirectionalLight extends Light"
+    },
+    {
+      "id": "/entities/lights/directional-light.ts#direction",
+      "label": "Getter",
+      "name": "direction",
+      "signature": "get direction(): vec3"
+    },
+    {
+      "id": "/entities/lights/directional-light.ts#invertLightDirection",
+      "label": "Property",
+      "name": "invertLightDirection",
+      "signature": "public invertLightDirection = false"
+    },
+    {
+      "id": "/entities/lights/directional-light.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(name: string)"
+    },
+    {
+      "id": "/entities/lights/directional-light.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(name?: string, transform?: Transform): DirectionalLight"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/lights/directional-light.ts",
+      "target": "/core.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/directional-light.ts",
+      "target": "/enums.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/directional-light.ts",
+      "target": "/light.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

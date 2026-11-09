@@ -1,0 +1,55 @@
+{
+  "component": {
+    "name": "NumberRange",
+    "source_path": "/core/range.ts",
+    "doc_path": "/core/range.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The NumberRange class models a numeric value strictly constrained by defined minimum and maximum bounds. It enforces range integrity by automatically clamping the value upon assignment, ensuring it never violates the set limits. It integrates with JsonSerializable for reliable persistence, handling serialization and deserialization of its bounded state. The class manages cross-constraint validation, where changing one bound automatically adjusts the other to maintain logical consistency."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/range.ts#NumberRange",
+      "label": "Class",
+      "name": "NumberRange",
+      "signature": "constructor(protected _value: number, protected _min = 0, protected _max = 0, protected _step = 0)"
+    },
+    {
+      "id": "/core/range.ts#value",
+      "label": "Getter/Setter",
+      "name": "value",
+      "signature": "get value(): number; set value(value: number)"
+    },
+    {
+      "id": "/core/range.ts#min",
+      "label": "Getter/Setter",
+      "name": "min",
+      "signature": "get min(): number; set min(min: number)"
+    },
+    {
+      "id": "/core/range.ts#max",
+      "label": "Getter/Setter",
+      "name": "max",
+      "signature": "get max(): number; set max(max: number)"
+    },
+    {
+      "id": "/core/range.ts#step",
+      "label": "Getter/Setter",
+      "name": "step",
+      "signature": "get step(): number; set step(step: number)"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/range.ts",
+      "target": "/core/json-serializable.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

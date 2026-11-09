@@ -1,0 +1,51 @@
+{
+  "component": {
+    "name": "CubePrimitive",
+    "source_path": "/primitives/cube-primitive.ts",
+    "doc_path": "/primitives/cube-primitive.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "CubePrimitive is a class inheriting from MeshData, responsible for procedurally generating the complete geometric data for a standard cube primitive. It calculates and populates arrays for vertices, normals, UV coordinates, and indices based on a specified size. The core logic involves iterating over six faces, using an internal helper function to define the four vertices, associated normals, UVs, and two triangles (six indices) for each face. This component abstracts complex 3D geometry definition into a reusable, instantiated data structure for rendering pipelines."
+  },
+  "graph_nodes": [
+    {
+      "id": "/primitives/cube-primitive.ts#CubePrimitive",
+      "label": "Class",
+      "name": "CubePrimitive",
+      "signature": "class CubePrimitive extends MeshData"
+    },
+    {
+      "id": "/primitives/cube-primitive.ts#CubePrimitive.instanciate",
+      "label": "Method",
+      "name": "CubePrimitive.instanciate",
+      "signature": "static override instanciate(vertices?: vec3[], normals?: vec3[], uvs?: vec2[], indices?: number[]): CubePrimitive"
+    },
+    {
+      "id": "/primitives/cube-primitive.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(size: number = 2.0)"
+    },
+    {
+      "id": "/primitives/cube-primitive.ts#addFace",
+      "label": "Function",
+      "name": "addFace",
+      "signature": "const addFace = (v0: vec3, v1: vec3, v2: vec3, v3: vec3, normal: vec3, uv0: vec2, uv1: vec2, uv2: vec2, uv3: vec2, baseIndex: number): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/primitives/cube-primitive.ts",
+      "target": "/core/mesh.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

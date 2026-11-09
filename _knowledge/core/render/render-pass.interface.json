@@ -1,0 +1,67 @@
+{
+  "component": {
+    "name": "IRenderPass",
+    "source_path": "/core/render/render-pass.interface.ts",
+    "doc_path": "/core/render/render-pass.interface.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "IRenderPass defines the essential contract for any rendering stage within the application's pipeline. It encapsulates the lifecycle methodsinitialize, execute, cleanup, resize, and setGlrequired for a rendering pass to interact with the WebGL context and scene data. This interface serves as a core abstraction layer, standardizing how individual rendering operations are managed by the rendering manager."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/render-pass.interface.ts#IRenderPass",
+      "label": "Interface",
+      "name": "IRenderPass",
+      "signature": "interface IRenderPass"
+    },
+    {
+      "id": "/core/render/render-pass.interface.ts#name",
+      "label": "Property",
+      "name": "name",
+      "signature": "name:string"
+    },
+    {
+      "id": "/core/render/render-pass.interface.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "initialize(gl: WebGL2RenderingContext): void"
+    },
+    {
+      "id": "/core/render/render-pass.interface.ts#execute",
+      "label": "Method",
+      "name": "execute",
+      "signature": "execute( scene: Scene): void"
+    },
+    {
+      "id": "/core/render/render-pass.interface.ts#cleanup",
+      "label": "Method",
+      "name": "cleanup",
+      "signature": "cleanup(): void"
+    },
+    {
+      "id": "/core/render/render-pass.interface.ts#resize",
+      "label": "Method",
+      "name": "resize",
+      "signature": "resize(width: number, height: number): void"
+    },
+    {
+      "id": "/core/render/render-pass.interface.ts#setGl",
+      "label": "Method",
+      "name": "setGl",
+      "signature": "setGl(gl:WebGL2RenderingContext):void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/render-pass.interface.ts",
+      "target": "/entities.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

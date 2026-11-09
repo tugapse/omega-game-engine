@@ -1,0 +1,135 @@
+{
+  "component": {
+    "name": "EngineCache",
+    "source_path": "/core/engineCache.ts",
+    "doc_path": "/core/engineCache.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "EngineCache is a static service class acting as a centralized, global repository for managing and caching critical engine assets like 2D textures, cubemaps, mesh data, and shader source code. It abstracts asset loading, ensuring expensive I/O and parsing operations occur only once per unique key. It manages resource lifecycles via reference counting and provides specific retrieval methods for various asset types."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/engineCache.ts#EngineCache",
+      "label": "Class",
+      "name": "EngineCache",
+      "signature": "abstract class EngineCache"
+    },
+    {
+      "id": "/core/engineCache.ts#__cache",
+      "label": "Variable",
+      "name": "__cache",
+      "signature": "private static __cache: StorageSpaces"
+    },
+    {
+      "id": "/core/engineCache.ts#objPArser",
+      "label": "Variable",
+      "name": "objPArser",
+      "signature": "private static objPArser: ObjParser"
+    },
+    {
+      "id": "/core/engineCache.ts#set",
+      "label": "Function",
+      "name": "set",
+      "signature": "public static set(key: string, value: any): void"
+    },
+    {
+      "id": "/core/engineCache.ts#get",
+      "label": "Function",
+      "name": "get",
+      "signature": "public static get<T>(key: string): T"
+    },
+    {
+      "id": "/core/engineCache.ts#getTexture2D",
+      "label": "Function",
+      "name": "getTexture2D",
+      "signature": "public static async getTexture2D(uri: string, gl?: WebGL2RenderingContext): Promise<Texture>"
+    },
+    {
+      "id": "/core/engineCache.ts#getTextureCube",
+      "label": "Function",
+      "name": "getTextureCube",
+      "signature": "public static async getTextureCube(uris: ICubemapSides, gl?: WebGL2RenderingContext): Promise<CubemapTexture>"
+    },
+    {
+      "id": "/core/engineCache.ts#getWhiteTextureCube",
+      "label": "Function",
+      "name": "getWhiteTextureCube",
+      "signature": "public static async getWhiteTextureCube(gl?: WebGL2RenderingContext): Promise<CubemapTexture>"
+    },
+    {
+      "id": "/core/engineCache.ts#getWhiteTexture",
+      "label": "Function",
+      "name": "getWhiteTexture",
+      "signature": "public static async getWhiteTexture(gl: WebGL2RenderingContext): Promise<Texture>"
+    },
+    {
+      "id": "/core/engineCache.ts#getBlackTexture",
+      "label": "Function",
+      "name": "getBlackTexture",
+      "signature": "public static async getBlackTexture(gl: WebGL2RenderingContext): Promise<Texture>"
+    },
+    {
+      "id": "/core/engineCache.ts#getNormalTexture",
+      "label": "Function",
+      "name": "getNormalTexture",
+      "signature": "public static async getNormalTexture(gl: WebGL2RenderingContext): Promise<Texture>"
+    },
+    {
+      "id": "/core/engineCache.ts#releaseTexture",
+      "label": "Function",
+      "name": "releaseTexture",
+      "signature": "public static releaseTexture(texture: Texture): void"
+    },
+    {
+      "id": "/core/engineCache.ts#getMeshDataFromObj",
+      "label": "Function",
+      "name": "getMeshDataFromObj",
+      "signature": "public static async getMeshDataFromObj(uri: string): Promise<MeshData>"
+    },
+    {
+      "id": "/core/engineCache.ts#loadShaderSource",
+      "label": "Function",
+      "name": "loadShaderSource",
+      "signature": "public static async loadShaderSource(uri: string): Promise<string>"
+    },
+    {
+      "id": "/core/engineCache.ts#clear",
+      "label": "Function",
+      "name": "clear",
+      "signature": "public static clear(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/engineCache.ts",
+      "target": "/interfaces/cubemap.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/engineCache.ts",
+      "target": "/parsers/obj-parser.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/engineCache.ts",
+      "target": "/textures/cubemap-texture.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/engineCache.ts",
+      "target": "/textures/texture.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/engineCache.ts",
+      "target": "/core/mesh.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

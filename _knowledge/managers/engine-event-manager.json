@@ -1,0 +1,141 @@
+{
+  "component": {
+    "name": "EngineEventManager",
+    "source_path": "/managers/engine-event-manager.ts",
+    "doc_path": "/managers/engine-event-manager.json",
+    "type": "service"
+  },
+  "vector_memory": {
+    "semantic_summary": "EngineEventManager serves as the central service layer responsible for capturing all low-level browser input events, including mouse movements, keyboard presses, and gamepad states. It acts as a bridge, translating raw DOM events into state changes within the engine's static input managers. Its primary duty is to initialize listeners and update input states once per frame, ensuring game logic has consistent access to user input data."
+  },
+  "graph_nodes": [
+    {
+      "id": "/managers/engine-event-manager.ts#EngineEventManager",
+      "label": "Class",
+      "name": "EngineEventManager",
+      "signature": "constructor(engine: Engine, canvas: HTMLCanvasElement)"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "public initialize(): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#update",
+      "label": "Method",
+      "name": "update",
+      "signature": "public update(): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineContextMenu",
+      "label": "Method",
+      "name": "onEngineContextMenu",
+      "signature": "private onEngineContextMenu = (event: MouseEvent): void => {}"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineKeyDown",
+      "label": "Method",
+      "name": "onEngineKeyDown",
+      "signature": "private onEngineKeyDown = (event: KeyboardEvent): void => {}"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineKeyUp",
+      "label": "Method",
+      "name": "onEngineKeyUp",
+      "signature": "private onEngineKeyUp = (event: KeyboardEvent): void => {}"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineMouseMove",
+      "label": "Method",
+      "name": "onEngineMouseMove",
+      "signature": "private onEngineMouseMove = (event: MouseEvent): void => {}"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineMouseDown",
+      "label": "Method",
+      "name": "onEngineMouseDown",
+      "signature": "private onEngineMouseDown = (event: MouseEvent): void => {}"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineMouseUp",
+      "label": "Method",
+      "name": "onEngineMouseUp",
+      "signature": "private onEngineMouseUp = (event: MouseEvent): void => {}"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineMouseLeave",
+      "label": "Method",
+      "name": "onEngineMouseLeave",
+      "signature": "private onEngineMouseLeave = (): void => {}"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineFocus",
+      "label": "Method",
+      "name": "onEngineFocus",
+      "signature": "private onEngineFocus = (): void => {}"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineBlur",
+      "label": "Method",
+      "name": "onEngineBlur",
+      "signature": "private onEngineBlur = (): void => {}"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineMouseScroll",
+      "label": "Method",
+      "name": "onEngineMouseScroll",
+      "signature": "private onEngineMouseScroll = (event: WheelEvent): void => {}"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineVisibilityChange",
+      "label": "Method",
+      "name": "onEngineVisibilityChange",
+      "signature": "private onEngineVisibilityChange = (): void => {}"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineWindowFocus",
+      "label": "Method",
+      "name": "onEngineWindowFocus",
+      "signature": "private onEngineWindowFocus = (): void => {}"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineWindowBlur",
+      "label": "Method",
+      "name": "onEngineWindowBlur",
+      "signature": "private onEngineWindowBlur = (): void => {}"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/managers/engine-event-manager.ts",
+      "target": "/managers/engine-event-manager.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/managers/engine-event-manager.ts",
+      "target": "/core/mouse.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/engine-event-manager.ts",
+      "target": "/core/keyboard.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/engine-event-manager.ts",
+      "target": "/core/gamepad-manager.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/engine-event-manager.ts",
+      "target": "/engine/engine.md",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

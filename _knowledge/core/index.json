@@ -1,0 +1,99 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/core/index.ts",
+    "doc_path": "/core/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as the primary facade or barrel file for the entire engine, centralizing access to all core subsystems. It aggregates and exports a comprehensive collection of functionalities, including rendering, input handling, vector math, and scene management. Its architectural role is to provide a predictable, high-level interface, shielding consumers from the internal dependency structure of the engine. It contains no complex logic, serving purely as an aggregation point for other core components."
+  },
+  "graph_nodes": [],
+  "graph_edges": [
+    {
+      "source": "/core/index.ts",
+      "target": "/core/bounding-box.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/camera-ubo.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/canvas-viewport.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/color.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/colors.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/engineCache.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/event-emitter.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/input.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/json-serializable.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/mesh.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/object-instanciator.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/range.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/scene-fog.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/transform.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/vector.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/render.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

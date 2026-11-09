@@ -1,0 +1,55 @@
+{
+  "component": {
+    "name": "SceneEntityBehaviour",
+    "source_path": "/interfaces/scene-behaviour.ts",
+    "doc_path": "/interfaces/scene-behaviour.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This interface defines the contract for entity behaviours requiring granular control over the entity's lifecycle within the game loop. It extends the base EntityBehaviour by mandating specific hooks: beforeUpdate, afterUpdate, beforeDraw, and afterDraw. Its primary role is to standardize how behaviours interact with the engine's frame processing cycle, ensuring predictable integration into the simulation and rendering pipeline."
+  },
+  "graph_nodes": [
+    {
+      "id": "/interfaces/scene-behaviour.ts#SceneEntityBehaviour",
+      "label": "Interface",
+      "name": "SceneEntityBehaviour",
+      "signature": "extends EntityBehaviour"
+    },
+    {
+      "id": "/interfaces/scene-behaviour.ts#beforeUpdate",
+      "label": "Method",
+      "name": "beforeUpdate",
+      "signature": "beforeUpdate(ellapsed: number): void"
+    },
+    {
+      "id": "/interfaces/scene-behaviour.ts#afterUpdate",
+      "label": "Method",
+      "name": "afterUpdate",
+      "signature": "afterUpdate(): void"
+    },
+    {
+      "id": "/interfaces/scene-behaviour.ts#beforeDraw",
+      "label": "Method",
+      "name": "beforeDraw",
+      "signature": "beforeDraw(): void"
+    },
+    {
+      "id": "/interfaces/scene-behaviour.ts#afterDraw",
+      "label": "Method",
+      "name": "afterDraw",
+      "signature": "afterDraw(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/interfaces/scene-behaviour.ts",
+      "target": "/behaviours/entity-behaviour.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "component": {
+    "name": "RenderPipeline",
+    "source_path": "/core/render/render-pipeline.ts",
+    "doc_path": "/core/render/render-pipeline.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The RenderPipeline class serves as the central orchestrator for the entire rendering process, managing the sequential execution of various rendering stages like shadow mapping and geometry rendering. It abstracts WebGL state management by maintaining a queue of IRenderPasses and managing intermediate rendering targets, such as the main off-screen framebuffer. Its primary responsibility is to execute the entire frame draw cycle, ensuring correct data flow between specialized and intermediate rendering passes."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipeline",
+      "label": "Class",
+      "name": "RenderPipeline",
+      "signature": "constructor(public override name: string = 'Render Pipeline')"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#instanciate",
+      "label": "Static Method",
+      "name": "instanciate",
+      "signature": "static instanciate(): RenderPipeline"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#shadowMap",
+      "label": "Getter",
+      "name": "shadowMap",
+      "signature": "get shadowMap(): ShadowMapPass"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#sceneTexture",
+      "label": "Getter",
+      "name": "sceneTexture",
+      "signature": "get sceneTexture(): Texture | null"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#framebuffer",
+      "label": "Getter",
+      "name": "framebuffer",
+      "signature": "get framebuffer(): WebGLFramebuffer | null"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#setGlRenderingContext",
+      "label": "Method",
+      "name": "setGlRenderingContext",
+      "signature": "setGlRenderingContext(gl: WebGL2RenderingContext): void"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "initialize(scene: Scene): void"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#addPass",
+      "label": "Method",
+      "name": "addPass",
+      "signature": "addPass(pass: IRenderPass): void"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#draw",
+      "label": "Method",
+      "name": "draw",
+      "signature": "draw(): void"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#resize",
+      "label": "Method",
+      "name": "resize",
+      "signature": "resize(width: number, height: number): void"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#recreateSingleBuffer",
+      "label": "Method",
+      "name": "recreateSingleBuffer",
+      "signature": "protected recreateSingleBuffer(width: number, height: number): void"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#cleanupSingleBuffer",
+      "label": "Method",
+      "name": "cleanupSingleBuffer",
+      "signature": "protected cleanupSingleBuffer(): void"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "override fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "override toJsonObject(): JsonSerializedData"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/core/render/pass/shadow-map-pass.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/core/render/pass/geometry-pass.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/core/render/pass/post-processing-pass.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/core/render/render-pass.interface.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/core/entities/scene.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/core/entities/camera.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/core/enums/class-type.enum.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/core/interfaces/json-serialized-data.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/core/textures/texture.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/core/render/camera-ubo.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/core/render/canvas-viewport.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/core/render/json-serializable.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/core/render/object-instanciator.md",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

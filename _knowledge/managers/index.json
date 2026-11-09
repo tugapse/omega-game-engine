@@ -1,0 +1,39 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/managers/index.ts",
+    "doc_path": "/managers/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as a facade or barrel file for the entire 'managers' subsystem within the application. Its core responsibility is to centralize and export the public interfaces of critical management services, including event, dependency, input, and scene managers. It ensures that consumers interact with the system through a single, predictable, and unified entry point, which is vital for maintaining modularity and dependency management across application layers."
+  },
+  "graph_nodes": [],
+  "graph_edges": [
+    {
+      "source": "/managers/index.ts",
+      "target": "/managers/engine-event-manager.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/managers/index.ts",
+      "target": "/managers/dependency-manager.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/managers/index.ts",
+      "target": "/managers/input-manager.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/managers/index.ts",
+      "target": "/managers/scene-manager.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

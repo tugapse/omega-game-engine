@@ -1,0 +1,39 @@
+{
+  "component": {
+    "name": "SpherePrimitive",
+    "source_path": "/primitives/sphere-primitive.ts",
+    "doc_path": "/primitives/sphere-primitive.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "SpherePrimitive is a data model class responsible for procedurally generating the geometric data for a sphere mesh. It calculates vertices, surface normals, and UV coordinates by mapping spherical coordinates (latitude/longitude) onto a specified radius. The constructor iterates through defined stacks and slices to construct the mesh data, which is then stored in a MeshData structure for rendering consumption."
+  },
+  "graph_nodes": [
+    {
+      "id": "/primitives/sphere-primitive.ts#SpherePrimitive",
+      "label": "Class",
+      "name": "SpherePrimitive",
+      "signature": "constructor(radius: number = 1.0, slices: number = 32, stacks: number = 16)"
+    },
+    {
+      "id": "/primitives/sphere-primitive.ts#MeshData",
+      "label": "Type",
+      "name": "MeshData",
+      "signature": "N/A"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/primitives/sphere-primitive.ts",
+      "target": "/core/mesh.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

@@ -1,0 +1,166 @@
+{
+  "component": {
+    "name": "Texture",
+    "source_path": "/textures/texture.ts",
+    "doc_path": "/textures/texture.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The Texture class manages the complete lifecycle of 2D textures within a WebGL rendering pipeline. It handles asynchronous loading from URIs, creation of GPU resources via WebGL2RenderingContext, and configuration of filtering/wrapping parameters. It integrates serialization capabilities via JsonSerializable and manages resource cleanup through EngineCache upon destruction."
+  },
+  "graph_nodes": [
+    {
+      "id": "/textures/texture.ts#Texture",
+      "label": "Class",
+      "name": "Texture",
+      "signature": "constructor(gl?: WebGL2RenderingContext, textureUri?: string)"
+    },
+    {
+      "id": "/textures/texture.ts#Texture.createDepthTexture",
+      "label": "Method",
+      "name": "createDepthTexture",
+      "signature": "static createDepthTexture(gl: WebGL2RenderingContext, width: number, height: number): Texture"
+    },
+    {
+      "id": "/textures/texture.ts#Texture.create",
+      "label": "Method",
+      "name": "create",
+      "signature": "static create(gl: WebGL2RenderingContext, width: number, height: number, color: Uint8Array | null = null): Texture"
+    },
+    {
+      "id": "/textures/texture.ts#load",
+      "label": "Method",
+      "name": "load",
+      "signature": "load(): Promise<void>"
+    },
+    {
+      "id": "/textures/texture.ts#rebuild",
+      "label": "Method",
+      "name": "rebuild",
+      "signature": "rebuild(): void"
+    },
+    {
+      "id": "/textures/texture.ts#setTextureParameters",
+      "label": "Method",
+      "name": "setTextureParameters",
+      "signature": "setTextureParameters(): void"
+    },
+    {
+      "id": "/textures/texture.ts#setMinFilter",
+      "label": "Method",
+      "name": "setMinFilter",
+      "signature": "setMinFilter(filter: TextureFilterMode): void"
+    },
+    {
+      "id": "/textures/texture.ts#setMagFilter",
+      "label": "Method",
+      "name": "setMagFilter",
+      "signature": "setMagFilter(filter: TextureFilterMode): void"
+    },
+    {
+      "id": "/textures/texture.ts#setWrapS",
+      "label": "Method",
+      "name": "setWrapS",
+      "signature": "setWrapS(wrap: TextureWrapMode): void"
+    },
+    {
+      "id": "/textures/texture.ts#setWrapT",
+      "label": "Method",
+      "name": "setWrapT",
+      "signature": "setWrapT(wrap: TextureWrapMode): void"
+    },
+    {
+      "id": "/textures/texture.ts#setPixels",
+      "label": "Method",
+      "name": "setPixels",
+      "signature": "setPixels(x: number, y: number, width: number, height: number, data: TexImageSource | ArrayBufferView): void"
+    },
+    {
+      "id": "/textures/texture.ts#getPixels",
+      "label": "Method",
+      "name": "getPixels",
+      "signature": "getPixels(width: number, height: number): Uint8Array | null"
+    },
+    {
+      "id": "/textures/texture.ts#bind",
+      "label": "Method",
+      "name": "bind",
+      "signature": "bind(): void"
+    },
+    {
+      "id": "/textures/texture.ts#unBind",
+      "label": "Method",
+      "name": "unBind",
+      "signature": "unBind(): void"
+    },
+    {
+      "id": "/textures/texture.ts#glTexture",
+      "label": "Getter",
+      "name": "glTexture",
+      "signature": "get glTexture(): WebGLTexture | null"
+    },
+    {
+      "id": "/textures/texture.ts#isImageLoaded",
+      "label": "Getter",
+      "name": "isImageLoaded",
+      "signature": "get isImageLoaded(): boolean"
+    },
+    {
+      "id": "/textures/texture.ts#width",
+      "label": "Getter",
+      "name": "width",
+      "signature": "get width(): number"
+    },
+    {
+      "id": "/textures/texture.ts#height",
+      "label": "Getter",
+      "name": "height",
+      "signature": "get height(): number"
+    },
+    {
+      "id": "/textures/texture.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "destroy(): void"
+    },
+    {
+      "id": "/textures/texture.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/textures/texture.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/textures/texture.ts",
+      "target": "/src/core/engine-cache.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/textures/texture.ts",
+      "target": "/src/core/json-serializable.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/textures/texture.ts",
+      "target": "/src/interfaces/json-serialized-data.md",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "HTMLImageElement",
+      "WebGL2RenderingContext",
+      "Uint8Array",
+      "ArrayBufferView"
+    ],
+    "has_side_effects": true
+  }
+}

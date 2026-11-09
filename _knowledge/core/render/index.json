@@ -1,0 +1,41 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/core/render/index.ts",
+    "doc_path": "/core/render/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module serves as the primary facade for the rendering subsystem, acting as the top-layer entry point. It aggregates and exports core functionalities by consolidating access to various rendering pipeline stages. It exposes the main pipeline definition, defines necessary contracts via interfaces, and provides access to concrete rendering pass implementations."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/index.ts#index",
+      "label": "Module",
+      "name": "index",
+      "signature": "export *"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/index.ts",
+      "target": "/core/render/render-pipeline.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/index.ts",
+      "target": "/core/render/render-pass.interface.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/index.ts",
+      "target": "/core/render/pass.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

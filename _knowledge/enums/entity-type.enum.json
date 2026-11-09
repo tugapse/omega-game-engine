@@ -1,0 +1,67 @@
+{
+  "component": {
+    "name": "entity-type.enum",
+    "source_path": "/enums/entity-type.enum.ts",
+    "doc_path": "/enums/entity-type.enum.json",
+    "type": "model"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the strongly-typed enumeration, EntityType, which serves as the canonical identifier for all distinct object types within the engine's runtime environment. It provides a fixed set of constants, such as STATIC, CAMERA, and various LIGHT types, ensuring predictable entity identification. This enum is foundational to the engine's data structure layer, critical for serialization and scene graph management."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/entity-type.enum.ts#EntityType",
+      "label": "Type",
+      "name": "EntityType",
+      "signature": "enum EntityType"
+    },
+    {
+      "id": "/enums/entity-type.enum.ts#STATIC",
+      "label": "Type",
+      "name": "STATIC",
+      "signature": "STATIC = -1"
+    },
+    {
+      "id": "/enums/entity-type.enum.ts#LIGHT_AMBIENT",
+      "label": "Type",
+      "name": "LIGHT_AMBIENT",
+      "signature": "LIGHT_AMBIENT = 0"
+    },
+    {
+      "id": "/enums/entity-type.enum.ts#LIGHT_DIRECTIONAL",
+      "label": "Type",
+      "name": "LIGHT_DIRECTIONAL",
+      "signature": "LIGHT_DIRECTIONAL = 1"
+    },
+    {
+      "id": "/enums/entity-type.enum.ts#LIGHT_POINT",
+      "label": "Type",
+      "name": "LIGHT_POINT",
+      "signature": "LIGHT_POINT = 2"
+    },
+    {
+      "id": "/enums/entity-type.enum.ts#LIGHT_SPOT",
+      "label": "Type",
+      "name": "LIGHT_SPOT",
+      "signature": "LIGHT_SPOT = 3"
+    },
+    {
+      "id": "/enums/entity-type.enum.ts#CAMERA",
+      "label": "Type",
+      "name": "CAMERA",
+      "signature": "CAMERA = 4"
+    },
+    {
+      "id": "/enums/entity-type.enum.ts#SCENE",
+      "label": "Type",
+      "name": "SCENE",
+      "signature": "SCENE = 5"
+    }
+  ],
+  "graph_edges": [],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

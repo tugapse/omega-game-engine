@@ -1,0 +1,230 @@
+{
+  "component": {
+    "name": "Scene",
+    "source_path": "/entities/scene.ts",
+    "doc_path": "/entities/scene.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The Scene class acts as the root context and primary manager for the entire 3D environment within the ECS pattern. It orchestrates the lifecycle, managing collections of SceneEntity objects, lights, and scene-specific effects like fog. It provides critical methods for state persistence via serialization (toJsonObject/fromJson) and controls the main update/draw loop, delegating rendering to the RenderPipeline."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/scene.ts#Scene",
+      "label": "Class",
+      "name": "Scene",
+      "signature": "constructor()"
+    },
+    {
+      "id": "/entities/scene.ts#shadowmap",
+      "label": "Getter",
+      "name": "shadowmap",
+      "signature": "get shadowmap(): any"
+    },
+    {
+      "id": "/entities/scene.ts#renderPipeline",
+      "label": "Getter",
+      "name": "renderPipeline",
+      "signature": "get renderPipeline(): RenderPipeline"
+    },
+    {
+      "id": "/entities/scene.ts#sceneFog",
+      "label": "Property",
+      "name": "sceneFog",
+      "signature": "sceneFog: SceneFog"
+    },
+    {
+      "id": "/entities/scene.ts#isRunning",
+      "label": "Property",
+      "name": "isRunning",
+      "signature": "isRunning: boolean"
+    },
+    {
+      "id": "/entities/scene.ts#inEditMode",
+      "label": "Property",
+      "name": "inEditMode",
+      "signature": "inEditMode: boolean"
+    },
+    {
+      "id": "/entities/scene.ts#clearColor",
+      "label": "Property",
+      "name": "clearColor",
+      "signature": "clearColor: Color"
+    },
+    {
+      "id": "/entities/scene.ts#tag",
+      "label": "Property",
+      "name": "tag",
+      "signature": "tag: string"
+    },
+    {
+      "id": "/entities/scene.ts#behaviours",
+      "label": "Property",
+      "name": "behaviours",
+      "signature": "behaviours: SceneEntityBehaviour[]"
+    },
+    {
+      "id": "/entities/scene.ts#entityType",
+      "label": "Property",
+      "name": "entityType",
+      "signature": "entityType: number"
+    },
+    {
+      "id": "/entities/scene.ts#objects",
+      "label": "Getter",
+      "name": "objects",
+      "signature": "get objects(): SceneEntity[]"
+    },
+    {
+      "id": "/entities/scene.ts#lights",
+      "label": "Getter",
+      "name": "lights",
+      "signature": "get lights(): Light[]"
+    },
+    {
+      "id": "/entities/scene.ts#addEntity",
+      "label": "Method",
+      "name": "addEntity",
+      "signature": "addEntity(entity: SceneEntity): void"
+    },
+    {
+      "id": "/entities/scene.ts#removeEntity",
+      "label": "Method",
+      "name": "removeEntity",
+      "signature": "removeEntity(entity: SceneEntity): void"
+    },
+    {
+      "id": "/entities/scene.ts#addBehaviour",
+      "label": "Method",
+      "name": "addBehaviour",
+      "signature": "addBehaviour(behaviour: SceneEntityBehaviour): void"
+    },
+    {
+      "id": "/entities/scene.ts#setGlRenderingContext",
+      "label": "Method",
+      "name": "setGlRenderingContext",
+      "signature": "setGlRenderingContext(gl: WebGL2RenderingContext): void"
+    },
+    {
+      "id": "/entities/scene.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "destroy(): void"
+    },
+    {
+      "id": "/entities/scene.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/entities/scene.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/entities/scene.ts#getEntitieByName",
+      "label": "Method",
+      "name": "getEntitieByName",
+      "signature": "getEntitieByName(name: string): SceneEntity | undefined"
+    },
+    {
+      "id": "/entities/scene.ts#getEntitieClassByName",
+      "label": "Method",
+      "name": "getEntitieClassByName",
+      "signature": "getEntitieClassByName(className: string): SceneEntity | undefined"
+    },
+    {
+      "id": "/entities/scene.ts#getEntitiesClassByName",
+      "label": "Method",
+      "name": "getEntitiesClassByName",
+      "signature": "getEntitiesClassByName(className: string): SceneEntity[]"
+    },
+    {
+      "id": "/entities/scene.ts#getEntitieByUuid",
+      "label": "Method",
+      "name": "getEntitieByUuid",
+      "signature": "getEntitieByUuid(uuid: string): SceneEntity | undefined"
+    },
+    {
+      "id": "/entities/scene.ts#getEntitiesByTag",
+      "label": "Method",
+      "name": "getEntitiesByTag",
+      "signature": "getEntitiesByTag(tag: string): SceneEntity[]"
+    },
+    {
+      "id": "/entities/scene.ts#getEntities",
+      "label": "Method",
+      "name": "getEntities",
+      "signature": "getEntities<T>(constructor: new (...args: any[]) => T): T[]"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/scene.ts",
+      "target": "/entities/scene.ts",
+      "relation": "inherits"
+    },
+    {
+      "source": "/entities/scene.ts",
+      "target": "/entities/scene.ts",
+      "relation": "uses"
+    },
+    {
+      "source": "/entities/scene.ts",
+      "target": "/core.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/scene.ts",
+      "target": "/core/render.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/scene.ts",
+      "target": "/enums/entity-type.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/scene.ts",
+      "target": "/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/scene.ts",
+      "target": "/interfaces/scene-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/scene.ts",
+      "target": "/textures/cubemap-texture.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/scene.ts",
+      "target": "/textures/texture.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/scene.ts",
+      "target": "/entities/camera.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/scene.ts",
+      "target": "/entities/entity.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/scene.ts",
+      "target": "/entities/lights/light.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

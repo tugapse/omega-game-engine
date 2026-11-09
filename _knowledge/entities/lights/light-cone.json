@@ -1,0 +1,60 @@
+{
+  "component": {
+    "name": "LightConeAngles",
+    "source_path": "/entities/lights/light-cone.ts",
+    "doc_path": "/entities/lights/light-cone.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "LightConeAngles is a data model class responsible for encapsulating the geometric parameters defining a spotlight's beam spread. It manages two key properties: 'inner' and 'outer' cone angles, which dictate light intensity falloff. The class implements serialization via JsonSerializable, allowing its angle data to be reliably persisted and loaded from external JSON data structures."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/lights/light-cone.ts#LightConeAngles",
+      "label": "Class",
+      "name": "LightConeAngles",
+      "signature": ""
+    },
+    {
+      "id": "/entities/lights/light-cone.ts#inner",
+      "label": "Variable",
+      "name": "inner",
+      "signature": "inner: number"
+    },
+    {
+      "id": "/entities/lights/light-cone.ts#outer",
+      "label": "Variable",
+      "name": "outer",
+      "signature": "outer: number"
+    },
+    {
+      "id": "/entities/lights/light-cone.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/entities/lights/light-cone.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/lights/light-cone.ts",
+      "target": "/core/json-serializable.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/light-cone.ts",
+      "target": "/interfaces/json-serialized-data.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

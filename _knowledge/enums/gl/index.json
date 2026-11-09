@@ -1,0 +1,75 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/enums/gl/index.ts",
+    "doc_path": "/enums/gl/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as a central barrel file for aggregating OpenGL-related enumeration types within the engine's graphics subsystem. Its primary role is to consolidate exports from various specific enum definition files, such as blending modes and face winding rules. By serving as a facade, it simplifies dependency management, allowing consumers to import all GL enums from a single, predictable location."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/gl/index.ts#blend.enum",
+      "label": "Type",
+      "name": "blend.enum",
+      "signature": ""
+    },
+    {
+      "id": "/enums/gl/index.ts#clear-mask.enum",
+      "label": "Type",
+      "name": "clear-mask.enum",
+      "signature": ""
+    },
+    {
+      "id": "/enums/gl/index.ts#cull-face.enum",
+      "label": "Type",
+      "name": "cull-face.enum",
+      "signature": ""
+    },
+    {
+      "id": "/enums/gl/index.ts#deph-function.enum",
+      "label": "Type",
+      "name": "deph-function.enum",
+      "signature": ""
+    },
+    {
+      "id": "/enums/gl/index.ts#face-winding.enum",
+      "label": "Type",
+      "name": "face-winding.enum",
+      "signature": ""
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/enums/gl/index.ts",
+      "target": "/enums/gl/blend.enum",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/gl/index.ts",
+      "target": "/enums/gl/clear-mask.enum",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/gl/index.ts",
+      "target": "/enums/gl/cull-face.enum",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/gl/index.ts",
+      "target": "/enums/gl/deph-function.enum",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/gl/index.ts",
+      "target": "/enums/gl/face-winding.enum",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

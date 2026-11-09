@@ -1,0 +1,77 @@
+{
+  "component": {
+    "name": "SkyboxMaterial",
+    "source_path": "/materials/skybox-material.ts",
+    "doc_path": "/materials/skybox-material.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "SkyboxMaterial extends CubemapMaterial to manage specialized rendering properties for skybox environments. It encapsulates procedural color definitions like skyColor, horizonColor, and groundColor, alongside an exponent factor controlling lighting falloff. The class overrides serialization methods to ensure these unique procedural parameters are correctly persisted and reconstructed from JSON data structures."
+  },
+  "graph_nodes": [
+    {
+      "id": "/materials/skybox-material.ts#SkyboxMaterial",
+      "label": "Class",
+      "name": "SkyboxMaterial",
+      "signature": "class SkyboxMaterial extends CubemapMaterial"
+    },
+    {
+      "id": "/materials/skybox-material.ts#skyColor",
+      "label": "Variable",
+      "name": "skyColor",
+      "signature": "public skyColor: Color = new Color(0.35, 0.53, 0.7, 1.0);"
+    },
+    {
+      "id": "/materials/skybox-material.ts#horizonColor",
+      "label": "Variable",
+      "name": "horizonColor",
+      "signature": "public horizonColor: Color = new Color(0.7, 0.75, 0.8, 1.0);"
+    },
+    {
+      "id": "/materials/skybox-material.ts#groundColor",
+      "label": "Variable",
+      "name": "groundColor",
+      "signature": "public groundColor: Color = new Color(0.2, 0.2, 0.2, 1.0);"
+    },
+    {
+      "id": "/materials/skybox-material.ts#exponent",
+      "label": "Variable",
+      "name": "exponent",
+      "signature": "public exponent: number = 0.6;"
+    },
+    {
+      "id": "/materials/skybox-material.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/materials/skybox-material.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "override async fromJson(jsonObject: JsonSerializedData): Promise<void>"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/materials/skybox-material.ts",
+      "target": "/materials/cubemap-material.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/skybox-material.ts",
+      "target": "/core/color.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/skybox-material.ts",
+      "target": "/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

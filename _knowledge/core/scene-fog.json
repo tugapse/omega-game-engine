@@ -1,0 +1,106 @@
+{
+  "component": {
+    "name": "SceneFog",
+    "source_path": "/core/scene-fog.ts",
+    "doc_path": "/core/scene-fog.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "SceneFog is a core data model class responsible for encapsulating all parameters related to atmospheric fog simulation within a 3D rendering scene. It manages configuration details such as fog type (LINEAR, EXPONENTIAL), starting distance, density, and color. As a JsonSerializable, its primary architectural role is to provide a structured, serializable representation of fog effects, allowing for easy persistence to and loading from JSON structures."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/scene-fog.ts#SceneFog",
+      "label": "Class",
+      "name": "SceneFog",
+      "signature": "constructor(public override name = 'Scene Fog')"
+    },
+    {
+      "id": "/core/scene-fog.ts#FogType",
+      "label": "Enum",
+      "name": "FogType",
+      "signature": "LINEAR = 0, EXPONENTIAL = 1, EXPONEMTIAL_SQUARED = 2"
+    },
+    {
+      "id": "/core/scene-fog.ts#enabled",
+      "label": "Variable",
+      "name": "enabled",
+      "signature": "boolean = true"
+    },
+    {
+      "id": "/core/scene-fog.ts#fogType",
+      "label": "Variable",
+      "name": "fogType",
+      "signature": "number = FogType.LINEAR"
+    },
+    {
+      "id": "/core/scene-fog.ts#distance",
+      "label": "Variable",
+      "name": "distance",
+      "signature": "number = 0.01"
+    },
+    {
+      "id": "/core/scene-fog.ts#density",
+      "label": "Variable",
+      "name": "density",
+      "signature": "number = 0.001"
+    },
+    {
+      "id": "/core/scene-fog.ts#heightFalloff",
+      "label": "Variable",
+      "name": "heightFalloff",
+      "signature": "number = 0.0"
+    },
+    {
+      "id": "/core/scene-fog.ts#baseHeight",
+      "label": "Variable",
+      "name": "baseHeight",
+      "signature": "number = 0.0"
+    },
+    {
+      "id": "/core/scene-fog.ts#color",
+      "label": "Variable",
+      "name": "color",
+      "signature": "Color = Colors.grey"
+    },
+    {
+      "id": "/core/scene-fog.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "public override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/core/scene-fog.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "public override fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/scene-fog.ts",
+      "target": "/interfaces.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/scene-fog.ts",
+      "target": "/core/color.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/scene-fog.ts",
+      "target": "/core/colors.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/scene-fog.ts",
+      "target": "/json-serializable.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/textures/index.ts",
+    "doc_path": "/textures/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as a central barrel file for the texture subsystem, aggregating exports from related texture definitions. Its primary architectural role is to provide a unified, single entry point for consumers needing access to various texture types. By exporting from './texture' and './cubemap-texture', it promotes cleaner dependency graphs by abstracting internal file structure from consumers."
+  },
+  "graph_nodes": [
+    {
+      "id": "/textures/index.ts#texture",
+      "label": "Module",
+      "name": "texture",
+      "signature": "export * from './texture'"
+    },
+    {
+      "id": "/textures/index.ts#cubemap-texture",
+      "label": "Module",
+      "name": "cubemap-texture",
+      "signature": "export * from './cubemap-texture'"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/textures/index.ts",
+      "target": "/textures/texture.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/textures/index.ts",
+      "target": "/textures/cubemap-texture.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

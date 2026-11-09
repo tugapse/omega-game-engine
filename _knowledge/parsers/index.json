@@ -1,0 +1,59 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/parsers/index.ts",
+    "doc_path": "/parsers/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as the primary facade and aggregation layer for all parsing functionalities within the data ingestion pipeline. It consolidates exports from specialized parser implementations, such as MTL and OBJ format parsers, providing a unified interface to consumers. Architecturally, it serves as a barrel file, abstracting the specific locations of individual parser implementations for clean, high-level application interaction."
+  },
+  "graph_nodes": [
+    {
+      "id": "/parsers/index.ts#index",
+      "label": "Module",
+      "name": "index",
+      "signature": "export *"
+    },
+    {
+      "id": "/parsers/index.ts#interfaces",
+      "label": "Module",
+      "name": "interfaces",
+      "signature": "export *"
+    },
+    {
+      "id": "/parsers/index.ts#mtl-parser",
+      "label": "Module",
+      "name": "mtl-parser",
+      "signature": "export *"
+    },
+    {
+      "id": "/parsers/index.ts#obj-parser",
+      "label": "Module",
+      "name": "obj-parser",
+      "signature": "export *"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/parsers/index.ts",
+      "target": "/parsers/interfaces.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/parsers/index.ts",
+      "target": "/parsers/mtl-parser.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/parsers/index.ts",
+      "target": "/parsers/obj-parser.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

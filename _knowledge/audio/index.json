@@ -1,0 +1,51 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/audio/index.ts",
+    "doc_path": "/audio/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module serves as the primary facade and aggregation layer for the entire audio subsystem. It consolidates and exposes core functionalities related to audio processing, playback, and management through a single, unified interface. Architecturally, it sits at the top level of the audio service layer, promoting modularity by abstracting complex underlying mechanisms. It aggregates functionality from specialized internal modules like the audio-cache, audio-engine, and sequencer-clock."
+  },
+  "graph_nodes": [
+    {
+      "id": "/audio/index.ts#index",
+      "label": "Module",
+      "name": "index",
+      "signature": "export *"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/audio/index.ts",
+      "target": "/audio/audio-cache.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/audio/index.ts",
+      "target": "/audio/audio-engine.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/audio/index.ts",
+      "target": "/audio/sequencer-clock.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/audio/index.ts",
+      "target": "/audio/voice-factory.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/audio/index.ts",
+      "target": "/audio/audio-diagnostics.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

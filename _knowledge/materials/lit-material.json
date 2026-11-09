@@ -1,0 +1,118 @@
+{
+  "component": {
+    "name": "LitMaterial",
+    "source_path": "/materials/lit-material.ts",
+    "doc_path": "/materials/lit-material.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "LitMaterial is a core rendering model extending UnlitMaterial to support physically-based rendering features. It manages lighting parameters like specularStrength, roughness, and normalMapStrength, enabling accurate light interaction simulation. The class provides serialization (toJsonObject) and deserialization (fromJson) methods, interacting with EngineCache for texture loading during state reconstruction. It ensures proper resource cleanup via the destroy method."
+  },
+  "graph_nodes": [
+    {
+      "id": "/materials/lit-material.ts#LitMaterial",
+      "label": "Class",
+      "name": "LitMaterial",
+      "signature": "class LitMaterial extends UnlitMaterial"
+    },
+    {
+      "id": "/materials/lit-material.ts#specularStrength",
+      "label": "Variable",
+      "name": "specularStrength",
+      "signature": "public specularStrength: number = 0.5"
+    },
+    {
+      "id": "/materials/lit-material.ts#roughness",
+      "label": "Variable",
+      "name": "roughness",
+      "signature": "public roughness: number = 0.01"
+    },
+    {
+      "id": "/materials/lit-material.ts#normalMapStrength",
+      "label": "Variable",
+      "name": "normalMapStrength",
+      "signature": "public normalMapStrength: number = 0.1"
+    },
+    {
+      "id": "/materials/lit-material.ts#normalTex",
+      "label": "Variable",
+      "name": "normalTex",
+      "signature": "public normalTex?: Texture"
+    },
+    {
+      "id": "/materials/lit-material.ts#specularTex",
+      "label": "Variable",
+      "name": "specularTex",
+      "signature": "public specularTex?: Texture"
+    },
+    {
+      "id": "/materials/lit-material.ts#roughnessTex",
+      "label": "Variable",
+      "name": "roughnessTex",
+      "signature": "public roughnessTex?: Texture"
+    },
+    {
+      "id": "/materials/lit-material.ts#aoTex",
+      "label": "Variable",
+      "name": "aoTex",
+      "signature": "public aoTex?: Texture"
+    },
+    {
+      "id": "/materials/lit-material.ts#emissiveTex",
+      "label": "Variable",
+      "name": "emissiveTex",
+      "signature": "public emissiveTex?: Texture"
+    },
+    {
+      "id": "/materials/lit-material.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/materials/lit-material.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "override async fromJson(jsonObject: JsonSerializedData): Promise<void>"
+    },
+    {
+      "id": "/materials/lit-material.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(): LitMaterial"
+    },
+    {
+      "id": "/materials/lit-material.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "public override destroy(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/materials/lit-material.ts",
+      "target": "/materials/unlit-material.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/materials/lit-material.ts",
+      "target": "/core/engine-cache.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/lit-material.ts",
+      "target": "/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/lit-material.ts",
+      "target": "/textures/texture.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "component": {
+    "name": "core/input.ts",
+    "source_path": "/core/input.ts",
+    "doc_path": "/core/input.json",
+    "type": "service"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component provides a centralized, static interface for tracking and querying user input from mouse, keyboard, and gamepad devices. It abstracts raw input events into frame-independent state variables, allowing game logic to poll for current states like button presses and cursor positions. It manages transient states using functions like cleanLastFrame() to ensure state integrity across the game loop frames."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/input.ts#Mouse",
+      "label": "Class",
+      "name": "Mouse",
+      "signature": ""
+    },
+    {
+      "id": "/core/input.ts#mouseButtonDown",
+      "label": "Variable",
+      "name": "mouseButtonDown",
+      "signature": "{ [key: string]: boolean }"
+    },
+    {
+      "id": "/core/input.ts#mouseClickPosition",
+      "label": "Variable",
+      "name": "mouseClickPosition",
+      "signature": "{ x: number; y: number }"
+    },
+    {
+      "id": "/core/input.ts#mousePosition",
+      "label": "Variable",
+      "name": "mousePosition",
+      "signature": "{ x: number; y: number }"
+    },
+    {
+      "id": "/core/input.ts#mouseMovement",
+      "label": "Variable",
+      "name": "mouseMovement",
+      "signature": "{ x: number; y: number }"
+    },
+    {
+      "id": "/core/input.ts#wheelX",
+      "label": "Variable",
+      "name": "wheelX",
+      "signature": "number"
+    },
+    {
+      "id": "/core/input.ts#wheelY",
+      "label": "Variable",
+      "name": "wheelY",
+      "signature": "number"
+    },
+    {
+      "id": "/core/input.ts#getMousePosition",
+      "label": "Method",
+      "name": "getMousePosition",
+      "signature": "getMousePosition(): { x: number; y: number }"
+    },
+    {
+      "id": "/core/input.ts#getMouseMovement",
+      "label": "Method",
+      "name": "getMouseMovement",
+      "signature": "getMouseMovement(): { x: number; y: number }"
+    },
+    {
+      "id": "/core/input.ts#isMouseButtonDown",
+      "label": "Method",
+      "name": "isMouseButtonDown",
+      "signature": "isMouseButtonDown(button: number): boolean"
+    },
+    {
+      "id": "/core/input.ts#getMouseWheelDelta",
+      "label": "Method",
+      "name": "getMouseWheelDelta",
+      "signature": "getMouseWheelDelta(): { x: number; y: number }"
+    },
+    {
+      "id": "/core/input.ts#Keyboard",
+      "label": "Class",
+      "name": "Keyboard",
+      "signature": ""
+    },
+    {
+      "id": "/core/input.ts#keyDown",
+      "label": "Variable",
+      "name": "keyDown",
+      "signature": "{ [key: string]: boolean }"
+    },
+    {
+      "id": "/core/input.ts#keyUp",
+      "label": "Variable",
+      "name": "keyUp",
+      "signature": "{ [key: string]: boolean }"
+    },
+    {
+      "id": "/core/input.ts#keyPress",
+      "label": "Variable",
+      "name": "keyPress",
+      "signature": "{ [key: string]: boolean }"
+    },
+    {
+      "id": "/core/input.ts#isKeyDown",
+      "label": "Method",
+      "name": "isKeyDown",
+      "signature": "isKeyDown(key: string): boolean"
+    },
+    {
+      "id": "/core/input.ts#isKeyPressed",
+      "label": "Method",
+      "name": "isKeyPressed",
+      "signature": "isKeyPressed(key: string): boolean"
+    },
+    {
+      "id": "/core/input.ts#isKeyReleased",
+      "label": "Method",
+      "name": "isKeyReleased",
+      "signature": "isKeyReleased(key: string): boolean"
+    },
+    {
+      "id": "/core/input.ts#GamepadManager",
+      "label": "Class",
+      "name": "GamepadManager",
+      "signature": ""
+    },
+    {
+      "id": "/core/input.ts#get gamepads",
+      "label": "Variable",
+      "name": "get gamepads",
+      "signature": "(Gamepad | null)[]"
+    },
+    {
+      "id": "/core/input.ts#update",
+      "label": "Method",
+      "name": "update",
+      "signature": "update(): void"
+    },
+    {
+      "id": "/core/input.ts#cleanLastFrame",
+      "label": "Function",
+      "name": "cleanLastFrame",
+      "signature": "cleanLastFrame()"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/input.ts",
+      "target": "/core/input.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "navigator"
+    ],
+    "has_side_effects": true
+  }
+}

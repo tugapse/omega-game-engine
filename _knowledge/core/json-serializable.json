@@ -1,0 +1,87 @@
+{
+  "component": {
+    "name": "JsonSerializable",
+    "source_path": "/core/json-serializable.ts",
+    "doc_path": "/core/json-serializable.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "JsonSerializable is an abstract base class enforcing a standardized contract for objects capable of JSON serialization and deserialization. It manages core metadata like className and UUID, providing recursive logic via loopAndSaveProperties to handle primitives, custom objects, and plain data structures. It acts as a foundational data model utility, ensuring objects can persist state across boundaries by integrating serialization lifecycle management."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/json-serializable.ts#JsonSerializable",
+      "label": "Class",
+      "name": "JsonSerializable",
+      "signature": ""
+    },
+    {
+      "id": "/core/json-serializable.ts#className",
+      "label": "Getter",
+      "name": "className",
+      "signature": "get className(): string"
+    },
+    {
+      "id": "/core/json-serializable.ts#uuid",
+      "label": "Getter",
+      "name": "uuid",
+      "signature": "get uuid(): string"
+    },
+    {
+      "id": "/core/json-serializable.ts#loopAndSaveProperties",
+      "label": "Method",
+      "name": "loopAndSaveProperties",
+      "signature": "loopAndSaveProperties(value: any): any"
+    },
+    {
+      "id": "/core/json-serializable.ts#getBaseJsonInfo",
+      "label": "Method",
+      "name": "getBaseJsonInfo",
+      "signature": "getBaseJsonInfo(): JsonSerializedData"
+    },
+    {
+      "id": "/core/json-serializable.ts#serializeAutomatically",
+      "label": "Method",
+      "name": "serializeAutomatically",
+      "signature": "serializeAutomatically(): JsonSerializedData"
+    },
+    {
+      "id": "/core/json-serializable.ts#populateProperties",
+      "label": "Method",
+      "name": "populateProperties",
+      "signature": "populateProperties(target: any, source: JsonSerializedData): void"
+    },
+    {
+      "id": "/core/json-serializable.ts#deserializeAutomatically",
+      "label": "Method",
+      "name": "deserializeAutomatically",
+      "signature": "deserializeAutomatically(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/core/json-serializable.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/core/json-serializable.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/json-serializable.ts",
+      "target": "/interfaces/json-serialized-data.md",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "uuid"
+    ],
+    "has_side_effects": true
+  }
+}

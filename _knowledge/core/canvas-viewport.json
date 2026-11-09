@@ -1,0 +1,37 @@
+{
+  "component": {
+    "name": "CanvasViewport",
+    "source_path": "/core/canvas-viewport.ts",
+    "doc_path": "/core/canvas-viewport.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "CanvasViewport is a static utility class designed to serve as a centralized, globally accessible registry for tracking the current dimensions of the rendering surface. It holds two static properties, rendererWidth and rendererHeight, which represent the viewport's width and height. Its primary architectural role is to decouple rendering logic from specific canvas instances by providing a consistent source of truth for rendering bounds across the engine. It relies on external event handlers to mutate its state upon canvas resizing."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/canvas-viewport.ts#CanvasViewport",
+      "label": "Class",
+      "name": "CanvasViewport",
+      "signature": ""
+    },
+    {
+      "id": "/core/canvas-viewport.ts#rendererWidth",
+      "label": "Variable",
+      "name": "rendererWidth",
+      "signature": ""
+    },
+    {
+      "id": "/core/canvas-viewport.ts#rendererHeight",
+      "label": "Variable",
+      "name": "rendererHeight",
+      "signature": ""
+    }
+  ],
+  "graph_edges": [],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

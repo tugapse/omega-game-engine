@@ -1,0 +1,185 @@
+{
+  "component": {
+    "name": "CameraFlyBehaviour",
+    "source_path": "/behaviours/camera-fly-behaviour.ts",
+    "doc_path": "/behaviours/camera-fly-behaviour.json",
+    "type": "controller"
+  },
+  "vector_memory": {
+    "semantic_summary": "CameraFlyBehaviour implements a sophisticated, free-look camera controller, enabling fluid navigation via keyboard (WASD/QE) and mouse input. It manages velocity, acceleration, and dampening for smooth movement in 3D space. The component handles both perspective and orthographic camera modes, where input translates to translation or zoom, respectively, modifying the parent entity's Transform."
+  },
+  "graph_nodes": [
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#CameraFlyBehaviour",
+      "label": "Class",
+      "name": "CameraFlyBehaviour",
+      "signature": "class CameraFlyBehaviour extends EntityBehaviour"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#ICameraMoveKeys",
+      "label": "Interface",
+      "name": "ICameraMoveKeys",
+      "signature": "interface ICameraMoveKeys { forward: string; back: string; left: string; right: string; up: string; down: string; boost: string; }"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#ICameraMouseButtons",
+      "label": "Interface",
+      "name": "ICameraMouseButtons",
+      "signature": "interface ICameraMouseButtons { pan: number; look: number; }"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#moveSpeed",
+      "label": "Variable",
+      "name": "moveSpeed",
+      "signature": "public moveSpeed = 20;"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#rotationSpeed",
+      "label": "Variable",
+      "name": "rotationSpeed",
+      "signature": "/* (Implicitly used/derived from context) */"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#moveDampening",
+      "label": "Variable",
+      "name": "moveDampening",
+      "signature": "/* (Implicitly used/derived from context) */"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#_forwardVelocity",
+      "label": "Variable",
+      "name": "_forwardVelocity",
+      "signature": "protected _forwardVelocity = 0;"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#_strafeVelocity",
+      "label": "Variable",
+      "name": "_strafeVelocity",
+      "signature": "protected _strafeVelocity = 0;"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#_upVelocity",
+      "label": "Variable",
+      "name": "_upVelocity",
+      "signature": "protected _upVelocity = 0;"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#_currentYaw",
+      "label": "Variable",
+      "name": "_currentYaw",
+      "signature": "protected _currentYaw = 0;"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#_currentPitch",
+      "label": "Variable",
+      "name": "_currentPitch",
+      "signature": "protected _currentPitch = 0;"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "override initialize(): boolean"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#update",
+      "label": "Method",
+      "name": "update",
+      "signature": "override update(ellapsed: number): void"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#updateMoveVelocity",
+      "label": "Method",
+      "name": "updateMoveVelocity",
+      "signature": "protected updateMoveVelocity(ellapsed: number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#updateForwardVelocity",
+      "label": "Method",
+      "name": "updateForwardVelocity",
+      "signature": "protected updateForwardVelocity(accelerationDelta: number, maxSpeed: number, stopThreshold: number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#updateStrafeVelocity",
+      "label": "Method",
+      "name": "updateStrafeVelocity",
+      "signature": "protected updateStrafeVelocity(accelerationDelta: number, maxSpeed: number, stopThreshold: number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#updateUpVelocity",
+      "label": "Method",
+      "name": "updateUpVelocity",
+      "signature": "protected updateUpVelocity(accelerationDelta: number, maxSpeed: number, stopThreshold: number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#updatePanVelocity",
+      "label": "Method",
+      "name": "updatePanVelocity",
+      "signature": "protected updatePanVelocity(ellapsed:number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#updateScrollVelocity",
+      "label": "Method",
+      "name": "updateScrollVelocity",
+      "signature": "protected updateScrollVelocity(ellapsed:number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#applyMovementVelocity",
+      "label": "Method",
+      "name": "applyMovementVelocity",
+      "signature": "protected applyMovementVelocity(transform: Transform, ellapsed: number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#applyRotationVelocity",
+      "label": "Method",
+      "name": "applyRotationVelocity",
+      "signature": "protected applyRotationVelocity(transform: Transform, ellapsed: number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#updateInput",
+      "label": "Method",
+      "name": "updateInput",
+      "signature": "protected updateInput(ellapsed: number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#clone",
+      "label": "Method",
+      "name": "clone",
+      "signature": "override clone(): EntityBehaviour | null"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/behaviours/camera-fly-behaviour.ts",
+      "target": "/behaviours/entity-behaviour.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/camera-fly-behaviour.ts",
+      "target": "/core/input.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/camera-fly-behaviour.ts",
+      "target": "/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/camera-fly-behaviour.ts",
+      "target": "/core/transform.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/camera-fly-behaviour.ts",
+      "target": "/entities/camera.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

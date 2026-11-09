@@ -1,0 +1,97 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/interfaces/index.ts",
+    "doc_path": "/interfaces/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as a central barrel export for the entire interfaces subsystem within the engine. Its primary role is to aggregate and expose all core interface definitions, such as blend modes, metadata structures, and scene behaviors, under a single, unified entry point. It functions as a high-level aggregation layer, simplifying client code by providing a stable API surface for consuming core data contracts."
+  },
+  "graph_nodes": [
+    {
+      "id": "/interfaces/index.ts#blend-mode",
+      "label": "Interface",
+      "name": "blend-mode",
+      "signature": ""
+    },
+    {
+      "id": "/interfaces/index.ts#class-metadata",
+      "label": "Interface",
+      "name": "class-metadata",
+      "signature": ""
+    },
+    {
+      "id": "/interfaces/index.ts#cubemap",
+      "label": "Interface",
+      "name": "cubemap",
+      "signature": ""
+    },
+    {
+      "id": "/interfaces/index.ts#json-serialized-data",
+      "label": "Interface",
+      "name": "json-serialized-data",
+      "signature": ""
+    },
+    {
+      "id": "/interfaces/index.ts#meshData",
+      "label": "Interface",
+      "name": "meshData",
+      "signature": ""
+    },
+    {
+      "id": "/interfaces/index.ts#renderer-behaviour",
+      "label": "Interface",
+      "name": "renderer-behaviour",
+      "signature": ""
+    },
+    {
+      "id": "/interfaces/index.ts#scene-behaviour",
+      "label": "Interface",
+      "name": "scene-behaviour",
+      "signature": ""
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/interfaces/index.ts",
+      "target": "/interfaces/blend-mode.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/interfaces/index.ts",
+      "target": "/interfaces/class-metadata.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/interfaces/index.ts",
+      "target": "/interfaces/cubemap.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/interfaces/index.ts",
+      "target": "/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/interfaces/index.ts",
+      "target": "/interfaces/meshData.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/interfaces/index.ts",
+      "target": "/interfaces/renderer-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/interfaces/index.ts",
+      "target": "/interfaces/scene-behaviour.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

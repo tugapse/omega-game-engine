@@ -1,0 +1,66 @@
+{
+  "component": {
+    "name": "LightAttenuation",
+    "source_path": "/entities/lights/light-attenuation.ts",
+    "doc_path": "/entities/lights/light-attenuation.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "LightAttenuation is a core data model class responsible for encapsulating the mathematical parameters that govern light intensity falloff over distance. It manages three distinct attenuation components: constant, linear, and quadratic. This class ensures that light decay behavior can be reliably serialized to and deserialized from JSON configurations, integrating seamlessly into the application's rendering pipeline."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/lights/light-attenuation.ts#LightAttenuation",
+      "label": "Class",
+      "name": "LightAttenuation",
+      "signature": "constructor()"
+    },
+    {
+      "id": "/entities/lights/light-attenuation.ts#constant",
+      "label": "Variable",
+      "name": "constant",
+      "signature": "public constant: number = 0.2"
+    },
+    {
+      "id": "/entities/lights/light-attenuation.ts#linear",
+      "label": "Variable",
+      "name": "linear",
+      "signature": "public linear: number = 0.01"
+    },
+    {
+      "id": "/entities/lights/light-attenuation.ts#quadratic",
+      "label": "Variable",
+      "name": "quadratic",
+      "signature": "public quadratic: number = 0.001"
+    },
+    {
+      "id": "/entities/lights/light-attenuation.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "public override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/entities/lights/light-attenuation.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "public override fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/lights/light-attenuation.ts",
+      "target": "/core/json-serializable.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/light-attenuation.ts",
+      "target": "/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}
