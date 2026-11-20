@@ -1,5 +1,7 @@
 import { EntityBehaviour } from '../behaviours';
-import { EngineCache, JsonSerializable } from '../core';
+import { JsonSerializable } from '../core';
+import { ResourceManager } from '../core/resources/resource-manager';
+import { Resources } from '../core/resources/resources';
 import { MeshData } from '../core/mesh';
 import { ObjectInstanciator } from '../core/object-instanciator';
 import { Transform } from '../core/transform';
@@ -25,14 +27,16 @@ export class SceneManager {
     jsonData: JsonSerializedData,
     scene?: Scene,
   ): Promise<Scene> {
-    EngineCache.clear();
+    // No cache clear() here any more: it threw away every cached
+    // resource (and leaked their GPU memory) on each load. Cached textures are
+    // reused; the scene holds the ones it uses and releases them on destroy.
     scene = scene || new Scene();
     scene.setGlRenderingContext(gl);
 
     const { meshMaps, objects, textureMaps } = jsonData;
     const meshes: { [key: string]: MeshData } =
       SceneManager.instaciateSceneMeshes(meshMaps);
-    await SceneManager.instaciateAndLoadSceneTextures(textureMaps, gl);
+    await SceneManager.instaciateAndLoadSceneTextures(textureMaps, gl, scene);
 
     jsonData['objects'] = SceneManager.instaciateSceneObjects(
       scene,
@@ -55,23 +59,23 @@ export class SceneManager {
   private static async instaciateAndLoadSceneTextures(
     texturesMaps: any,
     gl: WebGL2RenderingContext,
+    scene: Scene,
   ): Promise<void> {
-    for (const textureJsonData of Object.values(texturesMaps) as any[]) {
+    const resources = Resources.for(gl);
+    for (const textureJsonData of Object.values(texturesMaps ?? {}) as any[]) {
       if (textureJsonData.url) {
-        await EngineCache.getTexture2D(textureJsonData.url, gl);
+        scene.holdResource(await resources.textures.acquire(textureJsonData.url));
       } else if (textureJsonData.uris) {
         const keys = textureJsonData.uris;
-        await EngineCache.getTextureCube(
-          {
-            right: keys[0],
-            left: keys[1],
-            up: keys[2],
-            bottom: keys[3],
-            front: keys[4],
-            back: keys[5],
-          },
-          gl,
-        );
+        const key = ResourceManager.cubemapKey({
+          right: keys[0],
+          left: keys[1],
+          up: keys[2],
+          bottom: keys[3],
+          front: keys[4],
+          back: keys[5],
+        });
+        scene.holdResource(await resources.cubemaps.acquire(key));
       }
     }
   }
@@ -117,6 +121,8 @@ export class SceneManager {
       this.instanciateEntity(ob, instanciatedTransforms);
       this.instanciateBehaviours(ob, scene, meshes, gl);
     });
+    // Parents are linked once every transform exists (a child can come first).
+    SceneManager.prepareTransforms(instanciatedTransforms, objects);
 
     return objects.map((e: any) => e.entity);
   }
@@ -133,8 +139,10 @@ export class SceneManager {
     entities: any,
   ): void {
     for (const ent of entities) {
-      if (ent.transform.parent) {
-        ent.entity.transform.setParent(transforms[ent.transform.parent]);
+      const parentUuid = ent.transform?.parent;
+      const parent = parentUuid ? transforms[parentUuid] : undefined;
+      if (parent && ent.entity.transform.parent !== parent) {
+        ent.entity.transform.setParent(parent);
       }
     }
   }

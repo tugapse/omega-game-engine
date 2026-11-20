@@ -1,3 +1,4 @@
+import { ResourceHandle } from '../core/resources/resource-cache';
 import { RendererBehaviour } from '../behaviours/renderer/renderer-behaviour';
 import { Color, Colors, ObjectInstanciator, SceneFog } from '../core';
 import { RenderPipeline } from '../core/render';
@@ -125,7 +126,9 @@ export class Scene extends SceneEntity {
    */
   public override update(ellapsed: number): void {
     if (this.destroyed) return;
-    Camera.mainCamera.update(ellapsed);
+    
+    Camera.mainCamera && Camera.mainCamera.update(ellapsed);
+    
     this.behaviours.forEach((behaviour) => behaviour.beforeUpdate(ellapsed));
 
     if (!this.isRunning && this.inEditMode && this.objects?.length) {
@@ -137,7 +140,6 @@ export class Scene extends SceneEntity {
     if (!this.isRunning) return;
 
     this.ellapsedTime += ellapsed;
-    super.update(ellapsed);
     for (const object of this.objects.filter((e) => e.active)) {
       object.update(ellapsed);
     }
@@ -211,11 +213,22 @@ export class Scene extends SceneEntity {
    * @override
    * @returns {void}
    */
+  /** Resources this scene uses (textures, cubemaps), released on destroy. */
+  private resourceHandles: ResourceHandle<unknown>[] = [];
+
+  /** Keeps a resource alive while this scene exists. */
+  public holdResource(handle: ResourceHandle<unknown>): void {
+    this.resourceHandles.push(handle);
+  }
+
   public override destroy(): void {
     for (const child of this.objects) {
       child.destroy();
     }
     this._objects = [];
+    for (const handle of this.resourceHandles) handle.release();
+    this.resourceHandles = [];
+    this._renderPipeline.destroy();
     super.destroy();
   }
 
@@ -234,6 +247,7 @@ export class Scene extends SceneEntity {
           jsonObject['renderPipeline'].className,
         );
       this._renderPipeline = renderpipeline || new RenderPipeline();
+      this._renderPipeline.fromJson(jsonObject['renderPipeline']);
     } else {
       this._renderPipeline = new RenderPipeline();
     }

@@ -22,6 +22,7 @@ import { CubemapMaterial } from '../materials/cubemap-material';
 import { LitMaterial } from '../materials/lit-material';
 import { UnlitMaterial } from '../materials/unlit-material';
 import { CubePrimitive } from '../primitives/cube-primitive';
+import { PlanePrimitive } from '../primitives/plane-primitive';
 import { QuadPrimitive } from '../primitives/quad-primitive';
 import { SkyboxPrimitive } from '../primitives/skybox-primitive';
 import { SpherePrimitive } from '../primitives/sphere-primitive';
@@ -122,6 +123,16 @@ export class DependencyManager {
         type: ClassType.Mesh,
         path: 'Geometry/Primitives',
         description: 'A primitive mesh representing a 3D cube.',
+      },
+    );
+    ObjectInstanciator.addDependency(
+      'PlanePrimitive',
+      PlanePrimitive.instanciate,
+      {
+        name: 'PlanePrimitive',
+        type: ClassType.Mesh,
+        path: 'Geometry/Primitives',
+        description: 'A flat square grid on the XZ plane.',
       },
     );
     ObjectInstanciator.addDependency(

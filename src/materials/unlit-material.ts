@@ -1,5 +1,6 @@
+import { Resources } from '../core/resources/resources';
 import { vec2 } from "gl-matrix";
-import { EngineCache, Vector2 } from "../core";
+import { Vector2 } from "../core";
 import { JsonSerializedData } from "../interfaces/json-serialized-data";
 import { Texture } from "../textures/texture";
 import { ColorMaterial } from "./color-material";
@@ -51,7 +52,7 @@ export class UnlitMaterial extends ColorMaterial {
   override async fromJson(jsonObject: JsonSerializedData): Promise<void> {
     super.fromJson(jsonObject);
     if (jsonObject["mainTex"]?.url) {
-      this.mainTex = await EngineCache.getTexture2D(jsonObject["mainTex"].url);
+      this.mainTex = await Resources.for().getTexture(jsonObject["mainTex"].url);
     }
     jsonObject['uvScale'] && this.uvScale.set(...jsonObject['uvScale']);
     jsonObject['uvOffset'] && this.uvOffset.set(...jsonObject['uvOffset']);

@@ -1,211 +1,293 @@
 import { Scene, Camera } from "../../entities";
 import { ClassType } from "../../enums/class-type.enum";
 import { JsonSerializedData } from "../../interfaces";
-import { Texture } from "../../textures";
+import { ShaderSources } from "../../shaders/shader-sources";
 import { CameraUBO } from "../camera-ubo";
-import { CanvasViewport } from "../canvas-viewport";
 import { JsonSerializable } from "../json-serializable";
 import { ObjectInstanciator } from "../object-instanciator";
-import { ShadowMapPass, GeometryPass, PostProcessingPass } from "./pass";
-import { IRenderPass } from "./render-pass.interface";
+import { NumberRange } from "../range";
+import { buildFrameData } from "./frame-data";
+import { LightsUBO } from "./lights-ubo";
+import { FullscreenProgram } from "./fullscreen-program";
+import { GeometryPass, ShadowAtlasPass } from "./pass";
 
-export class RenderPipeline extends JsonSerializable {
-  static instanciate() {
-    return new RenderPipeline();
+import { planShadows } from "./shadows";
+import { PostEffect, RetroEffect } from "./post-effect";
+import { IRenderPass, RenderContext } from "./render-pass.interface";
+import { RenderTarget, RenderTargetColor } from "./render-target";
+
+/** How the final copy maps HDR colour to the screen. */
+export enum ToneMapping {
+  /** Clamp to [0, 1]: looks like an LDR pipeline. */
+  None = 0,
+  Reinhard = 1,
+  /** Filmic curve (Narkowicz's ACES fit). */
+  ACES = 2,
+}
+
+/**
+ * What a scene saves about its rendering. GPU objects (targets, textures,
+ * shaders) are never saved: they are rebuilt from these settings.
+ */
+export class RenderPipelineSettings extends JsonSerializable {
+  public shadowsEnabled = true;
+  public shadowStrength = new NumberRange(0.4, 0.0, 1.0, 0.0001);
+  /** How far from the camera the directional light's shadow reaches, in world units. */
+  public shadowDistance = new NumberRange(60, 5, 500, 1);
+  /** Scene colour in RGBA16F (when the GPU can render to it), so lights can go above 1. */
+  public hdr = true;
+  public toneMapping = ToneMapping.None;
+  public exposure = new NumberRange(1, 0, 8, 0.01);
+  /** CRT post effect. */
+  public retroEffect = false;
+
+  constructor() {
+    super("RenderPipelineSettings");
   }
 
-  public get shadowMap() {
-    return this._shadowmapPass;
-  }
-
-  protected _gl!: WebGL2RenderingContext;
-  protected ubo! : CameraUBO;
-  protected scene!: Scene;
-  protected _shadowmapPass!: ShadowMapPass;
-  protected _geometryPass!: GeometryPass;
-  protected _screenBlit!: PostProcessingPass;
-
-  private _passes: IRenderPass[] = [];
-
-  // Single Buffer properties
-  protected _framebuffer: WebGLFramebuffer | null = null;
-  protected _colorTexture: Texture | null = null;
-  protected _depthRenderbuffer: WebGLRenderbuffer | null = null;
-
-  protected _bufferWidth = 0;
-  protected _bufferHeight = 0;
-
-  constructor(public override name: string = 'Render Pipeline') {
-    super('RenderPipeline');
-  }
-
-  public get sceneTexture(): Texture | null {
-    return this._colorTexture;
-  }
-
-  public get framebuffer(): WebGLFramebuffer | null {
-    return this._framebuffer;
-  }
-
-  public setGlRenderingContext(gl: WebGL2RenderingContext): void {
-    this._gl = gl;
-    this.ubo = new CameraUBO(this._gl);
-
-    if (!this._shadowmapPass) {
-      this._shadowmapPass = new ShadowMapPass(this._gl);
-      this.addPass(this._shadowmapPass);
-    }
-    if (!this._geometryPass) {
-      this._geometryPass = new GeometryPass(this._gl);
-      this.addPass(this._geometryPass);
-    }
-    // if (!this._retropass) {
-    //   this._retropass = new PostProcessingPass(this._gl);
-    //   this._retropass.setInputTexture(this.sceneTexture)
-    //   this.addPass(this._retropass);
-    // }
-
-    // if (!this._screenBlit) {
-    //   this._screenBlit = new PostProcessingPass(this._gl);
-    //   this.addPass(this._screenBlit);
-    // }
-
-    this._passes.forEach((pass) => {
-      if (typeof (pass as any).setGl === 'function') {
-        (pass as any).setGl(gl);
-      }
-    });
-
-    const width = CanvasViewport.rendererWidth || 1024;
-    const height = CanvasViewport.rendererHeight || 768;
-    this.recreateSingleBuffer(width, height);
-  }
-
-  public initialize(scene: Scene) {
-    this.scene = scene;
-  }
-
-  public addPass(pass: IRenderPass): void {
-    if (this._gl) {
-      pass.initialize(this._gl);
-    }
-    this._passes.push(pass);
-  }
-
-  protected recreateSingleBuffer(width: number, height: number): void {
-    if (!this._gl) return;
-
-    this._bufferWidth = width;
-    this._bufferHeight = height;
-
-    this.cleanupSingleBuffer();
-
-    // Allocate single off-screen framebuffer target
-    this._framebuffer = this._gl.createFramebuffer();
-    this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._framebuffer);
-
-    this._colorTexture = Texture.create(this._gl, width, height);
-    this._gl.framebufferTexture2D(
-      this._gl.FRAMEBUFFER,
-      this._gl.COLOR_ATTACHMENT0,
-      this._gl.TEXTURE_2D,
-      this._colorTexture!.glTexture,
-      0,
-    );
-
-    this._depthRenderbuffer = this._gl.createRenderbuffer();
-    this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._depthRenderbuffer);
-    this._gl.renderbufferStorage(
-      this._gl.RENDERBUFFER,
-      this._gl.DEPTH_COMPONENT16,
-      width,
-      height,
-    );
-    this._gl.framebufferRenderbuffer(
-      this._gl.FRAMEBUFFER,
-      this._gl.DEPTH_ATTACHMENT,
-      this._gl.RENDERBUFFER,
-      this._depthRenderbuffer,
-    );
-
-    this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
-  }
-
-  public draw() {
-    if (!this.scene) {
-      console.error('No scene defined for this render pipeline');
-      return;
-    }
-    const camera =Camera.mainCamera;
-
-    
-    for (let i = 0; i < this._passes.length; i++) {
-      const pass = this._passes[i];
-      
-      // Specialty passes (e.g., ShadowMap) manage their own binding scopes
-      if (pass.name === 'ShadowMapPass') {
-        pass.execute(this.scene);
-        continue;
-      }
-      
-      this.ubo.update(camera.viewMatrix,camera.projectionMatrix);
-      this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
-      this._gl.viewport(0, 0, this._gl.canvas.width, this._gl.canvas.height);
-
-      // Final screen output pass reads off-screen color texture and draws to canvas (null)
-      if (pass.name === 'ScreenBlitPass') {
-        // this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
-        // this._gl.viewport(0, 0, this._gl.canvas.width, this._gl.canvas.height);
-
-        if ('setInputTexture' in pass) {
-          (pass as any).setInputTexture(this._colorTexture);
-        }
-
-        pass.execute(this.scene);
-        continue;
-      }
-
-      // Route all intermediate render passes (e.g., GeometryPass) to the single off-screen buffer
-      // this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._framebuffer);
-      // this._gl.viewport(0, 0, this._bufferWidth, this._bufferHeight);
-
-      pass.execute(this.scene);
-    }
-
-    // Unbind buffer cleanly at the end of frame execution
-    this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
-
-  }
-
-  public resize(width: number, height: number): void {
-    this.recreateSingleBuffer(width, height);
-    for (const pass of this._passes) {
-      pass.resize(width, height);
-    }
-  }
-
-  protected cleanupSingleBuffer(): void {
-    if (!this._gl) return;
-    if (this._framebuffer) this._gl.deleteFramebuffer(this._framebuffer);
-    if (this._colorTexture) this._colorTexture!.destroy();
-    if (this._depthRenderbuffer)
-      this._gl.deleteRenderbuffer(this._depthRenderbuffer);
+  public override toJsonObject(): JsonSerializedData {
+    return this.serializeAutomatically();
   }
 
   public override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
     this.deserializeAutomatically(jsonObject);
   }
+}
+
+/**
+ * Forward render pipeline. Each frame:
+ * 1. shadow map (its own depth target),
+ * 2. the scene into an off-screen target (colour + depth), cleared with the
+ *    host's clear colour, then any passes added with `addPass`,
+ * 3. the post effects, each reading the previous result (ping-pong),
+ * 4. a tone-mapped copy to the canvas, depth included, so the host can keep
+ *    drawing on top (editor grid, gizmos) with correct occlusion.
+ */
+export class RenderPipeline extends JsonSerializable {
+  static instanciate() {
+    return new RenderPipeline();
+  }
+
+  public settings = new RenderPipelineSettings();
+
+  protected _gl!: WebGL2RenderingContext;
+  protected ubo!: CameraUBO;
+  protected lightsUbo: LightsUBO | null = null;
+  protected scene!: Scene;
+  protected _shadowmapPass!: ShadowAtlasPass;
+  protected _geometryPass!: GeometryPass;
+  protected _sceneTarget: RenderTarget | null = null;
+  /** Colour-only targets the post effects write into, in turn. */
+  protected _postTargets: RenderTarget[] = [];
+  protected _copy: FullscreenProgram | null = null;
+  private _passes: IRenderPass[] = [];
+  private _retro = new RetroEffect();
+  /** Post effects in order; disabled ones are skipped. */
+  public readonly effects: PostEffect[] = [this._retro];
+  private _startTime = performance.now();
+
+  constructor(public override name: string = "Render Pipeline") {
+    super("RenderPipeline");
+    this._serializationIgnoreKeys.push(
+      "_gl", "ubo", "lightsUbo", "scene", "_shadowmapPass", "_geometryPass", "_sceneTarget", "_postTargets", "_copy",
+      "_passes", "_retro", "effects", "_startTime",
+    );
+  }
+
+  public get shadowMap(): ShadowAtlasPass {
+    return this._shadowmapPass;
+  }
+
+  /** The off-screen target the scene is drawn into (colour + depth textures). */
+  public get sceneTarget(): RenderTarget | null {
+    return this._sceneTarget;
+  }
+
+  public setGlRenderingContext(gl: WebGL2RenderingContext): void {
+    this._gl = gl;
+    this.ubo = new CameraUBO(gl);
+    this.lightsUbo?.dispose();
+    this.lightsUbo = new LightsUBO(gl);
+    this._shadowmapPass?.dispose();
+    this._shadowmapPass = new ShadowAtlasPass(gl);
+    this._geometryPass ??= new GeometryPass(gl);
+    this._geometryPass.setGl(gl);
+    this.applySettings();
+
+    this.disposeTargets();
+    this._sceneTarget = new RenderTarget(gl, gl.drawingBufferWidth, gl.drawingBufferHeight, {
+      color: this.colorFormat(),
+      depth: "texture",
+    });
+    this._copy?.dispose();
+    this._copy = new FullscreenProgram(gl, ShaderSources.frag.copy_with_depth);
+    for (const pass of this._passes) pass.initialize(gl);
+  }
+
+  public initialize(scene: Scene) {
+    this.scene = scene;
+  }
+
+  /** Adds a pass that runs after the scene is drawn, into the scene target. */
+  public addPass(pass: IRenderPass): void {
+    if (this._gl) pass.initialize(this._gl);
+    this._passes.push(pass);
+  }
+
+  public draw(): void {
+    const gl = this._gl;
+    const camera = Camera.mainCamera;
+    if (!this.scene || !gl || !camera || !this._sceneTarget || !this._copy) return;
+
+    // The host cleared the canvas with its colour; the scene target uses the same.
+    const clearColor = gl.getParameter(gl.COLOR_CLEAR_VALUE) as Float32Array;
+    this.applySettings();
+    const target = this.ensureSceneTarget(gl.drawingBufferWidth, gl.drawingBufferHeight);
+    const frame = buildFrameData(this.scene, camera, (performance.now() - this._startTime) / 1000);
+    const ctx: RenderContext = { gl, frame, target };
+
+    const shadows = planShadows(frame.lights, camera.transform.worldPosition, {
+      directionalDistance: this.settings.shadowDistance.value,
+    });
+    this._shadowmapPass.render(shadows, frame.shadowCasters);
+    this._shadowmapPass.bindAtlas();
+
+    this.ubo.update(camera.viewMatrix, camera.projectionMatrix);
+    this.lightsUbo!.update(frame.lights, shadows.slotOf);
+    target.bind();
+    target.clear(clearColor);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);
+    this._geometryPass.execute(this.scene, ctx);
+    for (const pass of this._passes) pass.execute(this.scene, ctx);
+
+    // Post effects ping-pong between two colour targets; the depth stays in
+    // the scene target for the final copy.
+    let source = target;
+    const effects = this.effects.filter((e) => e.enabled);
+    if (effects.length) this.withFullscreenState(() => {
+      for (const effect of effects) {
+        const destination = this.postTarget(source === this._postTargets[0] ? 1 : 0, target);
+        effect.render({ ...ctx, source, target: destination });
+        source = destination;
+      }
+    });
+
+    this.copyToCanvas(source, target);
+  }
+
+  public resize(width: number, height: number): void {
+    this._sceneTarget?.resize(width, height);
+    for (const t of this._postTargets) t.resize(width, height);
+    for (const pass of this._passes) pass.resize(width, height);
+  }
+
+  public destroy(): void {
+    this.disposeTargets();
+    this._copy?.dispose();
+    this.lightsUbo?.dispose();
+    for (const effect of this.effects) effect.dispose();
+    this._shadowmapPass?.dispose();
+    for (const pass of this._passes) pass.cleanup();
+    this._sceneTarget = null;
+    this._copy = null;
+  }
+
+  /** Writes `color`'s colour (tone mapped) and `depth`'s depth to the canvas. */
+  private copyToCanvas(color: RenderTarget, depth: RenderTarget): void {
+    const gl = this._gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    this.withFullscreenState(() => {
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.ALWAYS);
+      gl.depthMask(true);
+      const copy = this._copy!;
+      copy.use();
+      copy.bindTexture("u_color", color.colorTexture, 0);
+      copy.bindTexture("u_depth", depth.depthTexture, 1);
+      gl.uniform1i(copy.uniform("u_toneMapping"), this.settings.toneMapping);
+      gl.uniform1f(copy.uniform("u_exposure"), this.settings.exposure.value);
+      copy.draw();
+      gl.depthFunc(gl.LESS);
+    });
+  }
+
+  /**
+   * Runs full-screen draws with blending, culling and depth testing off, then
+   * restores them. Passes leave state behind (the shadow pass culls front
+   * faces, which would cull the full-screen triangle).
+   */
+  private withFullscreenState(draw: () => void): void {
+    const gl = this._gl;
+    const blend = gl.isEnabled(gl.BLEND);
+    const cull = gl.isEnabled(gl.CULL_FACE);
+    const depthTest = gl.isEnabled(gl.DEPTH_TEST);
+    gl.disable(gl.BLEND);
+    gl.disable(gl.CULL_FACE);
+    gl.disable(gl.DEPTH_TEST);
+    draw();
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.activeTexture(gl.TEXTURE0);
+    if (blend) gl.enable(gl.BLEND);
+    if (cull) gl.enable(gl.CULL_FACE);
+    if (depthTest) gl.enable(gl.DEPTH_TEST); else gl.disable(gl.DEPTH_TEST);
+  }
+
+  private colorFormat(): RenderTargetColor {
+    return this.settings.hdr && RenderTarget.supportsFloatColor(this._gl) ? "rgba16f" : "rgba8";
+  }
+
+  /** The scene target at this size and in the colour format the settings ask for. */
+  private ensureSceneTarget(width: number, height: number): RenderTarget {
+    if (this._sceneTarget!.color !== this.colorFormat()) {
+      this.disposeTargets();
+      this._sceneTarget = new RenderTarget(this._gl, width, height, { color: this.colorFormat(), depth: "texture" });
+    }
+    this._sceneTarget!.resize(width, height);
+    return this._sceneTarget!;
+  }
+
+  /** Post target `i` (0 or 1), created on first use like the scene target, without depth. */
+  private postTarget(i: number, like: RenderTarget): RenderTarget {
+    let t = this._postTargets[i];
+    if (!t || t.color !== like.color) {
+      t?.dispose();
+      t = this._postTargets[i] = new RenderTarget(this._gl, like.width, like.height, { color: like.color, depth: null });
+    }
+    t.resize(like.width, like.height);
+    return t;
+  }
+
+  private disposeTargets(): void {
+    this._sceneTarget?.dispose();
+    this._sceneTarget = null;
+    for (const t of this._postTargets) t.dispose();
+    this._postTargets = [];
+  }
+
+  private applySettings(): void {
+    if (!this._shadowmapPass) return;
+    this._shadowmapPass.enabled = this.settings.shadowsEnabled;
+    this._shadowmapPass.shadowstrength = this.settings.shadowStrength;
+    this._retro.enabled = this.settings.retroEffect;
+  }
+
+  public override fromJson(jsonObject: JsonSerializedData): void {
+    super.fromJson(jsonObject);
+    if (jsonObject["settings"]) this.settings.fromJson(jsonObject["settings"]);
+    this.applySettings();
+  }
 
   public override toJsonObject(): JsonSerializedData {
-    return this.serializeAutomatically();
+    return { ...this.getBaseJsonInfo(), settings: this.settings.toJsonObject() };
   }
 }
 
-ObjectInstanciator.addDependency('RenderPipeline', RenderPipeline.instanciate, {
-  name: 'RenderPipeline',
+ObjectInstanciator.addDependency("RenderPipeline", RenderPipeline.instanciate, {
+  name: "RenderPipeline",
   type: ClassType.RenderBehaviour,
-  path: 'Renderers/RenderPipeline',
-  description:
-    'Modular Render Pipeline supporting injected passes with internal single buffering functionality.',
+  path: "Renderers/RenderPipeline",
+  description: "Forward render pipeline: shadow map, scene into an off-screen target, copy to the canvas.",
 });

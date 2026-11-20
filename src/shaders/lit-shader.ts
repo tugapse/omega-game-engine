@@ -1,4 +1,5 @@
-import { EngineCache } from "../core/engineCache";
+import { Resources } from "../core/resources/resources";
+import { BuiltinTextures } from "../core/resources/builtin-textures";
 import { Camera } from "../entities/camera";
 import { ShaderUniformsEnum } from "../enums/shader-uniforms.enum";
 import { JsonSerializedData } from "../interfaces";
@@ -83,12 +84,12 @@ export class LitShader extends Shader {
       return activeTex;
     };
     
-    this.material.mainTex = await bindMap(this.material.mainTex, ShaderUniformsEnum.U_MAIN_TEX, 0, EngineCache.getWhiteTexture);
-    this.material.normalTex = await bindMap(this.material.normalTex, ShaderUniformsEnum.U_NORMAL_TEX, 1, EngineCache.getNormalTexture);
-    this.material.specularTex = await bindMap(this.material.specularTex, "u_specularMap", 3, EngineCache.getWhiteTexture);
-    this.material.roughnessTex = await bindMap(this.material.roughnessTex, "u_roughnessMap", 4, EngineCache.getWhiteTexture);
-    this.material.aoTex = await bindMap(this.material.aoTex, "u_aoMap", 5, EngineCache.getWhiteTexture);
-    this.material.emissiveTex = await bindMap(this.material.emissiveTex, "u_emissiveMap", 6, EngineCache.getBlackTexture);
+    this.material.mainTex = await bindMap(this.material.mainTex, ShaderUniformsEnum.U_MAIN_TEX, 0, (gl: WebGL2RenderingContext) => Resources.for(gl).getTexture(BuiltinTextures.white));
+    this.material.normalTex = await bindMap(this.material.normalTex, ShaderUniformsEnum.U_NORMAL_TEX, 1, (gl: WebGL2RenderingContext) => Resources.for(gl).getTexture(BuiltinTextures.normal));
+    this.material.specularTex = await bindMap(this.material.specularTex, "u_specularMap", 3, (gl: WebGL2RenderingContext) => Resources.for(gl).getTexture(BuiltinTextures.white));
+    this.material.roughnessTex = await bindMap(this.material.roughnessTex, "u_roughnessMap", 4, (gl: WebGL2RenderingContext) => Resources.for(gl).getTexture(BuiltinTextures.white));
+    this.material.aoTex = await bindMap(this.material.aoTex, "u_aoMap", 5, (gl: WebGL2RenderingContext) => Resources.for(gl).getTexture(BuiltinTextures.white));
+    this.material.emissiveTex = await bindMap(this.material.emissiveTex, "u_emissiveMap", 6, (gl: WebGL2RenderingContext) => Resources.for(gl).getTexture(BuiltinTextures.black));
   }
 
   override release(): void {

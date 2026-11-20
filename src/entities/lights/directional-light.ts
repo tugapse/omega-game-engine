@@ -43,6 +43,7 @@ export class DirectionalLight extends Light {
     super(name);
     this.entityType = EntityType.LIGHT_DIRECTIONAL;
     this.color = new Color(1.0, 0.98, 0.95, 0.7);
+    this.castShadows = true;
   }
 
   /**
