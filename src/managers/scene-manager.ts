@@ -1,6 +1,7 @@
 import { EntityBehaviour } from '../behaviours';
-import { EngineCache, JsonSerializable } from '../core';
+import { JsonSerializable } from '../core';
 import { ResourceManager } from '../core/resources/resource-manager';
+import { Resources } from '../core/resources/resources';
 import { MeshData } from '../core/mesh';
 import { ObjectInstanciator } from '../core/object-instanciator';
 import { Transform } from '../core/transform';
@@ -26,7 +27,7 @@ export class SceneManager {
     jsonData: JsonSerializedData,
     scene?: Scene,
   ): Promise<Scene> {
-    // No EngineCache.clear() here any more: it threw away every cached
+    // No cache clear() here any more: it threw away every cached
     // resource (and leaked their GPU memory) on each load. Cached textures are
     // reused; the scene holds the ones it uses and releases them on destroy.
     scene = scene || new Scene();
@@ -60,7 +61,7 @@ export class SceneManager {
     gl: WebGL2RenderingContext,
     scene: Scene,
   ): Promise<void> {
-    const resources = EngineCache.managerFor(gl);
+    const resources = Resources.for(gl);
     for (const textureJsonData of Object.values(texturesMaps ?? {}) as any[]) {
       if (textureJsonData.url) {
         scene.holdResource(await resources.textures.acquire(textureJsonData.url));

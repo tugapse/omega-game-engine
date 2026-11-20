@@ -1,4 +1,4 @@
-import { EngineCache } from '../core/engineCache';
+import { Resources } from '../core/resources/resources';
 import { JsonSerializedData } from "../interfaces";
 import { Texture } from "./texture";
 
@@ -134,7 +134,7 @@ export class CubemapTexture extends Texture {
           reject(new Error(`Failed to load image: ${this.textureUris![i]}. Error: ${error}`));
         };
         // Resolve built-in textures and custom URIs (asset://…) before loading.
-        EngineCache.resolveUri(this.textureUris![i]).then(
+        Resources.resolveUri(this.textureUris![i]).then(
           (url) => {
             _image.src = url;
           },

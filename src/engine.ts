@@ -1,6 +1,6 @@
 import { Scene } from './entities';
 import { DependencyManager, EngineEventManager } from './managers';
-import { EngineCache } from './core/engineCache';
+import { Resources } from './core/resources/resources';
 import { ResourceManager } from './core/resources/resource-manager';
 
 /**

@@ -13,7 +13,7 @@ export interface ResourceLoader {
 }
 
 /**
- * Turns a stored URI into a URL to load (see `EngineCache.setUriResolver`).
+ * Turns a stored URI into a URL to load (see `Resources.setUriResolver`).
  * Kept for hosts that only need to rewrite URLs; a custom ResourceLoader
  * replaces it entirely.
  */

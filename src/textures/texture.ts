@@ -1,7 +1,8 @@
+import { Resources } from '../core/resources/resources';
 // The WebGL constants are retrieved from the WebGL2RenderingContext
 // for more robust and type-safe enums.
 
-import { EngineCache, JsonSerializable } from "../core";
+import { JsonSerializable } from "../core";
 import { LoadedImage, ResourceLoader } from "../core/resources/resource-loader";
 import { JsonSerializedData } from "../interfaces";
 
@@ -256,7 +257,7 @@ export class Texture extends JsonSerializable {
     }
 
     const uri = this.textureUri;
-    const loader = this.loader ?? EngineCache.defaultLoader;
+    const loader = this.loader ?? Resources.defaultLoader;
     this.isLoading = true;
     // textureUri stays the saved reference; the loader decides the real URL.
     this._loadPromise = loader.loadImage(uri).then(
@@ -544,7 +545,7 @@ export class Texture extends JsonSerializable {
       this._glTexture = null;
       this.gl.deleteTexture(glTexture);
       // Make sure the cache no longer hands out this destroyed texture.
-      EngineCache.forgetTexture(this);
+      Resources.forgetTexture(this);
     }
     this.image = null;
     this.isLoaded = false;

@@ -1,5 +1,5 @@
 import { mat4, vec3 } from 'gl-matrix';
-import { EngineCache, SceneFog } from '../../core';
+import { SceneFog } from '../../core';
 import {
   Camera,
   DirectionalLight,

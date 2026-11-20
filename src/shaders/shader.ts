@@ -1,5 +1,5 @@
+import { Resources } from '../core/resources/resources';
 import { mat4, mat3, vec4, vec3, vec2 } from 'gl-matrix';
-import { EngineCache } from '../core/engineCache';
 import { MeshData } from '../core/mesh';
 import { ShaderUniformsEnum } from '../enums/shader-uniforms.enum';
 import { JsonSerializable } from '../core/json-serializable';
@@ -41,7 +41,7 @@ export class Shader extends JsonSerializable {
 
   public static preFetchFunctionsGlsl(): void {
     for (const a of Object.values(Shader.SHADER_FUNCTIONS)) {
-      EngineCache.loadShaderSource(a);
+      Resources.for().getShader(a);
     }
   }
 
@@ -93,8 +93,8 @@ export class Shader extends JsonSerializable {
     }
     const keys: string[] = Object.keys(Shader.SHADER_FUNCTIONS);
 
-    let vsSource = await EngineCache.loadShaderSource(this.vertexUri);
-    let fsSource = await EngineCache.loadShaderSource(this.fragUri);
+    let vsSource = await Resources.for().getShader(this.vertexUri);
+    let fsSource = await Resources.for().getShader(this.fragUri);
 
     if (vsSource.trim().startsWith('<')) {
       console.warn(`[Shader Warning] Vertex source from ${this.vertexUri} starts with '<'. It may be HTML.`);
@@ -106,7 +106,7 @@ export class Shader extends JsonSerializable {
     for (const obkey of keys) {
       if (fsSource.includes(obkey)) {
         const url: string = Shader.SHADER_FUNCTIONS[obkey] as string;
-        const text = await EngineCache.loadShaderSource(url);
+        const text = await Resources.for().getShader(url);
         fsSource = fsSource.replace(obkey, text);
       }
     }

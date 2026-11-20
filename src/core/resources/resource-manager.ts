@@ -5,7 +5,7 @@ import { Texture } from '../../textures/texture';
 import { MeshData } from '../mesh';
 import { ResourceCache, ResourceCacheStats } from './resource-cache';
 import { DefaultResourceLoader, ResourceLoader } from './resource-loader';
-import { builtinTextureUrl } from './builtin-textures';
+import { BuiltinTextures, builtinTextureUrl } from './builtin-textures';
 import { EMBEDDED_SHADERS } from '../../shaders/embedded-shaders';
 
 export interface ResourceManagerStats {
@@ -20,7 +20,7 @@ export interface ResourceManagerStats {
  * shader sources, each in its own ResourceCache.
  *
  * GL objects belong to the context that created them, so each context has
- * its own manager (see `EngineCache.managerFor`). Everything is loaded
+ * its own manager (see `Resources.for`). Everything is loaded
  * through one replaceable ResourceLoader.
  */
 export class ResourceManager {
@@ -67,6 +67,38 @@ export class ResourceManager {
   static cubemapKey(sides: ICubemapSides): string {
     const { right, left, up, bottom, front, back } = sides;
     return [right, left, up, bottom, front, back].join('|');
+  }
+
+  /**
+   * Shortcuts that load (or reuse) a resource without holding it: it stays
+   * shared and cached until `trim()`/`dispose()`. Hold a handle from the
+   * caches (`textures.acquire`) when you own a resource.
+   */
+  async getTexture(uri: string): Promise<Texture> {
+    return ResourceManager.peekValue(await this.textures.acquire(uri));
+  }
+
+  async getCubemap(sides: ICubemapSides): Promise<CubemapTexture> {
+    return ResourceManager.peekValue(await this.cubemaps.acquire(ResourceManager.cubemapKey(sides)));
+  }
+
+  /** A cubemap with the built-in white texture on all six faces. */
+  getWhiteCubemap(): Promise<CubemapTexture> {
+    const w = BuiltinTextures.white;
+    return this.getCubemap({ right: w, left: w, up: w, bottom: w, front: w, back: w });
+  }
+
+  async getMesh(uri: string): Promise<MeshData> {
+    return ResourceManager.peekValue(await this.meshes.acquire(uri));
+  }
+
+  async getShader(uri: string): Promise<string> {
+    return ResourceManager.peekValue(await this.shaders.acquire(uri));
+  }
+
+  private static peekValue<V>(handle: { value: V; release(): void }): V {
+    handle.release();
+    return handle.value;
   }
 
   /** Replaces the loader for resources loaded from now on. */

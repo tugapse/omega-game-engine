@@ -2,188 +2,117 @@ import { ICubemapSides } from '../interfaces/cubemap';
 import { CubemapTexture } from '../textures';
 import { Texture } from '../textures/texture';
 import { MeshData } from './mesh';
-import { BuiltinTextures, builtinTextureUrl } from './resources/builtin-textures';
+import { BuiltinTextures } from './resources/builtin-textures';
 import { ResourceManager, ResourceManagerStats } from './resources/resource-manager';
-import {
-  DefaultResourceLoader,
-  ResourceLoader,
-  UriResolver,
-} from './resources/resource-loader';
+import { ResourceLoader, UriResolver } from './resources/resource-loader';
+import { Resources } from './resources/resources';
 
 export type { UriResolver } from './resources/resource-loader';
 
 /**
- * Static entry point to the engine's resources, kept for compatibility.
- *
- * Each WebGL context has its own {@link ResourceManager}; this class finds
- * the right one and loads through it. New code should take a manager from
- * {@link EngineCache.managerFor} and hold handles (`acquire`/`release`).
- *
- * The static helpers hold no references: what they load stays cached until
- * the manager is trimmed or the cache is cleared.
+ * @deprecated Since the resources rework; removed in 4.0. Use
+ * {@link Resources} (`Resources.for(gl)` returns the context's
+ * {@link ResourceManager}). Every method here delegates to it.
  */
 export abstract class EngineCache {
-  private static managers = new Map<WebGL2RenderingContext | null, ResourceManager>();
-  /** The context most recently used, for callers that pass no `gl`. */
-  private static currentGl: WebGL2RenderingContext | null = null;
+  /** @deprecated Use `Resources.defaultLoader`. */
+  static get defaultLoader(): ResourceLoader {
+    return Resources.defaultLoader;
+  }
 
-  private static uriResolver: UriResolver | null = null;
-  private static customLoader: ResourceLoader | null = null;
-
-  /** The engine's own loader: fetch and <img>, through the URI resolver. */
-  static readonly defaultLoader: ResourceLoader = new DefaultResourceLoader((uri) =>
-    EngineCache.resolveUri(uri),
-  );
-
-  /**
-   * Registers (or clears, with `null`) the resolver applied to every URI
-   * before the default loader fetches it, e.g. to serve `asset://<id>`.
-   */
+  /** @deprecated Use `Resources.setUriResolver`. */
   public static setUriResolver(resolver: UriResolver | null): void {
-    EngineCache.uriResolver = resolver;
+    Resources.setUriResolver(resolver);
   }
 
-  /** The URL to load for a URI: the resolver's result, or the URI itself. */
-  public static async resolveUri(uri: string): Promise<string> {
-    const builtin = builtinTextureUrl(uri);
-    if (builtin) return builtin;
-    return EngineCache.uriResolver ? await EngineCache.uriResolver(uri) : uri;
+  /** @deprecated Use `Resources.resolveUri`. */
+  public static resolveUri(uri: string): Promise<string> {
+    return Resources.resolveUri(uri);
   }
 
-  /**
-   * Replaces how every manager loads files (or restores the default loader,
-   * with `null`), e.g. to fetch with an Authorization header.
-   */
+  /** @deprecated Use `Resources.setLoader`. */
   public static setLoader(loader: ResourceLoader | null): void {
-    EngineCache.customLoader = loader;
-    for (const manager of EngineCache.managers.values()) {
-      manager.setLoader(EngineCache.loader);
-    }
+    Resources.setLoader(loader);
   }
 
-  private static get loader(): ResourceLoader {
-    return EngineCache.customLoader ?? EngineCache.defaultLoader;
-  }
-
-  /**
-   * The resource manager of a WebGL context, created on first use. Without
-   * `gl`, the context used most recently (textures need one; shaders and
-   * meshes do not).
-   */
+  /** @deprecated Use `Resources.for`. */
   public static managerFor(gl?: WebGL2RenderingContext | null): ResourceManager {
-    const key = gl ?? EngineCache.currentGl;
-    if (gl) EngineCache.currentGl = gl;
-    let manager = EngineCache.managers.get(key);
-    if (!manager) {
-      manager = new ResourceManager(key, EngineCache.loader);
-      EngineCache.managers.set(key, manager);
-    }
-    return manager;
+    return Resources.for(gl);
   }
 
-  /**
-   * Frees everything loaded for a WebGL context and forgets its manager. Call
-   * it when the canvas/context goes away (e.g. an editor view is closed).
-   */
+  /** @deprecated Use `Resources.releaseContext`. */
   public static releaseContext(gl: WebGL2RenderingContext): void {
-    const manager = EngineCache.managers.get(gl);
-    if (!manager) return;
-    manager.dispose();
-    EngineCache.managers.delete(gl);
-    if (EngineCache.currentGl === gl) EngineCache.currentGl = null;
+    Resources.releaseContext(gl);
   }
 
-  /** Loads (or reuses) a 2D texture. */
-  public static async getTexture2D(uri: string, gl?: WebGL2RenderingContext): Promise<Texture> {
-    const handle = await EngineCache.managerFor(gl).textures.acquire(uri);
-    handle.release();
-    return handle.value;
+  /** @deprecated Use `Resources.for(gl).getTexture(uri)` or `.textures.acquire(uri)`. */
+  public static getTexture2D(uri: string, gl?: WebGL2RenderingContext): Promise<Texture> {
+    return Resources.for(gl).getTexture(uri);
   }
 
-  /** Loads (or reuses) a cubemap, keyed by its six faces. */
-  public static async getTextureCube(
-    uris: ICubemapSides,
-    gl?: WebGL2RenderingContext,
-  ): Promise<CubemapTexture> {
-    const key = ResourceManager.cubemapKey(uris);
-    const handle = await EngineCache.managerFor(gl).cubemaps.acquire(key);
-    handle.release();
-    return handle.value;
+  /** @deprecated Use `Resources.for(gl).getCubemap(sides)` or `.cubemaps.acquire(key)`. */
+  public static getTextureCube(uris: ICubemapSides, gl?: WebGL2RenderingContext): Promise<CubemapTexture> {
+    return Resources.for(gl).getCubemap(uris);
   }
 
-  public static async getWhiteTextureCube(gl?: WebGL2RenderingContext): Promise<CubemapTexture> {
-    const white = BuiltinTextures.white;
-    return EngineCache.getTextureCube(
-      { right: white, left: white, up: white, bottom: white, front: white, back: white },
-      gl,
-    );
+  /** @deprecated Use `Resources.for(gl).getWhiteCubemap()`. */
+  public static getWhiteTextureCube(gl?: WebGL2RenderingContext): Promise<CubemapTexture> {
+    return Resources.for(gl).getWhiteCubemap();
   }
 
-  public static async getWhiteTexture(gl: WebGL2RenderingContext): Promise<Texture> {
-    return EngineCache.getTexture2D(BuiltinTextures.white, gl);
+  /** @deprecated Use `Resources.for(gl).getTexture(BuiltinTextures.white)`. */
+  public static getWhiteTexture(gl: WebGL2RenderingContext): Promise<Texture> {
+    return Resources.for(gl).getTexture(BuiltinTextures.white);
   }
 
-  public static async getBlackTexture(gl: WebGL2RenderingContext): Promise<Texture> {
-    return EngineCache.getTexture2D(BuiltinTextures.black, gl);
+  /** @deprecated Use `Resources.for(gl).getTexture(BuiltinTextures.black)`. */
+  public static getBlackTexture(gl: WebGL2RenderingContext): Promise<Texture> {
+    return Resources.for(gl).getTexture(BuiltinTextures.black);
   }
 
-  public static async getNormalTexture(gl: WebGL2RenderingContext): Promise<Texture> {
-    return EngineCache.getTexture2D(BuiltinTextures.normal, gl);
+  /** @deprecated Use `Resources.for(gl).getTexture(BuiltinTextures.normal)`. */
+  public static getNormalTexture(gl: WebGL2RenderingContext): Promise<Texture> {
+    return Resources.for(gl).getTexture(BuiltinTextures.normal);
   }
 
-  /** Magenta: the texture shown where one is missing. */
-  public static async getMissingTexture(gl: WebGL2RenderingContext): Promise<Texture> {
-    return EngineCache.getTexture2D(BuiltinTextures.missing, gl);
+  /** @deprecated Use `Resources.for(gl).getTexture(BuiltinTextures.missing)`. */
+  public static getMissingTexture(gl: WebGL2RenderingContext): Promise<Texture> {
+    return Resources.for(gl).getTexture(BuiltinTextures.missing);
   }
 
-  /** The owner of a texture is done with it: remove it from the cache and free it. */
+  /** @deprecated Hold a handle from `textures.acquire()` and `release()` it instead. */
   public static releaseTexture(texture: Texture): void {
-    EngineCache.forgetTexture(texture);
+    Resources.forgetTexture(texture);
     texture.destroy();
   }
 
-  /** Removes a texture from its manager's cache without freeing it. */
+  /** @deprecated Use `Resources.forgetTexture`. */
   public static forgetTexture(texture: Texture): void {
-    const uri = texture.textureUri;
-    if (!uri) return;
-    for (const manager of EngineCache.managers.values()) {
-      if (manager.textures.remove(uri, texture)) return;
-    }
+    Resources.forgetTexture(texture);
   }
 
-  /** Loads (or reuses) mesh data parsed from an OBJ file. */
-  public static async getMeshDataFromObj(uri: string): Promise<MeshData> {
-    const handle = await EngineCache.managerFor().meshes.acquire(uri);
-    handle.release();
-    return handle.value;
+  /** @deprecated Use `Resources.for().getMesh(uri)`. */
+  public static getMeshDataFromObj(uri: string): Promise<MeshData> {
+    return Resources.for().getMesh(uri);
   }
 
-  /** Loads (or reuses) a shader's source code. */
-  public static async loadShaderSource(uri: string): Promise<string> {
-    const handle = await EngineCache.managerFor().shaders.acquire(uri);
-    handle.release();
-    return handle.value;
+  /** @deprecated Use `Resources.for().getShader(uri)`. */
+  public static loadShaderSource(uri: string): Promise<string> {
+    return Resources.for().getShader(uri);
   }
 
-  /**
-   * Frees every resource nobody holds (scenes hold what they loaded). Call it
-   * after closing a scene to give the GPU memory back. Returns how many.
-   */
+  /** @deprecated Use `Resources.trim`. */
   public static trim(): number {
-    let freed = 0;
-    for (const manager of EngineCache.managers.values()) freed += manager.trim();
-    return freed;
+    return Resources.trim();
   }
 
-  /** What every manager holds, by WebGL context (the `null` key = no context). */
+  /** @deprecated Use `Resources.stats`. */
   public static stats(): ResourceManagerStats[] {
-    return [...EngineCache.managers.values()].map((m) => m.stats());
+    return Resources.stats();
   }
 
-  /** Frees every cached resource of every context and forgets them (P1). */
+  /** @deprecated Use `Resources.clear`. */
   public static clear(): void {
-    for (const manager of EngineCache.managers.values()) manager.dispose();
-    EngineCache.managers.clear();
-    EngineCache.currentGl = null;
+    Resources.clear();
   }
 }

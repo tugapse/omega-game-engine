@@ -1,4 +1,4 @@
-import { EngineCache } from "../core";
+import { Resources } from '../core/resources/resources';
 import { JsonSerializedData } from "../interfaces/json-serialized-data";
 import { Texture } from "../textures/texture";
 import { UnlitMaterial } from "./unlit-material";
@@ -67,7 +67,7 @@ export class LitMaterial extends UnlitMaterial {
   override async fromJson(jsonObject: JsonSerializedData): Promise<void> {
     await super.fromJson(jsonObject);
     if(jsonObject["normalTex"]?.url){
-      this.normalTex = await EngineCache.getTexture2D(jsonObject["normalTex"].url);
+      this.normalTex = await Resources.for().getTexture(jsonObject["normalTex"].url);
       this.normalTex.fromJson(jsonObject['normalTex']);
     }
     this.roughness = jsonObject['roughness'];
