@@ -8,7 +8,7 @@ import { JsonSerializable } from "../../json-serializable";
 import { NumberRange } from "../../range";
 import { Scene, Camera } from "../../../entities";
 import { DirectionalLight } from "../../../entities/lights";
-import { IRenderPass } from "../render-pass.interface";
+import { IRenderPass, RenderContext } from "../render-pass.interface";
 
 
 export class ShadowMapPass extends JsonSerializable implements IRenderPass {
@@ -71,7 +71,7 @@ export class ShadowMapPass extends JsonSerializable implements IRenderPass {
     }
   }
 
-  public execute(scene: Scene): void {
+  public execute(scene: Scene, ctx?: RenderContext): void {
     if (
       !this.enabled ||
       !this.shadowmapTexture.glTexture ||
@@ -125,7 +125,7 @@ export class ShadowMapPass extends JsonSerializable implements IRenderPass {
     this.depthShader.use();
 
     // Loop through casters directly
-    const shadowCasters = scene.objects.filter(
+    const shadowCasters = ctx?.frame.shadowCasters ?? scene.objects.filter(
       (obj) =>
         obj.active &&
         obj.show &&

@@ -1,18 +1,17 @@
 import { JsonSerializable } from "../../json-serializable";
 import { CameraUBO } from "../../camera-ubo";
-import { RendererBehaviour } from "../../../behaviours";
-import { Scene, Camera } from "../../../entities";
-import { RenderLayer } from "../../../enums";
+import { Scene } from "../../../entities";
 import { JsonSerializedData } from "../../../interfaces";
-import { vec3 } from "gl-matrix";
-import { IRenderPass } from "../render-pass.interface";
+import { IRenderPass, RenderContext } from "../render-pass.interface";
 
+/**
+ * Draws the frame's entities into the bound target: opaque (nearest first),
+ * then the skybox, then transparent (farthest first). The lists come sorted
+ * in the FrameData.
+ */
 export class GeometryPass extends JsonSerializable implements IRenderPass {
   private gl: WebGL2RenderingContext;
-  private ubo!: CameraUBO;
-
-  // Optionally bind to an off-screen FBO texture, or leave null to render directly to the backbuffer (screen)
-  // public targetFramebuffer: WebGLFramebuffer | null = null;
+  private ubo: CameraUBO;
 
   constructor(gl: WebGL2RenderingContext) {
     super("GeometryPass");
@@ -22,84 +21,29 @@ export class GeometryPass extends JsonSerializable implements IRenderPass {
 
   public initialize(): void {}
 
-  public execute(scene: Scene): void {
-    const camera = Camera.mainCamera;
-    this.ubo.update(camera.viewMatrix, camera.projectionMatrix);
-
-    // // Bind target buffer (null = default screen canvas)
-    // this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-    // this.gl.viewport(
-    //   0,
-    //   0,
-    //   CanvasViewport.rendererWidth,
-    //   CanvasViewport.rendererHeight,
-    // );
-
-    // Fetch and sort scene objects by distance for correct layering
-    const activeObjects = scene.objects.filter((o) => o.active && o.show);
-
-    // Sort transparent objects back-to-front
-    const sortedObjects = [...activeObjects].sort((a, b) => {
-      const aD = vec3.distance(
-        a.transform.worldPosition,
-        Camera.mainCamera.transform.worldPosition,
-      );
-      const bD = vec3.distance(
-        b.transform.worldPosition,
-        Camera.mainCamera.transform.worldPosition,
-      );
-      return bD - aD;
-    });
-
-    const opaque = sortedObjects.filter(
-      (e) =>
-        e.getBehaviour(RendererBehaviour)?.renderLayer === RenderLayer.OPAQUE,
-    );
-    const skybox = sortedObjects.filter(
-      (e) =>
-        e.getBehaviour(RendererBehaviour)?.renderLayer === RenderLayer.SKYBOX,
-    );
-    const transparent = sortedObjects.filter(
-      (e) =>
-        e.getBehaviour(RendererBehaviour)?.renderLayer ===
-        RenderLayer.TRANSPARENT,
-    );
-
-    // Draw opaque objects
-    for (const obj of opaque) {
-      obj.draw();
-    }
-
-    // Draw skybox
-    for (const obj of skybox) {
-      obj.draw();
-    }
-
-    // Draw transparent objects
-    for (const obj of transparent) {
-      obj.draw();
-    }
-
-    // // Unbind framebuffer if it was an off-screen pass
-    // if (this.targetFramebuffer) {
-    //   this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-    // }
+  public execute(_scene: Scene, ctx?: RenderContext): void {
+    if (!ctx) return;
+    const { frame } = ctx;
+    this.ubo.update(frame.camera.viewMatrix, frame.camera.projectionMatrix);
+    for (const entity of frame.opaque) entity.draw();
+    for (const entity of frame.skybox) entity.draw();
+    for (const entity of frame.transparent) entity.draw();
   }
 
   public cleanup(): void {}
 
-  public resize(width: number, height: number): void {}
+  public resize(_width: number, _height: number): void {}
 
   setGl(gl: WebGL2RenderingContext): void {
     this.gl = gl;
+    this.ubo = new CameraUBO(gl);
   }
 
   public override toJsonObject(): JsonSerializedData {
-    return this.serializeAutomatically();
+    return this.getBaseJsonInfo();
   }
 
   public override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
-    this.deserializeAutomatically(jsonObject);
   }
 }

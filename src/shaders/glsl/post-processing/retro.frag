@@ -28,6 +28,12 @@ void main() {
     // Multiply by a large number (like 800) to create thin horizontal lines
     float scanline = sin(distortedUv.y * 800.0 + u_time * 5.0) * 0.04;
 
+    // Outside the distorted screen: black, like the bezel of a CRT.
+    if (distortedUv.x < 0.0 || distortedUv.x > 1.0 || distortedUv.y < 0.0 || distortedUv.y > 1.0) {
+        fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
+    }
+
     // Combine into final color, darkening slightly with the scanline
-    fragColor = vec4(1.0,0.1,0.1, 1.0);
+    fragColor = vec4(vec3(r, g, b) - scanline, 1.0);
 }
