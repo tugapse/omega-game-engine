@@ -1,275 +1,161 @@
 import { ICubemapSides } from '../interfaces/cubemap';
-import { ObjParser } from '../parsers/obj-parser';
 import { CubemapTexture } from '../textures';
 import { Texture } from '../textures/texture';
 import { MeshData } from './mesh';
-import { ResourceCache } from './resources/resource-cache';
+import { ResourceManager, ResourceManagerStats } from './resources/resource-manager';
+import {
+  DefaultResourceLoader,
+  ResourceLoader,
+  UriResolver,
+} from './resources/resource-loader';
+
+export type { UriResolver } from './resources/resource-loader';
 
 /**
-  The structure for storing cached assets.
- * @interface StorageSpaces
- */
-interface StorageSpaces {
-  /**
-    A map for caching textures.
-   * @type {{ [key: string]: Texture | CubemapTexture }}
-   */
-  textures: { [key: string]: Texture | CubemapTexture };
-  textureCounter: { [key: string]: number };
-
-  generic: { [key: string]: any };
-}
-
-/**
-  Turns a URI stored in a scene (for example `asset://<id>`) into a URL the
-  browser can load. It may return a promise (for example to download the file
-  with credentials and hand back an object URL).
- */
-export type UriResolver = (uri: string) => string | Promise<string>;
-
-/**
-  A static class that manages the caching of various engine assets such as textures, meshes, and shader code.
- * @abstract
+ * Static entry point to the engine's resources, kept for compatibility.
+ *
+ * Each WebGL context has its own {@link ResourceManager}; this class finds
+ * the right one and loads through it. New code should take a manager from
+ * {@link EngineCache.managerFor} and hold handles (`acquire`/`release`).
+ *
+ * The static helpers hold no references: what they load stays cached until
+ * the manager is trimmed or the cache is cleared.
  */
 export abstract class EngineCache {
-  /**
-    The private cache instance.
-   * @private
+  private static managers = new Map<WebGL2RenderingContext | null, ResourceManager>();
+  /** The context most recently used, for callers that pass no `gl`. */
+  private static currentGl: WebGL2RenderingContext | null = null;
 
-   * @type {StorageSpaces}
-   */
-  private static __cache: StorageSpaces = {
-    textures: {},
-    textureCounter: {},
-    generic: {},
-  };
-  /**
-    An instance of the OBJ parser used for loading mesh data.
-   * @private
-
-   * @type {ObjParser}
-   */
-  private static objPArser: ObjParser = new ObjParser();
-
-  /**
-    Optional resolver applied to every texture, mesh and shader URI right
-    before it is loaded. The original URI is still the one cached and saved.
-   * @private
-   */
   private static uriResolver: UriResolver | null = null;
+  private static customLoader: ResourceLoader | null = null;
 
-  /** Shader sources and parsed OBJ meshes: shared loads, failures not cached. */
-  private static shaderSources = new ResourceCache<string>({
-    load: (uri) => EngineCache.fetchText(uri, 'shader'),
-  });
-  private static objMeshes = new ResourceCache<MeshData>({
-    load: async (uri) =>
-      EngineCache.objPArser.parse(await EngineCache.fetchText(uri, 'mesh')) as MeshData,
-  });
-
-  private static async fetchText(uri: string, what: string): Promise<string> {
-    const response = await fetch(await EngineCache.resolveUri(uri));
-    if (!response.ok) {
-      throw new Error(`Failed to load ${what}: ${uri} (HTTP ${response.status})`);
-    }
-    return response.text();
-  }
+  /** The engine's own loader: fetch and <img>, through the URI resolver. */
+  static readonly defaultLoader: ResourceLoader = new DefaultResourceLoader((uri) =>
+    EngineCache.resolveUri(uri),
+  );
 
   /**
-    Registers (or clears, with `null`) the resolver used before loading URIs.
-    Use it to serve custom schemes such as `asset://<id>` or to add credentials.
+   * Registers (or clears, with `null`) the resolver applied to every URI
+   * before the default loader fetches it, e.g. to serve `asset://<id>`.
    */
   public static setUriResolver(resolver: UriResolver | null): void {
     EngineCache.uriResolver = resolver;
   }
 
-  /**
-    Returns the URL to load for a URI: the resolver's result, or the URI itself.
-   */
+  /** The URL to load for a URI: the resolver's result, or the URI itself. */
   public static async resolveUri(uri: string): Promise<string> {
     return EngineCache.uriResolver ? await EngineCache.uriResolver(uri) : uri;
   }
 
-  public static set(key: string, value: any): void {
-    if (key === '__white_texture__' || key === '__normal_texture__') {
-      console.warn('Attempted to set reserved cache key:', key);
-    }
-    EngineCache.__cache.generic[key] = value;
-  }
-
-  public static get<T>(key: string): T {
-    return EngineCache.__cache.generic[key] as T;
-  }
-
   /**
-    Retrieves a 2D texture from the cache or loads and caches it if not present.
-
-   * @param {string} uri - The URI of the texture.
-   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
-   * @returns {Texture} - The cached or newly loaded Texture instance.
+   * Replaces how every manager loads files (or restores the default loader,
+   * with `null`), e.g. to fetch with an Authorization header.
    */
-  public static async getTexture2D(
-    uri: string,
-    gl?: WebGL2RenderingContext,
-  ): Promise<Texture> {
-    let result = EngineCache.__cache.textures[uri] as Texture;
-    if (!result) {
-      result = new Texture(gl, uri);
-      EngineCache.__cache.textures[uri] = result;
-      EngineCache.__cache.textureCounter[uri] = 1;
-    } else {
-      EngineCache.__cache.textureCounter[uri]++;
+  public static setLoader(loader: ResourceLoader | null): void {
+    EngineCache.customLoader = loader;
+    for (const manager of EngineCache.managers.values()) {
+      manager.setLoader(EngineCache.loader);
     }
-    await result.load();
-    return result;
-    // let result = EngineCache.__cache.textures[uri];
-    // if (!result) {
-    //   result = new Texture(gl, uri);
-    //   EngineCache.__cache.textures[uri] = result;
-    //   result.load();
-    // }
-    // return result;
+  }
+
+  private static get loader(): ResourceLoader {
+    return EngineCache.customLoader ?? EngineCache.defaultLoader;
   }
 
   /**
-  Retrieves a Cube texture from the cache or loads and caches it if not present.
+   * The resource manager of a WebGL context, created on first use. Without
+   * `gl`, the context used most recently (textures need one; shaders and
+   * meshes do not).
+   */
+  public static managerFor(gl?: WebGL2RenderingContext | null): ResourceManager {
+    const key = gl ?? EngineCache.currentGl;
+    if (gl) EngineCache.currentGl = gl;
+    let manager = EngineCache.managers.get(key);
+    if (!manager) {
+      manager = new ResourceManager(key, EngineCache.loader);
+      EngineCache.managers.set(key, manager);
+    }
+    return manager;
+  }
 
- * @param {string} uri - The URI of the texture.
- * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
- * @returns {Promise<CubemapTexture>} - A promise that resolves with the cached or newly loaded CubemapTexture instance.
- */
+  /** Loads (or reuses) a 2D texture. */
+  public static async getTexture2D(uri: string, gl?: WebGL2RenderingContext): Promise<Texture> {
+    const handle = await EngineCache.managerFor(gl).textures.acquire(uri);
+    handle.release();
+    return handle.value;
+  }
+
+  /** Loads (or reuses) a cubemap, keyed by its six faces. */
   public static async getTextureCube(
     uris: ICubemapSides,
     gl?: WebGL2RenderingContext,
   ): Promise<CubemapTexture> {
-    const { right, left, up, bottom, front, back } = uris;
-    const key = [right, left, up, bottom, front, back].join('|');
-
-    let result = EngineCache.__cache.textures[key] as CubemapTexture;
-    if (!result) {
-      result = new CubemapTexture(gl, [right, left, up, bottom, front, back]);
-      EngineCache.__cache.textures[key] = result;
-      EngineCache.__cache.textureCounter[key] = 1;
-    } else {
-      EngineCache.__cache.textureCounter[key]++;
-    }
-    await result.load();
-    return result;
+    const key = ResourceManager.cubemapKey(uris);
+    const handle = await EngineCache.managerFor(gl).cubemaps.acquire(key);
+    handle.release();
+    return handle.value;
   }
 
-  /**
-   * Retrieves a default white cubemap texture from the cache, maintaining the URI signature for engine compatibility.
-   *
-   * @param {ICubemapSides} uris - The URIs of the texture faces.
-   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
-   * @returns {Promise<CubemapTexture>} - A promise that resolves with the cached or newly created white CubemapTexture instance.
-   */
-  public static async getWhiteTextureCube(
-    gl?: WebGL2RenderingContext,
-  ): Promise<CubemapTexture> {
-    const keyUrl = 'assets/images/default/white.jpg';
-    const uris = {
-      right: keyUrl,
-      left: keyUrl,
-      up: keyUrl,
-      bottom: keyUrl,
-      front: keyUrl,
-      back: keyUrl,
-    };
-    const key = [keyUrl, keyUrl, keyUrl, keyUrl, keyUrl, keyUrl].join('|');
-
-    let result = EngineCache.__cache.textures[key] as CubemapTexture;
-    if (!result) {
-      result = await EngineCache.getTextureCube(uris, gl);
-      EngineCache.__cache.textures[key] = result;
-      EngineCache.__cache.textureCounter[key] = 1;
-    } else {
-      EngineCache.__cache.textureCounter[key]++;
-    }
-    return result;
+  public static async getWhiteTextureCube(gl?: WebGL2RenderingContext): Promise<CubemapTexture> {
+    const white = 'assets/images/default/white.jpg';
+    return EngineCache.getTextureCube(
+      { right: white, left: white, up: white, bottom: white, front: white, back: white },
+      gl,
+    );
   }
 
-  /**
-   * Retrieves a default white texture from the cache or loads and caches it if not present.
-   * This texture is loaded from "assets/default/white.jpg".
-   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
-   * @returns {Promise<Texture>} - A promise that resolves with the cached or newly loaded white Texture instance.
-   */
-  public static async getWhiteTexture(
-    gl: WebGL2RenderingContext,
-  ): Promise<Texture> {
+  public static async getWhiteTexture(gl: WebGL2RenderingContext): Promise<Texture> {
     return EngineCache.getTexture2D('assets/images/default/white.jpg', gl);
   }
 
-  public static async getBlackTexture(
-    gl: WebGL2RenderingContext,
-  ): Promise<Texture> {
+  public static async getBlackTexture(gl: WebGL2RenderingContext): Promise<Texture> {
     return EngineCache.getTexture2D('assets/images/default/black.jpg', gl);
   }
-  public static async getNormalTexture(
-    gl: WebGL2RenderingContext,
-  ): Promise<Texture> {
+
+  public static async getNormalTexture(gl: WebGL2RenderingContext): Promise<Texture> {
     return EngineCache.getTexture2D('assets/images/default/normal.jpg', gl);
   }
 
+  /** The owner of a texture is done with it: remove it from the cache and free it. */
   public static releaseTexture(texture: Texture): void {
-    const uri = texture.textureUri!;
-    if (EngineCache.__cache.textureCounter[uri]) {
-      EngineCache.__cache.textureCounter[uri]--;
-      if (EngineCache.__cache.textureCounter[uri] === 0) {
-        texture.destroy();
-        delete EngineCache.__cache.textures[uri];
-        delete EngineCache.__cache.textureCounter[uri];
-      }
+    EngineCache.forgetTexture(texture);
+    texture.destroy();
+  }
+
+  /** Removes a texture from its manager's cache without freeing it. */
+  public static forgetTexture(texture: Texture): void {
+    const uri = texture.textureUri;
+    if (!uri) return;
+    for (const manager of EngineCache.managers.values()) {
+      if (manager.textures.remove(uri, texture)) return;
     }
   }
 
-  /**
-    Retrieves mesh data parsed from an OBJ file from the cache or loads, parses, and caches it if not present.
-
-
-   * @param {string} uri - The URI of the OBJ file.
-   * @returns {Promise<MeshData>} - A promise that resolves with the mesh data.
-   */
+  /** Loads (or reuses) mesh data parsed from an OBJ file. */
   public static async getMeshDataFromObj(uri: string): Promise<MeshData> {
-    // The facade holds no references: the entry stays cached until clear().
-    const handle = await EngineCache.objMeshes.acquire(uri);
+    const handle = await EngineCache.managerFor().meshes.acquire(uri);
     handle.release();
     return handle.value;
   }
 
-
-  /**
-    Retrieves shader source code from the cache or loads and caches it if not present.
-
-
-   * @param {string} uri - The URI of the shader source file.
-   * @returns {Promise<string>} - A promise that resolves with the shader source code as a string.
-   */
+  /** Loads (or reuses) a shader's source code. */
   public static async loadShaderSource(uri: string): Promise<string> {
-    const handle = await EngineCache.shaderSources.acquire(uri);
+    const handle = await EngineCache.managerFor().shaders.acquire(uri);
     handle.release();
     return handle.value;
   }
 
+  /** What every manager holds, by WebGL context (the `null` key = no context). */
+  public static stats(): ResourceManagerStats[] {
+    return [...EngineCache.managers.values()].map((m) => m.stats());
+  }
 
   /**
-    Clears all cached data, including textures, meshes, and shader code.
+   * Forgets every cached resource, without freeing GPU memory (as before).
+   * Freeing on clear comes with the scene lifecycle change (plan phase 5).
    */
   public static clear(): void {
-    // for (const key in EngineCache.__cache.textures) {
-    //   const texture = EngineCache.__cache.textures[key];
-    //   if (texture) {
-    //     texture.destroy();
-    //   }
-    // }
-
-    EngineCache.shaderSources.clear();
-    EngineCache.objMeshes.clear();
-    EngineCache.__cache = {
-        textures: {},
-        textureCounter: {},
-      generic: {},
-    };
+    EngineCache.managers.clear();
+    EngineCache.currentGl = null;
   }
 }

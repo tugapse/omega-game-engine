@@ -15,3 +15,5 @@ export * from './transform';
 export * from './vector';
 export * from './render';
 export * from './resources/resource-cache';
+export * from './resources/resource-loader';
+export * from './resources/resource-manager';

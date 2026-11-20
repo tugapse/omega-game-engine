@@ -85,17 +85,38 @@ describe('textures', () => {
     expect(a).not.toBe(c);
   });
 
-  it.fails('P4: a texture first requested without a GL context is not reused once one is given', async () => {
-    const withoutGl = await EngineCache.getTexture2D('assets/a.png');
+  it('P4 (fixed): without any known GL context, it rejects and caches nothing', async () => {
+    await expect(EngineCache.getTexture2D('assets/a.png')).rejects.toThrow(/no WebGL context/);
     const withGl = await EngineCache.getTexture2D('assets/a.png', gl);
-    expect(withGl).not.toBe(withoutGl);
+    expect(withGl.gl).toBe(gl);
   });
 
-  it.fails('P2: looking a texture up again does not hold it forever', async () => {
+  it('without gl, uses the GL context used most recently', async () => {
+    const a = await EngineCache.getTexture2D('assets/a.png', gl);
+    const b = await EngineCache.getTexture2D('assets/a.png');
+    expect(b).toBe(a);
+  });
+
+  it('keeps separate textures per GL context (P6)', async () => {
+    const other = {} as WebGL2RenderingContext;
+    const a = await EngineCache.getTexture2D('assets/a.png', gl);
+    const b = await EngineCache.getTexture2D('assets/a.png', other);
+    expect(b).not.toBe(a);
+    expect(b.gl).toBe(other);
+  });
+
+  it('P2 (fixed): looking a texture up again does not hold it forever', async () => {
     const t = await EngineCache.getTexture2D('assets/a.png', gl);
     await EngineCache.getTexture2D('assets/a.png', gl); // a lookup, e.g. by LitShader
     EngineCache.releaseTexture(t); // the one real owner lets go
     expect(t.destroy).toHaveBeenCalled();
+  });
+
+  it('a released texture is not handed out again', async () => {
+    const t = await EngineCache.getTexture2D('assets/a.png', gl);
+    EngineCache.releaseTexture(t);
+    const again = await EngineCache.getTexture2D('assets/a.png', gl);
+    expect(again).not.toBe(t);
   });
 });
 
@@ -151,6 +172,30 @@ describe('URI resolver', () => {
     EngineCache.setUriResolver(async (uri) => `https://cdn.test/${uri}`);
     await EngineCache.getMeshDataFromObj('cube.obj');
     expect(fetchMock).toHaveBeenCalledWith('https://cdn.test/cube.obj');
+  });
+});
+
+describe('loader', () => {
+  it('a custom loader replaces fetch for text', async () => {
+    const loader = {
+      loadText: vi.fn(async (uri: string) => `custom ${uri}`),
+      loadImage: vi.fn(),
+    };
+    EngineCache.setLoader(loader);
+    try {
+      expect(await EngineCache.loadShaderSource('a.frag')).toBe('custom a.frag');
+      expect(fetchMock).not.toHaveBeenCalled();
+    } finally {
+      EngineCache.setLoader(null);
+    }
+  });
+
+  it('reports what each manager holds', async () => {
+    await EngineCache.getTexture2D('assets/a.png', gl);
+    await EngineCache.loadShaderSource('a.frag');
+    const [stats] = EngineCache.stats();
+    expect(stats.textures.entries).toBe(1);
+    expect(stats.shaders.entries).toBe(1);
   });
 });
 

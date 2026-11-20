@@ -1,5 +1,7 @@
 import { Scene } from './entities';
 import { DependencyManager, EngineEventManager } from './managers';
+import { EngineCache } from './core/engineCache';
+import { ResourceManager } from './core/resources/resource-manager';
 
 /**
   The main entry point for the engine. This class handles the initialization of core components and dependency registration.

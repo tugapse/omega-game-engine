@@ -73,6 +73,17 @@ export class ResourceCache<V> {
     return this.entries.has(key);
   }
 
+  /**
+   * Forgets the entry for `key` without disposing it (its owner already
+   * did). With `value`, only if the entry holds that value.
+   */
+  remove(key: string, value?: V): boolean {
+    const entry = this.entries.get(key);
+    if (!entry || (value !== undefined && entry.value !== value)) return false;
+    this.entries.delete(key);
+    return true;
+  }
+
   /** Disposes every loaded entry that nobody holds. Returns how many. */
   trim(): number {
     let freed = 0;
