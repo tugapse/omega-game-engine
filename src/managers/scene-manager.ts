@@ -121,6 +121,8 @@ export class SceneManager {
       this.instanciateEntity(ob, instanciatedTransforms);
       this.instanciateBehaviours(ob, scene, meshes, gl);
     });
+    // Parents are linked once every transform exists (a child can come first).
+    SceneManager.prepareTransforms(instanciatedTransforms, objects);
 
     return objects.map((e: any) => e.entity);
   }
@@ -137,8 +139,10 @@ export class SceneManager {
     entities: any,
   ): void {
     for (const ent of entities) {
-      if (ent.transform.parent) {
-        ent.entity.transform.setParent(transforms[ent.transform.parent]);
+      const parentUuid = ent.transform?.parent;
+      const parent = parentUuid ? transforms[parentUuid] : undefined;
+      if (parent && ent.entity.transform.parent !== parent) {
+        ent.entity.transform.setParent(parent);
       }
     }
   }
