@@ -6,14 +6,14 @@ import { JsonSerializedData } from "../interfaces";
 
 
 /**
- * An enumeration of WebGL texture targets, corresponding to `WebGL2RenderingContext` constants.
+ * An enumeration of WebGL texture targets.
  */
 export enum TextureTarget {
   TEXTURE_2D = WebGL2RenderingContext.TEXTURE_2D,
 }
 
 /**
- * An enumeration of texture filtering modes, corresponding to WebGL constants for minification and magnification filters.
+ * An enumeration of texture filtering modes. These values correspond to WebGL constants for minification and magnification filters.
  */
 export enum TextureFilterMode {
   NEAREST = WebGL2RenderingContext.NEAREST,
@@ -25,7 +25,7 @@ export enum TextureFilterMode {
 }
 
 /**
- * An enumeration of texture wrapping modes, corresponding to WebGL constants for `TEXTURE_WRAP_S` and `TEXTURE_WRAP_T`.
+ * An enumeration of texture wrapping modes. These values correspond to WebGL constants for `TEXTURE_WRAP_S` and `TEXTURE_WRAP_T`.
  */
 export enum TextureWrapMode {
   REPEAT = WebGL2RenderingContext.REPEAT,
@@ -34,7 +34,7 @@ export enum TextureWrapMode {
 }
 
 /**
- * An enumeration of WebGL texture parameters, corresponding to `WebGL2RenderingContext` constants.
+ * An enumeration of WebGL texture parameters.
  */
 export enum TextureParameter {
   MIN_FILTER = WebGL2RenderingContext.TEXTURE_MIN_FILTER,
@@ -45,82 +45,88 @@ export enum TextureParameter {
 
 /**
  * A class to manage the loading, creation, and binding of 2D textures for use in WebGL.
- * It handles asynchronous image loading and provides methods for configuring texture parameters.
- * @augments {JsonSerializable}
+ * @extends {JsonSerializable}
  */
 export class Texture extends JsonSerializable {
   /**
    * The HTML image element that contains the texture data.
    * @protected
+   * @type {HTMLImageElement | null}
    */
   protected image: HTMLImageElement | null = null;
   /**
    * The WebGL texture object.
    * @protected
+   * @type {WebGLTexture | null}
    */
   protected _glTexture: WebGLTexture | null = null;
   /**
    * Indicates whether the image data has been loaded.
    * @protected
-   * @defaultValue `false`
+   * @type {boolean}
    */
   public isLoaded: boolean = false;
   /**
    * Indicates whether the texture is currently in the process of loading.
    * @protected
-   * @defaultValue `false`
+   * @type {boolean}
    */
   public isLoading: boolean = false;
   /**
-   * The minification filter used when the texture is smaller than the area it covers.
-   * @defaultValue `TextureFilterMode.LINEAR_MIPMAP_LINEAR`
+   * The minification filter.
+   * @public
+   * @type {TextureFilterMode}
    */
   public minFilter: TextureFilterMode = TextureFilterMode.LINEAR_MIPMAP_LINEAR;
   /**
-   * The magnification filter used when the texture is larger than the area it covers.
-   * @defaultValue `TextureFilterMode.LINEAR`
+   * The magnification filter.
+   * @public
+   * @type {TextureFilterMode}
    */
   public magFilter: TextureFilterMode = TextureFilterMode.LINEAR;
   /**
    * The texture wrap mode for the S (horizontal) axis.
-   * @defaultValue `TextureWrapMode.MIRRORED_REPEAT`
+   * @public
+   * @type {TextureWrapMode}
    */
   public wrapS: TextureWrapMode = TextureWrapMode.MIRRORED_REPEAT;
   /**
    * The texture wrap mode for the T (vertical) axis.
-   * @defaultValue `TextureWrapMode.MIRRORED_REPEAT`
+   * @public
+   * @type {TextureWrapMode}
    */
   public wrapT: TextureWrapMode = TextureWrapMode.MIRRORED_REPEAT;
   /**
    * A flag to indicate if the texture is currently in a bound state.
    * @protected
-   * @defaultValue `false`
+   * @type {boolean}
    */
   protected _isBound: boolean = false;
   /**
    * The width of the texture in pixels.
    * @protected
-   * @defaultValue `0`
+   * @type {number}
    */
   protected _width: number = 0;
 
   /**
    * The height of the texture in pixels.
    * @protected
-   * @defaultValue `0`
+   * @type {number}
    */
   protected _height: number = 0;
 
   /**
    * A promise that resolves when the texture is fully loaded.
    * @protected
+   * @type {Promise<void> | null}
    */
   protected _loadPromise: Promise<void> | null = null;
 
   /**
    * Creates an instance of Texture.
-   * @param gl - The WebGL2 rendering context.
-   * @param textureUri - The URI of the image to load.
+   * @param {WebGL2RenderingContext} [gl] - The WebGL2 rendering context.
+   * @param {string} [textureUri] - The URI of the image to load.
    */
   constructor(protected gl?: WebGL2RenderingContext, public textureUri?: string) {
     super("Texture");
@@ -128,17 +134,18 @@ export class Texture extends JsonSerializable {
 
   /**
    * Sets the WebGL2 rendering context for the texture.
-   * @param gl - The WebGL2 rendering context.
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @returns {void}
    */
   public setGL(gl: WebGL2RenderingContext): void {
     this.gl = gl;
   }
     /**
    * Creates a new texture specifically for depth information (e.g., for shadow mapping).
-   * @param gl - The WebGL2 rendering context.
-   * @param width - The width of the texture.
-   * @param height - The height of the texture.
-   * @returns A new `Texture` instance configured as a depth texture.
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @param {number} width - The width of the texture.
+   * @param {number} height - The height of the texture.
+   * @returns {Texture} A new Texture instance configured as a depth texture.
    */
   public static createDepthTexture(gl: WebGL2RenderingContext, width: number, height: number): Texture {
     const texture = gl.createTexture();
@@ -180,11 +187,11 @@ export class Texture extends JsonSerializable {
   /**
    * Creates and returns a texture with a specified color and size.
    * This is useful for creating fallback textures or solid colors.
-   * @param gl - The WebGL2 rendering context.
-   * @param width - The width of the texture.
-   * @param height - The height of the texture.
-   * @param color - An optional array of color data. If not provided, an empty texture is created.
-   * @returns A new `Texture` instance.
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @param {number} width - The width of the texture.
+   * @param {number} height - The height of the texture.
+   * @param {Uint8Array} [color] - An optional array of color data. If not provided, a single white pixel is used.
+   * @returns {Texture} A new Texture instance.
    */
   public static create(gl: WebGL2RenderingContext, width: number, height: number, color: Uint8Array | null = null): Texture {
     const texture = gl.createTexture();
@@ -222,7 +229,7 @@ export class Texture extends JsonSerializable {
 
   /**
    * Loads an image from the provided URI and creates the WebGL texture.
-   * @returns A promise that resolves when the image is fully loaded and the WebGL texture is created.
+   * @returns {Promise<void>} A Promise that resolves when the image is fully loaded and the WebGL texture is created.
    */
   public load(): Promise<void> {
     if (this._loadPromise) {
@@ -272,7 +279,8 @@ export class Texture extends JsonSerializable {
   /**
    * Creates the WebGLTexture object from the loaded image data.
    * @protected
-   * @param gl - The WebGL2 rendering context.
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @returns {void}
    */
   protected createGLTexture(gl: WebGL2RenderingContext): void {
     if (!this.isLoaded || !this.image) {
@@ -289,6 +297,7 @@ export class Texture extends JsonSerializable {
 
   /**
    * Re-uploads the texture data to the GPU. This is useful if the underlying image or data has changed.
+   * @returns {void}
    */
   public rebuild(): void {
     if (!this.gl || !this.isLoaded || !this.image) {
@@ -311,6 +320,7 @@ export class Texture extends JsonSerializable {
   /**
    * Sets the texture filtering and wrapping parameters for the texture.
    * This method applies the values stored in the class properties to the GPU.
+   * @returns {void}
    */
   public setTextureParameters(): void {
     if (!this.gl) return;
@@ -325,7 +335,8 @@ export class Texture extends JsonSerializable {
 
   /**
    * Sets the minification filter for the texture.
-   * @param filter - The minification filter to apply.
+   * @param {TextureFilterMode} filter - The minification filter to apply.
+   * @returns {void}
    */
   public setMinFilter(filter: TextureFilterMode): void {
     this.minFilter = filter;
@@ -334,7 +345,8 @@ export class Texture extends JsonSerializable {
 
   /**
    * Sets the magnification filter for the texture.
-   * @param filter - The magnification filter to apply.
+   * @param {TextureFilterMode} filter - The magnification filter to apply.
+   * @returns {void}
    */
   public setMagFilter(filter: TextureFilterMode): void {
     this.magFilter = filter;
@@ -343,7 +355,8 @@ export class Texture extends JsonSerializable {
 
   /**
    * Sets the texture wrapping mode for the S axis.
-   * @param wrap - The wrapping mode to apply.
+   * @param {TextureWrapMode} wrap - The wrapping mode to apply.
+   * @returns {void}
    */
   public setWrapS(wrap: TextureWrapMode): void {
     this.wrapS = wrap;
@@ -352,7 +365,8 @@ export class Texture extends JsonSerializable {
 
   /**
    * Sets the texture wrapping mode for the T axis.
-   * @param wrap - The wrapping mode to apply.
+   * @param {TextureWrapMode} wrap - The wrapping mode to apply.
+   * @returns {void}
    */
   public setWrapT(wrap: TextureWrapMode): void {
     this.wrapT = wrap;
@@ -361,11 +375,12 @@ export class Texture extends JsonSerializable {
 
   /**
    * Sets a sub-region of the texture's pixels.
-   * @param x - The x-coordinate of the sub-region to update.
-   * @param y - The y-coordinate of the sub-region to update.
-   * @param width - The width of the sub-region.
-   * @param height - The height of the sub-region.
-   * @param data - The pixel data to upload.
+   * @param {number} x - The x-coordinate of the sub-region to update.
+   * @param {number} y - The y-coordinate of the sub-region to update.
+   * @param {number} width - The width of the sub-region.
+   * @param {number} height - The height of the sub-region.
+   * @param {TexImageSource | ArrayBufferView} data - The pixel data to upload.
+   * @returns {void}
    */
   public setPixels(
     x: number,
@@ -412,11 +427,10 @@ export class Texture extends JsonSerializable {
   /**
    * Reads the pixels from the texture and returns them as a Uint8Array.
    * NOTE: This function requires the texture to be attached to a framebuffer object (FBO).
-   * It temporarily creates and binds an FBO to perform the read operation.
-   *
-   * @param width - The width of the texture to read.
-   * @param height - The height of the texture to read.
-   * @returns A `Uint8Array` containing the pixel data, or `null` if an error occurred.
+   * A more complete implementation would handle FBO creation and binding.
+   * @param {number} width - The width of the texture to read.
+   * @param {number} height - The height of the texture to read.
+   * @returns {Uint8Array | null} A Uint8Array containing the pixel data, or null if an error occurred.
    */
   public getPixels(width: number, height: number): Uint8Array | null {
     if (!this.gl || !this._glTexture) {
@@ -456,6 +470,7 @@ export class Texture extends JsonSerializable {
 
   /**
    * Binds the texture to the `TEXTURE_2D` target if it is not already bound.
+   * @returns {void}
    */
   public bind(): void {
     if (!this.gl) {
@@ -467,6 +482,7 @@ export class Texture extends JsonSerializable {
 
   /**
    * Unbinds the texture from the `TEXTURE_2D` target if it is currently bound.
+   * @returns {void}
    */
   public unBind(): void {
     if (!this.gl || !this._isBound) {
@@ -478,7 +494,8 @@ export class Texture extends JsonSerializable {
 
   /**
    * Gets the WebGLTexture object.
-   * @returns The underlying `WebGLTexture` object, or `null` if not created.
+   * @readonly
+   * @type {WebGLTexture | null}
    */
   public get glTexture(): WebGLTexture | null {
     return this._glTexture;
@@ -486,7 +503,8 @@ export class Texture extends JsonSerializable {
 
   /**
    * Checks if the image data has been successfully loaded into the HTMLImageElement.
-   * @returns `true` if the texture data is loaded and ready for use.
+   * @readonly
+   * @type {boolean}
    */
   public get isImageLoaded(): boolean {
     return this.isLoaded;
@@ -494,7 +512,8 @@ export class Texture extends JsonSerializable {
 
   /**
    * Gets the width of the texture.
-   * @returns The width of the texture in pixels.
+   * @readonly
+   * @type {number}
    */
   public get width(): number {
     return this._width;
@@ -502,7 +521,8 @@ export class Texture extends JsonSerializable {
 
   /**
    * Gets the height of the texture.
-   * @returns The height of the texture in pixels.
+   * @readonly
+   * @type {number}
    */
   public get height(): number {
     return this._height;
@@ -510,6 +530,7 @@ export class Texture extends JsonSerializable {
 
   /**
    * Destroys the WebGL texture to free up GPU memory.
+   * @returns {void}
    */
   public destroy(): void {
     if (this.gl && this._glTexture) {
@@ -539,8 +560,9 @@ export class Texture extends JsonSerializable {
 
   /**
    * Populates the texture object from a JSON serializable object.
-   * @param jsonObject - The JSON data to deserialize from.
    * @override
+   * @param {JsonSerializedData} jsonObject
+   * @returns {void}
    */
   override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);

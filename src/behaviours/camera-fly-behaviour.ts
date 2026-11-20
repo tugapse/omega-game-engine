@@ -1,5 +1,5 @@
 import { quat, vec3 } from 'gl-matrix';
-import { Mouse , Keyboard} from "../core/input";
+import { Keybord, Mouse } from "../core/input";
 import { EntityBehaviour } from "./entity-behaviour";
 import { JsonSerializedData } from '../interfaces/json-serialized-data';
 import { Transform } from '../core/transform';
@@ -10,9 +10,9 @@ import { Camera, CameraType } from '../entities/camera';
  * Defines the key mappings for camera movement.
  */
 export interface ICameraMoveKeys {
-  /** Key for moving forward. @defaultValue 'w' */
+  /** Key for moving forward. */
   forward: string,
-  /** Key for moving backward. @defaultValue 's' */
+  /** Key for moving backward. */
   back: string,
   /** Key for strafing left. */
   left: string
@@ -20,9 +20,9 @@ export interface ICameraMoveKeys {
   right: string,
   /** Key for moving up. */
   up: string,
-  /** Key for moving down. @defaultValue 'e' */
+  /** Key for moving down. */
   down: string,
-  /** Key for boosting movement speed. @defaultValue 'shift' */
+  /** Key for boosting movement speed. */
   boost: string,
 }
 /**
@@ -30,20 +30,18 @@ export interface ICameraMoveKeys {
  */
 export interface ICameraMouseButtons {
   /** Mouse button for panning (moving up/down and left/right). */
-  pan: number, // Typically 1 (middle mouse)
+  pan: number,
   /** Mouse button for looking around (rotating). */
-  look: number // Typically 2 (right mouse)
+  look: number
 }
 /**
+   CameraFlyBehaviour
+
  * Implements a free-look camera controller, often referred to as "flycam" or "FPS camera."
- * This behavior allows for navigation in a 3D scene using standard keyboard (WASD) and mouse controls.
+ * It allows movement with W/A/S/D/Q/E keys and rotation with mouse input.
+ * The movement includes smooth acceleration and deceleration, and rotation is smoothly dampened.
  *
- * @remarks
- * The movement includes smooth acceleration and deceleration, and rotation is smoothly dampened for a more
- * fluid user experience. It also supports orthographic camera controls, where forward/backward movement
- * translates to zooming.
- *
- * This behavior can be attached to an Entity to control its transform,
+ * This behaviour can be attached to an Entity to control its transform,
  * making it behave like a camera in a 3D scene.
  *
  * @extends EntityBehaviour
@@ -53,7 +51,7 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
   /**
    * Instantiates a new CameraFlyBehaviour instance.
-   * @returns A new instance of CameraFlyBehaviour.
+   * @returns {CameraFlyBehaviour} A new instance of CameraFlyBehaviour.
    */
   static override instanciate(): CameraFlyBehaviour { return new CameraFlyBehaviour(); }
 
@@ -61,6 +59,7 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    * The maximum speed at which the camera can move.
    * @type {number}
    * @default 20
+   */
   public moveSpeed = 20;
 
   /**
@@ -68,6 +67,7 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    * @type {number}
    * @default 3.0
    */
+  public rotationSpeed = 5.0;
 
   /**
    * The dampening factor for rotation. A higher value means rotation snaps faster.
@@ -75,6 +75,7 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    * @type {number}
    * @default 0.4
    */
+  public rotationDampening = 0.20;
 
   /**
    * The dampening factor for movement. A higher value means movement stops faster.
@@ -82,18 +83,21 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    * @type {number}
    * @default 0.15
    */
+  public moveDampening = 0.15;
 
   /**
    * The sensitivity of the mouse scroll wheel for moving forward and backward.
    * @type {number}
    * @default 1.0
    */
+  public scrollSpeed = 1;
 
   /**
    * The multiplier applied to `moveSpeed` when the boost key is held down.
    * @type {number}
    * @default 2.0
    */
+  public boostMultiplier = 4.0;
 
   /**
    * The key mappings for movement controls.
@@ -123,6 +127,7 @@ export class CameraFlyBehaviour extends EntityBehaviour {
    * @type {number}
    * @default 10
    */
+  protected _acceleration = 4.0;
 
   /** @protected Current forward/backward velocity. */
   protected _forwardVelocity = 0;
@@ -145,20 +150,14 @@ export class CameraFlyBehaviour extends EntityBehaviour {
     this._className = "CameraFlyBehaviour";
   }
 
-  /**
-   * Initializes the behavior by capturing the initial rotation from the parent's transform.
-   * @override
-   * @returns {boolean} True if initialization is successful.
-   */
   override initialize(): boolean {
     this._currentPitch = this.transform.localRotation[0];
     this._currentYaw = this.transform.localRotation[1];
     return super.initialize();
   }
   /**
-   * Updates the camera's state based on user input each frame.
-   * @param ellapsed - The time elapsed since the last update in seconds.
-   * @override
+   * Updates the camera's state based on input.
+   * @param {number} ellapsed - The time elapsed since the last update in seconds.
    */
   override update(ellapsed: number): void {
     this.updateInput(ellapsed);
@@ -167,12 +166,12 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
   /**
    * Updates all movement velocities based on key inputs.
-   * @param ellapsed - The time elapsed since the last frame.
+   * @param {number} ellapsed - The time elapsed since the last frame.
    * @protected
    */
   protected updateMoveVelocity(ellapsed: number) {
     const accelerationDelta = this._acceleration * ellapsed;
-    const maxSpeed = Keyboard.keyDown[this.moveKeys.boost]
+    const maxSpeed = Keybord.keyDown[this.moveKeys.boost]
       ? this.moveSpeed * this.boostMultiplier
       : this.moveSpeed;
     const stopThreshold = 0.1;
@@ -185,15 +184,14 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
   /**
    * Updates the forward/backward velocity based on input.
-   * @param accelerationDelta - The acceleration to apply for this frame.
-   * @param maxSpeed - The maximum speed.
-   * @param stopThreshold - The velocity below which movement stops completely.
-   * @protected
+   * @param {number} accelerationDelta - The acceleration to apply for this frame.
+   * @param {number} maxSpeed - The maximum speed.
+   * @param {number} stopThreshold - The velocity below which movement stops completely.
    */
   protected updateForwardVelocity(accelerationDelta: number, maxSpeed: number, stopThreshold: number) {
-    if (Keyboard.keyDown[this.moveKeys.forward]) {
+    if (Keybord.keyDown[this.moveKeys.forward]) {
       this._forwardVelocity = Math.min(this._forwardVelocity + accelerationDelta, maxSpeed);
-    } else if (Keyboard.keyDown[this.moveKeys.back]) {
+    } else if (Keybord.keyDown[this.moveKeys.back]) {
       this._forwardVelocity = Math.max(this._forwardVelocity - accelerationDelta, -maxSpeed);
     } else {
       this._forwardVelocity *= (1 - this.moveDampening);
@@ -205,15 +203,14 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
   /**
    * Updates the strafe (left/right) velocity based on input.
-   * @param accelerationDelta - The acceleration to apply for this frame.
-   * @param maxSpeed - The maximum speed.
-   * @param stopThreshold - The velocity below which movement stops completely.
-   * @protected
+   * @param {number} accelerationDelta - The acceleration to apply for this frame.
+   * @param {number} maxSpeed - The maximum speed.
+   * @param {number} stopThreshold - The velocity below which movement stops completely.
    */
   protected updateStrafeVelocity(accelerationDelta: number, maxSpeed: number, stopThreshold: number) {
-    if (Keyboard.keyDown[this.moveKeys.left]) {
+    if (Keybord.keyDown[this.moveKeys.left]) {
       this._strafeVelocity = Math.min(this._strafeVelocity + accelerationDelta, maxSpeed);
-    } else if (Keyboard.keyDown[this.moveKeys.right]) {
+    } else if (Keybord.keyDown[this.moveKeys.right]) {
       this._strafeVelocity = Math.max(this._strafeVelocity - accelerationDelta, -maxSpeed);
     } else {
       this._strafeVelocity *= (1 - this.moveDampening);
@@ -225,15 +222,14 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
   /**
    * Updates the up/down velocity based on input.
-   * @param accelerationDelta - The acceleration to apply for this frame.
-   * @param maxSpeed - The maximum speed.
-   * @param stopThreshold - The velocity below which movement stops completely.
-   * @protected
+   * @param {number} accelerationDelta - The acceleration to apply for this frame.
+   * @param {number} maxSpeed - The maximum speed.
+   * @param {number} stopThreshold - The velocity below which movement stops completely.
    */
   protected updateUpVelocity(accelerationDelta: number, maxSpeed: number, stopThreshold: number) {
-    if (Keyboard.keyDown[this.moveKeys.up]) {
+    if (Keybord.keyDown[this.moveKeys.up]) {
       this._upVelocity = Math.max(this._upVelocity - accelerationDelta, -maxSpeed);
-    } else if (Keyboard.keyDown[this.moveKeys.down]) {
+    } else if (Keybord.keyDown[this.moveKeys.down]) {
       this._upVelocity = Math.min(this._upVelocity + accelerationDelta, maxSpeed);
     } else {
       this._upVelocity *= (1 - this.moveDampening);
@@ -245,7 +241,6 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
   /**
    * Updates the camera's pan velocity based on mouse movement.
-   * @param ellapsed - The time elapsed since the last frame.
    * @protected
    */
   protected updatePanVelocity(ellapsed:number) {
@@ -257,7 +252,6 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
   /**
    * Updates the forward velocity based on mouse scroll wheel input.
-   * @param ellapsed - The time elapsed since the last frame.
    * @protected
    */
   protected updateScrollVelocity(ellapsed:number) {
@@ -266,8 +260,8 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
   /**
    * Applies the calculated movement velocities to the entity's transform.
-   * @param transform - The transform to modify.
-   * @param ellapsed - The time elapsed since the last frame.
+   * @param {Transform} transform - The transform to modify.
+   * @param {number} ellapsed - The time elapsed since the last frame.
    * @protected
    */
   protected applyMovementVelocity(transform: Transform, ellapsed: number) {
@@ -311,8 +305,8 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
   /**
    * Applies the calculated rotation velocities to the entity's transform.
-   * @param transform - The transform to modify.
-   * @param ellapsed - The time elapsed since the last frame.
+   * @param {Transform} transform - The transform to modify.
+   * @param {number} ellapsed - The time elapsed since the last frame.
    * @protected
    */
   protected applyRotationVelocity(transform: Transform, ellapsed: number) {
@@ -344,7 +338,7 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
   /**
    * Main input processing loop called every frame.
-   * @param ellapsed - The time elapsed since the last frame.
+   * @param {number} ellapsed - The time elapsed since the last frame.
    * @protected
    */
   protected updateInput(ellapsed: number) {
@@ -360,11 +354,7 @@ export class CameraFlyBehaviour extends EntityBehaviour {
 
   }
   
-  /**
-   * Creates a clone of this behavior.
-   * @override
-   * @returns A new `CameraFlyBehaviour` instance with the same properties.
-   */
+
   override clone(): EntityBehaviour | null {
     const clone = new CameraFlyBehaviour();
     clone.fromJson(this.toJsonObject());
