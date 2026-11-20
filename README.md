@@ -46,6 +46,8 @@ Each frame, `RenderPipeline.draw()`:
 5. Runs the enabled `PostEffect`s, each reading the previous result (ping-pong between two targets). `RetroEffect` is the built-in one.
 6. Copies the result to the canvas with tone mapping (None, Reinhard or ACES, plus exposure) and writes the scene depth too. Whatever the host draws afterwards, like the editor's grid and gizmos, is still hidden by the scene's objects.
 
+Before the main camera, every other active camera with a `targetTexture` runs the same steps into its render texture (`rendertexture://<name>`, `targetWidth` × `targetHeight`). The copy goes into the texture instead of the canvas. Materials pick it up like any texture: `Resources.for(gl).getTexture('rendertexture://minimap')`. Each render texture keeps two targets and swaps them after each render, so a camera can see an object that shows its own texture (the object shows the previous frame).
+
 A scene saves only `RenderPipelineSettings`: shadows on/off, strength and distance, HDR, tone mapping, exposure and the retro effect. GPU objects are always rebuilt.
 
 `RenderTarget` and `FullscreenProgram` are exported for custom passes and effects.

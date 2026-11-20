@@ -2,6 +2,7 @@ import { ICubemapSides } from '../../interfaces/cubemap';
 import { ObjParser } from '../../parsers/obj-parser';
 import { CubemapTexture } from '../../textures';
 import { Texture } from '../../textures/texture';
+import { RenderTexture, isRenderTextureUri, renderTextureUri } from '../../textures/render-texture';
 import { MeshData } from '../mesh';
 import { ResourceCache, ResourceCacheStats } from './resource-cache';
 import { DefaultResourceLoader, ResourceLoader } from './resource-loader';
@@ -30,6 +31,8 @@ export class ResourceManager {
   readonly shaders: ResourceCache<string>;
 
   private readonly objParser = new ObjParser();
+  /** Textures cameras render into, by URI. They live until `dispose()`. */
+  private readonly renderTextures = new Map<string, RenderTexture>();
   /** Serves built-in textures from their data URLs, whatever the host loader. */
   private readonly builtinLoader = new DefaultResourceLoader(async (uri) => builtinTextureUrl(uri) ?? uri);
   /** Loads the magenta "missing" image whatever the URI. */
@@ -41,6 +44,7 @@ export class ResourceManager {
   ) {
     this.textures = new ResourceCache<Texture>({
       load: async (uri) => {
+        if (isRenderTextureUri(uri)) return this.getRenderTexture(uri);
         const texture = new Texture(this.requireGl(uri), uri);
         texture.loader = builtinTextureUrl(uri) ? this.builtinLoader : this.loader;
         try {
@@ -54,7 +58,8 @@ export class ResourceManager {
         }
         return texture;
       },
-      dispose: (texture) => texture.destroy(),
+      // Render textures belong to `renderTextures`, not to the cache.
+      dispose: (texture) => { if (!(texture instanceof RenderTexture)) texture.destroy(); },
     });
     this.cubemaps = new ResourceCache<CubemapTexture>({
       load: async (key) => {
@@ -90,6 +95,21 @@ export class ResourceManager {
 
   async getCubemap(sides: ICubemapSides): Promise<CubemapTexture> {
     return ResourceManager.peekValue(await this.cubemaps.acquire(ResourceManager.cubemapKey(sides)));
+  }
+
+  /**
+   * The render texture called `name` (or with that `rendertexture://` URI),
+   * created empty the first time. Cameras render into it; materials load it
+   * like any texture.
+   */
+  getRenderTexture(name: string): RenderTexture {
+    const uri = renderTextureUri(name);
+    let texture = this.renderTextures.get(uri);
+    if (!texture) {
+      texture = new RenderTexture(this.requireGl(uri), uri);
+      this.renderTextures.set(uri, texture);
+    }
+    return texture;
   }
 
   /** A cubemap with the built-in white texture on all six faces. */
@@ -140,6 +160,8 @@ export class ResourceManager {
     this.cubemaps.clear();
     this.meshes.clear();
     this.shaders.clear();
+    for (const texture of this.renderTextures.values()) texture.destroy();
+    this.renderTextures.clear();
   }
 
   private requireGl(what: string): WebGL2RenderingContext {

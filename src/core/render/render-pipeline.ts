@@ -15,6 +15,17 @@ import { planShadows } from "./shadows";
 import { PostEffect, RetroEffect } from "./post-effect";
 import { IRenderPass, RenderContext } from "./render-pass.interface";
 import { RenderTarget, RenderTargetColor } from "./render-target";
+import { Resources } from "../resources/resources";
+
+/** The off-screen targets of one view (the canvas, or one render texture). */
+interface ViewTargets {
+  scene: RenderTarget;
+  /** Colour-only targets the post effects write into, in turn. */
+  post: RenderTarget[];
+}
+
+/** Key of the canvas view in `_views`. */
+const CANVAS_VIEW = "";
 
 /** How the final copy maps HDR colour to the screen. */
 export enum ToneMapping {
@@ -77,9 +88,8 @@ export class RenderPipeline extends JsonSerializable {
   protected scene!: Scene;
   protected _shadowmapPass!: ShadowAtlasPass;
   protected _geometryPass!: GeometryPass;
-  protected _sceneTarget: RenderTarget | null = null;
-  /** Colour-only targets the post effects write into, in turn. */
-  protected _postTargets: RenderTarget[] = [];
+  /** Targets per view: the canvas (`CANVAS_VIEW`) and each render texture. */
+  protected _views = new Map<string, ViewTargets>();
   protected _copy: FullscreenProgram | null = null;
   private _passes: IRenderPass[] = [];
   private _retro = new RetroEffect();
@@ -90,7 +100,7 @@ export class RenderPipeline extends JsonSerializable {
   constructor(public override name: string = "Render Pipeline") {
     super("RenderPipeline");
     this._serializationIgnoreKeys.push(
-      "_gl", "ubo", "lightsUbo", "scene", "_shadowmapPass", "_geometryPass", "_sceneTarget", "_postTargets", "_copy",
+      "_gl", "ubo", "lightsUbo", "scene", "_shadowmapPass", "_geometryPass", "_views", "_copy",
       "_passes", "_retro", "effects", "_startTime",
     );
   }
@@ -101,7 +111,7 @@ export class RenderPipeline extends JsonSerializable {
 
   /** The off-screen target the scene is drawn into (colour + depth textures). */
   public get sceneTarget(): RenderTarget | null {
-    return this._sceneTarget;
+    return this._views.get(CANVAS_VIEW)?.scene ?? null;
   }
 
   public setGlRenderingContext(gl: WebGL2RenderingContext): void {
@@ -116,10 +126,6 @@ export class RenderPipeline extends JsonSerializable {
     this.applySettings();
 
     this.disposeTargets();
-    this._sceneTarget = new RenderTarget(gl, gl.drawingBufferWidth, gl.drawingBufferHeight, {
-      color: this.colorFormat(),
-      depth: "texture",
-    });
     this._copy?.dispose();
     this._copy = new FullscreenProgram(gl, ShaderSources.frag.copy_with_depth);
     for (const pass of this._passes) pass.initialize(gl);
@@ -135,18 +141,68 @@ export class RenderPipeline extends JsonSerializable {
     this._passes.push(pass);
   }
 
+  /**
+   * Draws the frame: first every camera with a `targetTexture` (other than
+   * the main one) into its render texture, then the main camera to the canvas.
+   */
   public draw(): void {
     const gl = this._gl;
-    const camera = Camera.mainCamera;
-    if (!this.scene || !gl || !camera || !this._sceneTarget || !this._copy) return;
+    const main = Camera.mainCamera;
+    if (!this.scene || !gl || !main || !this._copy) return;
 
-    // The host cleared the canvas with its colour; the scene target uses the same.
-    const clearColor = gl.getParameter(gl.COLOR_CLEAR_VALUE) as Float32Array;
+    // The host cleared the canvas with its colour; the scene targets use the same.
+    const clearColor = Float32Array.from(gl.getParameter(gl.COLOR_CLEAR_VALUE) as Float32Array);
+    const time = (performance.now() - this._startTime) / 1000;
     this.applySettings();
-    const target = this.ensureSceneTarget(gl.drawingBufferWidth, gl.drawingBufferHeight);
-    const frame = buildFrameData(this.scene, camera, (performance.now() - this._startTime) / 1000);
+
+    const resources = Resources.for(gl);
+    for (const camera of this.textureCameras(main)) {
+      const texture = resources.getRenderTexture(camera.targetTexture);
+      const width = Math.max(1, camera.targetWidth | 0);
+      const height = Math.max(1, camera.targetHeight | 0);
+      camera.aspectRatio = width / height;
+      camera.refreshMatrices();
+      // Shaders and renderers read the camera from Camera.mainCamera.
+      Camera.setMainCamera(camera);
+      try {
+        const output = texture.beginWrite(width, height);
+        this.renderView(camera, texture.textureUri!, width, height, clearColor, time, output);
+        texture.endWrite();
+      } finally {
+        Camera.setMainCamera(main);
+      }
+    }
+
+    this.renderView(main, CANVAS_VIEW, gl.drawingBufferWidth, gl.drawingBufferHeight, clearColor, time, null);
+  }
+
+  /** The active cameras of the scene that draw into a texture, main camera excluded. */
+  private textureCameras(main: Camera): Camera[] {
+    return this.scene.objects.filter(
+      (o): o is Camera => o instanceof Camera && o !== main && o.active && !!o.targetTexture,
+    );
+  }
+
+  /**
+   * One view: shadows, the scene into the view's target, passes, post effects
+   * and the tone-mapped copy into `output` (null = the canvas).
+   */
+  private renderView(
+    camera: Camera,
+    key: string,
+    width: number,
+    height: number,
+    clearColor: Float32Array,
+    time: number,
+    output: RenderTarget | null,
+  ): void {
+    const gl = this._gl;
+    const view = this.ensureView(key, width, height);
+    const target = view.scene;
+    const frame = buildFrameData(this.scene, camera, time);
     const ctx: RenderContext = { gl, frame, target };
 
+    // The atlas is shared, so each view redraws it around its own camera.
     const shadows = planShadows(frame.lights, camera.transform.worldPosition, {
       directionalDistance: this.settings.shadowDistance.value,
     });
@@ -168,18 +224,19 @@ export class RenderPipeline extends JsonSerializable {
     const effects = this.effects.filter((e) => e.enabled);
     if (effects.length) this.withFullscreenState(() => {
       for (const effect of effects) {
-        const destination = this.postTarget(source === this._postTargets[0] ? 1 : 0, target);
+        const destination = this.postTarget(view, source === view.post[0] ? 1 : 0);
         effect.render({ ...ctx, source, target: destination });
         source = destination;
       }
     });
 
-    this.copyToCanvas(source, target);
+    this.copyTo(output, source, target);
   }
 
   public resize(width: number, height: number): void {
-    this._sceneTarget?.resize(width, height);
-    for (const t of this._postTargets) t.resize(width, height);
+    const canvas = this._views.get(CANVAS_VIEW);
+    canvas?.scene.resize(width, height);
+    for (const t of canvas?.post ?? []) t.resize(width, height);
     for (const pass of this._passes) pass.resize(width, height);
   }
 
@@ -190,15 +247,22 @@ export class RenderPipeline extends JsonSerializable {
     for (const effect of this.effects) effect.dispose();
     this._shadowmapPass?.dispose();
     for (const pass of this._passes) pass.cleanup();
-    this._sceneTarget = null;
     this._copy = null;
   }
 
-  /** Writes `color`'s colour (tone mapped) and `depth`'s depth to the canvas. */
-  private copyToCanvas(color: RenderTarget, depth: RenderTarget): void {
+  /**
+   * Writes `color`'s colour (tone mapped) and `depth`'s depth into `output`,
+   * or into the canvas when it is null. Render textures have no depth, so
+   * only the colour lands there.
+   */
+  private copyTo(output: RenderTarget | null, color: RenderTarget, depth: RenderTarget): void {
     const gl = this._gl;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    if (output) {
+      output.bind();
+    } else {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    }
     this.withFullscreenState(() => {
       gl.enable(gl.DEPTH_TEST);
       gl.depthFunc(gl.ALWAYS);
@@ -239,32 +303,44 @@ export class RenderPipeline extends JsonSerializable {
     return this.settings.hdr && RenderTarget.supportsFloatColor(this._gl) ? "rgba16f" : "rgba8";
   }
 
-  /** The scene target at this size and in the colour format the settings ask for. */
-  private ensureSceneTarget(width: number, height: number): RenderTarget {
-    if (this._sceneTarget!.color !== this.colorFormat()) {
-      this.disposeTargets();
-      this._sceneTarget = new RenderTarget(this._gl, width, height, { color: this.colorFormat(), depth: "texture" });
+  /** The targets of view `key` at this size and in the colour format the settings ask for. */
+  private ensureView(key: string, width: number, height: number): ViewTargets {
+    let view = this._views.get(key);
+    if (view && view.scene.color !== this.colorFormat()) {
+      this.disposeView(view);
+      view = undefined;
     }
-    this._sceneTarget!.resize(width, height);
-    return this._sceneTarget!;
+    if (!view) {
+      view = {
+        scene: new RenderTarget(this._gl, width, height, { color: this.colorFormat(), depth: "texture" }),
+        post: [],
+      };
+      this._views.set(key, view);
+    }
+    view.scene.resize(width, height);
+    return view;
   }
 
-  /** Post target `i` (0 or 1), created on first use like the scene target, without depth. */
-  private postTarget(i: number, like: RenderTarget): RenderTarget {
-    let t = this._postTargets[i];
+  /** Post target `i` (0 or 1) of a view, created on first use like its scene target, without depth. */
+  private postTarget(view: ViewTargets, i: number): RenderTarget {
+    const like = view.scene;
+    let t = view.post[i];
     if (!t || t.color !== like.color) {
       t?.dispose();
-      t = this._postTargets[i] = new RenderTarget(this._gl, like.width, like.height, { color: like.color, depth: null });
+      t = view.post[i] = new RenderTarget(this._gl, like.width, like.height, { color: like.color, depth: null });
     }
     t.resize(like.width, like.height);
     return t;
   }
 
+  private disposeView(view: ViewTargets): void {
+    view.scene.dispose();
+    for (const t of view.post) t.dispose();
+  }
+
   private disposeTargets(): void {
-    this._sceneTarget?.dispose();
-    this._sceneTarget = null;
-    for (const t of this._postTargets) t.dispose();
-    this._postTargets = [];
+    for (const view of this._views.values()) this.disposeView(view);
+    this._views.clear();
   }
 
   private applySettings(): void {
