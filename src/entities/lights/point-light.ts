@@ -26,6 +26,9 @@ export class PointLight extends Light {
    */
   public attenuation!: LightAttenuation;
 
+  /** Distance the light reaches, in world units: the shadow's far plane and the cut-off for culling. */
+  public range = 25;
+
   /**
     Creates an instance of PointLight.
    * @param {string} name - The name of the light entity.

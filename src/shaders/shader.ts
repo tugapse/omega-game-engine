@@ -470,10 +470,11 @@ export class Shader extends JsonSerializable {
       return null;
     }
 
-    const blockIndex = gl.getUniformBlockIndex(shaderProgram, 'CameraBlock');
-
-    if (blockIndex !== gl.INVALID_INDEX) {
-      gl.uniformBlockBinding(shaderProgram, blockIndex, 0);
+    // Uniform blocks shared by every shader, filled once per frame by the pipeline.
+    const blocks: [string, number][] = [['CameraBlock', 0], ['LightsBlock', 1], ['ShadowsBlock', 2]];
+    for (const [name, binding] of blocks) {
+      const blockIndex = gl.getUniformBlockIndex(shaderProgram, name);
+      if (blockIndex !== gl.INVALID_INDEX) gl.uniformBlockBinding(shaderProgram, blockIndex, binding);
     }
 
     return shaderProgram;

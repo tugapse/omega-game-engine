@@ -41,15 +41,15 @@ void main() {
 
     // Fog application (fog math also blends much better in linear space)
     if (u_fogEnabled == 1) {
-        vec3 mainLightDir = u_numDirectionalLights > 0 ? u_directionalLightDirections[0] : vec3(0.0);
-        vec3 mainLightCol = u_numDirectionalLights > 0 ? u_directionalLightColors[0] : vec3(0.0);
+        vec3 mainLightDir = u_lightCounts.x > 0 ? u_dirDirection[0].xyz : vec3(0.0);
+        vec3 mainLightCol = u_lightCounts.x > 0 ? u_dirColor[0].rgb : vec3(0.0);
         
         foggedRGB = applyFog(
             finalColor.rgb, 
             v_fogDistance, 
             v_position, 
             u_cameraPosition, 
-            u_numDirectionalLights, 
+            u_lightCounts.x, 
             mainLightDir, 
             mainLightCol
         );

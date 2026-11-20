@@ -6,7 +6,6 @@ uniform float u_specularStrength;
 uniform float u_roughness;
 uniform vec3 u_cameraPosition;
 uniform float u_normalMapStrength;
-uniform vec4 u_ambientLight;
 
 uniform int u_useShadows;
 uniform float u_shadowStrength;
@@ -19,26 +18,22 @@ uniform sampler2D u_roughnessMap;
 uniform sampler2D u_aoMap;
 uniform sampler2D u_emissiveMap;
 
-uniform int u_numDirectionalLights;
-uniform vec3 u_directionalLightDirections[MAX_DIRECTIONAL_LIGHTS];
-uniform vec3 u_directionalLightColors[MAX_DIRECTIONAL_LIGHTS];
-
-uniform int u_numPointLights;
-uniform vec3 u_pointLightPositions[MAX_POINT_LIGHTS];
-uniform vec3 u_pointLightColors[MAX_POINT_LIGHTS];
-uniform float u_pointLightConstantAtts[MAX_POINT_LIGHTS];
-uniform float u_pointLightLinearAtts[MAX_POINT_LIGHTS];
-uniform float u_pointLightQuadraticAtts[MAX_POINT_LIGHTS];
-
-uniform int u_numSpotLights;
-uniform vec3 u_spotLightPositions[MAX_SPOT_LIGHTS];
-uniform vec3 u_spotLightDirections[MAX_SPOT_LIGHTS];
-uniform vec3 u_spotLightColors[MAX_SPOT_LIGHTS];
-uniform float u_spotLightInnerConeCos[MAX_SPOT_LIGHTS];
-uniform float u_spotLightOuterConeCos[MAX_SPOT_LIGHTS];
-uniform float u_spotLightConstantAtts[MAX_SPOT_LIGHTS];
-uniform float u_spotLightLinearAtts[MAX_SPOT_LIGHTS];
-uniform float u_spotLightQuadraticAtts[MAX_SPOT_LIGHTS];
+// All lights of the frame, uploaded once per frame (core/render/lights-ubo.ts:
+// keep the order and sizes in sync with LIGHTS_LAYOUT).
+layout(std140) uniform LightsBlock {
+    vec4 u_lightAmbient;
+    ivec4 u_lightCounts;                        // x directional, y point, z spot
+    vec4 u_dirDirection[MAX_DIRECTIONAL_LIGHTS];
+    vec4 u_dirColor[MAX_DIRECTIONAL_LIGHTS];    // w: shadow slot (-1 none)
+    vec4 u_pointPosition[MAX_POINT_LIGHTS];     // w: range
+    vec4 u_pointColor[MAX_POINT_LIGHTS];        // w: shadow slot
+    vec4 u_pointAtten[MAX_POINT_LIGHTS];        // constant, linear, quadratic
+    vec4 u_spotPosition[MAX_SPOT_LIGHTS];       // w: range
+    vec4 u_spotDirection[MAX_SPOT_LIGHTS];
+    vec4 u_spotColor[MAX_SPOT_LIGHTS];          // w: shadow slot
+    vec4 u_spotCone[MAX_SPOT_LIGHTS];           // cos inner, cos outer
+    vec4 u_spotAtten[MAX_SPOT_LIGHTS];
+};
 
 float is_in_shadow_pcf(vec4 lightSpacePosition, vec3 finalNormal, vec3 lightDir) {
     vec3 projCoords = lightSpacePosition.xyz / lightSpacePosition.w;
@@ -111,7 +106,7 @@ vec2 calculateBlinnPhong(vec3 lightDir, vec3 viewDir, vec3 normal, float shinine
 }
 
 vec3 applyDirectionalLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal, float shininess, float specStrength) {
-    vec3 lightDir = normalize(-u_directionalLightDirections[index]);
+    vec3 lightDir = normalize(-u_dirDirection[index].xyz);
     vec2 intensities = calculateBlinnPhong(lightDir, viewDir, normal, shininess, specStrength);
     
     if (intensities.x <= 0.0) return vec3(0.0);
@@ -120,48 +115,48 @@ vec3 applyDirectionalLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal,
 
     vec3 diffuse = baseColor * intensities.x;
     vec3 specular = vec3(1.0) * intensities.y;
-    return (diffuse + specular) * u_directionalLightColors[index] * shadowFactor;
+    return (diffuse + specular) * u_dirColor[index].rgb * shadowFactor;
 }
 
 vec3 applyPointLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal, float shininess, float specStrength) {
-    vec3 lightVec = u_pointLightPositions[index] - v_position;
+    vec3 lightVec = u_pointPosition[index].xyz - v_position;
     vec3 lightDir = normalize(lightVec);
 
     vec2 intensities = calculateBlinnPhong(lightDir, viewDir, normal, shininess, specStrength);
     if (intensities.x <= 0.0) return vec3(0.0);
 
     float distance = length(lightVec);
-    float attenuation = 1.0 / (u_pointLightConstantAtts[index] +
-                               u_pointLightLinearAtts[index] * distance +
-                               u_pointLightQuadraticAtts[index] * (distance * distance));
+    float attenuation = 1.0 / (u_pointAtten[index].x +
+                               u_pointAtten[index].y * distance +
+                               u_pointAtten[index].z * (distance * distance));
 
     vec3 diffuse = baseColor * intensities.x;
     vec3 specular = vec3(1.0) * intensities.y;
 
-    return (diffuse + specular) * u_pointLightColors[index] * attenuation;
+    return (diffuse + specular) * u_pointColor[index].rgb * attenuation;
 }
 
 vec3 applySpotLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal, float shininess, float specStrength) {
-    vec3 lightVec = u_spotLightPositions[index] - v_position;
+    vec3 lightVec = u_spotPosition[index].xyz - v_position;
     vec3 lightDir = normalize(lightVec);
 
     vec2 intensities = calculateBlinnPhong(lightDir, viewDir, normal, shininess, specStrength);
     if (intensities.x <= 0.0) return vec3(0.0);
 
-    float angleCos = dot(lightDir, -u_spotLightDirections[index]);
-    float coneFactor = smoothstep(u_spotLightOuterConeCos[index], u_spotLightInnerConeCos[index], angleCos);
+    float angleCos = dot(lightDir, -u_spotDirection[index].xyz);
+    float coneFactor = smoothstep(u_spotCone[index].y, u_spotCone[index].x, angleCos);
     
     if (coneFactor <= 0.0) return vec3(0.0);
 
     float distance = length(lightVec);
-    float attenuation = 1.0 / (u_spotLightConstantAtts[index] +
-                               u_spotLightLinearAtts[index] * distance +
-                               u_spotLightQuadraticAtts[index] * (distance * distance));
+    float attenuation = 1.0 / (u_spotAtten[index].x +
+                               u_spotAtten[index].y * distance +
+                               u_spotAtten[index].z * (distance * distance));
     
     vec3 diffuse = baseColor * intensities.x;
     vec3 specular = vec3(1.0) * intensities.y;
 
-    return (diffuse + specular) * u_spotLightColors[index] * attenuation * coneFactor;
+    return (diffuse + specular) * u_spotColor[index].rgb * attenuation * coneFactor;
 }
 
 vec3 calculateTotalLitColor(vec3 baseColor, vec2 uv) {
@@ -184,17 +179,17 @@ vec3 calculateTotalLitColor(vec3 baseColor, vec2 uv) {
     float ao = texture(u_aoMap, uv).r;
     vec3 emissive = texture(u_emissiveMap, uv).rgb;
 
-    vec3 totalLitColorRGB = (u_ambientLight.rgb * baseColor * ao) + emissive;
+    vec3 totalLitColorRGB = (u_lightAmbient.rgb * baseColor * ao) + emissive;
 
-    for (int i = 0; i < u_numDirectionalLights; ++i) {
+    for (int i = 0; i < u_lightCounts.x; ++i) {
         totalLitColorRGB += applyDirectionalLight(i, baseColor, viewDir, finalNormal, shininess, finalSpecularStrength);
     }
 
-    for (int i = 0; i < u_numPointLights; ++i) {
+    for (int i = 0; i < u_lightCounts.y; ++i) {
         totalLitColorRGB += applyPointLight(i, baseColor, viewDir, finalNormal, shininess, finalSpecularStrength);
     }
 
-    for (int i = 0; i < u_numSpotLights; ++i) {
+    for (int i = 0; i < u_lightCounts.z; ++i) {
         totalLitColorRGB += applySpotLight(i, baseColor, viewDir, finalNormal, shininess, finalSpecularStrength);
     }
     

@@ -7,6 +7,7 @@ import { JsonSerializable } from "../json-serializable";
 import { ObjectInstanciator } from "../object-instanciator";
 import { NumberRange } from "../range";
 import { buildFrameData } from "./frame-data";
+import { LightsUBO } from "./lights-ubo";
 import { FullscreenProgram } from "./fullscreen-program";
 import { ShadowMapPass, GeometryPass } from "./pass";
 import { PostEffect, RetroEffect } from "./post-effect";
@@ -68,6 +69,7 @@ export class RenderPipeline extends JsonSerializable {
 
   protected _gl!: WebGL2RenderingContext;
   protected ubo!: CameraUBO;
+  protected lightsUbo: LightsUBO | null = null;
   protected scene!: Scene;
   protected _shadowmapPass!: ShadowMapPass;
   protected _geometryPass!: GeometryPass;
@@ -84,7 +86,7 @@ export class RenderPipeline extends JsonSerializable {
   constructor(public override name: string = "Render Pipeline") {
     super("RenderPipeline");
     this._serializationIgnoreKeys.push(
-      "_gl", "ubo", "scene", "_shadowmapPass", "_geometryPass", "_sceneTarget", "_postTargets", "_copy",
+      "_gl", "ubo", "lightsUbo", "scene", "_shadowmapPass", "_geometryPass", "_sceneTarget", "_postTargets", "_copy",
       "_passes", "_retro", "effects", "_startTime",
     );
   }
@@ -101,6 +103,8 @@ export class RenderPipeline extends JsonSerializable {
   public setGlRenderingContext(gl: WebGL2RenderingContext): void {
     this._gl = gl;
     this.ubo = new CameraUBO(gl);
+    this.lightsUbo?.dispose();
+    this.lightsUbo = new LightsUBO(gl);
     this._shadowmapPass ??= new ShadowMapPass(gl);
     this._geometryPass ??= new GeometryPass(gl);
     this._shadowmapPass.setGl(gl);
@@ -142,6 +146,7 @@ export class RenderPipeline extends JsonSerializable {
     this._shadowmapPass.execute(this.scene, ctx);
 
     this.ubo.update(camera.viewMatrix, camera.projectionMatrix);
+    this.lightsUbo!.update(frame.lights);
     target.bind();
     target.clear(clearColor);
     gl.enable(gl.DEPTH_TEST);
@@ -173,6 +178,7 @@ export class RenderPipeline extends JsonSerializable {
   public destroy(): void {
     this.disposeTargets();
     this._copy?.dispose();
+    this.lightsUbo?.dispose();
     for (const effect of this.effects) effect.dispose();
     this._shadowmapPass?.cleanup();
     for (const pass of this._passes) pass.cleanup();

@@ -31,6 +31,9 @@ export class SpotLight extends Light {
    * @type {LightAttenuation}
    */
   public attenuation: LightAttenuation = new LightAttenuation();
+
+  /** Distance the light reaches, in world units: the shadow's far plane and the cut-off for culling. */
+  public range = 25;
   /**
     Gets the direction of the light, derived from the transform's rotation.
    * @readonly
