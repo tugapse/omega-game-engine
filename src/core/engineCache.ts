@@ -3,6 +3,7 @@ import { ObjParser } from '../parsers/obj-parser';
 import { CubemapTexture } from '../textures';
 import { Texture } from '../textures/texture';
 import { MeshData } from './mesh';
+import { ResourceCache } from './resources/resource-cache';
 
 /**
   The structure for storing cached assets.
@@ -10,20 +11,10 @@ import { MeshData } from './mesh';
  */
 interface StorageSpaces {
   /**
-    A map for caching shader source code strings.
-   * @type {{ [key: string]: string }}
-   */
-  shaderCode: { [key: string]: string };
-  /**
     A map for caching textures.
    * @type {{ [key: string]: Texture | CubemapTexture }}
    */
   textures: { [key: string]: Texture | CubemapTexture };
-  /**
-    A map for caching parsed mesh data.
-   * @type {{ [key: string]: MeshData }}
-   */
-  meshs: { [key: string]: MeshData };
   textureCounter: { [key: string]: number };
 
   generic: { [key: string]: any };
@@ -48,9 +39,7 @@ export abstract class EngineCache {
    * @type {StorageSpaces}
    */
   private static __cache: StorageSpaces = {
-    shaderCode: {},
     textures: {},
-    meshs: {},
     textureCounter: {},
     generic: {},
   };
@@ -68,6 +57,23 @@ export abstract class EngineCache {
    * @private
    */
   private static uriResolver: UriResolver | null = null;
+
+  /** Shader sources and parsed OBJ meshes: shared loads, failures not cached. */
+  private static shaderSources = new ResourceCache<string>({
+    load: (uri) => EngineCache.fetchText(uri, 'shader'),
+  });
+  private static objMeshes = new ResourceCache<MeshData>({
+    load: async (uri) =>
+      EngineCache.objPArser.parse(await EngineCache.fetchText(uri, 'mesh')) as MeshData,
+  });
+
+  private static async fetchText(uri: string, what: string): Promise<string> {
+    const response = await fetch(await EngineCache.resolveUri(uri));
+    if (!response.ok) {
+      throw new Error(`Failed to load ${what}: ${uri} (HTTP ${response.status})`);
+    }
+    return response.text();
+  }
 
   /**
     Registers (or clears, with `null`) the resolver used before loading URIs.
@@ -226,15 +232,12 @@ export abstract class EngineCache {
    * @returns {Promise<MeshData>} - A promise that resolves with the mesh data.
    */
   public static async getMeshDataFromObj(uri: string): Promise<MeshData> {
-    let result = EngineCache.__cache.meshs[uri];
-    if (!result) {
-      const obj = await fetch(await EngineCache.resolveUri(uri));
-      const text = await obj.text();
-      result = EngineCache.objPArser.parse(text) as MeshData;
-      EngineCache.__cache.meshs[uri] = result;
-    }
-    return result;
+    // The facade holds no references: the entry stays cached until clear().
+    const handle = await EngineCache.objMeshes.acquire(uri);
+    handle.release();
+    return handle.value;
   }
+
 
   /**
     Retrieves shader source code from the cache or loads and caches it if not present.
@@ -244,17 +247,11 @@ export abstract class EngineCache {
    * @returns {Promise<string>} - A promise that resolves with the shader source code as a string.
    */
   public static async loadShaderSource(uri: string): Promise<string> {
-    let result = EngineCache.__cache.shaderCode[uri];
-    if (!result) {
-      const response = await fetch(await EngineCache.resolveUri(uri));
-      if (!response.ok) {
-        throw new Error(`Failed to load shader: ${uri}`);
-      }
-      result = await response.text();
-      EngineCache.__cache.shaderCode[uri] = result;
-    }
-    return result;
+    const handle = await EngineCache.shaderSources.acquire(uri);
+    handle.release();
+    return handle.value;
   }
+
 
   /**
     Clears all cached data, including textures, meshes, and shader code.
@@ -267,11 +264,11 @@ export abstract class EngineCache {
     //   }
     // }
 
+    EngineCache.shaderSources.clear();
+    EngineCache.objMeshes.clear();
     EngineCache.__cache = {
-      shaderCode: {},
-      textures: {},
-      meshs: {},
-      textureCounter: {},
+        textures: {},
+        textureCounter: {},
       generic: {},
     };
   }

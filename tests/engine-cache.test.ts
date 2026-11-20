@@ -113,7 +113,7 @@ describe('shader sources', () => {
     await expect(EngineCache.loadShaderSource('missing.frag')).rejects.toThrow();
   });
 
-  it.fails('P8: two requests at the same time share one fetch', async () => {
+  it('P8 (fixed): two requests at the same time share one fetch', async () => {
     await Promise.all([
       EngineCache.loadShaderSource('assets/shaders/a.frag'),
       EngineCache.loadShaderSource('assets/shaders/a.frag'),
@@ -131,7 +131,7 @@ describe('meshes', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it.fails('P9: a failed OBJ fetch rejects instead of parsing the error page', async () => {
+  it('P9 (fixed): a failed OBJ fetch rejects instead of parsing the error page', async () => {
     fetchMock.mockResolvedValueOnce({ ok: false, status: 404, text: async () => '<html>404</html>' });
     await expect(EngineCache.getMeshDataFromObj('missing.obj')).rejects.toThrow();
   });

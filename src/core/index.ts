@@ -14,3 +14,4 @@ export * from './scene-fog';
 export * from './transform';
 export * from './vector';
 export * from './render';
+export * from './resources/resource-cache';
