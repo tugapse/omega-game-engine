@@ -32,6 +32,8 @@ export class ResourceManager {
   private readonly objParser = new ObjParser();
   /** Serves built-in textures from their data URLs, whatever the host loader. */
   private readonly builtinLoader = new DefaultResourceLoader(async (uri) => builtinTextureUrl(uri) ?? uri);
+  /** Loads the magenta "missing" image whatever the URI. */
+  private readonly missingLoader = new DefaultResourceLoader(async () => builtinTextureUrl(BuiltinTextures.missing)!);
 
   constructor(
     readonly gl: WebGL2RenderingContext | null,
@@ -41,7 +43,15 @@ export class ResourceManager {
       load: async (uri) => {
         const texture = new Texture(this.requireGl(uri), uri);
         texture.loader = builtinTextureUrl(uri) ? this.builtinLoader : this.loader;
-        await texture.load();
+        try {
+          await texture.load();
+        } catch (error) {
+          // Like Unity: show magenta instead of failing the whole scene. The
+          // texture keeps its URI, so saving the scene keeps the reference.
+          console.warn(`Texture ${uri} could not be loaded; using the missing texture.`, error);
+          texture.loader = this.missingLoader;
+          await texture.load();
+        }
         return texture;
       },
       dispose: (texture) => texture.destroy(),

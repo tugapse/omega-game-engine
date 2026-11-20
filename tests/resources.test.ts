@@ -11,7 +11,12 @@ vi.mock('../src/textures/texture', () => {
     static created: Texture[] = [];
     load = vi.fn(async () => {});
     destroy = vi.fn();
+    loader?: unknown;
     constructor(public gl?: unknown, public textureUri?: string) {
+      // A "broken" file fails once; the retry with the missing loader works.
+      if (textureUri?.includes('broken')) {
+        this.load = vi.fn().mockRejectedValueOnce(new Error('HTTP 404')).mockResolvedValue(undefined);
+      }
       Texture.created.push(this);
     }
   }
@@ -66,6 +71,15 @@ describe('textures', () => {
     const b = await Resources.for(gl).getTexture('assets/a.png');
     expect(a).toBe(b);
     expect(a.load).toHaveBeenCalled();
+  });
+
+  it('a texture that fails to load becomes magenta and keeps its URI', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const t = await Resources.for(gl).getTexture('asset://broken');
+    expect(t.textureUri).toBe('asset://broken');
+    expect(t.load).toHaveBeenCalledTimes(2);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it('returns different textures for different URIs', async () => {
