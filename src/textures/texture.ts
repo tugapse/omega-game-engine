@@ -219,8 +219,9 @@ export class Texture extends JsonSerializable {
 
       gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MIN_FILTER, TextureFilterMode.LINEAR_MIPMAP_LINEAR);
       gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MAG_FILTER, TextureFilterMode.LINEAR);
+      // Only a texture with pixels has mipmaps to build (an empty one warns "zero-size").
+      gl.generateMipmap(TextureTarget.TEXTURE_2D);
     }
-    gl.generateMipmap(TextureTarget.TEXTURE_2D);
 
     gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_S, TextureWrapMode.CLAMP_TO_EDGE);
     gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_T, TextureWrapMode.CLAMP_TO_EDGE);

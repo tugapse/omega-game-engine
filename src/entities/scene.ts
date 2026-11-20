@@ -228,6 +228,7 @@ export class Scene extends SceneEntity {
     this._objects = [];
     for (const handle of this.resourceHandles) handle.release();
     this.resourceHandles = [];
+    this._renderPipeline.destroy();
     super.destroy();
   }
 
@@ -246,6 +247,7 @@ export class Scene extends SceneEntity {
           jsonObject['renderPipeline'].className,
         );
       this._renderPipeline = renderpipeline || new RenderPipeline();
+      this._renderPipeline.fromJson(jsonObject['renderPipeline']);
     } else {
       this._renderPipeline = new RenderPipeline();
     }

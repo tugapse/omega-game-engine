@@ -16,6 +16,7 @@ export class ShaderSources {
     light_header: 'assets/shaders/functions/light-header.frag',
     light: 'assets/shaders/functions/light.frag',
     light_old: 'assets/shaders/functions/light_old.frag',
+    copy_with_depth: 'assets/shaders/post-processing/copy-with-depth.frag',
     retro: 'assets/shaders/post-processing/retro.frag',
     bitangent: 'assets/shaders/tools/bitangent.frag',
     normal: 'assets/shaders/tools/normal.frag',
