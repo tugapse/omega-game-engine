@@ -1,4 +1,4 @@
-import { EngineCache } from "../core";
+import { Resources } from '../core/resources/resources';
 import { JsonSerializedData } from "../interfaces/json-serialized-data";
 import { CubemapTexture } from "../textures/cubemap-texture";
 import { ColorMaterial } from "./color-material";
@@ -27,7 +27,7 @@ export class CubemapMaterial extends ColorMaterial {
     super.fromJson(jsonObject);
     if (jsonObject["mainTex"]?.uris) {
       const keys = jsonObject["mainTex"].uris;
-      this.mainTex = await EngineCache.getTextureCube({
+      this.mainTex = await Resources.for().getCubemap({
         right: keys[0], left: keys[1],
         up: keys[2], bottom: keys[3],
         front: keys[4], back: keys[5],

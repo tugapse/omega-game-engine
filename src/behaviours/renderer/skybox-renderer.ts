@@ -1,5 +1,5 @@
+import { Resources } from '../../core/resources/resources';
 import { mat4 } from "gl-matrix";
-import { EngineCache } from "../../core";
 import { Camera } from "../../entities";
 import { RenderLayer, ShaderUniformsEnum } from "../../enums";
 import { SkyboxMaterial } from "../../materials";
@@ -39,7 +39,7 @@ export class SkyboxRenderer extends MeshRendererBehaviour {
     const material = new SkyboxMaterial();
     this.shader = new SkyboxShader(this._gl, material);
     this.renderLayer = RenderLayer.SKYBOX;
-    material.mainTex = await EngineCache.getWhiteTextureCube(this._gl);
+    material.mainTex = await Resources.for(this._gl).getWhiteCubemap();
   }
 
   /**

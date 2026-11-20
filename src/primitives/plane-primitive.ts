@@ -6,6 +6,11 @@ import { MeshData } from "../core/mesh";
  * @augments {MeshData}
  */
 export class PlanePrimitive extends MeshData {
+  /** Factory used by ObjectInstanciator; the plane data comes from the JSON afterwards. */
+  public static override instanciate(vertices?: vec3[], normals?: vec3[], uvs?: vec2[], indices?: number[]): PlanePrimitive {
+    return new PlanePrimitive();
+  }
+
   /**
     Creates a new instance of a PlanePrimitive.
    * This constructor generates a square plane mesh with the specified resolution. The plane is centered at the origin (0,0,0) and lies on the XZ-plane.

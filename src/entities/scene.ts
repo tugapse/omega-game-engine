@@ -1,3 +1,4 @@
+import { ResourceHandle } from '../core/resources/resource-cache';
 import { RendererBehaviour } from '../behaviours/renderer/renderer-behaviour';
 import { Color, Colors, ObjectInstanciator, SceneFog } from '../core';
 import { RenderPipeline } from '../core/render';
@@ -212,11 +213,22 @@ export class Scene extends SceneEntity {
    * @override
    * @returns {void}
    */
+  /** Resources this scene uses (textures, cubemaps), released on destroy. */
+  private resourceHandles: ResourceHandle<unknown>[] = [];
+
+  /** Keeps a resource alive while this scene exists. */
+  public holdResource(handle: ResourceHandle<unknown>): void {
+    this.resourceHandles.push(handle);
+  }
+
   public override destroy(): void {
     for (const child of this.objects) {
       child.destroy();
     }
     this._objects = [];
+    for (const handle of this.resourceHandles) handle.release();
+    this.resourceHandles = [];
+    this._renderPipeline.destroy();
     super.destroy();
   }
 
@@ -235,6 +247,7 @@ export class Scene extends SceneEntity {
           jsonObject['renderPipeline'].className,
         );
       this._renderPipeline = renderpipeline || new RenderPipeline();
+      this._renderPipeline.fromJson(jsonObject['renderPipeline']);
     } else {
       this._renderPipeline = new RenderPipeline();
     }

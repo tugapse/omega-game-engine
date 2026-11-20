@@ -1,7 +1,9 @@
+import { Resources } from '../core/resources/resources';
 // The WebGL constants are retrieved from the WebGL2RenderingContext
 // for more robust and type-safe enums.
 
-import { EngineCache, JsonSerializable } from "../core";
+import { JsonSerializable } from "../core";
+import { LoadedImage, ResourceLoader } from "../core/resources/resource-loader";
 import { JsonSerializedData } from "../interfaces";
 
 
@@ -53,7 +55,13 @@ export class Texture extends JsonSerializable {
    * @protected
    * @type {HTMLImageElement | null}
    */
-  protected image: HTMLImageElement | null = null;
+  protected image: LoadedImage | null = null;
+
+  /**
+   * Loads the image data. Set by the ResourceManager that owns this texture;
+   * without one, the engine's default loader is used.
+   */
+  public loader?: ResourceLoader;
   /**
    * The WebGL texture object.
    * @protected
@@ -211,8 +219,9 @@ export class Texture extends JsonSerializable {
 
       gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MIN_FILTER, TextureFilterMode.LINEAR_MIPMAP_LINEAR);
       gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.MAG_FILTER, TextureFilterMode.LINEAR);
+      // Only a texture with pixels has mipmaps to build (an empty one warns "zero-size").
+      gl.generateMipmap(TextureTarget.TEXTURE_2D);
     }
-    gl.generateMipmap(TextureTarget.TEXTURE_2D);
 
     gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_S, TextureWrapMode.CLAMP_TO_EDGE);
     gl.texParameteri(TextureTarget.TEXTURE_2D, TextureParameter.WRAP_T, TextureWrapMode.CLAMP_TO_EDGE);
@@ -244,34 +253,32 @@ export class Texture extends JsonSerializable {
       return Promise.reject(new Error("WebGL context not available."));
     }
 
-    this._loadPromise = new Promise((resolve, reject) => {
-      if (!this.textureUri) {
-        return reject(new Error("Failed to load image. Please provide a texture URL!"));
-      }
+    if (!this.textureUri) {
+      return Promise.reject(new Error("Failed to load image. Please provide a texture URL!"));
+    }
 
-      this.isLoading = true;
-      this.image = new Image();
-      this.image.onload = () => {
-        if (!this.image || !this.gl) {
-          this.isLoading = false;
-          return reject(new Error("Image or WebGL context is null after loading."));
-        }
-        this.isLoaded = true;
+    const uri = this.textureUri;
+    const loader = this.loader ?? Resources.defaultLoader;
+    this.isLoading = true;
+    // textureUri stays the saved reference; the loader decides the real URL.
+    this._loadPromise = loader.loadImage(uri).then(
+      (image) => {
         this.isLoading = false;
-        this._width = this.image.width;
-        this._height = this.image.height;
+        if (!this.gl) throw new Error("WebGL context is null after loading.");
+        this.image = image;
+        this.isLoaded = true;
+        this._width = image.width;
+        this._height = image.height;
         this.createGLTexture(this.gl);
-        resolve();
-      };
-      this.image.onerror = (error) => {
+      },
+      (error) => {
         this.isLoading = false;
         this.isLoaded = false;
         this.image = null;
         this._loadPromise = null; // Allow retrying
-        reject(new Error(`Failed to load image: ${this.textureUri!}. Error: ${error}`));
-      };
-      this.image.src = this.textureUri;
-    });
+        throw new Error(`Failed to load image: ${uri}. Error: ${error}`);
+      },
+    );
 
     return this._loadPromise;
   }
@@ -533,10 +540,13 @@ export class Texture extends JsonSerializable {
    * @returns {void}
    */
   public destroy(): void {
+    // Safe to call more than once: the GL texture is deleted exactly once.
     if (this.gl && this._glTexture) {
-      EngineCache.releaseTexture(this);
-      this.gl.deleteTexture(this._glTexture);
+      const glTexture = this._glTexture;
       this._glTexture = null;
+      this.gl.deleteTexture(glTexture);
+      // Make sure the cache no longer hands out this destroyed texture.
+      Resources.forgetTexture(this);
     }
     this.image = null;
     this.isLoaded = false;
