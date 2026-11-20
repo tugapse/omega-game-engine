@@ -81,6 +81,18 @@ export abstract class EngineCache {
     return manager;
   }
 
+  /**
+   * Frees everything loaded for a WebGL context and forgets its manager. Call
+   * it when the canvas/context goes away (e.g. an editor view is closed).
+   */
+  public static releaseContext(gl: WebGL2RenderingContext): void {
+    const manager = EngineCache.managers.get(gl);
+    if (!manager) return;
+    manager.dispose();
+    EngineCache.managers.delete(gl);
+    if (EngineCache.currentGl === gl) EngineCache.currentGl = null;
+  }
+
   /** Loads (or reuses) a 2D texture. */
   public static async getTexture2D(uri: string, gl?: WebGL2RenderingContext): Promise<Texture> {
     const handle = await EngineCache.managerFor(gl).textures.acquire(uri);
@@ -153,16 +165,24 @@ export abstract class EngineCache {
     return handle.value;
   }
 
+  /**
+   * Frees every resource nobody holds (scenes hold what they loaded). Call it
+   * after closing a scene to give the GPU memory back. Returns how many.
+   */
+  public static trim(): number {
+    let freed = 0;
+    for (const manager of EngineCache.managers.values()) freed += manager.trim();
+    return freed;
+  }
+
   /** What every manager holds, by WebGL context (the `null` key = no context). */
   public static stats(): ResourceManagerStats[] {
     return [...EngineCache.managers.values()].map((m) => m.stats());
   }
 
-  /**
-   * Forgets every cached resource, without freeing GPU memory (as before).
-   * Freeing on clear comes with the scene lifecycle change (plan phase 5).
-   */
+  /** Frees every cached resource of every context and forgets them (P1). */
   public static clear(): void {
+    for (const manager of EngineCache.managers.values()) manager.dispose();
     EngineCache.managers.clear();
     EngineCache.currentGl = null;
   }

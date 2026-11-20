@@ -26,6 +26,7 @@ vi.mock('../src/textures', async () => {
   const { Texture } = await import('../src/textures/texture');
   class CubemapTexture {
     load = vi.fn(async () => {});
+    destroy = vi.fn();
     constructor(public gl: unknown, public uris: string[]) {}
   }
   return { Texture, CubemapTexture };
@@ -227,6 +228,28 @@ describe('loader', () => {
   });
 });
 
+describe('releaseContext', () => {
+  it('frees a context and forgets its manager', async () => {
+    const t = await EngineCache.getTexture2D('assets/a.png', gl);
+    EngineCache.releaseContext(gl);
+    expect(t.destroy).toHaveBeenCalled();
+    expect(EngineCache.stats()).toHaveLength(0);
+  });
+});
+
+describe('trim', () => {
+  it('frees what nobody holds and keeps what a holder still uses', async () => {
+    const manager = EngineCache.managerFor(gl);
+    const held = await manager.textures.acquire('assets/held.png');
+    const loose = await EngineCache.getTexture2D('assets/loose.png', gl);
+    expect(EngineCache.trim()).toBe(1);
+    expect(loose.destroy).toHaveBeenCalled();
+    expect(held.value.destroy).not.toHaveBeenCalled();
+    held.release();
+    expect(EngineCache.trim()).toBe(1);
+  });
+});
+
 describe('clear', () => {
   it('forgets cached entries', async () => {
     const a = await EngineCache.getTexture2D('assets/a.png', gl);
@@ -235,7 +258,7 @@ describe('clear', () => {
     expect(b).not.toBe(a);
   });
 
-  it.fails('P1: clearing frees the GPU textures it forgets', async () => {
+  it('P1 (fixed): clearing frees the GPU textures it forgets', async () => {
     const a = await EngineCache.getTexture2D('assets/a.png', gl);
     EngineCache.clear();
     expect(a.destroy).toHaveBeenCalled();
