@@ -270,7 +270,18 @@ export class Texture extends JsonSerializable {
         this._loadPromise = null; // Allow retrying
         reject(new Error(`Failed to load image: ${this.textureUri!}. Error: ${error}`));
       };
-      this.image.src = this.textureUri;
+      // Load from the resolved URL; textureUri stays as the saved reference.
+      const image = this.image;
+      EngineCache.resolveUri(this.textureUri)
+        .then((url) => {
+          image.src = url;
+        })
+        .catch((error) => {
+          this.isLoading = false;
+          this.image = null;
+          this._loadPromise = null;
+          reject(new Error(`Failed to resolve texture URI: ${this.textureUri!}. Error: ${error}`));
+        });
     });
 
     return this._loadPromise;

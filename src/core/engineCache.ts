@@ -30,6 +30,13 @@ interface StorageSpaces {
 }
 
 /**
+  Turns a URI stored in a scene (for example `asset://<id>`) into a URL the
+  browser can load. It may return a promise (for example to download the file
+  with credentials and hand back an object URL).
+ */
+export type UriResolver = (uri: string) => string | Promise<string>;
+
+/**
   A static class that manages the caching of various engine assets such as textures, meshes, and shader code.
  * @abstract
  */
@@ -54,6 +61,28 @@ export abstract class EngineCache {
    * @type {ObjParser}
    */
   private static objPArser: ObjParser = new ObjParser();
+
+  /**
+    Optional resolver applied to every texture, mesh and shader URI right
+    before it is loaded. The original URI is still the one cached and saved.
+   * @private
+   */
+  private static uriResolver: UriResolver | null = null;
+
+  /**
+    Registers (or clears, with `null`) the resolver used before loading URIs.
+    Use it to serve custom schemes such as `asset://<id>` or to add credentials.
+   */
+  public static setUriResolver(resolver: UriResolver | null): void {
+    EngineCache.uriResolver = resolver;
+  }
+
+  /**
+    Returns the URL to load for a URI: the resolver's result, or the URI itself.
+   */
+  public static async resolveUri(uri: string): Promise<string> {
+    return EngineCache.uriResolver ? await EngineCache.uriResolver(uri) : uri;
+  }
 
   public static set(key: string, value: any): void {
     if (key === '__white_texture__' || key === '__normal_texture__') {
@@ -199,7 +228,7 @@ export abstract class EngineCache {
   public static async getMeshDataFromObj(uri: string): Promise<MeshData> {
     let result = EngineCache.__cache.meshs[uri];
     if (!result) {
-      const obj = await fetch(uri);
+      const obj = await fetch(await EngineCache.resolveUri(uri));
       const text = await obj.text();
       result = EngineCache.objPArser.parse(text) as MeshData;
       EngineCache.__cache.meshs[uri] = result;
@@ -217,7 +246,7 @@ export abstract class EngineCache {
   public static async loadShaderSource(uri: string): Promise<string> {
     let result = EngineCache.__cache.shaderCode[uri];
     if (!result) {
-      const response = await fetch(uri);
+      const response = await fetch(await EngineCache.resolveUri(uri));
       if (!response.ok) {
         throw new Error(`Failed to load shader: ${uri}`);
       }
