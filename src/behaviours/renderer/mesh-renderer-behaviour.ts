@@ -1,10 +1,10 @@
-import { mat4 } from 'gl-matrix';
 import { SceneFog } from '../../core';
-import { Camera, Light } from '../../entities';
-import { EntityType, GLPrimitiveType, ShaderUniformsEnum } from '../../enums';
+import { Camera } from '../../entities';
+import { GLPrimitiveType, ShaderUniformsEnum } from '../../enums';
 import { LitMaterial } from '../../materials';
 import { LitShader } from '../../shaders';
 import { RendererBehaviour } from './renderer-behaviour';
+import { SHADOW_ATLAS_UNIT } from '../../core/render/pass/shadow-atlas-pass';
 
 /**
  * A renderer for mesh-based objects that supports normal maps, lighting, and shadow mapping.
@@ -19,7 +19,6 @@ export class MeshRendererBehaviour extends RendererBehaviour {
   protected override _className = 'MeshRendererBehaviour';
 
   // --- PER-OBJECT PERMANENT BUFFERS TO ELIMINATE GC CHURN ---
-  private readonly _mvpScratch = mat4.create();
 
   protected _normalMapUniformLocation: WebGLUniformLocation | null = null;
   protected _specularMapUniformLocation: WebGLUniformLocation | null = null;
@@ -34,10 +33,6 @@ export class MeshRendererBehaviour extends RendererBehaviour {
   private _defaultTextures: { [key: string]: WebGLTexture } = {};
 
   public receiveShadows = true;
-
-  public get shadowMapTexture() {
-    return this.parent.scene.shadowmap?.shadowmapTexture;
-  }
 
   public get fog() {
     return this.parent.scene['sceneFog'] as SceneFog;
@@ -55,44 +50,9 @@ export class MeshRendererBehaviour extends RendererBehaviour {
     this.shader.use();
 
     if (this.shader instanceof LitShader) {
-      this.shader.setInt(ShaderUniformsEnum.U_USE_SHADOWS, 0);
-      if (this.shadowMapTexture && this.shadowMapTexture.glTexture) {
-        const lightEntity = this.parent.scene.lights.find(
-          (obj) =>
-            obj.entityType === EntityType.LIGHT_DIRECTIONAL &&
-            obj.active &&
-            obj.show,
-        );
-        this.shader.setTexture(
-          ShaderUniformsEnum.U_SHADOW_MAP,
-          this.shadowMapTexture,
-          2,
-        );
-        this.shader.setVec2(ShaderUniformsEnum.U_SHADOW_MAP_SIZE, [
-          this.shadowMapTexture.width,
-          this.shadowMapTexture.height,
-        ]);
-        this.shadowMapTexture.bind();
-
-        if (lightEntity) {
-          let { lightMvpMatrix } = this.createLightMatrices(
-            Camera.mainCamera.transform,
-            lightEntity as Light,
-          );
-          mat4.multiply(
-            this._mvpScratch,
-            lightMvpMatrix,
-            this.transform.modelMatrix,
-          );
-          this.shader.setMat4(
-            ShaderUniformsEnum.U_LIGHT_MVP_MATRIX,
-            this._mvpScratch,
-          );
-          this.receiveShadows &&
-            this.shader.setInt(ShaderUniformsEnum.U_USE_SHADOWS, 1);
-        }
-      }
-
+      // The shadow atlas and its views are bound by the render pipeline.
+      this.shader.setInt('u_receiveShadows', this.receiveShadows ? 1 : 0);
+      this.shader.setInt('u_shadowAtlasMap', SHADOW_ATLAS_UNIT);
       this.setShaderVariables();
     }
 
@@ -126,7 +86,6 @@ export class MeshRendererBehaviour extends RendererBehaviour {
 
     super.setShaderVariables();
     super.draw();
-    this.shadowMapTexture?.unBind();
   }
 
   protected override initializeShader(): void {
@@ -139,10 +98,6 @@ export class MeshRendererBehaviour extends RendererBehaviour {
   }
 
   protected override setShaderVariables(): void {
-    this.shader!.setFloat(
-      ShaderUniformsEnum.U_SHADOW_STRENGTH,
-      this.parent.scene.shadowmap.shadowstrength.value,
-    );
     this.setNormalMapsInformation();
   }
 

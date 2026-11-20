@@ -24,10 +24,10 @@ export class Light extends SceneEntity {
 
   /** Whether this light casts shadows (ambient light ignores it). */
   public castShadows = false;
-  /** Depth bias against shadow acne, in light depth units. */
-  public shadowBias = 0.0015;
+  /** Bias against shadow acne, in world units. */
+  public shadowBias = 0.1;
   /** Offset along the surface normal before the shadow lookup, in world units. */
-  public normalBias = 0.02;
+  public normalBias = 0.05;
 
   /**
     Creates an instance of Light.

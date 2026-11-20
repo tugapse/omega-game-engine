@@ -1,2 +1,2 @@
-export * from './shadowmapPass';
+export * from './shadow-atlas-pass';
 export * from './geometry';

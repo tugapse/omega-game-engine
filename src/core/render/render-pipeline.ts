@@ -9,7 +9,9 @@ import { NumberRange } from "../range";
 import { buildFrameData } from "./frame-data";
 import { LightsUBO } from "./lights-ubo";
 import { FullscreenProgram } from "./fullscreen-program";
-import { ShadowMapPass, GeometryPass } from "./pass";
+import { GeometryPass, ShadowAtlasPass } from "./pass";
+
+import { planShadows } from "./shadows";
 import { PostEffect, RetroEffect } from "./post-effect";
 import { IRenderPass, RenderContext } from "./render-pass.interface";
 import { RenderTarget, RenderTargetColor } from "./render-target";
@@ -30,6 +32,8 @@ export enum ToneMapping {
 export class RenderPipelineSettings extends JsonSerializable {
   public shadowsEnabled = true;
   public shadowStrength = new NumberRange(0.4, 0.0, 1.0, 0.0001);
+  /** How far from the camera the directional light's shadow reaches, in world units. */
+  public shadowDistance = new NumberRange(60, 5, 500, 1);
   /** Scene colour in RGBA16F (when the GPU can render to it), so lights can go above 1. */
   public hdr = true;
   public toneMapping = ToneMapping.None;
@@ -71,7 +75,7 @@ export class RenderPipeline extends JsonSerializable {
   protected ubo!: CameraUBO;
   protected lightsUbo: LightsUBO | null = null;
   protected scene!: Scene;
-  protected _shadowmapPass!: ShadowMapPass;
+  protected _shadowmapPass!: ShadowAtlasPass;
   protected _geometryPass!: GeometryPass;
   protected _sceneTarget: RenderTarget | null = null;
   /** Colour-only targets the post effects write into, in turn. */
@@ -91,7 +95,7 @@ export class RenderPipeline extends JsonSerializable {
     );
   }
 
-  public get shadowMap(): ShadowMapPass {
+  public get shadowMap(): ShadowAtlasPass {
     return this._shadowmapPass;
   }
 
@@ -105,9 +109,9 @@ export class RenderPipeline extends JsonSerializable {
     this.ubo = new CameraUBO(gl);
     this.lightsUbo?.dispose();
     this.lightsUbo = new LightsUBO(gl);
-    this._shadowmapPass ??= new ShadowMapPass(gl);
+    this._shadowmapPass?.dispose();
+    this._shadowmapPass = new ShadowAtlasPass(gl);
     this._geometryPass ??= new GeometryPass(gl);
-    this._shadowmapPass.setGl(gl);
     this._geometryPass.setGl(gl);
     this.applySettings();
 
@@ -143,10 +147,14 @@ export class RenderPipeline extends JsonSerializable {
     const frame = buildFrameData(this.scene, camera, (performance.now() - this._startTime) / 1000);
     const ctx: RenderContext = { gl, frame, target };
 
-    this._shadowmapPass.execute(this.scene, ctx);
+    const shadows = planShadows(frame.lights, camera.transform.worldPosition, {
+      directionalDistance: this.settings.shadowDistance.value,
+    });
+    this._shadowmapPass.render(shadows, frame.shadowCasters);
+    this._shadowmapPass.bindAtlas();
 
     this.ubo.update(camera.viewMatrix, camera.projectionMatrix);
-    this.lightsUbo!.update(frame.lights);
+    this.lightsUbo!.update(frame.lights, shadows.slotOf);
     target.bind();
     target.clear(clearColor);
     gl.enable(gl.DEPTH_TEST);
@@ -180,7 +188,7 @@ export class RenderPipeline extends JsonSerializable {
     this._copy?.dispose();
     this.lightsUbo?.dispose();
     for (const effect of this.effects) effect.dispose();
-    this._shadowmapPass?.cleanup();
+    this._shadowmapPass?.dispose();
     for (const pass of this._passes) pass.cleanup();
     this._sceneTarget = null;
     this._copy = null;

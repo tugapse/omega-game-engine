@@ -16,7 +16,6 @@ in vec3 v_normal;
 in vec3 v_position;
 in vec3 v_tangent;
 in vec3 v_bitangent;
-in vec4 v_lightSpacePosition;
 
 out vec4 fragColor;
 

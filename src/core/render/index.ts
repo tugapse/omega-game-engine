@@ -6,3 +6,4 @@ export * from "./fullscreen-program";
 export * from "./frame-data";
 export * from "./post-effect";
 export * from "./lights-ubo";
+export * from "./shadows";

@@ -7,10 +7,19 @@ uniform float u_roughness;
 uniform vec3 u_cameraPosition;
 uniform float u_normalMapStrength;
 
-uniform int u_useShadows;
-uniform float u_shadowStrength;
-uniform highp sampler2DShadow u_shadowMap;
-uniform vec2 u_shadowMapSize;
+#define MAX_SHADOW_VIEWS 17
+#define MAX_SHADOW_SLOTS 7
+
+// Shadow views of the frame, all in one depth atlas (core/render/shadows.ts:
+// keep the order and sizes in sync with SHADOWS_LAYOUT).
+layout(std140) uniform ShadowsBlock {
+    mat4 u_shadowMatrix[MAX_SHADOW_VIEWS];  // world -> light clip space
+    vec4 u_shadowRect[MAX_SHADOW_VIEWS];    // atlas uv: x, y, size, size
+    vec4 u_shadowParams[MAX_SHADOW_SLOTS];  // depth bias, normal bias, toward-light bias, first view
+    vec4 u_shadowAtlas;                     // 1/atlas size, strength, enabled
+};
+uniform highp sampler2DShadow u_shadowAtlasMap;
+uniform int u_receiveShadows;
 
 uniform sampler2D u_normalMap;
 uniform sampler2D u_specularMap;
@@ -35,13 +44,21 @@ layout(std140) uniform LightsBlock {
     vec4 u_spotAtten[MAX_SPOT_LIGHTS];
 };
 
-float is_in_shadow_pcf(vec4 lightSpacePosition, vec3 finalNormal, vec3 lightDir) {
-    vec3 projCoords = lightSpacePosition.xyz / lightSpacePosition.w;
-    projCoords = projCoords * 0.5 + 0.5;
+// Face of a point light's cube for a direction from the light: +X -X +Y -Y +Z -Z
+// (same rule as cubeFaceFor in shadows.ts).
+int cubeFace(vec3 v) {
+    vec3 a = abs(v);
+    if (a.x >= a.y && a.x >= a.z) return v.x > 0.0 ? 0 : 1;
+    if (a.y >= a.z) return v.y > 0.0 ? 2 : 3;
+    return v.z > 0.0 ? 4 : 5;
+}
 
-    if (projCoords.z > 1.0 || projCoords.z < 0.0 || projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0 || u_useShadows == 0) {
-        return 1.0;
-    }
+// 16-tap rotated Poisson PCF inside one atlas tile. Returns 1 lit, 0 shadowed.
+float sampleShadowView(int view, vec3 position, float depthBias) {
+    vec4 clip = u_shadowMatrix[view] * vec4(position, 1.0);
+    if (clip.w <= 0.0) return 1.0;
+    vec3 p = clip.xyz / clip.w * 0.5 + 0.5;
+    if (p.z > 1.0 || p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0) return 1.0;
 
     vec2 poissonDisk[16] = vec2[](
         vec2(-0.94201624, -0.39906216), vec2(0.94558609, -0.76890725),
@@ -54,29 +71,37 @@ float is_in_shadow_pcf(vec4 lightSpacePosition, vec3 finalNormal, vec3 lightDir)
         vec2(0.19984126, 0.78641367), vec2(0.14383161, -0.14100790)
     );
 
-    float shadow = 0.0;
-    float filterRadius = 0.0008;
-    vec2 texelSize = 1.0 / u_shadowMapSize;
-    float bias = max(0.002 * (1.0 - dot(finalNormal, lightDir)), 0.001);
+    vec4 rect = u_shadowRect[view];
+    float texel = u_shadowAtlas.x;
+    // Stay a texel and a half inside the tile so no tap reads the neighbour.
+    vec2 lo = rect.xy + vec2(texel * 1.5);
+    vec2 hi = rect.xy + rect.zw - vec2(texel * 1.5);
+    vec2 uv = rect.xy + p.xy * rect.zw;
+    float radius = texel * 2.5;
 
-    float angle = rand(projCoords.xy) * 6.283185;
-    float cosAngle = cos(angle);
-    float sinAngle = sin(angle);
-
+    float angle = rand(p.xy) * 6.283185;
+    float c = cos(angle);
+    float s = sin(angle);
+    float lit = 0.0;
     for (int i = 0; i < 16; i++) {
-        vec2 rotatedSample = vec2(
-            poissonDisk[i].x * cosAngle - poissonDisk[i].y * sinAngle,
-            poissonDisk[i].x * sinAngle + poissonDisk[i].y * cosAngle
-        );
-
-        vec2 sampleCoord = projCoords.xy + rotatedSample * filterRadius;
-        sampleCoord = clamp(sampleCoord, 0.0005, 0.9995);
-
-        shadow += texture(u_shadowMap, vec3(sampleCoord, projCoords.z - bias));
+        vec2 o = vec2(poissonDisk[i].x * c - poissonDisk[i].y * s, poissonDisk[i].x * s + poissonDisk[i].y * c);
+        lit += texture(u_shadowAtlasMap, vec3(clamp(uv + o * radius, lo, hi), p.z - depthBias));
     }
+    return lit / 16.0;
+}
 
-    float shadowFactor = shadow / 16.0;
-    return mix(1.0, shadowFactor, u_shadowStrength);
+// Light reaching a point from shadow slot `slotF` (-1: no shadow).
+// lightPos is only used for point lights (to pick the cube face).
+float shadowFactor(float slotF, vec3 normal, vec3 toLight, vec3 lightPos, bool isPoint) {
+    int slot = int(slotF);
+    if (slot < 0 || u_receiveShadows == 0 || u_shadowAtlas.z < 0.5) return 1.0;
+    vec4 prm = u_shadowParams[slot];
+    float ndotl = clamp(dot(normal, toLight), 0.0, 1.0);
+    // Normal offset grows at grazing angles, where acne appears first.
+    vec3 position = v_position + normal * prm.y * (2.0 - ndotl) + toLight * prm.z;
+    int view = int(prm.w) + (isPoint ? cubeFace(v_position - lightPos) : 0);
+    float lit = sampleShadowView(view, position, prm.x * (2.0 - ndotl));
+    return mix(1.0, lit, u_shadowAtlas.y);
 }
 
 vec3 getFinalNormal(vec2 uv) {
@@ -111,11 +136,11 @@ vec3 applyDirectionalLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal,
     
     if (intensities.x <= 0.0) return vec3(0.0);
 
-    float shadowFactor = is_in_shadow_pcf(v_lightSpacePosition, normal, lightDir);
+    float shadow = shadowFactor(u_dirColor[index].w, normal, lightDir, vec3(0.0), false);
 
     vec3 diffuse = baseColor * intensities.x;
     vec3 specular = vec3(1.0) * intensities.y;
-    return (diffuse + specular) * u_dirColor[index].rgb * shadowFactor;
+    return (diffuse + specular) * u_dirColor[index].rgb * shadow;
 }
 
 vec3 applyPointLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal, float shininess, float specStrength) {
@@ -132,8 +157,9 @@ vec3 applyPointLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal, float
 
     vec3 diffuse = baseColor * intensities.x;
     vec3 specular = vec3(1.0) * intensities.y;
+    float shadow = shadowFactor(u_pointColor[index].w, normal, lightDir, u_pointPosition[index].xyz, true);
 
-    return (diffuse + specular) * u_pointColor[index].rgb * attenuation;
+    return (diffuse + specular) * u_pointColor[index].rgb * attenuation * shadow;
 }
 
 vec3 applySpotLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal, float shininess, float specStrength) {
@@ -155,8 +181,9 @@ vec3 applySpotLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal, float 
     
     vec3 diffuse = baseColor * intensities.x;
     vec3 specular = vec3(1.0) * intensities.y;
+    float shadow = shadowFactor(u_spotColor[index].w, normal, lightDir, vec3(0.0), false);
 
-    return (diffuse + specular) * u_spotColor[index].rgb * attenuation * coneFactor;
+    return (diffuse + specular) * u_spotColor[index].rgb * attenuation * coneFactor * shadow;
 }
 
 vec3 calculateTotalLitColor(vec3 baseColor, vec2 uv) {

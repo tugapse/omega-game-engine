@@ -12,8 +12,6 @@ uniform mat3 u_worldInverseTransposeMatrix;
 uniform float u_time;
 uniform vec2 u_screenResolution;
 
-// Light uniforms for shadow mapping
-uniform mat4 u_lightMVPMatrix;
 uniform float u_fogDistance;
 
 in vec3 a_position;
@@ -29,7 +27,6 @@ out vec3 v_position;
 out vec3 v_position_view;
 out vec3 v_tangent;
 out vec3 v_bitangent;
-out vec4 v_lightSpacePosition;
 out float v_fogDistance;
 
 void main() {
@@ -47,9 +44,6 @@ void main() {
 
   // Calculate the distance for fog (using true radial distance from the camera)
   v_fogDistance = length(viewPosition.xyz) + u_fogDistance;
-
-  // Calculate the vertex position in light space and pass it to the fragment shader
-  v_lightSpacePosition = u_lightMVPMatrix * vec4(a_position, 1.0);
 
   // We multiply the matrices in order (Projection * View * Model) directly in the shader
   gl_Position = u_projectionMatrix * u_viewMatrix * u_worldMatrix * vec4(a_position, 1.0);
