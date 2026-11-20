@@ -4,8 +4,7 @@ import { Shader } from "./shader";
 import { ShaderSources } from "./shader-sources";
 
 /**
- * A simple shader for rendering objects without lighting calculations.
- * It handles uniforms for a base color, a main texture, and UV transformations (scale/offset).
+  Represents a shader specifically designed for rendering objects with an unlit material. It handles uniforms for color, texture, and UV transformations.
  * @augments {Shader}
  */
 export class UnlitShader extends Shader {
@@ -13,30 +12,31 @@ export class UnlitShader extends Shader {
   protected override _className = "UnlitShader"
 
   /**
-   * Creates a new instance of UnlitShader.
-   *
+    Creates a new instance of UnlitShader.
+
    * @override
-   * @param gl - The WebGL2 rendering context.
-   * @param material - The unlit material associated with this shader.
-   * @returns A new `UnlitShader` instance.
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @param {UnlitMaterial} material - The unlit material associated with this shader.
+   * @returns {UnlitShader} - A new UnlitShader instance.
    */
   public static override instanciate(gl: WebGL2RenderingContext, material: UnlitMaterial): UnlitShader {
     return new UnlitShader(gl, material);
   }
 
   /**
-   * Creates an instance of UnlitShader.
-   * @param gl - The WebGL2 rendering context.
-   * @param material - The unlit material.
+    Creates an instance of UnlitShader.
+   * @param {WebGL2RenderingContext} gl - The WebGL2 rendering context.
+   * @param {UnlitMaterial} material - The unlit material.
    */
   constructor(override gl: WebGL2RenderingContext, override material: UnlitMaterial) {
     super(gl, material, ShaderSources.frag.default_unlit, ShaderSources.vertex.default);
   }
 
   /**
-   * Loads the unlit material's properties into the shader's uniforms.
+    Loads the unlit material's properties into the shader's uniforms.
    * This includes the base color, UV scale and offset, and the main texture.
    * @override
+   * @returns {void}
    */
   public override async loadDataIntoShader(): Promise<void> {
     if (!this.material) return;
@@ -54,9 +54,15 @@ export class UnlitShader extends Shader {
   }
 
   /**
-   * Checks if the main texture is loaded and, if not, loads it.
-   * It ensures that a texture is bound before rendering.
+   * Checks if textures are loaded and retrieves them from the cache.
+   * If not found or if the URL is not provided, it uses a default white texture.
    * @private
+   * @returns {Promise<void>}
+   */
+   /**
+    Checks if textures are loaded and retrieves them from the cache. If not found or if the URL is not provided, it uses a default white texture.
+   * @private
+   * @returns {void}
    */
   protected async checkAndLoadTextures(): Promise<void> {
     if (this.material.mainTex) {
@@ -70,10 +76,6 @@ export class UnlitShader extends Shader {
     }
   }
 
-  /**
-   * Unbinds the main texture after rendering to free up the texture unit.
-   * @override
-   */
   override release(): void {
     if(this.material?.mainTex)
       this.material.mainTex.unBind();

@@ -6,19 +6,19 @@ import { IMeshData } from "../interfaces/meshData";
 import { BoundingBox, BoundingSphere } from "./bounding-box";
 
 /**
- * Stores raw geometric data for a 3D model, including vertices, normals, UVs, and indices.
- * It also provides methods for calculating normals, tangents, and bounding volumes.
+  Base class for geometric mesh data. It stores vertex positions, normals, and UV coordinates, along with optional tangent and bitangent vectors for normal mapping.
  * @augments {JsonSerializable}
  */
 export class MeshData extends JsonSerializable implements IMeshData {
 
   /**
-   * Creates a new MeshData instance.
-   * @param vertices - The array of vertex positions.
-   * @param normals - The array of vertex normals.
-   * @param uvs - The array of texture coordinates.
-   * @param indices - The array of vertex indices for indexed drawing.
-   * @returns A new `MeshData` instance.
+    Creates a new MeshData instance.
+
+   * @param {vec3[]} [vertices] - The array of vertex positions.
+   * @param {vec3[]} [normals=[]] - The array of vertex normals.
+   * @param {vec2[]} [uvs=[]] - The array of texture coordinates.
+   * @param {number[]} [indices=[]] - The array of vertex indices.
+   * @returns {MeshData} - A new MeshData instance.
    */
   public static instanciate(vertices?: vec3[], normals: vec3[] = [], uvs: vec2[] = [], indices: number[] = []): MeshData {
     if (!vertices) vertices = [];
@@ -26,42 +26,46 @@ export class MeshData extends JsonSerializable implements IMeshData {
   }
 
   /**
-   * The array of vertex positions, where each position is a `vec3`.
+    The array of vertex positions.
    * @type {vec3[]}
    */
   public vertices: vec3[];
   /**
-   * The array of vertex normals, corresponding to each vertex.
+    The array of vertex normals.
    * @type {vec3[]}
    */
   public normals: vec3[];
   /**
-   * The array of 2D texture coordinates (UVs), corresponding to each vertex.
+    The array of texture coordinates.
    * @type {vec2[]}
    */
   public uvs: vec2[];
   /**
-   * The array of vertex indices that define the faces (triangles) of the mesh.
+    The array of vertex indices.
    * @type {number[]}
    */
   public indices: number[];
   /**
-   * The array of tangent vectors, used for normal mapping. Calculated via `calculateTangentsAndBitangents`.
+    The array of tangent vectors.
    * @type {vec3[] | undefined}
    */
   public tangents?: vec3[];
   /**
-   * The array of bitangent vectors, used for normal mapping. Calculated via `calculateTangentsAndBitangents`.
+    The array of bitangent vectors.
    * @type {vec3[] | undefined}
    */
   public bitangents?: vec3[];
+  /**
+    The unique identifier for the mesh data.
+   * @type {string}
+   */
 
   /**
-   * Creates an instance of MeshData.
-   * @param vertices - The array of vertex positions.
-   * @param normals - The array of vertex normals.
-   * @param uvs - The array of texture coordinates.
-   * @param indices - The array of vertex indices.
+    Creates an instance of MeshData.
+   * @param {vec3[]} vertices - The array of vertex positions.
+   * @param {vec3[]} [normals=[]] - The array of vertex normals.
+   * @param {vec2[]} [uvs=[]] - The array of texture coordinates.
+   * @param {number[]} [indices=[]] - The array of vertex indices.
    */
   constructor(vertices: vec3[], normals: vec3[] = [], uvs: vec2[] = [], indices: number[] = []) {
     super("MeshData");
@@ -72,9 +76,10 @@ export class MeshData extends JsonSerializable implements IMeshData {
   }
 
   /**
-   * Calculates smooth normals for the mesh based on its vertices and indices.
+    Calculates smooth normals and generates indices for the mesh based on its vertices.
    * It computes face normals and then averages them for vertex normals to create a smooth appearance.
    * The calculated normals and indices are stored directly in `this.normals` and `this.indices`.
+   * @returns {void}
    */
   public calculateNormals(): void {
     if (this.vertices.length === 0) {
@@ -134,9 +139,9 @@ export class MeshData extends JsonSerializable implements IMeshData {
   }
 
   /**
- * Calculates an Axis-Aligned Bounding Box (AABB) for the given set of vertices.
+ * Calculates the bounding box for this mesh using its internal vertices.
  *
- * @returns A `BoundingBox` object, or `null` if the mesh has no vertices.
+ * @returns A BoundingBox object, or null if the mesh has no vertices.
  */
   static getBoundingBox(vertices: vec3[]): BoundingBox | null {
     if (vertices.length === 0) {
@@ -170,10 +175,10 @@ export class MeshData extends JsonSerializable implements IMeshData {
   }
 
   /**
-   * Calculates a bounding sphere for the given set of vertices.
+   * Calculates a bounding sphere for this mesh using its internal vertices.
    * The sphere's center is the mesh's centroid.
    *
-   * @returns A `BoundingSphere` object, or `null` if the mesh has no vertices.
+   * @returns A BoundingSphere object, or null if the mesh has no vertices.
    */
   static getBoundingSphere(vertices: vec3[]): BoundingSphere | null {
     if (vertices.length === 0) {
@@ -210,8 +215,9 @@ export class MeshData extends JsonSerializable implements IMeshData {
 
 
   /**
-   * Inverts the direction of all normal vectors in the mesh.
+    Inverts the direction of all normal vectors in the mesh.
    * This is useful for flipping faces or correcting normal orientations.
+   * @returns {void}
    */
   public invertNormals(): void {
     if (this.normals.length === 0) {
@@ -226,8 +232,9 @@ export class MeshData extends JsonSerializable implements IMeshData {
   }
 
   /**
-   * Calculates tangents and bitangents for the mesh, required for normal mapping.
+    Calculates tangents and bitangents for the mesh and populates the instance's arrays.
    * This method should be called after the mesh's vertices, normals, UVs, and indices are set.
+   * @returns {void}
    */
   public calculateTangentsAndBitangents(): void {
     if (!this.indices || this.indices.length === 0) {
@@ -306,9 +313,9 @@ export class MeshData extends JsonSerializable implements IMeshData {
   }
 
   /**
-   * Serializes the mesh data to a JSON object.
+    Serializes the mesh data to a JSON object.
    * @override
-   * @returns The JSON object representation of the mesh data.
+   * @returns {JsonSerializedData} - The JSON object representation.
    */
   override toJsonObject(): JsonSerializedData {
     return {
@@ -324,9 +331,9 @@ export class MeshData extends JsonSerializable implements IMeshData {
   }
 
   /**
-   * Deserializes the mesh data from a JSON object.
+    Deserializes the mesh data from a JSON object.
    * @override
-   * @param jsonObject - The JSON object to deserialize from.
+   * @param {JsonSerializedData} jsonObject - The JSON object to deserialize from.
    */
   override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
@@ -340,40 +347,26 @@ export class MeshData extends JsonSerializable implements IMeshData {
 }
 
 /**
- * A component-like class that holds a reference to a `MeshData` instance.
- * This allows multiple `RendererBehaviour` instances to share the same geometry,
- * saving memory and improving performance.
+  A class that holds a reference to shared mesh data.
  * @augments {JsonSerializable}
  */
 export class Mesh extends JsonSerializable {
-  /**
-   * Creates an instance of Mesh.
-   */
   constructor() {
     super("Mesh");
   }
   /**
-   * The shared `MeshData` instance containing the geometry.
+    The shared mesh data instance.
    * @type {MeshData}
    */
   public meshData!: MeshData;
 
-  /**
-   * Serializes the Mesh and its underlying `MeshData` to a JSON object.
-   * @override
-   * @returns The serialized JSON data.
-   */
   override toJsonObject(): JsonSerializedData {
     return {
       ...super.toJsonObject(),
       meshData: this.meshData.toJsonObject()
     }
   }
-  /**
-   * Deserializes the Mesh and its underlying `MeshData` from a JSON object.
-   * @override
-   * @param jsonObject - The JSON data to deserialize from.
-   */
+
   override fromJson(jsonObject: JsonSerializedData): void {
     super.fromJson(jsonObject);
     this.meshData = new MeshData([]);
