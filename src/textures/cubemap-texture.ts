@@ -1,3 +1,4 @@
+import { EngineCache } from '../core/engineCache';
 import { JsonSerializedData } from "../interfaces";
 import { Texture } from "./texture";
 
@@ -132,7 +133,13 @@ export class CubemapTexture extends Texture {
           this.setLoadedImage(i, false);
           reject(new Error(`Failed to load image: ${this.textureUris![i]}. Error: ${error}`));
         };
-        _image.src = this.textureUris![i];
+        // Resolve built-in textures and custom URIs (asset://…) before loading.
+        EngineCache.resolveUri(this.textureUris![i]).then(
+          (url) => {
+            _image.src = url;
+          },
+          (error) => reject(new Error(`Failed to resolve ${this.textureUris![i]}: ${error}`)),
+        );
         this.imagesData[i] = _image;
       }
     });

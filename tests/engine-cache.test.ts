@@ -175,6 +175,34 @@ describe('URI resolver', () => {
   });
 });
 
+describe('built-in resources (P7)', () => {
+  it('serves the engine shaders without fetching', async () => {
+    const src = await EngineCache.loadShaderSource('assets/shaders/frag/default-lit.frag');
+    expect(src).toContain('void main');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('default textures are built in, also under their old asset paths', async () => {
+    const white = await EngineCache.getWhiteTexture(gl);
+    expect(white.textureUri).toBe('builtin://white');
+    expect(await EngineCache.resolveUri('assets/images/default/normal.jpg')).toMatch(/^data:image\/png;base64,/);
+    expect(await EngineCache.resolveUri('builtin://missing')).toMatch(/^data:image\/png;base64,/);
+  });
+
+  it('built-in textures ignore a custom loader', async () => {
+    const custom = { loadText: vi.fn(), loadImage: vi.fn() };
+    EngineCache.setLoader(custom);
+    try {
+      const white = await EngineCache.getWhiteTexture(gl);
+      const photo = await EngineCache.getTexture2D('asset://42', gl);
+      expect(white.loader).not.toBe(custom);
+      expect(photo.loader).toBe(custom);
+    } finally {
+      EngineCache.setLoader(null);
+    }
+  });
+});
+
 describe('loader', () => {
   it('a custom loader replaces fetch for text', async () => {
     const loader = {

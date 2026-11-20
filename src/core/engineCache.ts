@@ -2,6 +2,7 @@ import { ICubemapSides } from '../interfaces/cubemap';
 import { CubemapTexture } from '../textures';
 import { Texture } from '../textures/texture';
 import { MeshData } from './mesh';
+import { BuiltinTextures, builtinTextureUrl } from './resources/builtin-textures';
 import { ResourceManager, ResourceManagerStats } from './resources/resource-manager';
 import {
   DefaultResourceLoader,
@@ -44,6 +45,8 @@ export abstract class EngineCache {
 
   /** The URL to load for a URI: the resolver's result, or the URI itself. */
   public static async resolveUri(uri: string): Promise<string> {
+    const builtin = builtinTextureUrl(uri);
+    if (builtin) return builtin;
     return EngineCache.uriResolver ? await EngineCache.uriResolver(uri) : uri;
   }
 
@@ -97,7 +100,7 @@ export abstract class EngineCache {
   }
 
   public static async getWhiteTextureCube(gl?: WebGL2RenderingContext): Promise<CubemapTexture> {
-    const white = 'assets/images/default/white.jpg';
+    const white = BuiltinTextures.white;
     return EngineCache.getTextureCube(
       { right: white, left: white, up: white, bottom: white, front: white, back: white },
       gl,
@@ -105,15 +108,20 @@ export abstract class EngineCache {
   }
 
   public static async getWhiteTexture(gl: WebGL2RenderingContext): Promise<Texture> {
-    return EngineCache.getTexture2D('assets/images/default/white.jpg', gl);
+    return EngineCache.getTexture2D(BuiltinTextures.white, gl);
   }
 
   public static async getBlackTexture(gl: WebGL2RenderingContext): Promise<Texture> {
-    return EngineCache.getTexture2D('assets/images/default/black.jpg', gl);
+    return EngineCache.getTexture2D(BuiltinTextures.black, gl);
   }
 
   public static async getNormalTexture(gl: WebGL2RenderingContext): Promise<Texture> {
-    return EngineCache.getTexture2D('assets/images/default/normal.jpg', gl);
+    return EngineCache.getTexture2D(BuiltinTextures.normal, gl);
+  }
+
+  /** Magenta: the texture shown where one is missing. */
+  public static async getMissingTexture(gl: WebGL2RenderingContext): Promise<Texture> {
+    return EngineCache.getTexture2D(BuiltinTextures.missing, gl);
   }
 
   /** The owner of a texture is done with it: remove it from the cache and free it. */

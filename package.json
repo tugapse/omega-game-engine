@@ -5,6 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "embed-shaders": "node scripts/embed-shaders.mjs",
+    "prebuild": "npm run embed-shaders",
     "build": "tsc",
     "build-js": "npm run build-js:dev && npm run build-js:prod",
     "build-js:dev": "rollup -c && api-extractor run --local --verbose",

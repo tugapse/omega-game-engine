@@ -4,7 +4,9 @@ import { CubemapTexture } from '../../textures';
 import { Texture } from '../../textures/texture';
 import { MeshData } from '../mesh';
 import { ResourceCache, ResourceCacheStats } from './resource-cache';
-import { ResourceLoader } from './resource-loader';
+import { DefaultResourceLoader, ResourceLoader } from './resource-loader';
+import { builtinTextureUrl } from './builtin-textures';
+import { EMBEDDED_SHADERS } from '../../shaders/embedded-shaders';
 
 export interface ResourceManagerStats {
   textures: ResourceCacheStats;
@@ -28,6 +30,8 @@ export class ResourceManager {
   readonly shaders: ResourceCache<string>;
 
   private readonly objParser = new ObjParser();
+  /** Serves built-in textures from their data URLs, whatever the host loader. */
+  private readonly builtinLoader = new DefaultResourceLoader(async (uri) => builtinTextureUrl(uri) ?? uri);
 
   constructor(
     readonly gl: WebGL2RenderingContext | null,
@@ -36,7 +40,7 @@ export class ResourceManager {
     this.textures = new ResourceCache<Texture>({
       load: async (uri) => {
         const texture = new Texture(this.requireGl(uri), uri);
-        texture.loader = this.loader;
+        texture.loader = builtinTextureUrl(uri) ? this.builtinLoader : this.loader;
         await texture.load();
         return texture;
       },
@@ -54,7 +58,8 @@ export class ResourceManager {
       load: async (uri) => this.objParser.parse(await this.loader.loadText(uri)) as MeshData,
     });
     this.shaders = new ResourceCache<string>({
-      load: (uri) => this.loader.loadText(uri),
+      // The engine's own shaders are embedded; anything else is loaded.
+      load: async (uri) => EMBEDDED_SHADERS[uri] ?? this.loader.loadText(uri),
     });
   }
 
