@@ -1,9 +1,13 @@
+import { SkinnedMeshRendererBehaviour } from '../behaviours/renderer/skinned-mesh-renderer-behaviour';
+import { Animator } from '../animation/animator';
 import {
   EntityBehaviour,
   MeshRendererBehaviour,
   RendererBehaviour,
 } from '../behaviours';
 import { CameraFlyBehaviour } from '../behaviours/camera-fly-behaviour';
+import { SunBehaviour } from '../behaviours/sun-behaviour';
+import { RotateBehaviour } from '../behaviours/rotate-behaviour';
 import { SkyboxRenderer } from '../behaviours/renderer/skybox-renderer';
 import { Transform } from '../core';
 import { Color } from '../core/color';
@@ -237,6 +241,35 @@ export class DependencyManager {
           'Renders 3D meshes using the assigned material and shader.',
       },
     );
+    ObjectInstanciator.addDependency(
+      'SkinnedMeshRendererBehaviour',
+      SkinnedMeshRendererBehaviour.instanciate,
+      {
+        name: 'SkinnedMeshRendererBehaviour',
+        type: ClassType.RenderBehaviour,
+        path: 'Behaviours/Renderers',
+        description: 'Renders a mesh from a model file, deformed by its bone entities.',
+      },
+    );
+    ObjectInstanciator.addDependency('SunBehaviour', SunBehaviour.instanciate, {
+      name: 'SunBehaviour',
+      type: ClassType.EntityBehaviour,
+      path: 'Behaviours/SunBehaviour',
+      description:
+        "Moves the sun through a day/night cycle and drives the skybox: sky colours, clouds, stars and an optional moon.",
+    });
+    ObjectInstanciator.addDependency('RotateBehaviour', RotateBehaviour.instanciate, {
+      name: 'RotateBehaviour',
+      type: ClassType.EntityBehaviour,
+      path: 'Behaviours/RotateBehaviour',
+      description: 'Continuously rotates the entity along its axis over time.',
+    });
+    ObjectInstanciator.addDependency('Animator', Animator.instanciate, {
+      name: 'Animator',
+      type: ClassType.EntityBehaviour,
+      path: 'Behaviours/Animation',
+      description: 'Plays animation clips from model files on the bones under its entity.',
+    });
     ObjectInstanciator.addDependency(
       'SkyboxRenderer',
       SkyboxRenderer.instanciate,

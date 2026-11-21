@@ -28,7 +28,7 @@ While developing with the editor, install the local build there with `npm instal
 | Resources | `src/core/resources` | `Resources.for(gl)` returns the `ResourceManager` of a WebGL context. It caches textures, cubemaps, OBJ meshes and shader sources, shares in-flight loads and hands out handles (`acquire` / `release`). A `ResourceLoader` decides how files are fetched; the editor plugs one in for `asset://<id>`. A texture that fails to load becomes the magenta `builtin://missing` and keeps its URI. |
 | Built-in textures | `builtin-textures.ts` | `builtin://white`, `black`, `normal`, `missing`, generated in memory. |
 | Render pipeline | `src/core/render` | Forward pipeline, described below. |
-| Lights | `src/entities/lights` | Ambient, directional, point and spot lights. Each light has `castShadows`, `shadowBias` and `normalBias` (world units). Point and spot lights also have a `range`. |
+| Lights | `src/entities/lights` | Ambient, directional, point and spot lights. Each light has `castShadows`, `shadowStrength` (0 to 1) and `shadowDepthBias` / `shadowNormalBias` (in shadow-map texels). Point and spot lights also have a `range`, where their light fades to 0. |
 | Materials and shaders | `src/materials`, `src/shaders` | `LitMaterial` + `LitShader` (Blinn-Phong, normal/specular/roughness/AO/emissive maps), unlit, skybox. |
 
 ## Render pipeline
@@ -44,9 +44,11 @@ Each frame, `RenderPipeline.draw()`:
 3. Uploads three uniform blocks shared by every shader: `CameraBlock` (binding 0), `LightsBlock` (1, `LightsUBO`) and `ShadowsBlock` (2).
 4. Draws the scene into an off-screen `RenderTarget` (RGBA16F when `EXT_color_buffer_float` exists, otherwise RGBA8, plus a depth texture), then runs any passes added with `addPass`.
 5. Runs the enabled `PostEffect`s, each reading the previous result (ping-pong between two targets). `RetroEffect` is the built-in one.
-6. Copies the result to the canvas with tone mapping (None, Reinhard or ACES, plus exposure) and writes the scene depth too. Whatever the host draws afterwards, like the editor's grid and gizmos, is still hidden by the scene's objects.
+6. Copies the result to the canvas with exposure, tone mapping (None, Reinhard or ACES), saturation, the sRGB gamma and contrast. Scene shaders write linear, unclamped colour; only this copy encodes it for the screen. It also writes the scene depth. Whatever the host draws afterwards, like the editor's grid and gizmos, is still hidden by the scene's objects.
 
-A scene saves only `RenderPipelineSettings`: shadows on/off, strength and distance, HDR, tone mapping, exposure and the retro effect. GPU objects are always rebuilt.
+Before the main camera, every other active camera with a `targetTexture` runs the same steps into its render texture (`rendertexture://<name>`, `targetWidth` × `targetHeight`). The copy goes into the texture instead of the canvas. Materials pick it up like any texture: `Resources.for(gl).getTexture('rendertexture://minimap')`. Each render texture keeps two targets and swaps them after each render, so a camera can see an object that shows its own texture (the object shows the previous frame).
+
+A scene saves only `RenderPipelineSettings`: shadows on/off and distance, HDR, tone mapping, exposure, saturation, contrast and the retro effect. GPU objects are always rebuilt.
 
 `RenderTarget` and `FullscreenProgram` are exported for custom passes and effects.
 

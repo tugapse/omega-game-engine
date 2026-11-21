@@ -46,11 +46,17 @@ export interface ShadowSlot {
   light: Light;
   firstView: number;
   viewCount: number;
-  /** Depth range of an orthographic view (world units), 0 for perspective views. */
-  orthoDepthRange: number;
+  /**
+   * World size of one shadow-map texel: constant for an orthographic view, per
+   * unit of distance from the light for a perspective one.
+   */
+  texelSize: number;
+  perspective: boolean;
 }
 
 export interface ShadowPlan {
+  /** Side of the atlas the rectangles are in, in pixels. */
+  atlasSize: number;
   slots: ShadowSlot[];
   views: ShadowView[];
   /** Light → slot index, for the LightsBlock w components. */
@@ -60,11 +66,22 @@ export interface ShadowPlan {
 export interface ShadowPlanOptions {
   /** Half-size of the directional light's orthographic box, in world units. */
   directionalDistance: number;
+  /** Side of the atlas in pixels (default 4096); the tiles scale with it. */
+  atlasSize?: number;
+  /** Shadowed lights per type, capped by SHADOW_BUDGET. */
+  budget?: { spot?: number; point?: number };
+}
+
+/** The default tile layout scaled to an atlas of `atlasSize` pixels. */
+function scaledTile(rect: AtlasRect, atlasSize: number): AtlasRect {
+  if (atlasSize === SHADOW_ATLAS_SIZE) return rect;
+  const k = atlasSize / SHADOW_ATLAS_SIZE;
+  return { x: rect.x * k, y: rect.y * k, size: rect.size * k };
 }
 
 /**
- * Picks the shadowed lights (castShadows, active, within budget, nearest to the
- * camera first) and lays their views out in the atlas.
+ * Picks the shadowed lights (castShadows, active, within budget, the nearest
+ * to the camera) and lays their views out in the atlas in scene order.
  */
 export function planShadows(lights: Light[], eye: vec3, options: ShadowPlanOptions): ShadowPlan {
   const casters = lights.filter((l) => l.castShadows);
@@ -73,25 +90,35 @@ export function planShadows(lights: Light[], eye: vec3, options: ShadowPlanOptio
       .map((l) => ({ l, d: vec3.distance(l.transform.worldPosition, eye) }))
       .sort((a, b) => a.d - b.d)
       .slice(0, n)
+      // Tiles go in scene order, not distance order: cameras at different
+      // places then share the same layout and the shadow cache stays valid.
+      .sort((a, b) => lights.indexOf(a.l) - lights.indexOf(b.l))
       .map((e) => e.l);
 
-  const plan: ShadowPlan = { slots: [], views: [], slotOf: new Map() };
-  const addSlot = (light: Light, views: { matrix: mat4; rect: AtlasRect }[], orthoDepthRange = 0) => {
+  const atlasSize = options.atlasSize ?? SHADOW_ATLAS_SIZE;
+  const spotBudget = Math.min(SHADOW_BUDGET.spot, Math.max(0, options.budget?.spot ?? SHADOW_BUDGET.spot));
+  const pointBudget = Math.min(SHADOW_BUDGET.point, Math.max(0, options.budget?.point ?? SHADOW_BUDGET.point));
+  const tile = (rect: AtlasRect) => scaledTile(rect, atlasSize);
+  const plan: ShadowPlan = { atlasSize, slots: [], views: [], slotOf: new Map() };
+  const addSlot = (light: Light, views: { matrix: mat4; rect: AtlasRect }[], texelSize: number, perspective: boolean) => {
     plan.slotOf.set(light, plan.slots.length);
-    plan.slots.push({ light, firstView: plan.views.length, viewCount: views.length, orthoDepthRange });
+    plan.slots.push({ light, firstView: plan.views.length, viewCount: views.length, texelSize, perspective });
     for (const v of views) plan.views.push({ light, ...v });
   };
 
   nearest<DirectionalLight>(EntityType.LIGHT_DIRECTIONAL, SHADOW_BUDGET.directional).forEach((l, i) => {
-    const rect = ATLAS_TILES.directional[i];
+    const rect = tile(ATLAS_TILES.directional[i]);
     const matrix = directionalMatrix(l.direction, eye, options.directionalDistance, rect.size);
-    addSlot(l, [{ rect, matrix }], directionalDepthRange(options.directionalDistance));
+    addSlot(l, [{ rect, matrix }], (2 * options.directionalDistance) / rect.size, false);
   });
-  nearest<SpotLight>(EntityType.LIGHT_SPOT, SHADOW_BUDGET.spot).forEach((l, i) => {
-    addSlot(l, [{ rect: ATLAS_TILES.spot[i], matrix: spotMatrix(l) }]);
+  nearest<SpotLight>(EntityType.LIGHT_SPOT, spotBudget).forEach((l, i) => {
+    const rect = tile(ATLAS_TILES.spot[i]);
+    addSlot(l, [{ rect, matrix: spotMatrix(l) }], (2 * Math.tan(spotFov(l) / 2)) / rect.size, true);
   });
-  nearest<PointLight>(EntityType.LIGHT_POINT, SHADOW_BUDGET.point).forEach((l, i) => {
-    addSlot(l, pointMatrices(l).map((matrix, face) => ({ matrix, rect: ATLAS_TILES.point[i * 6 + face] })));
+  nearest<PointLight>(EntityType.LIGHT_POINT, pointBudget).forEach((l, i) => {
+    const size = tile(ATLAS_TILES.point[i * 6]).size;
+    const texel = (2 * Math.tan((POINT_FACE_FOV_DEGREES * Math.PI) / 360)) / size;
+    addSlot(l, pointMatrices(l).map((matrix, face) => ({ matrix, rect: tile(ATLAS_TILES.point[i * 6 + face]) })), texel, true);
   });
   return plan;
 }
@@ -121,14 +148,18 @@ export function directionalDepthRange(distance: number): number {
   return distance * 3;
 }
 
+/** Field of view (radians) of the spot light's shadow view: its outer cone plus a margin. */
+export function spotFov(light: SpotLight): number {
+  return Math.min(170, light.coneAngles.outer * 2 + 2) * (Math.PI / 180);
+}
+
 /** Perspective matrix from the spot light, covering its outer cone out to its range. */
 export function spotMatrix(light: SpotLight): mat4 {
   const position = light.transform.worldPosition;
   const dir = vec3.normalize(vec3.create(), light.toLightDirection);
   const up = Math.abs(dir[1]) > 0.999 ? vec3.fromValues(0, 0, 1) : vec3.fromValues(0, 1, 0);
   const target = vec3.add(vec3.create(), position, dir);
-  const fov = Math.min(170, light.coneAngles.outer * 2 + 2) * (Math.PI / 180);
-  const proj = mat4.perspective(mat4.create(), fov, 1, 0.05, Math.max(0.1, light.range));
+  const proj = mat4.perspective(mat4.create(), spotFov(light), 1, 0.05, Math.max(0.1, light.range));
   return mat4.multiply(mat4.create(), proj, mat4.lookAt(mat4.create(), position, target, up));
 }
 
@@ -164,28 +195,38 @@ export function pointMatrices(light: PointLight): mat4[] {
 export const SHADOWS_LAYOUT = {
   matrices: 0, // MAX_SHADOW_VIEWS mat4 (4 slots each)
   rects: 4 * MAX_SHADOW_VIEWS, // atlas uv: x, y, size, size
-  params: 5 * MAX_SHADOW_VIEWS, // per slot: depth bias, normal bias, toward-light bias, first view
-  atlas: 5 * MAX_SHADOW_VIEWS + MAX_SHADOW_SLOTS, // 1/size, strength, enabled, 0
-  slots: 5 * MAX_SHADOW_VIEWS + MAX_SHADOW_SLOTS + 1,
+  params: 5 * MAX_SHADOW_VIEWS, // per slot: texel size, perspective (1/0), 0, first view
+  extra: 5 * MAX_SHADOW_VIEWS + MAX_SHADOW_SLOTS, // per slot: strength, depth bias, normal bias (texels), 0
+  atlas: 5 * MAX_SHADOW_VIEWS + 2 * MAX_SHADOW_SLOTS, // 1/size, filter taps, enabled, 0
+  slots: 5 * MAX_SHADOW_VIEWS + 2 * MAX_SHADOW_SLOTS + 1,
 };
 
+/** Shadow filter: taps of the PCF in the lit shader (each tap is a hardware 2×2 comparison). */
+export enum ShadowFilter {
+  Hard = 1,
+  Soft = 4,
+  Softer = 16,
+}
+
 /** Packs a plan into the std140 floats of ShadowsBlock. */
-export function packShadows(plan: ShadowPlan, strength: number, enabled: boolean, out?: Float32Array): Float32Array {
+export function packShadows(plan: ShadowPlan, enabled: boolean, out?: Float32Array, filter = ShadowFilter.Softer): Float32Array {
+  const atlasSize = plan.atlasSize ?? SHADOW_ATLAS_SIZE;
   const S = SHADOWS_LAYOUT;
   const data = out ?? new Float32Array(S.slots * 4);
   data.fill(0);
   plan.views.forEach((v, i) => {
     data.set(v.matrix as Float32Array, (S.matrices + i * 4) * 4);
-    const k = 1 / SHADOW_ATLAS_SIZE;
+    const k = 1 / atlasSize;
     data.set([v.rect.x * k, v.rect.y * k, v.rect.size * k, v.rect.size * k], (S.rects + i) * 4);
   });
-  // shadowBias is in world units: an orthographic view turns it into depth
-  // units; a perspective view (non-linear depth) moves the point toward the light.
+  // The biases are in texels: the shader turns them into world units with the
+  // texel size (times the distance to the light for a perspective view), so
+  // they stay as small as the shadow map allows at any distance.
   plan.slots.forEach((s, i) => {
-    const depthBias = s.orthoDepthRange ? s.light.shadowBias / s.orthoDepthRange : 0;
-    const towardLight = s.orthoDepthRange ? 0 : s.light.shadowBias;
-    data.set([depthBias, s.light.normalBias, towardLight, s.firstView], (S.params + i) * 4);
+    data.set([s.texelSize, s.perspective ? 1 : 0, 0, s.firstView], (S.params + i) * 4);
+    const strength = Math.min(1, Math.max(0, s.light.shadowStrength ?? 1));
+    data.set([strength, Math.max(0, s.light.shadowDepthBias), Math.max(0, s.light.shadowNormalBias), 0], (S.extra + i) * 4);
   });
-  data.set([1 / SHADOW_ATLAS_SIZE, strength, enabled ? 1 : 0, 0], S.atlas * 4);
+  data.set([1 / atlasSize, filter, enabled ? 1 : 0, 0], S.atlas * 4);
   return data;
 }

@@ -15,8 +15,9 @@ uniform float u_normalMapStrength;
 layout(std140) uniform ShadowsBlock {
     mat4 u_shadowMatrix[MAX_SHADOW_VIEWS];  // world -> light clip space
     vec4 u_shadowRect[MAX_SHADOW_VIEWS];    // atlas uv: x, y, size, size
-    vec4 u_shadowParams[MAX_SHADOW_SLOTS];  // depth bias, normal bias, toward-light bias, first view
-    vec4 u_shadowAtlas;                     // 1/atlas size, strength, enabled
+    vec4 u_shadowParams[MAX_SHADOW_SLOTS];  // texel size, perspective (1/0), 0, first view
+    vec4 u_shadowExtra[MAX_SHADOW_SLOTS];   // x: strength (per light)
+    vec4 u_shadowAtlas;                     // 1/atlas size, filter taps (1, 4, 16), enabled
 };
 uniform highp sampler2DShadow u_shadowAtlasMap;
 uniform int u_receiveShadows;
@@ -53,7 +54,8 @@ int cubeFace(vec3 v) {
     return v.z > 0.0 ? 4 : 5;
 }
 
-// 16-tap rotated Poisson PCF inside one atlas tile. Returns 1 lit, 0 shadowed.
+// PCF inside one atlas tile: 1 tap (hard), 4 taps on a grid, or 16 rotated
+// Poisson taps; each tap is a hardware 2x2 comparison. Returns 1 lit, 0 shadowed.
 float sampleShadowView(int view, vec3 position, float depthBias) {
     vec4 clip = u_shadowMatrix[view] * vec4(position, 1.0);
     if (clip.w <= 0.0) return 1.0;
@@ -77,6 +79,18 @@ float sampleShadowView(int view, vec3 position, float depthBias) {
     vec2 lo = rect.xy + vec2(texel * 1.5);
     vec2 hi = rect.xy + rect.zw - vec2(texel * 1.5);
     vec2 uv = rect.xy + p.xy * rect.zw;
+    float ref = p.z - depthBias;
+
+    int taps = int(u_shadowAtlas.y + 0.5);
+    if (taps <= 1) return texture(u_shadowAtlasMap, vec3(clamp(uv, lo, hi), ref));
+    if (taps <= 4) {
+        float sum = 0.0;
+        sum += texture(u_shadowAtlasMap, vec3(clamp(uv + vec2(-0.5, -0.5) * texel * 2.0, lo, hi), ref));
+        sum += texture(u_shadowAtlasMap, vec3(clamp(uv + vec2( 0.5, -0.5) * texel * 2.0, lo, hi), ref));
+        sum += texture(u_shadowAtlasMap, vec3(clamp(uv + vec2(-0.5,  0.5) * texel * 2.0, lo, hi), ref));
+        sum += texture(u_shadowAtlasMap, vec3(clamp(uv + vec2( 0.5,  0.5) * texel * 2.0, lo, hi), ref));
+        return sum * 0.25;
+    }
     float radius = texel * 2.5;
 
     float angle = rand(p.xy) * 6.283185;
@@ -85,23 +99,29 @@ float sampleShadowView(int view, vec3 position, float depthBias) {
     float lit = 0.0;
     for (int i = 0; i < 16; i++) {
         vec2 o = vec2(poissonDisk[i].x * c - poissonDisk[i].y * s, poissonDisk[i].x * s + poissonDisk[i].y * c);
-        lit += texture(u_shadowAtlasMap, vec3(clamp(uv + o * radius, lo, hi), p.z - depthBias));
+        lit += texture(u_shadowAtlasMap, vec3(clamp(uv + o * radius, lo, hi), ref));
     }
     return lit / 16.0;
 }
 
 // Light reaching a point from shadow slot `slotF` (-1: no shadow).
-// lightPos is only used for point lights (to pick the cube face).
+// lightPos (unused for directional lights) gives the distance for a
+// perspective view's texel size and picks a point light's cube face.
 float shadowFactor(float slotF, vec3 normal, vec3 toLight, vec3 lightPos, bool isPoint) {
     int slot = int(slotF);
     if (slot < 0 || u_receiveShadows == 0 || u_shadowAtlas.z < 0.5) return 1.0;
     vec4 prm = u_shadowParams[slot];
+    vec4 extra = u_shadowExtra[slot];
+    // World size of a shadow-map texel here: the biases are in texels, so they
+    // stay just big enough against acne and the shadow keeps touching its object.
+    float texel = prm.y > 0.5 ? prm.x * length(v_position - lightPos) : prm.x;
     float ndotl = clamp(dot(normal, toLight), 0.0, 1.0);
-    // Normal offset grows at grazing angles, where acne appears first.
-    vec3 position = v_position + normal * prm.y * (2.0 - ndotl) + toLight * prm.z;
+    // The normal offset is for grazing angles, where acne appears first.
+    float sinAngle = sqrt(1.0 - ndotl * ndotl);
+    vec3 position = v_position + normal * (extra.z * texel * sinAngle) + toLight * (extra.y * texel);
     int view = int(prm.w) + (isPoint ? cubeFace(v_position - lightPos) : 0);
-    float lit = sampleShadowView(view, position, prm.x * (2.0 - ndotl));
-    return mix(1.0, lit, u_shadowAtlas.y);
+    float lit = sampleShadowView(view, position, 0.0);
+    return mix(1.0, lit, extra.x);
 }
 
 vec3 getFinalNormal(vec2 uv) {
@@ -143,6 +163,15 @@ vec3 applyDirectionalLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal,
     return (diffuse + specular) * u_dirColor[index].rgb * shadow;
 }
 
+// Smooth cut-off at the light's range (Frostbite / UE4 windowing): 1 near the
+// light, 0 at the range, so a light only colours what is inside its range.
+float rangeWindow(float distance, float range) {
+    if (range <= 0.0) return 1.0;
+    float r = distance / range;
+    float w = clamp(1.0 - r * r * r * r, 0.0, 1.0);
+    return w * w;
+}
+
 vec3 applyPointLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal, float shininess, float specStrength) {
     vec3 lightVec = u_pointPosition[index].xyz - v_position;
     vec3 lightDir = normalize(lightVec);
@@ -154,6 +183,7 @@ vec3 applyPointLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal, float
     float attenuation = 1.0 / (u_pointAtten[index].x +
                                u_pointAtten[index].y * distance +
                                u_pointAtten[index].z * (distance * distance));
+    attenuation *= rangeWindow(distance, u_pointPosition[index].w);
 
     vec3 diffuse = baseColor * intensities.x;
     vec3 specular = vec3(1.0) * intensities.y;
@@ -178,10 +208,11 @@ vec3 applySpotLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal, float 
     float attenuation = 1.0 / (u_spotAtten[index].x +
                                u_spotAtten[index].y * distance +
                                u_spotAtten[index].z * (distance * distance));
+    attenuation *= rangeWindow(distance, u_spotPosition[index].w);
     
     vec3 diffuse = baseColor * intensities.x;
     vec3 specular = vec3(1.0) * intensities.y;
-    float shadow = shadowFactor(u_spotColor[index].w, normal, lightDir, vec3(0.0), false);
+    float shadow = shadowFactor(u_spotColor[index].w, normal, lightDir, u_spotPosition[index].xyz, false);
 
     return (diffuse + specular) * u_spotColor[index].rgb * attenuation * coneFactor * shadow;
 }

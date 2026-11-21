@@ -15,6 +15,7 @@ import { JsonSerializedData } from "../../interfaces/json-serialized-data";
 import { IRendererBehaviour } from "../../interfaces/renderer-behaviour";
 import { ColorMaterial as Material } from "../../materials";
 import { Shader } from "../../shaders/shader";
+import { localBoundingSphere, Sphere, transformSphere } from "../../core/render/culling";
 import { EntityBehaviour } from "../entity-behaviour";
 
 /**
@@ -360,7 +361,7 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
     material!.fromJson(materialData);
     this.shader = ObjectInstanciator.instanciateObjectFromJsonData(jsonObject["shader"].className, [this._gl, material]);
     this.shader?.fromJson(jsonObject["shader"]);
-    this.mesh.fromJson(jsonObject["mesh"]);
+    if (jsonObject["mesh"]) this.mesh.fromJson(jsonObject["mesh"]);
   }
 
   /**
@@ -459,10 +460,45 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
     }
     this.shader.use();
     this.shader.bindBuffers();
-    this._gl.drawElements(this.drawPrimitiveType, this.mesh.meshData.indices.length, this._gl.UNSIGNED_SHORT, 0);
+    this._gl.drawElements(this.drawPrimitiveType, this.mesh.meshData.indices.length, this.shader.indexType, 0);
     this.shader.release();
   }
 
+
+  /**
+   * Called by the render pipeline once per camera, before the shadow and
+   * geometry passes. Skinned renderers update their joint matrices here.
+   */
+  public beforeRender(): void {}
+
+  /**
+   * The world bounding sphere of what this renderer draws, written to `out`,
+   * for frustum culling. False when unknown (never culled).
+   */
+  public worldBounds(out: Sphere): boolean {
+    const local = localBoundingSphere(this.mesh?.meshData);
+    if (!local || !this.parent) return false;
+    transformSphere(out, local, this.parent.transform.modelMatrix);
+    return true;
+  }
+
+  /**
+   * Changes whenever the drawn shape changes without the transform moving
+   * (skinned meshes posing): the shadow pass redraws cached views then.
+   */
+  public get deformationVersion(): number {
+    return 0;
+  }
+
+  /** Whether the mesh data is saved in the scene (false when it comes from a model file). */
+  public get serializesMesh(): boolean {
+    return true;
+  }
+
+  /** Skinned renderers: the texture holding their joint matrices (null otherwise). */
+  public get jointTexture(): WebGLTexture | null {
+    return null;
+  }
 
   /**
    * Updates the renderer's internal state.

@@ -1,6 +1,8 @@
 #version 300 es
 
-precision mediump float;
+// highp: the star and cloud hashes need 32-bit floats; mediump is 16-bit on phone GPUs
+// and turns the stars into streaks. The hashes themselves avoid sin() (functions.frag).
+precision highp float;
 
 // --- GLOBAL SAMPLERS & ENVIRONMENT ---
 uniform samplerCube u_mainTex;
@@ -109,10 +111,8 @@ void main() {
         finalColor = drawMoon(finalColor, viewDir);
     }
 
-    // 6. Gamma Correction (Linear back to sRGB Out)
-    vec3 gammaCorrectedRGB = pow(finalColor, vec3(1.0 / 2.2));
-
-    fragColor = vec4(clamp(gammaCorrectedRGB, 0.0, 1.0), 1.0);
+    // Linear out: the pipeline's final copy tone maps and gamma-encodes.
+    fragColor = vec4(max(finalColor, 0.0), 1.0);
 }
 
 // --- RENDERING SUBSYSTEM IMPLEMENTATIONS ---
@@ -216,7 +216,7 @@ vec3 drawClouds(vec3 currentSkyColor, vec3 viewDir) {
     int rep = 1 + u_cloudRepetition;
     float c_weatherCondition = u_weatherCondition;     // Testing driver loop state (0.0 = Clear, 1.0 = Heavy Storm)
     float c_cloudTiling      = u_cloudTiling;                       // Size/frequency scale of the cloud fractal structures
-    vec3 c_cloudSeed         = vec3(200.0  , 128.54 / (100.0 + u_time) , 954.31) + u_time *  u_cloudSpeed; // 3D generation coordinate translation offsets (Procedural Seed)
+    vec3 c_cloudSeed         = vec3(209.3  , 128.54 / (100.0 + u_time) , 975.9) + u_time *  u_cloudSpeed; // 3D generation coordinate translation offsets (Procedural Seed)
     float c_maxOpacityClear  = 0.75;                        // Alpha opacity limit clamping factor during standard clear days
     float c_maxOpacityStorm  = 0.98;                        // Alpha opacity limit clamping factor during heavy dark storms
     const float c_zenithPatchWeight= 0.8;                         // Opacity blending mix weight of the overhead zenith dome cap

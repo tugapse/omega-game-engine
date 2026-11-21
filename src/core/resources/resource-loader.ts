@@ -10,6 +10,8 @@ export interface ResourceLoader {
   loadText(uri: string): Promise<string>;
   /** Images for textures. Rejects when the image cannot be loaded. */
   loadImage(uri: string): Promise<LoadedImage>;
+  /** Binary files: 3D models (FBX). Optional for older loaders. */
+  loadBinary?(uri: string): Promise<ArrayBuffer>;
 }
 
 /**
@@ -32,6 +34,14 @@ export class DefaultResourceLoader implements ResourceLoader {
       throw new Error(`Failed to load ${uri} (HTTP ${response.status})`);
     }
     return response.text();
+  }
+
+  async loadBinary(uri: string): Promise<ArrayBuffer> {
+    const response = await fetch(await this.resolve(uri));
+    if (!response.ok) {
+      throw new Error(`Failed to load ${uri} (HTTP ${response.status})`);
+    }
+    return response.arrayBuffer();
   }
 
   async loadImage(uri: string): Promise<LoadedImage> {

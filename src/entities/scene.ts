@@ -288,6 +288,7 @@ export class Scene extends SceneEntity {
         }
       }
 
+      if (!renderer.serializesMesh) continue;
       if (renderer.mesh) {
         meshMaps[renderer.mesh.meshData.uuid] =
           renderer.mesh.meshData.toJsonObject();

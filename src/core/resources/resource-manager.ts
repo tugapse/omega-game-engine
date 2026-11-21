@@ -2,17 +2,24 @@ import { ICubemapSides } from '../../interfaces/cubemap';
 import { ObjParser } from '../../parsers/obj-parser';
 import { CubemapTexture } from '../../textures';
 import { Texture } from '../../textures/texture';
+import { RenderTexture, isRenderTextureUri, renderTextureUri } from '../../textures/render-texture';
 import { MeshData } from '../mesh';
 import { ResourceCache, ResourceCacheStats } from './resource-cache';
 import { DefaultResourceLoader, ResourceLoader } from './resource-loader';
 import { BuiltinTextures, builtinTextureUrl } from './builtin-textures';
 import { EMBEDDED_SHADERS } from '../../shaders/embedded-shaders';
+import { ModelData, parseModelPartUri } from '../model/model-data';
+import { parseFbx } from '../../parsers/fbx/fbx-parser';
+import { isCollada, parseCollada } from '../../parsers/collada/collada-parser';
+import { isFbx } from '../../parsers/fbx/fbx-reader';
+import type { LoadedImage } from './resource-loader';
 
 export interface ResourceManagerStats {
   textures: ResourceCacheStats;
   cubemaps: ResourceCacheStats;
   meshes: ResourceCacheStats;
   shaders: ResourceCacheStats;
+  models: ResourceCacheStats;
 }
 
 /**
@@ -28,8 +35,12 @@ export class ResourceManager {
   readonly cubemaps: ResourceCache<CubemapTexture>;
   readonly meshes: ResourceCache<MeshData>;
   readonly shaders: ResourceCache<string>;
+  /** Imported model files (FBX), parsed once and shared by every copy placed. */
+  readonly models: ResourceCache<ModelData>;
 
   private readonly objParser = new ObjParser();
+  /** Textures cameras render into, by URI. They live until `dispose()`. */
+  private readonly renderTextures = new Map<string, RenderTexture>();
   /** Serves built-in textures from their data URLs, whatever the host loader. */
   private readonly builtinLoader = new DefaultResourceLoader(async (uri) => builtinTextureUrl(uri) ?? uri);
   /** Loads the magenta "missing" image whatever the URI. */
@@ -41,8 +52,11 @@ export class ResourceManager {
   ) {
     this.textures = new ResourceCache<Texture>({
       load: async (uri) => {
+        if (isRenderTextureUri(uri)) return this.getRenderTexture(uri);
         const texture = new Texture(this.requireGl(uri), uri);
-        texture.loader = builtinTextureUrl(uri) ? this.builtinLoader : this.loader;
+        texture.loader = builtinTextureUrl(uri) ? this.builtinLoader
+          : parseModelPartUri(uri)?.kind === 'image' ? this.modelImageLoader
+          : this.loader;
         try {
           await texture.load();
         } catch (error) {
@@ -54,7 +68,8 @@ export class ResourceManager {
         }
         return texture;
       },
-      dispose: (texture) => texture.destroy(),
+      // Render textures belong to `renderTextures`, not to the cache.
+      dispose: (texture) => { if (!(texture instanceof RenderTexture)) texture.destroy(); },
     });
     this.cubemaps = new ResourceCache<CubemapTexture>({
       load: async (key) => {
@@ -66,6 +81,14 @@ export class ResourceManager {
     });
     this.meshes = new ResourceCache<MeshData>({
       load: async (uri) => this.objParser.parse(await this.loader.loadText(uri)) as MeshData,
+    });
+    this.models = new ResourceCache<ModelData>({
+      load: async (uri) => {
+        const buffer = await this.loadBinary(uri);
+        if (isFbx(buffer)) return parseFbx(buffer);
+        if (isCollada(buffer)) return parseCollada(new TextDecoder('utf-8').decode(buffer));
+        throw new Error(`${uri} is not a model format the engine reads (FBX 7.x, COLLADA).`);
+      },
     });
     this.shaders = new ResourceCache<string>({
       // The engine's own shaders are embedded; anything else is loaded.
@@ -92,6 +115,21 @@ export class ResourceManager {
     return ResourceManager.peekValue(await this.cubemaps.acquire(ResourceManager.cubemapKey(sides)));
   }
 
+  /**
+   * The render texture called `name` (or with that `rendertexture://` URI),
+   * created empty the first time. Cameras render into it; materials load it
+   * like any texture.
+   */
+  getRenderTexture(name: string): RenderTexture {
+    const uri = renderTextureUri(name);
+    let texture = this.renderTextures.get(uri);
+    if (!texture) {
+      texture = new RenderTexture(this.requireGl(uri), uri);
+      this.renderTextures.set(uri, texture);
+    }
+    return texture;
+  }
+
   /** A cubemap with the built-in white texture on all six faces. */
   getWhiteCubemap(): Promise<CubemapTexture> {
     const w = BuiltinTextures.white;
@@ -101,6 +139,35 @@ export class ResourceManager {
   async getMesh(uri: string): Promise<MeshData> {
     return ResourceManager.peekValue(await this.meshes.acquire(uri));
   }
+
+  /** The model file at `uri` (without a `#part` fragment), loaded and parsed once. */
+  async getModel(uri: string): Promise<ModelData> {
+    return ResourceManager.peekValue(await this.models.acquire(uri.split('#')[0]));
+  }
+
+  /** Loads a binary file through the loader (or `fetch` when the loader has no `loadBinary`). */
+  async loadBinary(uri: string): Promise<ArrayBuffer> {
+    if (this.loader.loadBinary) return this.loader.loadBinary(uri);
+    const response = await fetch(uri);
+    if (!response.ok) throw new Error(`Failed to load ${uri} (HTTP ${response.status})`);
+    return response.arrayBuffer();
+  }
+
+  /** Serves `<model>#image/N` textures from the images embedded in a model file. */
+  private readonly modelImageLoader: ResourceLoader = {
+    loadText: (uri) => this.loader.loadText(uri),
+    loadImage: async (uri): Promise<LoadedImage> => {
+      const part = parseModelPartUri(uri)!;
+      const image = (await this.getModel(part.modelUri)).images[part.index];
+      if (!image) throw new Error(`${uri}: the model has no image ${part.index}.`);
+      if (image.data) return createImageBitmap(new Blob([image.data as BlobPart], { type: image.mimeType }));
+      // An external file: only resolvable next to a model with a real URL path.
+      if (image.path && /^(https?:|\/|\.)/.test(part.modelUri)) {
+        return this.loader.loadImage(new URL(image.path, new URL(part.modelUri, location.href)).href);
+      }
+      throw new Error(`${uri}: the image "${image.path}" is a separate file; place the model with instantiateModel's resolveImage.`);
+    },
+  };
 
   async getShader(uri: string): Promise<string> {
     return ResourceManager.peekValue(await this.shaders.acquire(uri));
@@ -126,12 +193,13 @@ export class ResourceManager {
       cubemaps: this.cubemaps.stats(),
       meshes: this.meshes.stats(),
       shaders: this.shaders.stats(),
+      models: this.models.stats(),
     };
   }
 
   /** Disposes every resource nobody holds. Returns how many were freed. */
   trim(): number {
-    return this.textures.trim() + this.cubemaps.trim() + this.meshes.trim() + this.shaders.trim();
+    return this.textures.trim() + this.cubemaps.trim() + this.meshes.trim() + this.shaders.trim() + this.models.trim();
   }
 
   /** Disposes everything (e.g. when the context goes away). */
@@ -140,6 +208,9 @@ export class ResourceManager {
     this.cubemaps.clear();
     this.meshes.clear();
     this.shaders.clear();
+    this.models.clear();
+    for (const texture of this.renderTextures.values()) texture.destroy();
+    this.renderTextures.clear();
   }
 
   private requireGl(what: string): WebGL2RenderingContext {

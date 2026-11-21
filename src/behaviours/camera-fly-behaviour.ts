@@ -151,8 +151,14 @@ export class CameraFlyBehaviour extends EntityBehaviour {
   }
 
   override initialize(): boolean {
-    this._currentPitch = this.transform.localRotation[0];
-    this._currentYaw = this.transform.localRotation[1];
+    // From the view direction, not the Euler angles: the same rotation has
+    // several Euler forms (yaw 180 can read as x 180, z 180).
+    // The update builds yaw * pitch, which turns +Z into
+    // (sin(yaw) cos(pitch), -sin(pitch), cos(yaw) cos(pitch)).
+    const f = this.transform.forward;
+    const toDeg = 180 / Math.PI;
+    this._currentPitch = Math.asin(Math.max(-1, Math.min(1, -f[1]))) * toDeg;
+    this._currentYaw = Math.atan2(f[0], f[2]) * toDeg;
     return super.initialize();
   }
   /**

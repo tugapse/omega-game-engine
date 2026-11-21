@@ -44,6 +44,7 @@ vi.mock('../src/parsers/obj-parser', () => ({
 import { Resources } from '../src/core/resources/resources';
 import { BuiltinTextures } from '../src/core/resources/builtin-textures';
 import { Texture } from '../src/textures/texture';
+import { RenderTexture, isRenderTextureUri, renderTextureUri } from '../src/textures/render-texture';
 
 const gl = {} as WebGL2RenderingContext;
 
@@ -274,5 +275,32 @@ describe('clear', () => {
     const a = await Resources.for(gl).getTexture('assets/a.png');
     Resources.clear();
     expect(a.destroy).toHaveBeenCalled();
+  });
+});
+
+describe('render textures', () => {
+  it('materials load a camera texture by its rendertexture:// URI, without fetching', async () => {
+    const manager = Resources.for(gl);
+    const byName = manager.getRenderTexture('mirror');
+    const byUri = await manager.getTexture('rendertexture://mirror');
+    expect(byUri).toBe(byName);
+    expect(byName).toBeInstanceOf(RenderTexture);
+    expect(byName.textureUri).toBe('rendertexture://mirror');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('trim keeps render textures: the camera still draws into them', async () => {
+    const manager = Resources.for(gl);
+    const texture = await manager.getTexture('rendertexture://minimap');
+    Resources.trim();
+    expect(texture.destroy).not.toHaveBeenCalled();
+    expect(await manager.getTexture('rendertexture://minimap')).toBe(texture);
+  });
+
+  it('builds and recognises the URIs', () => {
+    expect(renderTextureUri('a')).toBe('rendertexture://a');
+    expect(renderTextureUri('rendertexture://a')).toBe('rendertexture://a');
+    expect(isRenderTextureUri('rendertexture://a')).toBe(true);
+    expect(isRenderTextureUri('asset://a')).toBe(false);
   });
 });

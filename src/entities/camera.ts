@@ -64,6 +64,16 @@ export class Camera extends SceneEntity {
    */
   public aspectRatio: number = 1;
   /**
+   * Name of the render texture this camera draws into, or empty to leave it
+   * out of the texture pass. Materials show it as `rendertexture://<name>`.
+   * The main camera always draws to the screen.
+   */
+  public targetTexture: string = '';
+  /** Width in pixels of `targetTexture`. */
+  public targetWidth: number = 512;
+  /** Height in pixels of `targetTexture`. */
+  public targetHeight: number = 512;
+  /**
    * The projection matrix of the camera.
    * @private
    * @type {mat4}
@@ -157,6 +167,16 @@ export class Camera extends SceneEntity {
         this.farPlane,
       );
     }
+  }
+
+  /**
+   * Recomputes both matrices now. The render pipeline calls it for cameras
+   * that draw into a texture, since only the main camera updates every frame.
+   * @returns {void}
+   */
+  public refreshMatrices(): void {
+    this.updateProjectionMatrix();
+    this.updateViewMatrix();
   }
 
   /**
@@ -372,6 +392,9 @@ export class Camera extends SceneEntity {
       nearPlane: this.nearPlane,
       farPlane: this.farPlane,
       aspectRatio: this.aspectRatio,
+      targetTexture: this.targetTexture,
+      targetWidth: this.targetWidth,
+      targetHeight: this.targetHeight,
     };
   }
 
@@ -395,6 +418,12 @@ export class Camera extends SceneEntity {
       this.farPlane = jsonObject['farPlane'];
     if (jsonObject['aspectRatio'] !== undefined)
       this.aspectRatio = jsonObject['aspectRatio'];
+    if (jsonObject['targetTexture'] !== undefined)
+      this.targetTexture = jsonObject['targetTexture'];
+    if (jsonObject['targetWidth'] !== undefined)
+      this.targetWidth = jsonObject['targetWidth'];
+    if (jsonObject['targetHeight'] !== undefined)
+      this.targetHeight = jsonObject['targetHeight'];
   }
 
   /**
