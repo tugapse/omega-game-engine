@@ -25,6 +25,7 @@
 ### Fixed
 
 - The skybox shader uses `highp`: with `mediump` (16-bit on phone GPUs) the stars were drawn as streaks.
+- The shader noise hashes no longer use `sin()` ("hash without sine"): phone GPUs compute `sin()` of large arguments with little precision, which drew the clouds with bands and hard straight lines. The cloud seed was moved so the default sky keeps a similar look.
 - The skybox no longer draws into the shadow maps.
 - Shadow tiles are laid out in scene order: with a second camera (render to texture), lights sorted by distance swapped tiles every frame.
 - `Transform` getters (`worldPosition`, `forward`, `right`, `up`, `modelMatrix`, …) recompute a changed transform first. Entities that are never drawn, like cameras and lights in edit mode, reported stale positions and directions, and `lookAt` right after moving aimed from the old position.

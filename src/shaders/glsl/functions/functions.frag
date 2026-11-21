@@ -1,12 +1,19 @@
 
-
-float rand(vec2 c){
-    return fract(sin(dot(c.xy ,vec2(12.9898,78.233))) * 43758.5453);
+// Hashes without sin() (Dave Hoskins, "Hash without Sine"). The classic
+// fract(sin(x) * 43758.5) needs an exact sin() of large arguments: phone GPUs
+// (Mali, Adreno) reduce the range with little precision, and the noise turns
+// into bands and hard straight lines (the clouds near the horizon, where the
+// coordinates are large). These only use fract() and products.
+float rand(vec2 p) {
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
 }
 
 float hash3D(vec3 p) {
-    float xy = rand(p.xy);
-    return rand(vec2(xy, p.z));
+    vec3 p3 = fract(p * 0.1031);
+    p3 += dot(p3, p3.zyx + 31.32);
+    return fract((p3.x + p3.y) * p3.z);
 }
 
 float noise3D(vec3 p) {
