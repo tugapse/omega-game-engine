@@ -56,6 +56,11 @@ export class MeshData extends JsonSerializable implements IMeshData {
    */
   public bitangents?: vec3[];
   /**
+    True when `normals` came with the mesh (imported models): the renderer
+    then keeps them instead of recalculating smooth normals.
+   */
+  public providedNormals = false;
+  /**
     The unique identifier for the mesh data.
    * @type {string}
    */

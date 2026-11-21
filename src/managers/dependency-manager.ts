@@ -1,3 +1,5 @@
+import { SkinnedMeshRendererBehaviour } from '../behaviours/renderer/skinned-mesh-renderer-behaviour';
+import { Animator } from '../animation/animator';
 import {
   EntityBehaviour,
   MeshRendererBehaviour,
@@ -237,6 +239,22 @@ export class DependencyManager {
           'Renders 3D meshes using the assigned material and shader.',
       },
     );
+    ObjectInstanciator.addDependency(
+      'SkinnedMeshRendererBehaviour',
+      SkinnedMeshRendererBehaviour.instanciate,
+      {
+        name: 'SkinnedMeshRendererBehaviour',
+        type: ClassType.RenderBehaviour,
+        path: 'Behaviours/Renderers',
+        description: 'Renders a mesh from a model file, deformed by its bone entities.',
+      },
+    );
+    ObjectInstanciator.addDependency('Animator', Animator.instanciate, {
+      name: 'Animator',
+      type: ClassType.EntityBehaviour,
+      path: 'Behaviours/Animation',
+      description: 'Plays animation clips from model files on the bones under its entity.',
+    });
     ObjectInstanciator.addDependency(
       'SkyboxRenderer',
       SkyboxRenderer.instanciate,

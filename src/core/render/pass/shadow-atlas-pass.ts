@@ -3,6 +3,7 @@ import { RendererBehaviour } from "../../../behaviours";
 import { SceneEntity } from "../../../entities";
 import { ShaderUniformsEnum } from "../../../enums";
 import { EMBEDDED_SHADERS } from "../../../shaders/embedded-shaders";
+import { Shader } from "../../../shaders/shader";
 import { ShaderSources } from "../../../shaders/shader-sources";
 import { RenderTarget } from "../render-target";
 import { MAX_SHADOW_VIEWS, packShadows, SHADOW_ATLAS_SIZE, SHADOWS_LAYOUT, ShadowPlan } from "../shadows";
@@ -11,6 +12,16 @@ import { MAX_SHADOW_VIEWS, packShadows, SHADOW_ATLAS_SIZE, SHADOWS_LAYOUT, Shado
 export const SHADOWS_BINDING_POINT = 2;
 /** Texture unit the lit shader samples the atlas from (`u_shadowAtlasMap`). */
 export const SHADOW_ATLAS_UNIT = 2;
+/** Texture unit of a skinned mesh's joint matrices (`u_jointTexture`). */
+export const JOINT_TEXTURE_UNIT = 7;
+
+/** A shadow-caster program and its locations. */
+interface CasterProgram {
+  program: WebGLProgram;
+  position: number;
+  matrix: WebGLUniformLocation | null;
+  jointTexture: WebGLUniformLocation | null;
+}
 
 /**
  * Draws the depth of every planned shadow view into one 4096² atlas and
@@ -22,9 +33,9 @@ export class ShadowAtlasPass {
   public enabled = true;
 
   private atlas: RenderTarget;
-  private program: WebGLProgram;
-  private positionLocation: number;
-  private matrixLocation: WebGLUniformLocation | null;
+  private plain: CasterProgram;
+  /** The same program with `SKINNED`, for skinned meshes. */
+  private skinned: CasterProgram;
   private ubo: WebGLBuffer;
   private uboData = new Float32Array(SHADOWS_LAYOUT.slots * 4);
 
@@ -38,13 +49,8 @@ export class ShadowAtlasPass {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.bindTexture(gl.TEXTURE_2D, null);
 
-    this.program = ShadowAtlasPass.link(
-      gl,
-      EMBEDDED_SHADERS[ShaderSources.vertex.shadow_caster],
-      EMBEDDED_SHADERS[ShaderSources.frag.depth_only],
-    );
-    this.positionLocation = gl.getAttribLocation(this.program, ShaderUniformsEnum.A_POSITION);
-    this.matrixLocation = gl.getUniformLocation(this.program, ShaderUniformsEnum.U_MODEL_MATRIX);
+    this.plain = ShadowAtlasPass.casterProgram(gl, []);
+    this.skinned = ShadowAtlasPass.casterProgram(gl, ['SKINNED']);
 
     this.ubo = gl.createBuffer()!;
     gl.bindBuffer(gl.UNIFORM_BUFFER, this.ubo);
@@ -72,7 +78,6 @@ export class ShadowAtlasPass {
       gl.depthMask(true);
       gl.enable(gl.CULL_FACE);
       gl.cullFace(gl.FRONT); // back faces in the map: less acne on lit faces
-      gl.useProgram(this.program);
 
       for (const view of views) {
         const { x, y, size } = view.rect;
@@ -83,7 +88,7 @@ export class ShadowAtlasPass {
       }
 
       gl.disable(gl.SCISSOR_TEST);
-      if (this.positionLocation >= 0) gl.disableVertexAttribArray(this.positionLocation);
+      for (const p of [this.plain, this.skinned]) if (p.position >= 0) gl.disableVertexAttribArray(p.position);
       gl.cullFace(cullMode);
       if (!cull) gl.disable(gl.CULL_FACE);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -105,7 +110,8 @@ export class ShadowAtlasPass {
 
   dispose(): void {
     this.atlas.dispose();
-    this.gl.deleteProgram(this.program);
+    this.gl.deleteProgram(this.plain.program);
+    this.gl.deleteProgram(this.skinned.program);
     this.gl.deleteBuffer(this.ubo);
   }
 
@@ -114,18 +120,52 @@ export class ShadowAtlasPass {
   private drawDepth(entity: SceneEntity, lightMatrix: mat4): void {
     const gl = this.gl;
     const renderer = entity.getBehaviour(RendererBehaviour);
-    const buffers = renderer?.shader?.buffers;
+    const shader = renderer?.shader;
+    const buffers = shader?.buffers;
     const indices = renderer?.mesh?.meshData?.indices;
-    if (!buffers?.position || !buffers.indices || !indices?.length) return;
+    if (!shader || !buffers?.position || !buffers.indices || !indices?.length) return;
 
+    const jointTexture = renderer.jointTexture;
+    const caster = jointTexture && buffers.joints ? this.skinned : this.plain;
+    gl.useProgram(caster.program);
     mat4.multiply(this.modelLight, lightMatrix, entity.transform.modelMatrix);
-    gl.uniformMatrix4fv(this.matrixLocation, false, this.modelLight as Float32Array);
+    gl.uniformMatrix4fv(caster.matrix, false, this.modelLight as Float32Array);
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-    gl.enableVertexAttribArray(this.positionLocation);
-    gl.vertexAttribPointer(this.positionLocation, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(caster.position);
+    gl.vertexAttribPointer(caster.position, 3, gl.FLOAT, false, 0, 0);
+    if (caster === this.skinned) {
+      gl.activeTexture(gl.TEXTURE0 + JOINT_TEXTURE_UNIT);
+      gl.bindTexture(gl.TEXTURE_2D, jointTexture);
+      gl.uniform1i(caster.jointTexture, JOINT_TEXTURE_UNIT);
+      gl.activeTexture(gl.TEXTURE0);
+      shader.bindSkinAttributes(caster.program);
+    }
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
-    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+    gl.drawElements(gl.TRIANGLES, indices.length, shader.indexType, 0);
+    if (caster === this.skinned) ShadowAtlasPass.disableSkinAttributes(gl, caster.program);
+  }
+
+  private static casterProgram(gl: WebGL2RenderingContext, defines: string[]): CasterProgram {
+    const program = ShadowAtlasPass.link(
+      gl,
+      Shader.withDefines(EMBEDDED_SHADERS[ShaderSources.vertex.shadow_caster], defines),
+      EMBEDDED_SHADERS[ShaderSources.frag.depth_only],
+    );
+    return {
+      program,
+      position: gl.getAttribLocation(program, ShaderUniformsEnum.A_POSITION),
+      matrix: gl.getUniformLocation(program, ShaderUniformsEnum.U_MODEL_MATRIX),
+      jointTexture: gl.getUniformLocation(program, ShaderUniformsEnum.U_JOINT_TEXTURE),
+    };
+  }
+
+  /** Turns the skin attribute arrays off again, so later programs don't read them. */
+  static disableSkinAttributes(gl: WebGL2RenderingContext, program: WebGLProgram): void {
+    for (const name of [ShaderUniformsEnum.A_JOINTS, ShaderUniformsEnum.A_WEIGHTS]) {
+      const location = gl.getAttribLocation(program, name);
+      if (location >= 0) gl.disableVertexAttribArray(location);
+    }
   }
 
   private static link(gl: WebGL2RenderingContext, vs: string, fs: string): WebGLProgram {

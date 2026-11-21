@@ -7,6 +7,7 @@ import { JsonSerializable } from "../json-serializable";
 import { ObjectInstanciator } from "../object-instanciator";
 import { NumberRange } from "../range";
 import { buildFrameData } from "./frame-data";
+import { RendererBehaviour } from "../../behaviours/renderer/renderer-behaviour";
 import { LightsUBO } from "./lights-ubo";
 import { FullscreenProgram } from "./fullscreen-program";
 import { GeometryPass, ShadowAtlasPass } from "./pass";
@@ -203,6 +204,9 @@ export class RenderPipeline extends JsonSerializable {
     const view = this.ensureView(key, width, height);
     const target = view.scene;
     const frame = buildFrameData(this.scene, camera, time);
+    for (const entity of new Set([...frame.opaque, ...frame.transparent, ...frame.shadowCasters])) {
+      entity.getBehaviour(RendererBehaviour)?.beforeRender();
+    }
     const ctx: RenderContext = { gl, frame, target };
 
     // The atlas is shared, so each view redraws it around its own camera.

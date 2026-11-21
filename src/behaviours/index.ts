@@ -1,5 +1,6 @@
 export * from './renderer/renderer-behaviour'
 export * from './renderer/mesh-renderer-behaviour'
+export * from './renderer/skinned-mesh-renderer-behaviour'
 export * from './renderer/skybox-renderer'
 
 export * from './entity-behaviour'
