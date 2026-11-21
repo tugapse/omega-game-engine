@@ -35,7 +35,9 @@ void main() {
     // Lighting calculation (math is now accurately happening in linear space)
     vec3 totalLitColorRGB = calculateTotalLitColor(baseColor.rgb, uv);
 
-    vec4 finalColor = vec4(clamp(totalLitColorRGB, 0.0, 1.0), baseColor.a);
+    // Linear and unclamped: lights may go above 1 (HDR); the pipeline's final
+    // copy tone maps and gamma-encodes.
+    vec4 finalColor = vec4(max(totalLitColorRGB, 0.0), baseColor.a);
     vec3 foggedRGB = finalColor.rgb;
 
     // Fog application (fog math also blends much better in linear space)
@@ -54,8 +56,5 @@ void main() {
         );
     }
   
-    // 4. Gamma Correction: Convert the final linear color back to sRGB for the monitor
-    vec3 gammaCorrectedRGB = pow(foggedRGB, vec3(1.0 / 2.2));
-    
-    fragColor = vec4(gammaCorrectedRGB, finalColor.a);
+    fragColor = vec4(max(foggedRGB, 0.0), finalColor.a);
 }

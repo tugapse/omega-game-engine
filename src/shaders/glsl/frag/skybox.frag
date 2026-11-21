@@ -109,10 +109,8 @@ void main() {
         finalColor = drawMoon(finalColor, viewDir);
     }
 
-    // 6. Gamma Correction (Linear back to sRGB Out)
-    vec3 gammaCorrectedRGB = pow(finalColor, vec3(1.0 / 2.2));
-
-    fragColor = vec4(clamp(gammaCorrectedRGB, 0.0, 1.0), 1.0);
+    // Linear out: the pipeline's final copy tone maps and gamma-encodes.
+    fragColor = vec4(max(finalColor, 0.0), 1.0);
 }
 
 // --- RENDERING SUBSYSTEM IMPLEMENTATIONS ---

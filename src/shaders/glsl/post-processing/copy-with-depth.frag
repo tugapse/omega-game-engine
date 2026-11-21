@@ -1,8 +1,9 @@
 #version 300 es
 precision highp float;
 
-// Final copy of the scene to the bound framebuffer: tone maps the colour
-// (HDR targets can hold values above 1) and writes depth through
+// Final copy of the scene to the bound framebuffer. The scene is drawn in
+// linear colour (HDR targets can hold values above 1): this applies the
+// exposure, the tone mapping and then the sRGB gamma, and writes depth through
 // gl_FragDepth, so what is drawn afterwards (editor grid, gizmos) is still
 // hidden by the scene's objects.
 in vec2 v_uv;
@@ -21,6 +22,6 @@ void main() {
     vec3 rgb = color.rgb * u_exposure;
     if (u_toneMapping == 1) rgb = rgb / (1.0 + rgb);
     else if (u_toneMapping == 2) rgb = aces(rgb);
-    fragColor = vec4(clamp(rgb, 0.0, 1.0), color.a);
+    fragColor = vec4(pow(clamp(rgb, 0.0, 1.0), vec3(1.0 / 2.2)), color.a);
     gl_FragDepth = texture(u_depth, v_uv).r;
 }
