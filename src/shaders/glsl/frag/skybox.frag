@@ -1,6 +1,8 @@
 #version 300 es
 
-precision mediump float;
+// highp: the star and cloud hashes need 32-bit floats; mediump is 16-bit on phone GPUs
+// and turns the stars into streaks.
+precision highp float;
 
 // --- GLOBAL SAMPLERS & ENVIRONMENT ---
 uniform samplerCube u_mainTex;

@@ -114,12 +114,27 @@ export class RenderPipelineSettings extends JsonSerializable {
     this.cacheShadows = true;
   }
 
-  /** A guess at the right preset for this device: Low on phones and tablets, High elsewhere. */
-  public static suggestedQuality(): RenderQuality {
+  /**
+   * A guess at the right preset for this device: Low on phones and tablets,
+   * High elsewhere. With `gl`, a mobile GPU (Mali, Adreno, PowerVR, Apple,
+   * Xclipse) also counts, so a phone browser showing the desktop site is
+   * still caught.
+   */
+  public static suggestedQuality(gl?: WebGL2RenderingContext): RenderQuality {
     if (typeof navigator === "undefined") return RenderQuality.High;
-    const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
-      || (typeof matchMedia !== "undefined" && matchMedia("(pointer: coarse)").matches && navigator.maxTouchPoints > 0);
-    return mobile ? RenderQuality.Low : RenderQuality.High;
+    const nav = navigator as Navigator & { userAgentData?: { mobile?: boolean } };
+    const mobileUa = nav.userAgentData?.mobile === true || /Android|iPhone|iPad|iPod|Mobile/i.test(nav.userAgent);
+    const touchOnly = typeof matchMedia !== "undefined" && matchMedia("(pointer: coarse)").matches
+      && !matchMedia("(any-pointer: fine)").matches;
+    return mobileUa || touchOnly || RenderPipelineSettings.isMobileGpu(gl) ? RenderQuality.Low : RenderQuality.High;
+  }
+
+  /** True when the GPU's name is one of the phone and tablet GPU families. */
+  public static isMobileGpu(gl?: WebGL2RenderingContext): boolean {
+    if (!gl) return false;
+    const info = gl.getExtension("WEBGL_debug_renderer_info");
+    const renderer = String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER) ?? "");
+    return /Mali|Adreno|PowerVR|Apple GPU|Xclipse|Immortalis|Maleoon|VideoCore/i.test(renderer);
   }
 
   public override toJsonObject(): JsonSerializedData {

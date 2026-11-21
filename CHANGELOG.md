@@ -17,13 +17,14 @@
 - Performance settings for phones and weak GPUs (`RenderPipelineSettings`):
   - `renderScale` (0.25 to 2): the scene is drawn at that fraction of the canvas size and stretched in the final copy. `dynamicResolution` with `targetFrameRate` lowers it (down to half) while frames are slow and raises it again when there is room; `RenderPipeline.currentRenderScale` reports it.
   - `shadowMapSize` (`ShadowMapSize`: 1024, 2048, 4096; the atlas tiles scale with it), `shadowFilter` (`ShadowFilter`: 1, 4 or 16 PCF taps), `maxSpotShadows` (0 to 4), `maxPointShadows` (0 to 2: each costs 6 views).
-  - `applyQuality(RenderQuality.Low | Medium | High)` sets them all; `RenderPipelineSettings.suggestedQuality()` picks Low on phones and tablets.
+  - `applyQuality(RenderQuality.Low | Medium | High)` sets them all; `RenderPipelineSettings.suggestedQuality(gl?)` picks Low on phones and tablets, also by the GPU's name (`isMobileGpu`: Mali, Adreno, PowerVR, Apple…), so a phone browser asking for the desktop site is still caught.
 - Frustum culling: opaque and transparent entities outside the camera are not drawn, and each shadow view draws only the casters whose bounds reach into it. `RendererBehaviour.worldBounds()` (bounding sphere from the mesh; for a skinned mesh, from the posed bones and how far their vertices reach). `frustumPlanes`, `sphereInFrustum`, `localBoundingSphere`.
 - Shadow cache (`cacheShadows`, on by default): a shadow view is redrawn only when its light matrix changed or a caster inside it moved, posed (`RendererBehaviour.deformationVersion`), appeared or disappeared. A still scene redraws nothing but the directional light's view when the camera moves. `ShadowAtlasPass.stats` counts views and draws per frame.
 - Colour grading in the final copy: `RenderPipelineSettings.saturation` (0 to 2, default 1) after tone mapping, and `contrast` (0.5 to 2, default 1) around mid grey after the gamma.
 
 ### Fixed
 
+- The skybox shader uses `highp`: with `mediump` (16-bit on phone GPUs) the stars were drawn as streaks.
 - The skybox no longer draws into the shadow maps.
 - Shadow tiles are laid out in scene order: with a second camera (render to texture), lights sorted by distance swapped tiles every frame.
 - `Transform` getters (`worldPosition`, `forward`, `right`, `up`, `modelMatrix`, …) recompute a changed transform first. Entities that are never drawn, like cameras and lights in edit mode, reported stale positions and directions, and `lookAt` right after moving aimed from the old position.
