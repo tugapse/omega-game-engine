@@ -133,6 +133,9 @@ export enum ShaderUniformsEnum {
    * @type {string}
    */
   A_TANGENT = "a_tangent",
+  A_JOINTS = "a_joints",
+  A_WEIGHTS = "a_weights",
+  U_JOINT_TEXTURE = "u_jointTexture",
   /**
    * The attribute name for the bitangent vector, which can be used to pass vertex data to a shader.
    *

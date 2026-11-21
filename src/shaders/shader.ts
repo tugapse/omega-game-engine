@@ -9,6 +9,7 @@ import { Texture } from '../textures/texture';
 import { v4 as uuidv4 } from 'uuid';
 import { ObjectInstanciator } from '../core';
 import { ShaderSources } from './shader-sources';
+import { SkinnedMeshData } from '../core/model/model-data';
 
 /**
   An interface defining the structure for WebGL buffers associated with a mesh.
@@ -20,6 +21,10 @@ export interface WebGLBuffers {
   tangent: WebGLBuffer | null;
   bitangent: WebGLBuffer | null;
   indices: WebGLBuffer | null;
+  /** Skinned meshes: 4 joint indices per vertex (UNSIGNED_SHORT). */
+  joints?: WebGLBuffer | null;
+  /** Skinned meshes: 4 joint weights per vertex. */
+  weights?: WebGLBuffer | null;
 }
 
 /**
@@ -77,6 +82,15 @@ export class Shader extends JsonSerializable {
   public fragmentSource: string | null = null;
   public vertexSource: string | null = null;
 
+  /**
+   * Preprocessor defines compiled into both stages (e.g. `SKINNED`), added
+   * right after `#version`. Set them before `initialize()`.
+   */
+  public defines: string[] = [];
+
+  /** Type of the index buffer: UNSIGNED_INT for meshes over 65 535 vertices. */
+  public indexType: number = 0x1403; // UNSIGNED_SHORT
+
   constructor(
     protected gl: WebGL2RenderingContext,
     public material: ColorMaterial,
@@ -111,6 +125,9 @@ export class Shader extends JsonSerializable {
       }
     }
     
+    vsSource = Shader.withDefines(vsSource, this.defines);
+    fsSource = Shader.withDefines(fsSource, this.defines);
+
     const vertexShader = this.compileShader(
       this.gl,
       this.gl.VERTEX_SHADER,
@@ -136,8 +153,16 @@ export class Shader extends JsonSerializable {
     return true;
   }
 
+  /** Inserts `#define` lines after the `#version` line of a GLSL source. */
+  public static withDefines(source: string, defines: string[]): string {
+    if (!defines.length) return source;
+    const lines = defines.map((d) => `#define ${d}`).join('\n') + '\n';
+    const version = /^\s*#version[^\n]*\n/.exec(source);
+    return version ? source.slice(0, version[0].length) + lines + source.slice(version[0].length) : lines + source;
+  }
+
   public initBuffers(gl: WebGL2RenderingContext, mesh: MeshData): void {
-    mesh.calculateNormals();
+    if (!mesh.providedNormals || mesh.normals.length !== mesh.vertices.length) mesh.calculateNormals();
     mesh.calculateTangentsAndBitangents();
     const buffers: WebGLBuffers = {
       position: null,
@@ -200,11 +225,23 @@ export class Shader extends JsonSerializable {
       );
     }
 
+    if (mesh instanceof SkinnedMeshData && mesh.joints.length) {
+      buffers.joints = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.joints);
+      gl.bufferData(gl.ARRAY_BUFFER, mesh.joints, gl.STATIC_DRAW);
+      buffers.weights = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.weights);
+      gl.bufferData(gl.ARRAY_BUFFER, mesh.weights, gl.STATIC_DRAW);
+    }
+
+    // 16-bit indices address 65 536 vertices; bigger meshes need 32-bit ones.
+    const wide = mesh.vertices.length > 0xffff;
+    this.indexType = wide ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
     buffers.indices = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
     gl.bufferData(
       gl.ELEMENT_ARRAY_BUFFER,
-      new Uint16Array(mesh.indices),
+      wide ? new Uint32Array(mesh.indices) : new Uint16Array(mesh.indices),
       gl.STATIC_DRAW,
     );
 
@@ -309,8 +346,31 @@ export class Shader extends JsonSerializable {
       this.gl.disableVertexAttribArray(bitangentAttributeLocation);
     }
 
+    this.bindSkinAttributes(this._shaderProgram);
+
     if (this._buffers.indices) {
       this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this._buffers.indices);
+    }
+  }
+
+  /** Points `a_joints` / `a_weights` of `program` at this mesh's skin buffers. */
+  public bindSkinAttributes(program: WebGLProgram): void {
+    const gl = this.gl;
+    const joints = gl.getAttribLocation(program, ShaderUniformsEnum.A_JOINTS);
+    const weights = gl.getAttribLocation(program, ShaderUniformsEnum.A_WEIGHTS);
+    if (joints !== -1) {
+      if (this._buffers.joints) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers.joints);
+        gl.vertexAttribIPointer(joints, 4, gl.UNSIGNED_SHORT, 0, 0);
+        gl.enableVertexAttribArray(joints);
+      } else gl.disableVertexAttribArray(joints);
+    }
+    if (weights !== -1) {
+      if (this._buffers.weights) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers.weights);
+        gl.vertexAttribPointer(weights, 4, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(weights);
+      } else gl.disableVertexAttribArray(weights);
     }
   }
 
@@ -492,6 +552,8 @@ export class Shader extends JsonSerializable {
     if (this._buffers.tangent) this.gl.deleteBuffer(this._buffers.tangent);
     if (this._buffers.bitangent) this.gl.deleteBuffer(this._buffers.bitangent);
     if (this._buffers.indices) this.gl.deleteBuffer(this._buffers.indices);
+    if (this._buffers.joints) this.gl.deleteBuffer(this._buffers.joints);
+    if (this._buffers.weights) this.gl.deleteBuffer(this._buffers.weights);
     if (this._shaderProgram) this.gl.deleteProgram(this._shaderProgram);
     this._initialized = false;
   }

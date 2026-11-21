@@ -162,6 +162,11 @@ export class Transform extends JsonSerializable {
     return this._parent;
   }
 
+  /** The child transforms (read only: use `setParent` to change them). */
+  public get children(): readonly Transform[] {
+    return this._children;
+  }
+
   // --- Mutators ---
   public setLocalPosition(x = 0, y = 0, z = 0): void {
     vec3.set(this._position, x, y, z);

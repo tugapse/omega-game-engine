@@ -6,6 +6,13 @@
 
 - Render to texture: a camera with `targetTexture` set (plus `targetWidth` / `targetHeight`, 512² by default) draws into the render texture `rendertexture://<name>` every frame, before the main camera draws to the canvas. Materials use it like any texture (a minimap, a mirror, a security camera). The main camera always draws to the canvas.
 - `RenderTexture` (two colour targets swapped after each render, so an object showing the texture inside that camera's own view never reads the target being drawn), `ResourceManager.getRenderTexture(name)`, `renderTextureUri` / `isRenderTextureUri`, `Camera.refreshMatrices()`.
+- Skinned meshes and animation (first version, see the skinned mesh plan):
+  - `parseFbx` reads FBX 7.x files, binary or ASCII (`readAsciiFbx`, embedded textures in base64), as Mixamo exports them: node tree, meshes with up to 4 skin weights per vertex, inverse bind matrices (from `TransformLink` and the BindPose), materials with their embedded textures, and animations resampled at 30 fps. FBX 6.x files are refused with a message.
+  - `parseCollada` reads COLLADA 1.4 (.dae) files, as Mixamo exports them: node tree (matrix or translate/rotate/scale), one mesh per primitive list (so per material), skins with bind shape and inverse bind matrices, phong/lambert materials (normal maps from `<bump>` or FCOLLADA `<displacement>`), and baked matrix animations split into translation/rotation/scale. Images are separate files: `ModelImage.path`, resolved by `instantiateModel`'s `resolveImage` option. Comes with a small `parseXml` (no DOM needed).
+  - `SkinnedMeshRendererBehaviour` draws a mesh from a model file (`meshUri`, `skinUri`) deformed by bone entities (`boneIds`). The mesh is never saved in the scene. Joint matrices go in an RGBA32F texture, so there is no bone limit; shadows follow the pose.
+  - `Animator`: `play`, `crossFade`, `stop`, `speed`, `loop`, `time`, `onFinished` / `onLoop`, `playInEditor`, `inPlace` (the root bone keeps its horizontal position, for Mixamo animations that move the hips). Clips (`clipUris`, `<model>#anim/<n>`) find their bones by name (FBX `mixamorig:Hips` and COLLADA `mixamorig_Hips` count as the same), so a Mixamo animation downloaded "Without Skin" plays on the character.
+  - `instantiateModel(gl, uri, { scene })` places a model as an entity tree; `ResourceManager.models` / `getModel`, `ResourceLoader.loadBinary`, textures from `<model>#image/<n>`.
+  - `AnimationClip`, `sampleChannel` (STEP, LINEAR, CUBICSPLINE), `Shader.defines` / `Shader.withDefines`, `RendererBehaviour.beforeRender()`, `Transform.children`.
 - Colour grading in the final copy: `RenderPipelineSettings.saturation` (0 to 2, default 1) after tone mapping, and `contrast` (0.5 to 2, default 1) around mid grey after the gamma.
 
 ### Fixed
@@ -18,6 +25,8 @@
 
 ### Changed
 
+- Meshes over 65 535 vertices use 32-bit indices (`Shader.indexType`); the renderer and the shadow pass draw with it.
+- Meshes that come with normals (`MeshData.providedNormals`, set by the FBX parser) keep them instead of getting recalculated smooth normals.
 - The scene is drawn in linear colour, unclamped: the lit, unlit and skybox shaders no longer gamma-encode or clamp each object. The final copy applies exposure, tone mapping and then the sRGB gamma once. Before, ACES and Reinhard worked on colours that were already gamma-encoded and clipped at 1, which washed scenes out and made HDR useless. Scenes with tone mapping `None` look the same as before.
 - Shadow strength is per light: `Light.shadowStrength` (0 to 1, default 0.75). `RenderPipelineSettings.shadowStrength` and `ShadowAtlasPass.shadowstrength` are gone, and `packShadows(plan, enabled)` no longer takes a strength. `ShadowsBlock` has a `u_shadowExtra` array (x: strength) per shadow slot.
 - Shadow biases are in shadow-map texels: `Light.shadowDepthBias` (default 0.5) moves the lookup toward the light and `Light.shadowNormalBias` (default 1) along the normal at grazing angles, both scaled by the texel's world size at that point. They replace `shadowBias` / `normalBias` (0.1 / 0.05 world units), which were up to 14 texels for spot lights and a few for point lights, so shadows started away from their objects (peter panning). `ShadowSlot` has `texelSize` and `perspective` instead of `orthoDepthRange`, and `ShadowsBlock`'s params are now texel size, perspective flag and first view; the biases go in `u_shadowExtra` (y, z).
