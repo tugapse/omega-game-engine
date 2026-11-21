@@ -44,11 +44,11 @@ Each frame, `RenderPipeline.draw()`:
 3. Uploads three uniform blocks shared by every shader: `CameraBlock` (binding 0), `LightsBlock` (1, `LightsUBO`) and `ShadowsBlock` (2).
 4. Draws the scene into an off-screen `RenderTarget` (RGBA16F when `EXT_color_buffer_float` exists, otherwise RGBA8, plus a depth texture), then runs any passes added with `addPass`.
 5. Runs the enabled `PostEffect`s, each reading the previous result (ping-pong between two targets). `RetroEffect` is the built-in one.
-6. Copies the result to the canvas with exposure, tone mapping (None, Reinhard or ACES) and the sRGB gamma. Scene shaders write linear, unclamped colour; only this copy encodes it for the screen. It also writes the scene depth. Whatever the host draws afterwards, like the editor's grid and gizmos, is still hidden by the scene's objects.
+6. Copies the result to the canvas with exposure, tone mapping (None, Reinhard or ACES), saturation, the sRGB gamma and contrast. Scene shaders write linear, unclamped colour; only this copy encodes it for the screen. It also writes the scene depth. Whatever the host draws afterwards, like the editor's grid and gizmos, is still hidden by the scene's objects.
 
 Before the main camera, every other active camera with a `targetTexture` runs the same steps into its render texture (`rendertexture://<name>`, `targetWidth` × `targetHeight`). The copy goes into the texture instead of the canvas. Materials pick it up like any texture: `Resources.for(gl).getTexture('rendertexture://minimap')`. Each render texture keeps two targets and swaps them after each render, so a camera can see an object that shows its own texture (the object shows the previous frame).
 
-A scene saves only `RenderPipelineSettings`: shadows on/off and distance, HDR, tone mapping, exposure and the retro effect. GPU objects are always rebuilt.
+A scene saves only `RenderPipelineSettings`: shadows on/off and distance, HDR, tone mapping, exposure, saturation, contrast and the retro effect. GPU objects are always rebuilt.
 
 `RenderTarget` and `FullscreenProgram` are exported for custom passes and effects.
 

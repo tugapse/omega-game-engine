@@ -144,6 +144,15 @@ vec3 applyDirectionalLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal,
     return (diffuse + specular) * u_dirColor[index].rgb * shadow;
 }
 
+// Smooth cut-off at the light's range (Frostbite / UE4 windowing): 1 near the
+// light, 0 at the range, so a light only colours what is inside its range.
+float rangeWindow(float distance, float range) {
+    if (range <= 0.0) return 1.0;
+    float r = distance / range;
+    float w = clamp(1.0 - r * r * r * r, 0.0, 1.0);
+    return w * w;
+}
+
 vec3 applyPointLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal, float shininess, float specStrength) {
     vec3 lightVec = u_pointPosition[index].xyz - v_position;
     vec3 lightDir = normalize(lightVec);
@@ -155,6 +164,7 @@ vec3 applyPointLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal, float
     float attenuation = 1.0 / (u_pointAtten[index].x +
                                u_pointAtten[index].y * distance +
                                u_pointAtten[index].z * (distance * distance));
+    attenuation *= rangeWindow(distance, u_pointPosition[index].w);
 
     vec3 diffuse = baseColor * intensities.x;
     vec3 specular = vec3(1.0) * intensities.y;
@@ -179,6 +189,7 @@ vec3 applySpotLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal, float 
     float attenuation = 1.0 / (u_spotAtten[index].x +
                                u_spotAtten[index].y * distance +
                                u_spotAtten[index].z * (distance * distance));
+    attenuation *= rangeWindow(distance, u_spotPosition[index].w);
     
     vec3 diffuse = baseColor * intensities.x;
     vec3 specular = vec3(1.0) * intensities.y;

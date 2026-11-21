@@ -48,6 +48,10 @@ export class RenderPipelineSettings extends JsonSerializable {
   public hdr = true;
   public toneMapping = ToneMapping.None;
   public exposure = new NumberRange(1, 0, 8, 0.01);
+  /** Colour grading after tone mapping: 1 unchanged, 0 grey, above 1 more vivid. */
+  public saturation = new NumberRange(1, 0, 2, 0.01);
+  /** Contrast around mid grey after gamma: 1 unchanged. */
+  public contrast = new NumberRange(1, 0.5, 2, 0.01);
   /** CRT post effect. */
   public retroEffect = false;
 
@@ -272,6 +276,8 @@ export class RenderPipeline extends JsonSerializable {
       copy.bindTexture("u_depth", depth.depthTexture, 1);
       gl.uniform1i(copy.uniform("u_toneMapping"), this.settings.toneMapping);
       gl.uniform1f(copy.uniform("u_exposure"), this.settings.exposure.value);
+      gl.uniform1f(copy.uniform("u_saturation"), this.settings.saturation.value);
+      gl.uniform1f(copy.uniform("u_contrast"), this.settings.contrast.value);
       copy.draw();
       gl.depthFunc(gl.LESS);
     });
