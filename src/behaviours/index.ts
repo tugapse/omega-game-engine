@@ -5,3 +5,5 @@ export * from './renderer/skybox-renderer'
 
 export * from './entity-behaviour'
 export * from './camera-fly-behaviour'
+export * from './sun-behaviour'
+export * from './rotate-behaviour'
