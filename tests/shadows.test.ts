@@ -72,7 +72,7 @@ describe('packShadows', () => {
     const sun = light(EntityType.LIGHT_DIRECTIONAL, [0, 50, 0]);
     const spot = light(EntityType.LIGHT_SPOT, [0, 5, 0]);
     const plan = planShadows([sun, spot], vec3.create(), { directionalDistance: 60 });
-    const data = packShadows(plan, 0.4, true);
+    const data = packShadows(plan, true);
     const params = (slot: number) => Array.from(data.slice((SHADOWS_LAYOUT.params + slot) * 4, (SHADOWS_LAYOUT.params + slot) * 4 + 4));
     expect(params(0)[0]).toBeCloseTo(0.1 / 180);
     expect(params(0)[2]).toBe(0);
@@ -80,6 +80,15 @@ describe('packShadows', () => {
     expect(params(1)[2]).toBeCloseTo(0.1);
     expect(params(1)[3]).toBe(1); // first view of the spot
     expect(data.length / 4).toBe(SHADOWS_LAYOUT.slots);
-    expect(SHADOWS_LAYOUT.slots).toBe(4 * MAX_SHADOW_VIEWS + MAX_SHADOW_VIEWS + MAX_SHADOW_SLOTS + 1);
+    expect(SHADOWS_LAYOUT.slots).toBe(4 * MAX_SHADOW_VIEWS + MAX_SHADOW_VIEWS + 2 * MAX_SHADOW_SLOTS + 1);
+  });
+
+  it("packs each light's own shadow strength", () => {
+    const sun = light(EntityType.LIGHT_DIRECTIONAL, [0, 50, 0], { shadowStrength: 0.3 });
+    const spot = light(EntityType.LIGHT_SPOT, [0, 5, 0], { shadowStrength: 1.5 });
+    const data = packShadows(planShadows([sun, spot], vec3.create(), { directionalDistance: 60 }), true);
+    const strength = (slot: number) => data[(SHADOWS_LAYOUT.extra + slot) * 4];
+    expect(strength(0)).toBeCloseTo(0.3);
+    expect(strength(1)).toBe(1); // clamped
   });
 });

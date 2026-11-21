@@ -4,7 +4,6 @@ import { SceneEntity } from "../../../entities";
 import { ShaderUniformsEnum } from "../../../enums";
 import { EMBEDDED_SHADERS } from "../../../shaders/embedded-shaders";
 import { ShaderSources } from "../../../shaders/shader-sources";
-import { NumberRange } from "../../range";
 import { RenderTarget } from "../render-target";
 import { MAX_SHADOW_VIEWS, packShadows, SHADOW_ATLAS_SIZE, SHADOWS_LAYOUT, ShadowPlan } from "../shadows";
 
@@ -20,7 +19,6 @@ export const SHADOW_ATLAS_UNIT = 2;
 export class ShadowAtlasPass {
   readonly name = "ShadowAtlasPass";
   /** Strength of all shadows; shared with the pipeline settings (the editor's sun animates it). */
-  public shadowstrength = new NumberRange(0.4, 0.0, 1.0, 0.0001);
   public enabled = true;
 
   private atlas: RenderTarget;
@@ -91,7 +89,7 @@ export class ShadowAtlasPass {
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 
-    packShadows({ ...plan, views }, this.shadowstrength.value, this.enabled, this.uboData);
+    packShadows({ ...plan, views }, this.enabled, this.uboData);
     gl.bindBuffer(gl.UNIFORM_BUFFER, this.ubo);
     gl.bufferSubData(gl.UNIFORM_BUFFER, 0, this.uboData);
     gl.bindBuffer(gl.UNIFORM_BUFFER, null);

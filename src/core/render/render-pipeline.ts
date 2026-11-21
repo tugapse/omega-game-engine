@@ -42,7 +42,6 @@ export enum ToneMapping {
  */
 export class RenderPipelineSettings extends JsonSerializable {
   public shadowsEnabled = true;
-  public shadowStrength = new NumberRange(0.75, 0.0, 1.0, 0.0001);
   /** How far from the camera the directional light's shadow reaches, in world units. */
   public shadowDistance = new NumberRange(60, 5, 500, 1);
   /** Scene colour in RGBA16F (when the GPU can render to it), so lights can go above 1. */
@@ -346,7 +345,6 @@ export class RenderPipeline extends JsonSerializable {
   private applySettings(): void {
     if (!this._shadowmapPass) return;
     this._shadowmapPass.enabled = this.settings.shadowsEnabled;
-    this._shadowmapPass.shadowstrength = this.settings.shadowStrength;
     this._retro.enabled = this.settings.retroEffect;
   }
 

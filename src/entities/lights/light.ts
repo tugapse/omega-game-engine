@@ -28,6 +28,8 @@ export class Light extends SceneEntity {
   public shadowBias = 0.1;
   /** Offset along the surface normal before the shadow lookup, in world units. */
   public normalBias = 0.05;
+  /** How dark this light's shadow is: 0 none, 1 no light from it at all. */
+  public shadowStrength = 0.75;
 
   /**
     Creates an instance of Light.

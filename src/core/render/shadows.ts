@@ -165,12 +165,13 @@ export const SHADOWS_LAYOUT = {
   matrices: 0, // MAX_SHADOW_VIEWS mat4 (4 slots each)
   rects: 4 * MAX_SHADOW_VIEWS, // atlas uv: x, y, size, size
   params: 5 * MAX_SHADOW_VIEWS, // per slot: depth bias, normal bias, toward-light bias, first view
-  atlas: 5 * MAX_SHADOW_VIEWS + MAX_SHADOW_SLOTS, // 1/size, strength, enabled, 0
-  slots: 5 * MAX_SHADOW_VIEWS + MAX_SHADOW_SLOTS + 1,
+  extra: 5 * MAX_SHADOW_VIEWS + MAX_SHADOW_SLOTS, // per slot: strength, 0, 0, 0
+  atlas: 5 * MAX_SHADOW_VIEWS + 2 * MAX_SHADOW_SLOTS, // 1/size, 0, enabled, 0
+  slots: 5 * MAX_SHADOW_VIEWS + 2 * MAX_SHADOW_SLOTS + 1,
 };
 
 /** Packs a plan into the std140 floats of ShadowsBlock. */
-export function packShadows(plan: ShadowPlan, strength: number, enabled: boolean, out?: Float32Array): Float32Array {
+export function packShadows(plan: ShadowPlan, enabled: boolean, out?: Float32Array): Float32Array {
   const S = SHADOWS_LAYOUT;
   const data = out ?? new Float32Array(S.slots * 4);
   data.fill(0);
@@ -185,7 +186,9 @@ export function packShadows(plan: ShadowPlan, strength: number, enabled: boolean
     const depthBias = s.orthoDepthRange ? s.light.shadowBias / s.orthoDepthRange : 0;
     const towardLight = s.orthoDepthRange ? 0 : s.light.shadowBias;
     data.set([depthBias, s.light.normalBias, towardLight, s.firstView], (S.params + i) * 4);
+    const strength = Math.min(1, Math.max(0, s.light.shadowStrength ?? 1));
+    data.set([strength, 0, 0, 0], (S.extra + i) * 4);
   });
-  data.set([1 / SHADOW_ATLAS_SIZE, strength, enabled ? 1 : 0, 0], S.atlas * 4);
+  data.set([1 / SHADOW_ATLAS_SIZE, 0, enabled ? 1 : 0, 0], S.atlas * 4);
   return data;
 }

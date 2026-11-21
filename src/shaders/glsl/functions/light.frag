@@ -16,7 +16,8 @@ layout(std140) uniform ShadowsBlock {
     mat4 u_shadowMatrix[MAX_SHADOW_VIEWS];  // world -> light clip space
     vec4 u_shadowRect[MAX_SHADOW_VIEWS];    // atlas uv: x, y, size, size
     vec4 u_shadowParams[MAX_SHADOW_SLOTS];  // depth bias, normal bias, toward-light bias, first view
-    vec4 u_shadowAtlas;                     // 1/atlas size, strength, enabled
+    vec4 u_shadowExtra[MAX_SHADOW_SLOTS];   // x: strength (per light)
+    vec4 u_shadowAtlas;                     // 1/atlas size, 0, enabled
 };
 uniform highp sampler2DShadow u_shadowAtlasMap;
 uniform int u_receiveShadows;
@@ -101,7 +102,7 @@ float shadowFactor(float slotF, vec3 normal, vec3 toLight, vec3 lightPos, bool i
     vec3 position = v_position + normal * prm.y * (2.0 - ndotl) + toLight * prm.z;
     int view = int(prm.w) + (isPoint ? cubeFace(v_position - lightPos) : 0);
     float lit = sampleShadowView(view, position, prm.x * (2.0 - ndotl));
-    return mix(1.0, lit, u_shadowAtlas.y);
+    return mix(1.0, lit, u_shadowExtra[slot].x);
 }
 
 vec3 getFinalNormal(vec2 uv) {
