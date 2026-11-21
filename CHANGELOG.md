@@ -7,6 +7,13 @@
 - Render to texture: a camera with `targetTexture` set (plus `targetWidth` / `targetHeight`, 512² by default) draws into the render texture `rendertexture://<name>` every frame, before the main camera draws to the canvas. Materials use it like any texture (a minimap, a mirror, a security camera). The main camera always draws to the canvas.
 - `RenderTexture` (two colour targets swapped after each render, so an object showing the texture inside that camera's own view never reads the target being drawn), `ResourceManager.getRenderTexture(name)`, `renderTextureUri` / `isRenderTextureUri`, `Camera.refreshMatrices()`.
 
+### Fixed
+
+- `Transform` getters (`worldPosition`, `forward`, `right`, `up`, `modelMatrix`, …) recompute a changed transform first. Entities that are never drawn, like cameras and lights in edit mode, reported stale positions and directions, and `lookAt` right after moving aimed from the old position.
+- `Transform.localRotation` (the saved angles) now matches the rotation after `lookAt`, `rotate` or any quaternion change. Before, a saved scene could reload with cameras, lights or rotated objects facing elsewhere. `toEuler` now uses the same order as `quat.fromEuler`, and `rotate` derives the angles from the quaternion instead of adding them.
+- A child transform's own change was lost when its parent updated without moving.
+- `CameraFlyBehaviour` takes its start yaw and pitch from the view direction, since one rotation has several Euler forms.
+
 ### Changed
 
 - `RenderPipeline` draws each view (the canvas and each render texture) with its own scene and post targets. The shadow atlas is redrawn around each view's camera.

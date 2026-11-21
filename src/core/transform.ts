@@ -8,31 +8,22 @@ import { Vector3 } from './vector';
 /**
  * A helper function to convert a quaternion to Euler angles in radians.
  */
+/**
+ * Euler angles (radians) of a rotation, in the order `quat.fromEuler` uses by
+ * default (gl-matrix "zyx": q = qz * qy * qx), so that
+ * `setLocalRotation(toEuler(q))` gives back `q`.
+ */
 function toEuler(out: vec3, q: quat): void {
   const x = q[0],
     y = q[1],
     z = q[2],
     w = q[3];
-  const x2 = x * x,
-    y2 = y * y,
-    z2 = z * z;
-  const unit = x2 + y2 + z2 + w * w;
-  const test = x * w - y * z;
-
-  if (test > 0.4995 * unit) {
-    out[0] = Math.PI / 2;
-    out[1] = 2 * Math.atan2(y, w);
-    out[2] = 0;
-  } else if (test < -0.4995 * unit) {
-    out[0] = -Math.PI / 2;
-    out[1] = -2 * Math.atan2(y, w);
-    out[2] = 0;
-  } else {
-    out[0] = Math.asin(2 * (w * x - y * z));
-    out[1] = Math.atan2(2 * w * y + 2 * z * x, 1 - 2 * (x2 + y2));
-    out[2] = Math.atan2(2 * w * z + 2 * x * y, 1 - 2 * (z2 + y2));
-  }
+  const sinPitch = Math.max(-1, Math.min(1, 2 * (w * y - z * x)));
+  out[0] = Math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y));
+  out[1] = Math.asin(sinPitch);
+  out[2] = Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z));
 }
+
 
 export class Transform extends JsonSerializable {
   public static get className() {
@@ -66,6 +57,17 @@ export class Transform extends JsonSerializable {
   }
 
   public get modelMatrix(): mat4 {
+    return this.current;
+  }
+
+  /**
+   * The model matrix, recomputed first when the transform changed since the
+   * last update. Entities that are never drawn (cameras, lights in edit mode)
+   * are not updated every frame, and their position, directions and lookAt
+   * must still be right.
+   */
+  private get current(): mat4 {
+    if (this._dirty) this.updateMatrices();
     return this._modelMatrix;
   }
 
@@ -86,7 +88,7 @@ export class Transform extends JsonSerializable {
   // --- World Space Getters/Setters ---
   public get worldPosition(): vec3 {
     const out = vec3.create();
-    mat4.getTranslation(out, this._modelMatrix);
+    mat4.getTranslation(out, this.current);
     return out;
   }
 
@@ -103,7 +105,7 @@ export class Transform extends JsonSerializable {
 
   public get worldRotationQuat(): quat {
     const out = quat.create();
-    mat4.getRotation(out, this._modelMatrix);
+    mat4.getRotation(out, this.current);
     return out;
   }
 
@@ -140,7 +142,7 @@ export class Transform extends JsonSerializable {
 
   public get worldScale(): vec3 {
     const out = vec3.create();
-    mat4.getScaling(out, this._modelMatrix);
+    mat4.getScaling(out, this.current);
     return out;
   }
 
@@ -194,16 +196,15 @@ export class Transform extends JsonSerializable {
     this._dirty = true;
   }
 
+  /** Rotates in local space by these Euler angles (degrees). */
   public rotate(xDegrees = 0, yDegrees = 0, zDegrees = 0): void {
-    vec3.add(
-      this._rotationInDegrees,
-      this._rotationInDegrees,
-      vec3.fromValues(xDegrees, yDegrees, zDegrees),
-    );
     const rotationToAdd = quat.create();
     quat.fromEuler(rotationToAdd, xDegrees, yDegrees, zDegrees);
     quat.multiply(this._rotation, this._rotation, rotationToAdd);
     quat.normalize(this._rotation, this._rotation);
+    // The saved angles come from the quaternion: adding the angles is only
+    // right when rotating about a single axis.
+    this.updateEulerFromQuat();
     this._dirty = true;
   }
 
@@ -213,7 +214,8 @@ export class Transform extends JsonSerializable {
   }
 
   public updateMatrices(): void {
-    if (this._dirty) {
+    const changed = this._dirty;
+    if (changed) {
       mat4.fromRotationTranslationScale(
         this._localMatrix,
         this._rotation,
@@ -221,20 +223,17 @@ export class Transform extends JsonSerializable {
         this._scale,
       );
       if (this._parent) {
-        mat4.multiply(
-          this._modelMatrix,
-          this._parent.modelMatrix,
-          this._localMatrix,
-        );
+        mat4.multiply(this._modelMatrix, this._parent.current, this._localMatrix);
       } else {
         mat4.copy(this._modelMatrix, this._localMatrix);
       }
+      // Clean before the children run: they read this matrix through `current`.
+      this._dirty = false;
     }
     for (const child of this._children) {
-      child.setDirty(this._dirty);
+      child.setDirty(changed || child._dirty);
       child.updateMatrices();
     }
-    this._dirty = false;
   }
 
   public setParent(parent: Transform | null): void {
@@ -248,30 +247,33 @@ export class Transform extends JsonSerializable {
   }
 
   public get right(): vec3 {
+    const m = this.current;
     return vec3.fromValues(
-      this._modelMatrix[0],
-      this._modelMatrix[1],
-      this._modelMatrix[2],
+      m[0],
+      m[1],
+      m[2],
     );
   }
   public get left(): vec3 {
     return vec3.negate(vec3.create(), this.right);
   }
   public get up(): vec3 {
+    const m = this.current;
     return vec3.fromValues(
-      this._modelMatrix[4],
-      this._modelMatrix[5],
-      this._modelMatrix[6],
+      m[4],
+      m[5],
+      m[6],
     );
   }
   public get down(): vec3 {
     return vec3.negate(vec3.create(), this.up);
   }
   public get forward(): vec3 {
+    const m = this.current;
     return vec3.fromValues(
-      this._modelMatrix[8],
-      this._modelMatrix[9],
-      this._modelMatrix[10],
+      m[8],
+      m[9],
+      m[10],
     );
   }
   public get back(): vec3 {
