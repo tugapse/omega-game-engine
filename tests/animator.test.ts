@@ -61,4 +61,15 @@ describe('Animator', () => {
     expect(hips.transform.localPosition[0]).toBeCloseTo(5);
     expect(animator.currentClip?.name).toBe('Idle');
   });
+
+  it('matches FBX and COLLADA bone names (mixamorig:Hips / mixamorig_Hips)', () => {
+    const root = new SceneEntity('Model');
+    const hips = new SceneEntity('mixamorig:Hips');
+    hips.transform.setParent(root.transform);
+    const animator = new Animator();
+    root.addBehaviour(animator);
+    animator.addClip(new AnimationClip('Dae', [{ target: 'mixamorig_Hips', property: 'translation', interpolation: 'STEP', times: Float32Array.from([0]), values: Float32Array.from([1, 2, 3]) }]));
+    animator.play('Dae');
+    expect(Array.from(hips.transform.localPosition)).toEqual([1, 2, 3]);
+  });
 });

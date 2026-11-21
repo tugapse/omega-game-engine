@@ -10,6 +10,7 @@ import { BuiltinTextures, builtinTextureUrl } from './builtin-textures';
 import { EMBEDDED_SHADERS } from '../../shaders/embedded-shaders';
 import { ModelData, parseModelPartUri } from '../model/model-data';
 import { parseFbx } from '../../parsers/fbx/fbx-parser';
+import { isCollada, parseCollada } from '../../parsers/collada/collada-parser';
 import { isFbx } from '../../parsers/fbx/fbx-reader';
 import type { LoadedImage } from './resource-loader';
 
@@ -85,7 +86,8 @@ export class ResourceManager {
       load: async (uri) => {
         const buffer = await this.loadBinary(uri);
         if (isFbx(buffer)) return parseFbx(buffer);
-        throw new Error(`${uri} is not a model format the engine reads (FBX 7.x).`);
+        if (isCollada(buffer)) return parseCollada(new TextDecoder('utf-8').decode(buffer));
+        throw new Error(`${uri} is not a model format the engine reads (FBX 7.x, COLLADA).`);
       },
     });
     this.shaders = new ResourceCache<string>({
@@ -158,7 +160,12 @@ export class ResourceManager {
       const part = parseModelPartUri(uri)!;
       const image = (await this.getModel(part.modelUri)).images[part.index];
       if (!image) throw new Error(`${uri}: the model has no image ${part.index}.`);
-      return createImageBitmap(new Blob([image.data as BlobPart], { type: image.mimeType }));
+      if (image.data) return createImageBitmap(new Blob([image.data as BlobPart], { type: image.mimeType }));
+      // An external file: only resolvable next to a model with a real URL path.
+      if (image.path && /^(https?:|\/|\.)/.test(part.modelUri)) {
+        return this.loader.loadImage(new URL(image.path, new URL(part.modelUri, location.href)).href);
+      }
+      throw new Error(`${uri}: the image "${image.path}" is a separate file; place the model with instantiateModel's resolveImage.`);
     },
   };
 

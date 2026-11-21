@@ -12,6 +12,11 @@ function firstKey(channel: AnimationChannel): Float32Array {
   return channel.values.subarray(o, o + 3);
 }
 
+/** A bone name with ':' written as '_', so FBX and COLLADA names match. */
+function boneAlias(name: string): string {
+  return name.replace(/:/g, '_');
+}
+
 /** A minimal typed event: `subscribe` returns a function that unsubscribes. */
 export class AnimationEvent<T> {
   private listeners: ((value: T) => void)[] = [];
@@ -231,10 +236,10 @@ export class Animator extends EntityBehaviour {
 
   private stateFor(clip: AnimationClip, loop: boolean): PlayState {
     if (!this.bonesByName.size) this.collectBones();
-    let targets = clip.channels.map((c) => this.bonesByName.get(c.target) ?? null);
+    let targets = clip.channels.map((c) => this.bonesByName.get(c.target) ?? this.bonesByName.get(boneAlias(c.target)) ?? null);
     if (targets.some((t) => !t)) {
       this.collectBones(); // bones added since (or renamed): look again
-      targets = clip.channels.map((c) => this.bonesByName.get(c.target) ?? null);
+      targets = clip.channels.map((c) => this.bonesByName.get(c.target) ?? this.bonesByName.get(boneAlias(c.target)) ?? null);
     }
     // The root bone: the translated bone closest to this entity.
     const depth = (t: Transform | null) => { let d = 0; for (let p = t; p && p !== this.parent?.transform; p = p.parent) d++; return t ? d : Infinity; };
@@ -250,6 +255,9 @@ export class Animator extends EntityBehaviour {
     const visit = (t: Transform) => {
       const entity = t.parentEntity;
       if (entity && !this.bonesByName.has(entity.name)) this.bonesByName.set(entity.name, t);
+      // FBX writes "mixamorig:Hips", COLLADA "mixamorig_Hips": accept either.
+      const alias = entity ? boneAlias(entity.name) : '';
+      if (entity && !this.bonesByName.has(alias)) this.bonesByName.set(alias, t);
       for (const child of t.children) visit(child);
     };
     if (this.parent) visit(this.parent.transform);

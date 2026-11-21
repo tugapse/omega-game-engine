@@ -45,11 +45,16 @@ export interface ModelMaterial {
   emissive?: number;
 }
 
-/** An image embedded in the model file (PNG, JPEG). */
+/**
+ * An image used by the model's materials: embedded in the file (`data`, as
+ * in FBX) or a separate file next to it (`path`, relative, as in COLLADA).
+ */
 export interface ModelImage {
   name: string;
   mimeType: string;
-  data: Uint8Array;
+  data?: Uint8Array;
+  /** Path of an external image file, relative to the model file. */
+  path?: string;
 }
 
 /**

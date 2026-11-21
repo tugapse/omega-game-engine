@@ -5,7 +5,7 @@ import { Color } from '../core/color';
 import { Mesh } from '../core/mesh';
 import { BuiltinTextures } from '../core/resources/builtin-textures';
 import { Resources } from '../core/resources/resources';
-import { ModelData, ModelMaterial, modelPartUri } from '../core/model/model-data';
+import { ModelData, ModelImage, ModelMaterial, modelPartUri } from '../core/model/model-data';
 import { SceneEntity } from '../entities/entity';
 import type { Scene } from '../entities/scene';
 import { LitMaterial } from '../materials/lit-material';
@@ -16,6 +16,12 @@ export interface InstantiateModelOptions {
   name?: string;
   /** Add the entities to this scene (otherwise only return them). */
   scene?: Scene;
+  /**
+   * The texture URI of an image that is a separate file (COLLADA), from its
+   * path relative to the model (e.g. "textures/body.png"). Return undefined
+   * when it can't be found: the material then has no such texture.
+   */
+  resolveImage?: (path: string, image: ModelImage) => string | undefined;
 }
 
 /**
@@ -51,11 +57,11 @@ export async function instantiateModel(
     nodes[i].transform.setParent(node.parent >= 0 ? nodes[node.parent].transform : root.transform);
   });
 
-  const materials = await Promise.all(model.materials.map((m) => createMaterial(gl, modelUri, m)));
+  const materials = await Promise.all(model.materials.map((m) => createMaterial(gl, modelUri, model, m, options.resolveImage)));
 
   for (const [i, node] of model.nodes.entries()) {
     if (node.mesh === undefined) continue;
-    const material = node.material !== undefined ? materials[node.material] : await createMaterial(gl, modelUri);
+    const material = node.material !== undefined ? materials[node.material] : await createMaterial(gl, modelUri, model);
     let renderer: MeshRendererBehaviour;
     if (node.skin !== undefined) {
       const skinned = new SkinnedMeshRendererBehaviour(gl);
@@ -83,13 +89,26 @@ export async function instantiateModel(
   return { root, entities };
 }
 
-async function createMaterial(gl: WebGL2RenderingContext, modelUri: string, source?: ModelMaterial): Promise<LitMaterial> {
+async function createMaterial(
+  gl: WebGL2RenderingContext,
+  modelUri: string,
+  model: ModelData,
+  source?: ModelMaterial,
+  resolveImage?: InstantiateModelOptions['resolveImage'],
+): Promise<LitMaterial> {
   const resources = Resources.for(gl);
   const material = new LitMaterial();
   material.name = source?.name ?? 'Material';
   const c = source?.color ?? [1, 1, 1, 1];
   material.color = new Color(c[0], c[1], c[2], c[3]);
-  const image = (index: number | undefined) => index === undefined ? undefined : resources.getTexture(modelPartUri(modelUri, 'image', index));
+  const image = async (index: number | undefined) => {
+    const img = index === undefined ? undefined : model.images[index];
+    if (!img) return undefined;
+    if (img.data) return resources.getTexture(modelPartUri(modelUri, 'image', index!));
+    const uri = img.path ? resolveImage?.(img.path, img) : undefined;
+    if (!uri) { console.warn(`instantiateModel: texture "${img.path}" not found next to ${modelUri}.`); return undefined; }
+    return resources.getTexture(uri);
+  };
   material.mainTex = (await image(source?.albedo)) ?? (await resources.getTexture(BuiltinTextures.white));
   const normal = await image(source?.normal);
   if (normal) { material.normalTex = normal; material.normalMapStrength = 1; }
