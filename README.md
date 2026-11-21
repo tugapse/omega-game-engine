@@ -28,7 +28,7 @@ While developing with the editor, install the local build there with `npm instal
 | Resources | `src/core/resources` | `Resources.for(gl)` returns the `ResourceManager` of a WebGL context. It caches textures, cubemaps, OBJ meshes and shader sources, shares in-flight loads and hands out handles (`acquire` / `release`). A `ResourceLoader` decides how files are fetched; the editor plugs one in for `asset://<id>`. A texture that fails to load becomes the magenta `builtin://missing` and keeps its URI. |
 | Built-in textures | `builtin-textures.ts` | `builtin://white`, `black`, `normal`, `missing`, generated in memory. |
 | Render pipeline | `src/core/render` | Forward pipeline, described below. |
-| Lights | `src/entities/lights` | Ambient, directional, point and spot lights. Each light has `castShadows`, `shadowStrength` (0 to 1) and `shadowBias` / `normalBias` (world units). Point and spot lights also have a `range`. |
+| Lights | `src/entities/lights` | Ambient, directional, point and spot lights. Each light has `castShadows`, `shadowStrength` (0 to 1) and `shadowDepthBias` / `shadowNormalBias` (in shadow-map texels). Point and spot lights also have a `range`, where their light fades to 0. |
 | Materials and shaders | `src/materials`, `src/shaders` | `LitMaterial` + `LitShader` (Blinn-Phong, normal/specular/roughness/AO/emissive maps), unlit, skybox. |
 
 ## Render pipeline
