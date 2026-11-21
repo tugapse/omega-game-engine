@@ -6,6 +6,12 @@ import { parseModelPartUri } from '../core/model/model-data';
 import { JsonSerializedData } from '../interfaces/json-serialized-data';
 import { AnimationChannel, AnimationClip, sampleChannel } from './animation-clip';
 
+/** The first key's value of a translation channel (skipping a cubic in-tangent). */
+function firstKey(channel: AnimationChannel): Float32Array {
+  const o = channel.interpolation === 'CUBICSPLINE' ? 3 : 0;
+  return channel.values.subarray(o, o + 3);
+}
+
 /** A minimal typed event: `subscribe` returns a function that unsubscribes. */
 export class AnimationEvent<T> {
   private listeners: ((value: T) => void)[] = [];
@@ -29,6 +35,8 @@ interface PlayState {
   targets: (Transform | null)[];
   loop: boolean;
   finished: boolean;
+  /** Index of the root bone's translation channel (-1 if none), for `inPlace`. */
+  rootChannel: number;
 }
 
 /**
@@ -61,6 +69,12 @@ export class Animator extends EntityBehaviour {
   public loop = true;
   /** Also animate in the editor, without pressing Play. */
   public playInEditor = false;
+  /**
+   * Keep the character in place: the root bone (e.g. Mixamo's Hips) keeps
+   * its horizontal position from the first frame, so walks and dances don't
+   * move the model away. Height (crouch, jump) still animates.
+   */
+  public inPlace = false;
 
   /** Fired when a clip without loop reaches its end. */
   public readonly onFinished = new AnimationEvent<AnimationClip>();
@@ -222,7 +236,13 @@ export class Animator extends EntityBehaviour {
       this.collectBones(); // bones added since (or renamed): look again
       targets = clip.channels.map((c) => this.bonesByName.get(c.target) ?? null);
     }
-    return { clip, time: this.speed < 0 ? clip.duration : 0, weight: 1, hints: clip.channels.map(() => 0), targets, loop, finished: false };
+    // The root bone: the translated bone closest to this entity.
+    const depth = (t: Transform | null) => { let d = 0; for (let p = t; p && p !== this.parent?.transform; p = p.parent) d++; return t ? d : Infinity; };
+    let rootChannel = -1;
+    clip.channels.forEach((c, i) => {
+      if (c.property === 'translation' && targets[i] && (rootChannel < 0 || depth(targets[i]) < depth(targets[rootChannel]))) rootChannel = i;
+    });
+    return { clip, time: this.speed < 0 ? clip.duration : 0, weight: 1, hints: clip.channels.map(() => 0), targets, loop, finished: false, rootChannel };
   }
 
   private collectBones(): void {
@@ -247,6 +267,11 @@ export class Animator extends EntityBehaviour {
         const bone = previous.targets[i];
         if (!bone) return;
         previous.hints[i] = sampleChannel(channel, previous.time, this.blendA, previous.hints[i]);
+        if (this.inPlace && i === previous.rootChannel) {
+          const first = firstKey(channel);
+          this.blendA[0] = first[0];
+          this.blendA[2] = first[2];
+        }
         let perBone = blend.get(bone);
         if (!perBone) blend.set(bone, (perBone = new Map()));
         perBone.set(channel.property, Float32Array.from(this.blendA));
@@ -256,6 +281,11 @@ export class Animator extends EntityBehaviour {
       const bone = current.targets[i];
       if (!bone) return;
       current.hints[i] = sampleChannel(channel, current.time, this.value, current.hints[i]);
+      if (this.inPlace && i === current.rootChannel) {
+        const first = firstKey(channel);
+        this.value[0] = first[0];
+        this.value[2] = first[2];
+      }
       const from = blend.get(bone)?.get(channel.property);
       if (from) this.mix(channel, from, this.value, current.weight);
       this.write(bone, channel, this.value);
@@ -288,6 +318,7 @@ export class Animator extends EntityBehaviour {
       speed: this.speed,
       loop: this.loop,
       playInEditor: this.playInEditor,
+      inPlace: this.inPlace,
     };
   }
 
@@ -299,6 +330,7 @@ export class Animator extends EntityBehaviour {
     this.speed = jsonObject['speed'] ?? 1;
     this.loop = jsonObject['loop'] ?? true;
     this.playInEditor = jsonObject['playInEditor'] ?? false;
+    this.inPlace = jsonObject['inPlace'] ?? false;
   }
 }
 

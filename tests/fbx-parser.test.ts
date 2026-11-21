@@ -76,6 +76,34 @@ describe.skipIf(!find('skinning'))('FBX parser (Mixamo character)', () => {
   });
 });
 
+describe.skipIf(!find('twist'))('FBX parser (Mixamo ASCII FBX)', () => {
+  it('reads the same tree from an ASCII file, with embedded textures and a clean bind pose', async () => {
+    const model = await parseFbx(load(find('twist')!));
+    const mesh = model.meshes[0] as SkinnedMeshData;
+    expect(mesh).toBeInstanceOf(SkinnedMeshData);
+    expect(model.skins[0].joints.length).toBeGreaterThan(60);
+    expect(model.images.length).toBeGreaterThan(0);
+    expect(model.images.every((i) => i.data[0] === 0x89 && i.data[1] === 0x50)).toBe(true); // PNG signature
+    expect(model.clips[0].duration).toBeGreaterThan(1);
+    const globals = model.nodes.map(() => mat4.create());
+    model.nodes.forEach((n, i) => {
+      mat4.fromRotationTranslationScale(globals[i], n.rotation, n.translation, n.scale);
+      if (n.parent >= 0) mat4.multiply(globals[i], globals[n.parent], globals[i]);
+    });
+    const meshNode = model.nodes.findIndex((n) => n.skin !== undefined);
+    const skin = model.skins[model.nodes[meshNode].skin!];
+    const meshInverse = mat4.invert(mat4.create(), globals[meshNode])!;
+    let worst = 0;
+    skin.joints.forEach((joint, j) => {
+      const m = mat4.multiply(mat4.create(), meshInverse, globals[joint]);
+      mat4.multiply(m, m, skin.inverseBindMatrices[j]);
+      const id = mat4.create();
+      for (let k = 0; k < 16; k++) worst = Math.max(worst, Math.abs(m[k] - id[k]) / (k >= 12 ? 100 : 1));
+    });
+    expect(worst).toBeLessThan(1e-3);
+  });
+});
+
 describe.skipIf(!find('character'))('FBX parser (old FBX 6.1)', () => {
   it('rejects FBX 6.x with a clear message', async () => {
     await expect(parseFbx(load(find('character')!))).rejects.toThrow(/FBX 6\.1 is not supported/);

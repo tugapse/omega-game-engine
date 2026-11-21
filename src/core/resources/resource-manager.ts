@@ -10,7 +10,7 @@ import { BuiltinTextures, builtinTextureUrl } from './builtin-textures';
 import { EMBEDDED_SHADERS } from '../../shaders/embedded-shaders';
 import { ModelData, parseModelPartUri } from '../model/model-data';
 import { parseFbx } from '../../parsers/fbx/fbx-parser';
-import { fbxVersion } from '../../parsers/fbx/fbx-reader';
+import { isFbx } from '../../parsers/fbx/fbx-reader';
 import type { LoadedImage } from './resource-loader';
 
 export interface ResourceManagerStats {
@@ -84,8 +84,8 @@ export class ResourceManager {
     this.models = new ResourceCache<ModelData>({
       load: async (uri) => {
         const buffer = await this.loadBinary(uri);
-        if (fbxVersion(buffer) !== null) return parseFbx(buffer);
-        throw new Error(`${uri} is not a model format the engine reads (binary FBX 7.x).`);
+        if (isFbx(buffer)) return parseFbx(buffer);
+        throw new Error(`${uri} is not a model format the engine reads (FBX 7.x).`);
       },
     });
     this.shaders = new ResourceCache<string>({

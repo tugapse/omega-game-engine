@@ -30,7 +30,7 @@ export interface FbxParseOptions {
 }
 
 /**
- * Reads a binary FBX 7.x file, as exported by Mixamo, Blender or Maya, into
+ * Reads an FBX 7.x file (binary or ASCII), as exported by Mixamo, Blender or Maya, into
  * a ModelData: the node hierarchy, meshes with skin weights, bones with
  * their inverse bind matrices, materials, embedded textures and animations.
  *
@@ -492,9 +492,13 @@ function props70(node: FbxNode | undefined): Map<string, FbxProp[]> {
   return map;
 }
 
-/** "mixamorig:Hips\u0000\u0001Model" -> "mixamorig:Hips". */
+/** "mixamorig:Hips\u0000\u0001Model" or "Model::mixamorig:Hips" -> "mixamorig:Hips". */
 function cleanName(name: string): string {
-  return (name ?? '').split('\u0000')[0];
+  const n = name ?? '';
+  // Binary FBX writes "Name\u0000\u0001Class", ASCII writes "Class::Name".
+  if (n.includes('\u0000')) return n.split('\u0000')[0];
+  const sep = n.indexOf('::');
+  return sep >= 0 ? n.slice(sep + 2) : n;
 }
 
 function mimeOf(data: Uint8Array, name: string): string {
