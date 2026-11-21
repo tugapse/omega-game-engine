@@ -17,7 +17,7 @@ layout(std140) uniform ShadowsBlock {
     vec4 u_shadowRect[MAX_SHADOW_VIEWS];    // atlas uv: x, y, size, size
     vec4 u_shadowParams[MAX_SHADOW_SLOTS];  // texel size, perspective (1/0), 0, first view
     vec4 u_shadowExtra[MAX_SHADOW_SLOTS];   // x: strength (per light)
-    vec4 u_shadowAtlas;                     // 1/atlas size, 0, enabled
+    vec4 u_shadowAtlas;                     // 1/atlas size, filter taps (1, 4, 16), enabled
 };
 uniform highp sampler2DShadow u_shadowAtlasMap;
 uniform int u_receiveShadows;
@@ -54,7 +54,8 @@ int cubeFace(vec3 v) {
     return v.z > 0.0 ? 4 : 5;
 }
 
-// 16-tap rotated Poisson PCF inside one atlas tile. Returns 1 lit, 0 shadowed.
+// PCF inside one atlas tile: 1 tap (hard), 4 taps on a grid, or 16 rotated
+// Poisson taps; each tap is a hardware 2x2 comparison. Returns 1 lit, 0 shadowed.
 float sampleShadowView(int view, vec3 position, float depthBias) {
     vec4 clip = u_shadowMatrix[view] * vec4(position, 1.0);
     if (clip.w <= 0.0) return 1.0;
@@ -78,6 +79,18 @@ float sampleShadowView(int view, vec3 position, float depthBias) {
     vec2 lo = rect.xy + vec2(texel * 1.5);
     vec2 hi = rect.xy + rect.zw - vec2(texel * 1.5);
     vec2 uv = rect.xy + p.xy * rect.zw;
+    float ref = p.z - depthBias;
+
+    int taps = int(u_shadowAtlas.y + 0.5);
+    if (taps <= 1) return texture(u_shadowAtlasMap, vec3(clamp(uv, lo, hi), ref));
+    if (taps <= 4) {
+        float sum = 0.0;
+        sum += texture(u_shadowAtlasMap, vec3(clamp(uv + vec2(-0.5, -0.5) * texel * 2.0, lo, hi), ref));
+        sum += texture(u_shadowAtlasMap, vec3(clamp(uv + vec2( 0.5, -0.5) * texel * 2.0, lo, hi), ref));
+        sum += texture(u_shadowAtlasMap, vec3(clamp(uv + vec2(-0.5,  0.5) * texel * 2.0, lo, hi), ref));
+        sum += texture(u_shadowAtlasMap, vec3(clamp(uv + vec2( 0.5,  0.5) * texel * 2.0, lo, hi), ref));
+        return sum * 0.25;
+    }
     float radius = texel * 2.5;
 
     float angle = rand(p.xy) * 6.283185;
@@ -86,7 +99,7 @@ float sampleShadowView(int view, vec3 position, float depthBias) {
     float lit = 0.0;
     for (int i = 0; i < 16; i++) {
         vec2 o = vec2(poissonDisk[i].x * c - poissonDisk[i].y * s, poissonDisk[i].x * s + poissonDisk[i].y * c);
-        lit += texture(u_shadowAtlasMap, vec3(clamp(uv + o * radius, lo, hi), p.z - depthBias));
+        lit += texture(u_shadowAtlasMap, vec3(clamp(uv + o * radius, lo, hi), ref));
     }
     return lit / 16.0;
 }

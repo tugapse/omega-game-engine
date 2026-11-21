@@ -1,7 +1,8 @@
-import { mat4 } from 'gl-matrix';
+import { mat4, vec3 } from 'gl-matrix';
+import { maxScale, Sphere } from '../../core/render/culling';
 import { Transform } from '../../core/transform';
 import { Resources } from '../../core/resources/resources';
-import { ModelData, parseModelPartUri } from '../../core/model/model-data';
+import { ModelData, parseModelPartUri, SkinnedMeshData } from '../../core/model/model-data';
 import { ShaderUniformsEnum } from '../../enums/shader-uniforms.enum';
 import { JsonSerializedData } from '../../interfaces/json-serialized-data';
 import { JOINT_TEXTURE_UNIT, ShadowAtlasPass } from '../../core/render/pass/shadow-atlas-pass';
@@ -40,10 +41,13 @@ export class SkinnedMeshRendererBehaviour extends MeshRendererBehaviour {
   private loading: Promise<void> | null = null;
   private readonly scratch = mat4.create();
   private readonly meshInverse = mat4.create();
+  /** Per joint: how far its vertices reach from it at bind time (-1: no vertices). */
+  private jointReach: Float32Array = new Float32Array(0);
+  private _deformationVersion = 0;
 
   constructor(gl: WebGL2RenderingContext) {
     super(gl);
-    this._serializationIgnoreKeys.push('bones', 'inverseBindMatrices', '_jointTexture', 'jointData', 'loaded', 'loading', 'scratch', 'meshInverse');
+    this._serializationIgnoreKeys.push('bones', 'inverseBindMatrices', '_jointTexture', 'jointData', 'loaded', 'loading', 'scratch', 'meshInverse', 'jointReach', '_deformationVersion');
   }
 
   override get jointTexture(): WebGLTexture | null {
@@ -71,7 +75,7 @@ export class SkinnedMeshRendererBehaviour extends MeshRendererBehaviour {
     const meshPart = parseModelPartUri(this.meshUri);
     if (!meshPart || meshPart.kind !== 'mesh') throw new Error(`meshUri "${this.meshUri}" is not <model>#mesh/<n>`);
     const model: ModelData = await Resources.for(this._gl).getModel(meshPart.modelUri);
-    const meshData = model.meshes[meshPart.index];
+    const meshData = model.meshes[meshPart.index] as SkinnedMeshData;
     if (!meshData) throw new Error(`${this.meshUri}: the model has no mesh ${meshPart.index}`);
 
     const skinPart = parseModelPartUri(this.skinUri);
@@ -81,7 +85,54 @@ export class SkinnedMeshRendererBehaviour extends MeshRendererBehaviour {
     this.mesh.meshData = meshData;
     this.shader!.initBuffers(this._gl, meshData);
     this.createJointTexture(Math.max(1, this.inverseBindMatrices.length));
+    this.jointReach = SkinnedMeshRendererBehaviour.jointReach(meshData, this.inverseBindMatrices);
     this.loaded = true;
+    this._deformationVersion++;
+  }
+
+  /**
+   * For each joint, the farthest bind-pose distance from it to a vertex it
+   * moves most: the posed mesh stays within those spheres around the bones.
+   */
+  private static jointReach(meshData: SkinnedMeshData, inverseBinds: mat4[]): Float32Array {
+    const reach = new Float32Array(inverseBinds.length).fill(-1);
+    const bindPositions = inverseBinds.map((m) => mat4.getTranslation(vec3.create(), mat4.invert(mat4.create(), m) ?? mat4.create()));
+    const { joints, weights, vertices } = meshData;
+    if (!joints?.length || !weights?.length) return reach;
+    for (let v = 0; v < vertices.length; v++) {
+      let best = 0;
+      for (let k = 1; k < 4; k++) if (weights[v * 4 + k] > weights[v * 4 + best]) best = k;
+      const j = joints[v * 4 + best];
+      if (j === undefined || j >= bindPositions.length) continue;
+      reach[j] = Math.max(reach[j], vec3.distance(vertices[v], bindPositions[j]));
+    }
+    return reach;
+  }
+
+  /** The sphere around the posed bones, grown by each joint's reach. */
+  override worldBounds(out: Sphere): boolean {
+    if (!this.loaded || !this.parent) return false;
+    if (this.bones.length !== this.boneIds.length || this.bones.some((b) => !b)) this.resolveBones();
+    const scale = maxScale(this.parent.transform.modelMatrix);
+    let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+    const p = out.center;
+    for (let j = 0; j < this.bones.length; j++) {
+      const bone = this.bones[j];
+      const r = (this.jointReach[j] ?? -1) * scale;
+      if (!bone || r < 0) continue;
+      mat4.getTranslation(p, bone.modelMatrix);
+      minX = Math.min(minX, p[0] - r); maxX = Math.max(maxX, p[0] + r);
+      minY = Math.min(minY, p[1] - r); maxY = Math.max(maxY, p[1] + r);
+      minZ = Math.min(minZ, p[2] - r); maxZ = Math.max(maxZ, p[2] + r);
+    }
+    if (minX > maxX) return false;
+    vec3.set(out.center, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+    out.radius = Math.hypot(maxX - minX, maxY - minY, maxZ - minZ) / 2;
+    return true;
+  }
+
+  override get deformationVersion(): number {
+    return this._deformationVersion;
   }
 
   private createJointTexture(joints: number): void {
@@ -118,13 +169,18 @@ export class SkinnedMeshRendererBehaviour extends MeshRendererBehaviour {
 
     mat4.invert(this.meshInverse, this.parent.transform.modelMatrix);
     const count = Math.min(this.inverseBindMatrices.length, this.jointData.length / 16);
+    let changed = false;
     for (let j = 0; j < count; j++) {
       const bone = this.bones[j];
       if (!bone) continue;
       mat4.multiply(this.scratch, this.meshInverse, bone.modelMatrix);
       mat4.multiply(this.scratch, this.scratch, this.inverseBindMatrices[j]);
-      this.jointData.set(this.scratch, j * 16);
+      const at = j * 16;
+      if (!changed) for (let k = 0; k < 16; k++) if (this.jointData[at + k] !== this.scratch[k]) { changed = true; break; }
+      this.jointData.set(this.scratch, at);
     }
+    if (!changed) return; // same pose: the texture already holds it
+    this._deformationVersion++;
     const gl = this._gl;
     gl.bindTexture(gl.TEXTURE_2D, this._jointTexture);
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 4, this.jointData.length / 16, gl.RGBA, gl.FLOAT, this.jointData);

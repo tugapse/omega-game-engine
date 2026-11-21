@@ -3,7 +3,7 @@ import { vec3 } from 'gl-matrix';
 import { describe, expect, it } from 'vitest';
 import {
   ATLAS_TILES, CUBE_FACES, MAX_SHADOW_SLOTS, MAX_SHADOW_VIEWS, SHADOW_ATLAS_SIZE, SHADOWS_LAYOUT,
-  cubeFaceFor, directionalMatrix, packShadows, planShadows,
+  cubeFaceFor, directionalMatrix, packShadows, planShadows, ShadowFilter,
 } from '../src/core/render/shadows';
 import { EntityType } from '../src/enums/entity-type.enum';
 
@@ -46,6 +46,15 @@ describe('planShadows', () => {
     const pointSlot = plan.slots[plan.slotOf.get(point)!];
     expect(pointSlot.viewCount).toBe(6);
     expect(plan.views[pointSlot.firstView].rect).toEqual(ATLAS_TILES.point[0]);
+  });
+
+  it('lays the tiles out in scene order, so two cameras share the layout', () => {
+    const a = light(EntityType.LIGHT_POINT, [-5, 0, 0]);
+    const b = light(EntityType.LIGHT_POINT, [5, 0, 0]);
+    const fromLeft = planShadows([a, b], vec3.fromValues(-9, 0, 0), { directionalDistance: 60 });
+    const fromRight = planShadows([a, b], vec3.fromValues(9, 0, 0), { directionalDistance: 60 });
+    expect(fromLeft.slotOf.get(a)).toBe(0);
+    expect(fromRight.slotOf.get(a)).toBe(0);
   });
 });
 
@@ -93,5 +102,28 @@ describe('packShadows', () => {
     const strength = (slot: number) => data[(SHADOWS_LAYOUT.extra + slot) * 4];
     expect(strength(0)).toBeCloseTo(0.3);
     expect(strength(1)).toBe(1); // clamped
+  });
+});
+
+describe('quality options', () => {
+  it('scales the tiles with a smaller atlas and packs its texel size and the filter', () => {
+    const sun = light(EntityType.LIGHT_DIRECTIONAL, [0, 50, 0]);
+    const plan = planShadows([sun], vec3.create(), { directionalDistance: 60, atlasSize: 1024 });
+    expect(plan.atlasSize).toBe(1024);
+    expect(plan.views[0].rect).toEqual({ x: 0, y: 0, size: 512 });
+    expect(plan.slots[0].texelSize).toBeCloseTo(120 / 512);
+    const data = packShadows(plan, true, undefined, ShadowFilter.Soft);
+    expect(data[SHADOWS_LAYOUT.atlas * 4]).toBeCloseTo(1 / 1024);
+    expect(data[SHADOWS_LAYOUT.atlas * 4 + 1]).toBe(4);
+    expect(data[(SHADOWS_LAYOUT.rects) * 4 + 2]).toBeCloseTo(0.5); // tile is half the atlas
+  });
+
+  it('limits spot and point shadows to the budget', () => {
+    const spots = [1, 2, 3].map((x) => light(EntityType.LIGHT_SPOT, [x, 0, 0]));
+    const points = [1, 2].map((x) => light(EntityType.LIGHT_POINT, [x, 0, 0]));
+    const plan = planShadows([...spots, ...points], vec3.create(), { directionalDistance: 60, budget: { spot: 1, point: 0 } });
+    expect(plan.slots).toHaveLength(1);
+    expect(plan.slots[0].light).toBe(spots[0]); // nearest
+    expect(plan.views).toHaveLength(1);
   });
 });

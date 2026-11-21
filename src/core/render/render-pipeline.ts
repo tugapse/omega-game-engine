@@ -12,7 +12,7 @@ import { LightsUBO } from "./lights-ubo";
 import { FullscreenProgram } from "./fullscreen-program";
 import { GeometryPass, ShadowAtlasPass } from "./pass";
 
-import { planShadows } from "./shadows";
+import { planShadows, ShadowFilter } from "./shadows";
 import { PostEffect, RetroEffect } from "./post-effect";
 import { IRenderPass, RenderContext } from "./render-pass.interface";
 import { RenderTarget, RenderTargetColor } from "./render-target";
@@ -37,6 +37,22 @@ export enum ToneMapping {
   ACES = 2,
 }
 
+/** Side of the shadow atlas, in pixels. */
+export enum ShadowMapSize {
+  Small = 1024,
+  Medium = 2048,
+  Large = 4096,
+}
+
+/** Presets for `RenderPipelineSettings.applyQuality`. */
+export enum RenderQuality {
+  /** Phones and weak integrated GPUs. */
+  Low = 0,
+  Medium = 1,
+  /** Desktop GPUs: everything on. */
+  High = 2,
+}
+
 /**
  * What a scene saves about its rendering. GPU objects (targets, textures,
  * shaders) are never saved: they are rebuilt from these settings.
@@ -56,8 +72,54 @@ export class RenderPipelineSettings extends JsonSerializable {
   /** CRT post effect. */
   public retroEffect = false;
 
+  /**
+   * Size of the scene image relative to the canvas: below 1 draws fewer
+   * pixels and stretches the result (the cheapest win on phones).
+   */
+  public renderScale = new NumberRange(1, 0.25, 2, 0.05);
+  /** Lowers the render scale (down to half of it) while frames are slower than `targetFrameRate`. */
+  public dynamicResolution = false;
+  public targetFrameRate = new NumberRange(30, 15, 120, 1);
+  public shadowMapSize = ShadowMapSize.Large;
+  public shadowFilter = ShadowFilter.Softer;
+  /** Spot lights with a shadow per frame (nearest first, at most 4). */
+  public maxSpotShadows = new NumberRange(4, 0, 4, 1);
+  /** Point lights with a shadow per frame (6 views each, at most 2). */
+  public maxPointShadows = new NumberRange(2, 0, 2, 1);
+  /** Redraw a shadow view only when its light or a caster inside it changed. */
+  public cacheShadows = true;
+
   constructor() {
     super("RenderPipelineSettings");
+  }
+
+  /**
+   * Sets the performance settings to a preset (colour settings untouched):
+   * Low halves the resolution, uses a 1024² atlas with 4-tap shadows and no
+   * point-light shadows; Medium is in between; High is everything on.
+   */
+  public applyQuality(quality: RenderQuality): void {
+    const presets = {
+      [RenderQuality.Low]: { scale: 0.5, dynamic: true, atlas: ShadowMapSize.Small, filter: ShadowFilter.Soft, spot: 1, point: 0 },
+      [RenderQuality.Medium]: { scale: 0.75, dynamic: true, atlas: ShadowMapSize.Medium, filter: ShadowFilter.Soft, spot: 2, point: 1 },
+      [RenderQuality.High]: { scale: 1, dynamic: false, atlas: ShadowMapSize.Large, filter: ShadowFilter.Softer, spot: 4, point: 2 },
+    };
+    const p = presets[quality] ?? presets[RenderQuality.High];
+    this.renderScale.value = p.scale;
+    this.dynamicResolution = p.dynamic;
+    this.shadowMapSize = p.atlas;
+    this.shadowFilter = p.filter;
+    this.maxSpotShadows.value = p.spot;
+    this.maxPointShadows.value = p.point;
+    this.cacheShadows = true;
+  }
+
+  /** A guess at the right preset for this device: Low on phones and tablets, High elsewhere. */
+  public static suggestedQuality(): RenderQuality {
+    if (typeof navigator === "undefined") return RenderQuality.High;
+    const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+      || (typeof matchMedia !== "undefined" && matchMedia("(pointer: coarse)").matches && navigator.maxTouchPoints > 0);
+    return mobile ? RenderQuality.Low : RenderQuality.High;
   }
 
   public override toJsonObject(): JsonSerializedData {
@@ -100,17 +162,28 @@ export class RenderPipeline extends JsonSerializable {
   /** Post effects in order; disabled ones are skipped. */
   public readonly effects: PostEffect[] = [this._retro];
   private _startTime = performance.now();
+  /** Dynamic resolution: the factor applied on top of `settings.renderScale`. */
+  private _dynamicFactor = 1;
+  private _lastFrame = 0;
+  private _frameTimes: number[] = [];
+  private _lastAdjust = 0;
 
   constructor(public override name: string = "Render Pipeline") {
     super("RenderPipeline");
     this._serializationIgnoreKeys.push(
       "_gl", "ubo", "lightsUbo", "scene", "_shadowmapPass", "_geometryPass", "_views", "_copy",
-      "_passes", "_retro", "effects", "_startTime",
+      "_passes", "_retro", "effects", "_startTime", "_dynamicFactor", "_lastFrame", "_frameTimes", "_lastAdjust",
     );
   }
 
   public get shadowMap(): ShadowAtlasPass {
     return this._shadowmapPass;
+  }
+
+  /** The scale the canvas view is drawn at now (render scale × dynamic resolution). */
+  public get currentRenderScale(): number {
+    const base = this.settings.renderScale.value;
+    return this.settings.dynamicResolution ? base * this._dynamicFactor : base;
   }
 
   /** The off-screen target the scene is drawn into (colour + depth textures). */
@@ -156,8 +229,11 @@ export class RenderPipeline extends JsonSerializable {
 
     // The host cleared the canvas with its colour; the scene targets use the same.
     const clearColor = Float32Array.from(gl.getParameter(gl.COLOR_CLEAR_VALUE) as Float32Array);
-    const time = (performance.now() - this._startTime) / 1000;
+    const now = performance.now();
+    const time = (now - this._startTime) / 1000;
     this.applySettings();
+    this.adjustResolution(now);
+    this._shadowmapPass.resetStats();
 
     const resources = Resources.for(gl);
     for (const camera of this.textureCameras(main)) {
@@ -177,7 +253,31 @@ export class RenderPipeline extends JsonSerializable {
       }
     }
 
-    this.renderView(main, CANVAS_VIEW, gl.drawingBufferWidth, gl.drawingBufferHeight, clearColor, time, null);
+    const scale = this.currentRenderScale;
+    this.renderView(main, CANVAS_VIEW, gl.drawingBufferWidth * scale, gl.drawingBufferHeight * scale, clearColor, time, null);
+  }
+
+  /**
+   * Dynamic resolution: once a second, compares the average frame time with
+   * the target and moves the factor down (by 0.1, to 0.5) or back up (by 0.05).
+   * Gaps over 250 ms (hidden tab, breakpoint) are ignored.
+   */
+  private adjustResolution(now: number): void {
+    const dt = this._lastFrame ? now - this._lastFrame : 0;
+    this._lastFrame = now;
+    if (!this.settings.dynamicResolution) {
+      this._dynamicFactor = 1;
+      this._frameTimes.length = 0;
+      return;
+    }
+    if (dt > 0 && dt < 250) this._frameTimes.push(dt);
+    if (now - this._lastAdjust < 1000 || this._frameTimes.length < 10) return;
+    const average = this._frameTimes.reduce((a, b) => a + b, 0) / this._frameTimes.length;
+    this._frameTimes.length = 0;
+    this._lastAdjust = now;
+    const budget = 1000 / Math.max(1, this.settings.targetFrameRate.value);
+    if (average > budget * 1.1) this._dynamicFactor = Math.max(0.5, this._dynamicFactor - 0.1);
+    else if (average < budget * 0.8) this._dynamicFactor = Math.min(1, this._dynamicFactor + 0.05);
   }
 
   /** The active cameras of the scene that draw into a texture, main camera excluded. */
@@ -203,6 +303,8 @@ export class RenderPipeline extends JsonSerializable {
     const gl = this._gl;
     const view = this.ensureView(key, width, height);
     const target = view.scene;
+    // Bring every matrix up to date first: culling reads world bounds.
+    for (const o of this.scene.objects) if (!o.transform.parent) o.transform.updateMatrices();
     const frame = buildFrameData(this.scene, camera, time);
     for (const entity of new Set([...frame.opaque, ...frame.transparent, ...frame.shadowCasters])) {
       entity.getBehaviour(RendererBehaviour)?.beforeRender();
@@ -212,6 +314,8 @@ export class RenderPipeline extends JsonSerializable {
     // The atlas is shared, so each view redraws it around its own camera.
     const shadows = planShadows(frame.lights, camera.transform.worldPosition, {
       directionalDistance: this.settings.shadowDistance.value,
+      atlasSize: this.settings.shadowMapSize,
+      budget: { spot: this.settings.maxSpotShadows.value, point: this.settings.maxPointShadows.value },
     });
     this._shadowmapPass.render(shadows, frame.shadowCasters);
     this._shadowmapPass.bindAtlas();
@@ -241,6 +345,9 @@ export class RenderPipeline extends JsonSerializable {
   }
 
   public resize(width: number, height: number): void {
+    const scale = this.currentRenderScale;
+    width = Math.max(1, Math.floor(width * scale));
+    height = Math.max(1, Math.floor(height * scale));
     const canvas = this._views.get(CANVAS_VIEW);
     canvas?.scene.resize(width, height);
     for (const t of canvas?.post ?? []) t.resize(width, height);
@@ -355,6 +462,8 @@ export class RenderPipeline extends JsonSerializable {
   private applySettings(): void {
     if (!this._shadowmapPass) return;
     this._shadowmapPass.enabled = this.settings.shadowsEnabled;
+    this._shadowmapPass.filter = this.settings.shadowFilter;
+    this._shadowmapPass.cacheViews = this.settings.cacheShadows;
     this._retro.enabled = this.settings.retroEffect;
   }
 
