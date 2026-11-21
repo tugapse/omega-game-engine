@@ -24,10 +24,14 @@ export class Light extends SceneEntity {
 
   /** Whether this light casts shadows (ambient light ignores it). */
   public castShadows = false;
-  /** Bias against shadow acne, in world units. */
-  public shadowBias = 0.1;
-  /** Offset along the surface normal before the shadow lookup, in world units. */
-  public normalBias = 0.05;
+  /**
+   * Bias against shadow acne: the shadow lookup moves toward the light by this
+   * many shadow-map texels (their world size at that point). Too much detaches
+   * shadows from their objects (peter panning).
+   */
+  public shadowDepthBias = 0.5;
+  /** Offset along the surface normal at grazing angles, in shadow-map texels. */
+  public shadowNormalBias = 1;
   /** How dark this light's shadow is: 0 none, 1 no light from it at all. */
   public shadowStrength = 0.75;
 

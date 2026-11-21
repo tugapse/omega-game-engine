@@ -20,6 +20,7 @@
 
 - The scene is drawn in linear colour, unclamped: the lit, unlit and skybox shaders no longer gamma-encode or clamp each object. The final copy applies exposure, tone mapping and then the sRGB gamma once. Before, ACES and Reinhard worked on colours that were already gamma-encoded and clipped at 1, which washed scenes out and made HDR useless. Scenes with tone mapping `None` look the same as before.
 - Shadow strength is per light: `Light.shadowStrength` (0 to 1, default 0.75). `RenderPipelineSettings.shadowStrength` and `ShadowAtlasPass.shadowstrength` are gone, and `packShadows(plan, enabled)` no longer takes a strength. `ShadowsBlock` has a `u_shadowExtra` array (x: strength) per shadow slot.
+- Shadow biases are in shadow-map texels: `Light.shadowDepthBias` (default 0.5) moves the lookup toward the light and `Light.shadowNormalBias` (default 1) along the normal at grazing angles, both scaled by the texel's world size at that point. They replace `shadowBias` / `normalBias` (0.1 / 0.05 world units), which were up to 14 texels for spot lights and a few for point lights, so shadows started away from their objects (peter panning). `ShadowSlot` has `texelSize` and `perspective` instead of `orthoDepthRange`, and `ShadowsBlock`'s params are now texel size, perspective flag and first view; the biases go in `u_shadowExtra` (y, z).
 - `RenderPipeline` draws each view (the canvas and each render texture) with its own scene and post targets. The shadow atlas is redrawn around each view's camera.
 
 ## 4.0.0 (2026-11-20)

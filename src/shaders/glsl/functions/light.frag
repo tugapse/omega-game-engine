@@ -15,7 +15,7 @@ uniform float u_normalMapStrength;
 layout(std140) uniform ShadowsBlock {
     mat4 u_shadowMatrix[MAX_SHADOW_VIEWS];  // world -> light clip space
     vec4 u_shadowRect[MAX_SHADOW_VIEWS];    // atlas uv: x, y, size, size
-    vec4 u_shadowParams[MAX_SHADOW_SLOTS];  // depth bias, normal bias, toward-light bias, first view
+    vec4 u_shadowParams[MAX_SHADOW_SLOTS];  // texel size, perspective (1/0), 0, first view
     vec4 u_shadowExtra[MAX_SHADOW_SLOTS];   // x: strength (per light)
     vec4 u_shadowAtlas;                     // 1/atlas size, 0, enabled
 };
@@ -92,17 +92,23 @@ float sampleShadowView(int view, vec3 position, float depthBias) {
 }
 
 // Light reaching a point from shadow slot `slotF` (-1: no shadow).
-// lightPos is only used for point lights (to pick the cube face).
+// lightPos (unused for directional lights) gives the distance for a
+// perspective view's texel size and picks a point light's cube face.
 float shadowFactor(float slotF, vec3 normal, vec3 toLight, vec3 lightPos, bool isPoint) {
     int slot = int(slotF);
     if (slot < 0 || u_receiveShadows == 0 || u_shadowAtlas.z < 0.5) return 1.0;
     vec4 prm = u_shadowParams[slot];
+    vec4 extra = u_shadowExtra[slot];
+    // World size of a shadow-map texel here: the biases are in texels, so they
+    // stay just big enough against acne and the shadow keeps touching its object.
+    float texel = prm.y > 0.5 ? prm.x * length(v_position - lightPos) : prm.x;
     float ndotl = clamp(dot(normal, toLight), 0.0, 1.0);
-    // Normal offset grows at grazing angles, where acne appears first.
-    vec3 position = v_position + normal * prm.y * (2.0 - ndotl) + toLight * prm.z;
+    // The normal offset is for grazing angles, where acne appears first.
+    float sinAngle = sqrt(1.0 - ndotl * ndotl);
+    vec3 position = v_position + normal * (extra.z * texel * sinAngle) + toLight * (extra.y * texel);
     int view = int(prm.w) + (isPoint ? cubeFace(v_position - lightPos) : 0);
-    float lit = sampleShadowView(view, position, prm.x * (2.0 - ndotl));
-    return mix(1.0, lit, u_shadowExtra[slot].x);
+    float lit = sampleShadowView(view, position, 0.0);
+    return mix(1.0, lit, extra.x);
 }
 
 vec3 getFinalNormal(vec2 uv) {
@@ -193,7 +199,7 @@ vec3 applySpotLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal, float 
     
     vec3 diffuse = baseColor * intensities.x;
     vec3 specular = vec3(1.0) * intensities.y;
-    float shadow = shadowFactor(u_spotColor[index].w, normal, lightDir, vec3(0.0), false);
+    float shadow = shadowFactor(u_spotColor[index].w, normal, lightDir, u_spotPosition[index].xyz, false);
 
     return (diffuse + specular) * u_spotColor[index].rgb * attenuation * coneFactor * shadow;
 }

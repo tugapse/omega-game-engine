@@ -8,7 +8,7 @@ import {
 import { EntityType } from '../src/enums/entity-type.enum';
 
 const light = (entityType: EntityType, position: number[], extra: object = {}) => ({
-  entityType, castShadows: true, shadowBias: 0.1, normalBias: 0.05, range: 10,
+  entityType, castShadows: true, shadowDepthBias: 0.5, shadowNormalBias: 1, range: 10,
   transform: { worldPosition: vec3.fromValues(position[0], position[1], position[2]) },
   direction: vec3.fromValues(0, -1, 0.2), toLightDirection: vec3.fromValues(0, -1, 0),
   coneAngles: { inner: 20, outer: 30 }, ...extra,
@@ -68,17 +68,20 @@ describe('directionalMatrix', () => {
 });
 
 describe('packShadows', () => {
-  it('turns world-space bias into depth units for the directional light and into a light offset for others', () => {
+  it('packs the texel size (per unit of distance for perspective views) and the biases in texels', () => {
     const sun = light(EntityType.LIGHT_DIRECTIONAL, [0, 50, 0]);
     const spot = light(EntityType.LIGHT_SPOT, [0, 5, 0]);
     const plan = planShadows([sun, spot], vec3.create(), { directionalDistance: 60 });
     const data = packShadows(plan, true);
     const params = (slot: number) => Array.from(data.slice((SHADOWS_LAYOUT.params + slot) * 4, (SHADOWS_LAYOUT.params + slot) * 4 + 4));
-    expect(params(0)[0]).toBeCloseTo(0.1 / 180);
-    expect(params(0)[2]).toBe(0);
-    expect(params(1)[0]).toBe(0);
-    expect(params(1)[2]).toBeCloseTo(0.1);
+    expect(params(0)[0]).toBeCloseTo(120 / 2048); // ortho box 120 units over 2048 texels
+    expect(params(0)[1]).toBe(0);
+    expect(params(1)[0]).toBeCloseTo((2 * Math.tan((62 * Math.PI) / 360)) / 1024); // fov = outer cone * 2 + 2
+    expect(params(1)[1]).toBe(1);
     expect(params(1)[3]).toBe(1); // first view of the spot
+    const extra = (slot: number) => Array.from(data.slice((SHADOWS_LAYOUT.extra + slot) * 4, (SHADOWS_LAYOUT.extra + slot) * 4 + 3));
+    expect(extra(1)[1]).toBe(0.5);
+    expect(extra(1)[2]).toBe(1);
     expect(data.length / 4).toBe(SHADOWS_LAYOUT.slots);
     expect(SHADOWS_LAYOUT.slots).toBe(4 * MAX_SHADOW_VIEWS + MAX_SHADOW_VIEWS + 2 * MAX_SHADOW_SLOTS + 1);
   });
