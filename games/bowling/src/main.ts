@@ -7,12 +7,13 @@ import {
 } from '../../../src';
 import { bindSwipe } from './controls';
 import { GyroThrow } from './gyro';
-import { BowlingGame } from './scoring';
+import { Match, MAX_PLAYERS } from './match';
+import { BowlerRig, buildBowler, RELEASE_TIME } from './bowler';
 import {
   allStill, BALL, buildLane, isPinDown, LANE, LaneEntities, rackPins, removePin, resetBall, standingPins,
   ThrowParams, throwBall,
 } from './lane';
-import { dressLane, makeAimGuide, makeSweepBar } from './look';
+import { BowlerLook, dressBowler, dressLane, makeAimGuide, makeSweepBar, SHIRTS } from './look';
 import { ReplayRecorder } from './replay';
 import { BackgroundMusic } from './music';
 import { BowlingSound, forceToGain } from './sound';
@@ -30,11 +31,28 @@ const soundButton = document.getElementById('sound') as HTMLButtonElement;
 const musicButton = document.getElementById('music') as HTMLButtonElement;
 const replayTag = document.getElementById('replay-tag')!;
 const trailCanvas = document.getElementById('trail') as HTMLCanvasElement;
+const setupPanel = document.getElementById('setup')!;
+const othersList = document.getElementById('others')!;
+const turnBanner = document.getElementById('turn')!;
 const trail2d = trailCanvas.getContext('2d')!;
 
-type State = 'loading' | 'aim' | 'rolling' | 'settling' | 'result' | 'replay' | 'sweep' | 'over';
+type State = 'loading' | 'setup' | 'aim' | 'approach' | 'rolling' | 'settling' | 'result' | 'replay' | 'sweep' | 'over';
 let state: State = 'loading';
-let game = new BowlingGame();
+let match = Match.withPlayers(1);
+/** The current player's game. */
+const game = () => match.player.game;
+/** The roll just scored passed the turn to the next player. */
+let turnPassed = false;
+/** The player whose scoreboard is shown: the one who just bowled, until the turn changes hands. */
+let shown = 0;
+/** Each player's spot and aim, kept between their turns. */
+let spots: { x: number; aim: number }[] = [];
+let bowler: BowlerRig;
+let bowlerLook: BowlerLook;
+/** Where the held ball is at the release, relative to the bowler's root (the bowler stands so it lands at the ball's spot). */
+const releaseOffset = vec3.create();
+/** The throw chosen by the swipe, bowled when the arm reaches the release. */
+let pendingThrow: ThrowParams | null = null;
 /** Pins standing when the current roll started. */
 let standingBefore: number[] = [];
 let wentInGutter = false;
@@ -112,11 +130,39 @@ function setState(next: State): void {
   result.classList.toggle('show', next === 'result' || next === 'over');
   result.classList.toggle('over', next === 'over');
   replayTag.classList.toggle('show', next === 'replay');
+  setupPanel.classList.toggle('show', next === 'setup');
   if (next === 'aim') {
-    const n = game.next!;
-    frameInfo.textContent = `Frame ${n.frame + 1} · ${n.roll + 1}.º lançamento`;
+    const n = game().next!;
+    const who = match.players.length > 1 ? `${match.player.name} · ` : '';
+    frameInfo.textContent = `${who}Frame ${n.frame + 1} · ${n.roll + 1}.º lançamento`;
+    readyBowler();
   }
   placeAimGuide();
+}
+
+/** The bowler at the start of the approach, ball in hand, behind the ball's spot. */
+function readyBowler(): void {
+  if (!bowler) return;
+  bowler.root.transform.setLocalPosition(ballX - releaseOffset[0], 0, BALL.start[2] - releaseOffset[2]);
+  bowler.animator.play('Idle', { loop: true });
+  bowlerLook?.setVisible(true);
+  bowler.ball.show = true;
+  lane.ball.show = false;
+}
+
+/** The arm reached the release: the real ball takes over from the one in the hand. */
+function release(): void {
+  const t = pendingThrow!;
+  pendingThrow = null;
+  bowler.root.transform.updateMatrices();
+  const p = bowler.ball.transform.worldPosition;
+  lane.ballBody.teleport(vec3.fromValues(ballX, Math.max(p[1], BALL.radius + 0.002), BALL.start[2]), [0, 0, 0, 1]);
+  bowler.ball.show = false;
+  lane.ball.show = true;
+  throwBall(lane, t);
+  recorder.clear();
+  rollTime = 0;
+  setState('rolling');
 }
 
 /** The guide sits in front of the ball while aiming, and under the floor otherwise. */
@@ -144,16 +190,17 @@ function describeThrow(t: ThrowParams, angle: number): string {
   return `${(t.speed * 3.6).toFixed(0)} km/h · ${dir} · ${hook}`;
 }
 
+/** A throw from the swipe (or keys, or the gyroscope): the bowler walks up and releases it. */
 function bowl(t: ThrowParams): void {
   if (state !== 'aim') return;
   standingBefore = standingPins(lane);
   wentInGutter = false;
   const angle = Math.max(-0.1, Math.min(0.1, aimAngle + t.angle));
   throwInfo.textContent = describeThrow(t, angle);
-  throwBall(lane, { ...t, angle });
-  recorder.clear();
-  rollTime = 0;
-  setState('rolling');
+  pendingThrow = { ...t, angle };
+  spots[match.current] = { x: ballX, aim: aimAngle };
+  bowler.animator.play('Throw', { loop: false });
+  setState('approach');
 }
 
 function moveBall(dx: number): void {
@@ -161,6 +208,7 @@ function moveBall(dx: number): void {
   const limit = LANE.halfWidth - BALL.radius;
   ballX = Math.max(-limit, Math.min(limit, ballX + dx));
   resetBall(lane, ballX);
+  bowler.root.transform.setLocalPosition(ballX - releaseOffset[0], 0, BALL.start[2] - releaseOffset[2]);
   placeAimGuide();
 }
 
@@ -172,6 +220,7 @@ function turnAim(da: number): void {
 
 /** Taps: aim (or a motion throw) while aiming, otherwise continue. */
 function tap(x: number, y: number): void {
+  if (state === 'setup' || state === 'approach') return;
   if (state === 'replay') { endReplay(); return; }
   if (state !== 'aim') { advance(); return; }
   const motion = gyro.enabled ? gyro.release() : null;
@@ -226,12 +275,13 @@ function endReplay(): void {
 /** After a result (tap or timeout): sweep and set up the next roll, or start a new game. */
 function advance(): void {
   if (state === 'result') {
-    if (game.isOver) {
-      result.innerHTML = `Fim do jogo<br><b>${game.score}</b>`;
+    if (match.isOver) {
+      showFinal();
       setState('over');
       return;
     }
-    const fresh = game.next!.freshRack;
+    if (turnPassed) nextPlayer();
+    const fresh = game().next!.freshRack;
     const lifted = fresh ? [] : standingPins(lane).map((index) => {
       const p = lane.pins[index].transform.worldPosition;
       return { index, x: p[0], z: p[2] };
@@ -241,13 +291,59 @@ function advance(): void {
     sound.pinsetter(1.4);
     setState('sweep');
   } else if (state === 'over') {
-    game = new BowlingGame();
-    renderScore();
-    rackPins(lane);
-    resetBall(lane, ballX);
-    showPins();
-    setState('aim');
+    setState('setup');
   }
+}
+
+/** The turn passes: the next player's colours, spot and aim, and a banner. */
+function nextPlayer(): void {
+  turnPassed = false;
+  shown = match.current;
+  const spot = spots[match.current] ?? { x: 0, aim: 0 };
+  ballX = spot.x;
+  aimAngle = spot.aim;
+  bowlerLook.setShirt(match.current);
+  renderScore();
+  turnBanner.textContent = `Vez de ${match.player.name}`;
+  turnBanner.style.setProperty('--shirt', cssColor(SHIRTS[match.current]));
+  turnBanner.classList.remove('show');
+  void turnBanner.offsetWidth; // restart the animation
+  turnBanner.classList.add('show');
+}
+
+const cssColor = (c: number[]) => `rgb(${c.map((x) => Math.round(x * 255)).join(', ')})`;
+
+/** A new match for `count` players, from the start screen. */
+function choosePlayers(count: number): void {
+  if (state !== 'setup') return;
+  unlockAudio();
+  try { localStorage.setItem('bowling.players', String(count)); } catch { /* no storage */ }
+  match = Match.withPlayers(count);
+  spots = match.players.map(() => ({ x: 0, aim: 0 }));
+  turnPassed = false;
+  shown = 0;
+  ballX = 0;
+  aimAngle = 0;
+  bowlerLook.setShirt(0);
+  scoreboard.replaceChildren();
+  renderScore();
+  rackPins(lane);
+  resetBall(lane, ballX);
+  showPins();
+  setState('aim');
+}
+
+/** The end of the match: the score, or the ranking for several players. */
+function showFinal(): void {
+  if (match.players.length === 1) {
+    result.innerHTML = `Fim do jogo<br><b>${match.player.game.score}</b>`;
+    return;
+  }
+  const rows = match.ranking().map((p, i) => {
+    const colour = cssColor(SHIRTS[match.players.indexOf(p)]);
+    return `<li><i style="background:${colour}"></i>${i === 0 ? '🏆 ' : ''}${p.name}<b>${p.game.score}</b></li>`;
+  }).join('');
+  result.innerHTML = `Fim do jogo<ol class="ranking">${rows}</ol>`;
 }
 
 const smooth = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
@@ -304,8 +400,13 @@ function renderScore(): void {
       scoreboard.appendChild(frame);
     }
   }
-  const next = game.next;
-  game.frames().forEach((view, f) => {
+  const player = match.players[shown];
+  const next = player.game.next;
+  scoreboard.style.setProperty('--shirt', cssColor(SHIRTS[shown]));
+  othersList.innerHTML = match.players.length > 1 ? match.players.map((p, i) => (
+    `<span class="${i === shown ? 'me' : ''}"><i style="background:${cssColor(SHIRTS[i])}"></i>${p.name} <b>${p.game.score}</b></span>`
+  )).join('') : '';
+  player.game.frames().forEach((view, f) => {
     const el = scoreboard.children[f] as HTMLElement;
     el.querySelectorAll('span').forEach((box, k) => { box.textContent = view.marks[k] ?? ''; });
     (el.querySelector('.total') as HTMLElement).textContent = view.total === null ? '' : String(view.total);
@@ -383,9 +484,9 @@ function update(dt: number): void {
   } else if (state === 'settling') {
     if ((stateTime > 1.5 && allStill(lane)) || stateTime > 5) {
       showPins();
-      const before = game.next!;
+      const before = game().next!;
       const pins = standingBefore.filter((i) => isPinDown(lane, i)).length;
-      game.roll(pins);
+      turnPassed = match.roll(pins);
       renderScore();
       const strike = before.freshRack && pins === 10;
       const spare = !strike && !before.freshRack && pins === before.pinsLeft;
@@ -401,6 +502,8 @@ function update(dt: number): void {
     if (stateTime > (replayNext ? 1.3 : 1.8)) {
       if (replayNext) { replayNext = false; startReplay(); } else advance();
     }
+  } else if (state === 'approach') {
+    if (bowler.animator.time >= RELEASE_TIME) release();
   } else if (state === 'replay') {
     updateReplay(dt);
   } else if (state === 'sweep') {
@@ -410,15 +513,23 @@ function update(dt: number): void {
 
   // Camera: behind the ball when aiming, following it down the lane, then on the pins.
   const target = vec3.create(), aimAt = vec3.create();
-  if (state === 'aim' || state === 'loading') {
-    vec3.set(target, ballX * 0.6, 1.3, 2.4);
-    vec3.set(aimAt, ballX * 0.3, 0, -12);
+  if (state === 'aim' || state === 'loading' || state === 'setup') {
+    // Behind and above the bowler's right shoulder, the ball's line in view.
+    vec3.set(target, ballX * 0.7 + 0.45, 2.35, BALL.start[2] - releaseOffset[2] + 3.4);
+    vec3.set(aimAt, ballX * 0.35 + 0.1, 0.1, -11);
+  } else if (state === 'approach' || (state === 'rolling' && rollTime < 0.5)) {
+    // Walking up with the bowler, and a moment on the follow-through.
+    const hips = bowler.bones.get('Hips')!.transform.worldPosition;
+    vec3.set(target, ballX * 0.6 + 0.3, 1.9, hips[2] + 3.0);
+    vec3.set(aimAt, ballX * 0.3, 0.1, -12);
   } else if (state === 'rolling' && recorder.impactTime !== null) {
     // At impact: a cut to a low, close view of the pins.
     vec3.set(target, 0.25, 0.55, -16.5);
     vec3.set(aimAt, 0, 0.15, -18.6);
   } else if (state === 'rolling') {
-    vec3.set(target, ball[0] * 0.5, 0.9, Math.max(ball[2] + 2.8, -14.8));
+    // High over the bowler's follow-through at first, down behind the ball as it goes.
+    const near = Math.min(1, Math.max(0, (ball[2] + 5) / 4.75));
+    vec3.set(target, ball[0] * 0.5 + 0.3 * near, 0.9 + 1.0 * near, Math.max(ball[2] + 2.8, -14.8));
     vec3.set(aimAt, ball[0] * 0.3, 0.1, Math.max(ball[2] - 5, -18.8));
   } else if (state === 'replay') {
     // Fixed beside the deck on the pins, turning a little with the ball.
@@ -429,9 +540,11 @@ function update(dt: number): void {
     vec3.set(aimAt, 0, 0.1, -18.7);
   }
   const cut = state === 'rolling' && recorder.impactTime !== null && rollTime - recorder.impactTime < 0.05;
-  const k = cut ? 1 : 1 - Math.exp(-dt * (state === 'rolling' ? 8 : state === 'replay' ? 4 : state === 'aim' ? 6 : 3));
+  const k = cut ? 1 : 1 - Math.exp(-dt * (state === 'rolling' ? 8 : state === 'replay' ? 4 : state === 'aim' || state === 'approach' ? 6 : 3));
   vec3.lerp(eye, eye, target, k);
   vec3.lerp(look, look, aimAt, k);
+  // The camera flies past the bowler after the release: hide the figure before it goes through it.
+  if (state === 'rolling' && eye[2] < bowler.bones.get('Hips')!.transform.worldPosition[2] + 1.2) bowlerLook.setVisible(false);
   camera.transform.setLocalPosition(eye[0], eye[1], eye[2]);
   camera.transform.lookAt(look);
 }
@@ -462,7 +575,15 @@ async function start(): Promise<void> {
   scene.addBehaviour(world);
   lane = buildLane(world);
   for (const e of [...lane.blocks.map((b) => b.entity), lane.ball, ...lane.pins]) scene.addEntity(e);
-  await dressLane(gl, scene, lane);
+  const ballLook = await dressLane(gl, scene, lane);
+  bowler = buildBowler();
+  bowlerLook = await dressBowler(gl, scene, bowler, ballLook);
+  // Where the held ball is at the release, so the bowler can stand where that lands on the ball's spot.
+  bowler.animator.play('Throw', { loop: false });
+  bowler.animator.time = RELEASE_TIME;
+  bowler.root.transform.updateMatrices();
+  vec3.copy(releaseOffset, bowler.ball.transform.worldPosition);
+  readyBowler();
   sweepBar = await makeSweepBar(gl, scene);
   sweepBar.transform.setLocalPosition(BAR_REST[0], BAR_REST[1], BAR_REST[2]);
   aimGuide = await makeAimGuide(gl, scene);
@@ -523,8 +644,20 @@ async function start(): Promise<void> {
   // The gyroscope is a nice-to-have, tuned at the end: hidden unless the page has ?gyro.
   if (GyroThrow.available && new URLSearchParams(location.search).has('gyro')) gyroButton.hidden = false;
   gyroButton.addEventListener('click', () => { void toggleGyro(); });
+  setupPanel.querySelectorAll<HTMLButtonElement>('button[data-players]').forEach((b) => {
+    b.addEventListener('click', () => choosePlayers(Number(b.dataset.players)));
+  });
+  let lastCount = 1;
+  try { lastCount = Number(localStorage.getItem('bowling.players')) || 1; } catch { /* no storage */ }
+  setupPanel.querySelector<HTMLButtonElement>(`button[data-players="${Math.min(MAX_PLAYERS, lastCount)}"]`)?.classList.add('last');
   window.addEventListener('keydown', (e) => {
     unlockAudio();
+    if (state === 'setup') {
+      const n = Number(e.key);
+      if (n >= 1 && n <= MAX_PLAYERS) choosePlayers(n);
+      else if (e.key === 'Enter' || e.key === ' ') choosePlayers(Math.min(MAX_PLAYERS, lastCount));
+      return;
+    }
     if (e.key === 'ArrowLeft') moveBall(-0.03);
     else if (e.key === 'ArrowRight') moveBall(0.03);
     else if (e.key === 'a' || e.key === 'A') turnAim(-0.005);
@@ -534,15 +667,15 @@ async function start(): Promise<void> {
       const spin = e.key === 'q' ? 15 : e.key === 'e' ? -15 : 0;
       if (state === 'aim') bowl({ speed: 8, angle: 0, spin });
       else if (state === 'replay') endReplay();
-      else advance();
+      else if (state !== 'approach') advance();
     }
   });
   (window as any).bowling = {
-    lane, world, scene, bowl, advance, aimAt, sound, music, recorder, startReplay, get aimAngle() { return aimAngle; },
-    get game() { return game; }, get state() { return state; },
+    lane, world, scene, bowl, advance, aimAt, sound, music, recorder, startReplay, bowler, choosePlayers,
+    get aimAngle() { return aimAngle; }, get match() { return match; }, get game() { return game(); }, get state() { return state; },
   };
   document.getElementById('loading')!.classList.add('done');
-  setState('aim');
+  setState('setup');
   requestAnimationFrame(frame);
 }
 

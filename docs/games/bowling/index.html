@@ -10,7 +10,27 @@
     canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
     .hud { position: fixed; left: 0; right: 0; pointer-events: none; text-align: center; padding: 0 16px; }
     #top { top: max(10px, env(safe-area-inset-top)); }
-    #score { display: grid; grid-template-columns: repeat(9, 1fr) 1.45fr; max-width: 520px; margin: 0 auto 8px; background: rgba(10, 10, 14, .72); border: 1px solid #3a3530; border-radius: 6px; overflow: hidden; }
+    #score { display: grid; grid-template-columns: repeat(9, 1fr) 1.45fr; max-width: 520px; margin: 0 auto 4px; background: rgba(10, 10, 14, .72); border: 1px solid #3a3530; border-left: 4px solid var(--shirt, #3a3530); border-radius: 6px; overflow: hidden; }
+    #others { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 12px; max-width: 520px; margin: 0 auto 6px; font-size: 12px; color: var(--muted); text-shadow: 0 1px 4px #000; }
+    #others:empty { display: none; }
+    #others span.me { color: var(--fg); font-weight: 600; }
+    #others i, .ranking i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
+    #turn { top: 30%; font-size: 30px; font-weight: 700; color: var(--fg); opacity: 0; text-shadow: 0 2px 12px #000; }
+    #turn.show { animation: turn 1.8s ease-out forwards; }
+    #turn::after { content: ''; display: block; width: 120px; height: 4px; margin: 8px auto 0; border-radius: 2px; background: var(--shirt, var(--accent)); }
+    @keyframes turn { 0% { opacity: 0; transform: translateY(12px); } 15%, 75% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+    .ranking { list-style: none; padding: 6px 14px; margin: 12px auto 0; font-size: 17px; font-weight: 600; color: var(--fg); min-width: 220px; max-width: 280px; text-align: left; text-shadow: none; background: rgba(10, 10, 14, .82); border: 1px solid #3a3530; border-radius: 8px; }
+    .ranking li { display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid #3a3530; }
+    .ranking li:last-child { border-bottom: 0; }
+    #result .ranking b { margin-left: auto; font-size: 20px; color: var(--accent); }
+    #setup { position: fixed; inset: 0; display: none; place-content: center; text-align: center; background: rgba(5, 5, 7, .55); padding: 16px; }
+    #setup.show { display: grid; }
+    #setup h1 { margin: 0 0 4px; font-size: 34px; letter-spacing: .04em; color: var(--accent); text-shadow: 0 2px 14px #000; }
+    #setup p { margin: 0 0 18px; color: var(--muted); }
+    #setup .choices { display: flex; gap: 10px; justify-content: center; }
+    #setup button { font: inherit; font-size: 22px; font-weight: 700; width: 58px; height: 58px; border-radius: 50%; color: var(--fg); background: rgba(10, 10, 14, .8); border: 2px solid #4a4540; cursor: pointer; }
+    #setup button.last { border-color: var(--accent); }
+    #setup button:active { transform: scale(.94); }
     .frame { border-right: 1px solid #3a3530; min-width: 0; }
     .frame:last-child { border-right: 0; }
     .frame.current { background: rgba(255, 207, 90, .14); }
@@ -26,10 +46,10 @@
     #throw-info { font-size: 12px; color: var(--fg); min-height: 1.4em; }
     #trail { pointer-events: none; }
     .pill { position: fixed; right: 12px; font: inherit; font-size: 13px; color: var(--muted); background: rgba(10, 10, 14, .72); border: 1px solid #3a3530; border-radius: 16px; padding: 6px 12px; }
-    #gyro { bottom: max(108px, calc(env(safe-area-inset-bottom) + 84px)); }
+    #gyro { bottom: max(170px, calc(env(safe-area-inset-bottom) + 146px)); }
     #gyro.on { color: #050507; background: var(--accent); border-color: var(--accent); }
-    #sound, #music { top: max(118px, calc(env(safe-area-inset-top) + 108px)); padding: 4px 10px; font-size: 12px; }
-    #music { top: max(150px, calc(env(safe-area-inset-top) + 140px)); }
+    #sound, #music { bottom: max(132px, calc(env(safe-area-inset-bottom) + 108px)); padding: 4px 10px; font-size: 12px; }
+    #music { bottom: max(100px, calc(env(safe-area-inset-bottom) + 76px)); }
     #replay-tag { top: max(190px, calc(env(safe-area-inset-top) + 180px)); font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); opacity: 0; transition: opacity .3s; }
     #replay-tag.show { opacity: 1; animation: blink 1.2s ease-in-out infinite; }
     @keyframes blink { 50% { opacity: .35; } }
@@ -43,7 +63,7 @@
     #result { top: 38%; font-size: 44px; font-weight: 700; color: var(--accent); opacity: 0; transform: scale(.9); transition: opacity .25s, transform .25s; text-shadow: 0 2px 12px #000; }
     #result.show { opacity: 1; transform: scale(1); }
     #result b { font-size: 64px; }
-    #result.over::after { content: 'Toca para jogar outra vez'; display: block; font-size: 14px; font-weight: 400; color: var(--muted); }
+    #result.over::after { content: 'Toca para jogar outra vez'; display: block; margin-top: 10px; font-size: 14px; font-weight: 400; color: var(--fg); text-shadow: 0 1px 6px #000; }
     #loading { position: fixed; inset: 0; display: grid; place-items: center; background: #050507; transition: opacity .4s; }
     #loading.done { opacity: 0; pointer-events: none; }
   </style>
@@ -53,6 +73,7 @@
   <canvas id="trail"></canvas>
   <div class="hud" id="top">
     <div id="score" aria-label="Pontuação"></div>
+    <div id="others" aria-label="Jogadores"></div>
     <div id="row">
     <!-- Pins 7 8 9 10 / 4 5 6 / 2 3 / 1, as seen from the foul line. -->
     <div id="pins" aria-label="Pinos de pé">
@@ -70,6 +91,14 @@
   <button id="music" class="pill">Música: sim</button>
   <div class="hud" id="replay-tag">Repetição</div>
   <div class="hud" id="result"></div>
+  <div class="hud" id="turn"></div>
+  <div id="setup">
+    <h1>Omega Bowling</h1>
+    <p>Quantos jogadores?</p>
+    <div class="choices">
+      <button data-players="1">1</button><button data-players="2">2</button><button data-players="3">3</button><button data-players="4">4</button>
+    </div>
+  </div>
   <div id="loading">A carregar…</div>
   <script type="module" src="game.js"></script>
 </body>
