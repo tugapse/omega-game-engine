@@ -99,6 +99,8 @@ export function buildLane(world: PhysicsWorld): LaneEntities {
   // The pit behind the deck and its back cushion.
   block('pit', [0, -0.45, -20.1], [outer + 0.04, t, 0.7], 0.6);
   block('cushion', [0, 0.3, -20.85], [outer + 0.04, 0.8, 0.05], 0.8, 0.05);
+  // Out of sight under the floor: where swept pins wait until the next rack.
+  block('storage', [0, -3, -10], [2, t, 2], 0.8);
 
   const ball = new SceneEntity('Ball');
   ball.transform.setLocalPosition(BALL.start[0], BALL.start[1], BALL.start[2]);
@@ -139,6 +141,19 @@ export function rackPins(lane: LaneEntities): void {
   });
 }
 
+/** Takes a knocked-down pin off the deck (to the storage shelf under the floor). */
+export function removePin(lane: LaneEntities, index: number): void {
+  const body = lane.pinBodies[index];
+  body.teleport(vec3.fromValues(-1.4 + index * 0.3, -2.9, -10), UPRIGHT);
+  body.setLinearVelocity(ZERO);
+  body.setAngularVelocity(ZERO);
+}
+
+/** The pins still on the deck and standing. */
+export function standingPins(lane: LaneEntities): number[] {
+  return lane.pins.map((_, i) => i).filter((i) => !isPinDown(lane, i));
+}
+
 /** Puts the ball back at the foul line, `x` metres from the centre. */
 export function resetBall(lane: LaneEntities, x = 0): void {
   lane.ballBody.teleport(vec3.fromValues(x, BALL.start[1], BALL.start[2]), UPRIGHT);
@@ -162,13 +177,15 @@ export function throwBall(lane: LaneEntities, t: ThrowParams): void {
   lane.ballBody.setAngularVelocity(vec3.scale(vec3.create(), dir, t.spin));
 }
 
-/** True when the pin is down: tilted more than 45°, off its spot by 10 cm, or off the deck. */
+/**
+ * True when the pin is down: tilted more than 45° or off the deck (gutter,
+ * pit). A pin that slid but still stands counts as standing, as in the rules.
+ */
 export function isPinDown(lane: LaneEntities, index: number): boolean {
   const t = lane.pins[index].transform;
   const p = t.worldPosition;
   const up = vec3.transformQuat(vec3.create(), [0, 1, 0], t.worldRotationQuat);
-  const spot = PIN_SPOTS[index];
-  return up[1] < Math.SQRT1_2 || Math.hypot(p[0] - spot[0], p[2] - spot[2]) > 0.1 || p[1] < -0.03;
+  return up[1] < Math.SQRT1_2 || p[1] < -0.03 || Math.abs(p[0]) > LANE.halfWidth || p[2] < LANE.deckEnd;
 }
 
 export function pinsDown(lane: LaneEntities): number {

@@ -145,6 +145,14 @@ function drawBall(c: CanvasRenderingContext2D, w: number, h: number): void {
   }
 }
 
+/** The pinsetter's sweep bar (no physics: main.ts moves it). */
+export async function makeSweepBar(gl: Gl, scene: Scene): Promise<SceneEntity> {
+  const bar = new SceneEntity('Sweep bar');
+  scene.addEntity(bar);
+  boxVisual(gl, scene, bar, vec3.fromValues(LANE.halfWidth + 0.2, 0.07, 0.012), await material(gl, [0.55, 0.56, 0.6], { specular: 0.7, roughness: 0.3 }));
+  return bar;
+}
+
 /** Gives the lane its meshes and adds the room and the lights to `scene`. */
 export async function dressLane(gl: Gl, scene: Scene, lane: LaneEntities): Promise<void> {
   const laneTex = await canvasTexture(gl, 256, 2048, (c) => drawLane(c, 256, 2048));
@@ -155,6 +163,7 @@ export async function dressLane(gl: Gl, scene: Scene, lane: LaneEntities): Promi
   const wallMat = await material(gl, [0.16, 0.1, 0.2], { specular: 0.05, roughness: 0.9 });
 
   for (const { entity, name, halfExtents } of lane.blocks) {
+    if (name === 'storage') continue;
     const m = name === 'lane' ? darkMat : name.startsWith('gutter') ? gutterMat
       : name === 'approach' ? floorMat : darkMat;
     boxVisual(gl, scene, entity, halfExtents, m);

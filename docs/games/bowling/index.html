@@ -9,8 +9,20 @@
     html, body { margin: 0; height: 100%; background: #050507; color: var(--fg); font: 15px/1.4 system-ui, sans-serif; overflow: hidden; }
     canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
     .hud { position: fixed; left: 0; right: 0; pointer-events: none; text-align: center; padding: 0 16px; }
-    #top { top: max(12px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: flex-start; }
-    #stats { font-size: 12px; color: var(--muted); }
+    #top { top: max(10px, env(safe-area-inset-top)); }
+    #score { display: grid; grid-template-columns: repeat(9, 1fr) 1.45fr; max-width: 520px; margin: 0 auto 8px; background: rgba(10, 10, 14, .72); border: 1px solid #3a3530; border-radius: 6px; overflow: hidden; }
+    .frame { border-right: 1px solid #3a3530; min-width: 0; }
+    .frame:last-child { border-right: 0; }
+    .frame.current { background: rgba(255, 207, 90, .14); }
+    .boxes { display: flex; justify-content: flex-end; height: 17px; }
+    .boxes span { width: 50%; max-width: 17px; font-size: 12px; line-height: 17px; text-align: center; border-left: 1px solid #3a3530; border-bottom: 1px solid #3a3530; }
+    .tenth .boxes span { width: 33.3%; }
+    .tenth .boxes span:first-child { border-left: 0; }
+    .boxes span:empty::before { content: '\00a0'; }
+    .total { font-size: 13px; font-weight: 600; line-height: 19px; text-align: center; min-height: 19px; }
+    #row { display: flex; justify-content: space-between; align-items: flex-start; max-width: 520px; margin: 0 auto; }
+    #side { text-align: right; font-size: 13px; color: var(--muted); }
+    #stats { font-size: 11px; }
     #pins { display: grid; grid-template-columns: repeat(7, 10px); gap: 3px 0; }
     #pins i { width: 10px; height: 10px; border-radius: 50%; background: var(--fg); transition: background .2s; }
     #pins i.down { background: #4a4540; }
@@ -18,7 +30,8 @@
     #hint.hidden { opacity: 0; }
     #result { top: 38%; font-size: 44px; font-weight: 700; color: var(--accent); opacity: 0; transform: scale(.9); transition: opacity .25s, transform .25s; text-shadow: 0 2px 12px #000; }
     #result.show { opacity: 1; transform: scale(1); }
-    #result.show::after { content: 'Toca para continuar'; display: block; font-size: 14px; font-weight: 400; color: var(--muted); }
+    #result b { font-size: 64px; }
+    #result.over::after { content: 'Toca para jogar outra vez'; display: block; font-size: 14px; font-weight: 400; color: var(--muted); }
     #loading { position: fixed; inset: 0; display: grid; place-items: center; background: #050507; transition: opacity .4s; }
     #loading.done { opacity: 0; pointer-events: none; }
   </style>
@@ -26,6 +39,8 @@
 <body>
   <canvas id="view"></canvas>
   <div class="hud" id="top">
+    <div id="score" aria-label="Pontuação"></div>
+    <div id="row">
     <!-- Pins 7 8 9 10 / 4 5 6 / 2 3 / 1, as seen from the foul line. -->
     <div id="pins" aria-label="Pinos de pé">
       <i style="grid-area:4/4"></i>
@@ -33,7 +48,8 @@
       <i style="grid-area:2/2"></i><i style="grid-area:2/4"></i><i style="grid-area:2/6"></i>
       <i style="grid-area:1/1"></i><i style="grid-area:1/3"></i><i style="grid-area:1/5"></i><i style="grid-area:1/7"></i>
     </div>
-    <div id="stats"></div>
+    <div id="side"><div id="frame-info"></div><div id="stats"></div></div>
+    </div>
   </div>
   <div class="hud" id="hint">Arrasta para os lados para te posicionares · desliza para cima para lançar</div>
   <div class="hud" id="result"></div>
