@@ -12,7 +12,9 @@ The source lives here; `npm run build:games` bundles it into
 - `src/music.ts`: background music, a 16-bar lounge bossa sequenced with the engine's SequencerClock and synthesised (keys, vibraphone, bass, brushes).
 - `src/replay.ts`: records the ball and pins every frame and plays them back (strike replays).
 - `src/scoring.ts`: ten-frame scoring.
-- `src/main.ts`: start-up, game states, aiming, pinsetter, camera, HUD. Keys: arrows move, A/D aim, space throws straight, Q/E throw with a left/right hook.
+- `src/match.ts`: one to four players taking turns, a frame each, and the ranking.
+- `src/bowler.ts`: the bowler, a hierarchy of joints with an idle loop and a throw (four steps, slide, release, follow-through) keyed in code and played by the engine's Animator; the hips rise wherever the easing would push a foot through the floor. look.ts gives it its meshes and shirt colours.
+- `src/main.ts`: start-up, the players screen, game states, aiming, the approach and release, pinsetter, camera, HUD. Keys: 1–4 pick the players, arrows move, A/D aim, space throws straight, Q/E throw with a left/right hook.
 - `index.html`: the page and HUD.
 
 From the engine root:

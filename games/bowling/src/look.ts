@@ -5,6 +5,7 @@ import {
   MeshRendererBehaviour, Resources, Scene, SceneEntity, SpherePrimitive, SpotLight, Texture,
 } from '../../../src';
 import { BALL, LANE, LaneEntities, PIN, PIN_SPOTS } from './lane';
+import { BowlerRig, rigEntities } from './bowler';
 
 type Gl = WebGL2RenderingContext;
 
@@ -154,7 +155,7 @@ export async function makeSweepBar(gl: Gl, scene: Scene): Promise<SceneEntity> {
 }
 
 /** Gives the lane its meshes and adds the room and the lights to `scene`. */
-export async function dressLane(gl: Gl, scene: Scene, lane: LaneEntities): Promise<void> {
+export async function dressLane(gl: Gl, scene: Scene, lane: LaneEntities): Promise<{ ballMesh: MeshData; ballMaterial: LitMaterial }> {
   const laneTex = await canvasTexture(gl, 256, 2048, (c) => drawLane(c, 256, 2048));
   const laneMat = await material(gl, [1, 1, 1], { tex: laneTex, specular: 0.9, roughness: 0.15 });
   const gutterMat = await material(gl, [0.18, 0.19, 0.22], { specular: 0.6, roughness: 0.3 });
@@ -179,7 +180,9 @@ export async function dressLane(gl: Gl, scene: Scene, lane: LaneEntities): Promi
   for (const pin of lane.pins) render(gl, pin, pinMesh, pinMat);
 
   const ballTex = await canvasTexture(gl, 256, 128, (c) => drawBall(c, 256, 128));
-  render(gl, lane.ball, new SpherePrimitive(BALL.radius, 32, 16), await material(gl, [1, 1, 1], { tex: ballTex, specular: 1, roughness: 0.05 }));
+  const ballMesh = new SpherePrimitive(BALL.radius, 32, 16);
+  const ballMaterial = await material(gl, [1, 1, 1], { tex: ballTex, specular: 1, roughness: 0.05 });
+  render(gl, lane.ball, ballMesh, ballMaterial);
 
   // The room: side walls, back wall, floor around the lane.
   const room = (name: string, center: number[], half: number[], m: LitMaterial) => {
@@ -216,6 +219,89 @@ export async function dressLane(gl: Gl, scene: Scene, lane: LaneEntities): Promi
   spot('Lane light 1', [0, 3.2, -6], [0, 0, -8], [30, 45], false, 0.8);
   spot('Lane light 2', [0, 3.2, -12], [0, 0, -14], [30, 45], false, 0.8);
   spot('Pin light', [0, 1.6, -17.0], [0, 0.1, -18.8], [28, 42], true, 1.2);
+  return { ballMesh, ballMaterial };
+}
+
+/** Shirt colours, one per player. */
+export const SHIRTS: number[][] = [[0.85, 0.28, 0.17], [0.12, 0.62, 0.6], [0.88, 0.65, 0.15], [0.48, 0.3, 0.77]];
+
+/**
+ * A capsule-like limb hanging down from its joint: radius r0 at the joint,
+ * r1 at length `length`, rounded at both ends.
+ */
+function limb(length: number, r0: number, r1: number): MeshData {
+  const profile: [number, number][] = [];
+  for (let k = 0; k <= 4; k++) {
+    const a = (k / 4) * (Math.PI / 2);
+    profile.push([r0 * Math.sin(a), r0 * Math.cos(a) * 0.8]);
+  }
+  for (let k = 0; k <= 4; k++) {
+    const a = (k / 4) * (Math.PI / 2);
+    profile.push([r1 * Math.cos(a), -length - r1 * Math.sin(a) * 0.8]);
+  }
+  return new LathePrimitive(profile, 12);
+}
+
+/** A piece of the figure: a mesh on a joint, offset and scaled. */
+function part(gl: Gl, scene: Scene, joint: SceneEntity, mesh: MeshData, m: LitMaterial, at: number[] = [0, 0, 0], scale: number[] = [1, 1, 1]): SceneEntity {
+  const e = new SceneEntity(`${joint.name} (mesh)`);
+  e.transform.setParent(joint.transform);
+  e.transform.setLocalPosition(at[0], at[1], at[2]);
+  e.transform.setLocalScale(scale[0], scale[1], scale[2]);
+  render(gl, e, mesh, m);
+  scene.addEntity(e);
+  return e;
+}
+
+/** The dressed bowler: change the shirt (one colour per player), show or hide the figure. */
+export interface BowlerLook {
+  setShirt(player: number): void;
+  setVisible(visible: boolean): void;
+}
+
+/**
+ * Gives the bowler its meshes (simple rounded shapes: torso, head, limbs,
+ * shoes) and the ball in its hand.
+ */
+export async function dressBowler(
+  gl: Gl, scene: Scene, rig: BowlerRig, ball: { ballMesh: MeshData; ballMaterial: LitMaterial },
+): Promise<BowlerLook> {
+  const shirt = await material(gl, SHIRTS[0], { specular: 0.15, roughness: 0.8 });
+  const pants = await material(gl, [0.12, 0.13, 0.17], { specular: 0.1, roughness: 0.8 });
+  const skin = await material(gl, [0.86, 0.64, 0.5], { specular: 0.2, roughness: 0.6 });
+  const hair = await material(gl, [0.12, 0.08, 0.05], { specular: 0.3, roughness: 0.5 });
+  const shoe = await material(gl, [0.85, 0.85, 0.82], { specular: 0.3, roughness: 0.5 });
+  const sole = await material(gl, [0.6, 0.12, 0.1], { specular: 0.2, roughness: 0.6 });
+  const b = (name: string) => rig.bones.get(name)!;
+  for (const e of rigEntities(rig)) scene.addEntity(e);
+  const parts: SceneEntity[] = [];
+  const add = (...args: Parameters<typeof part>) => { parts.push(part(...args)); };
+
+  add(gl, scene, b('Hips'), new LathePrimitive([[0, 0.07], [0.13, 0.06], [0.155, -0.01], [0.14, -0.09], [0, -0.1]], 16), pants, [0, 0, 0], [1, 1, 0.72]);
+  add(gl, scene, b('Spine'), new LathePrimitive([[0, 0.25], [0.15, 0.24], [0.135, 0.12], [0.145, 0], [0, -0.02]], 16), shirt, [0, 0, 0], [1, 1, 0.66]);
+  add(gl, scene, b('Chest'), new LathePrimitive([[0, 0.21], [0.12, 0.2], [0.2, 0.16], [0.19, 0.05], [0.15, -0.02], [0, -0.03]], 16), shirt, [0, 0, 0], [1, 1, 0.62]);
+  add(gl, scene, b('Head'), new LathePrimitive([[0.045, 0.07], [0.05, -0.01]], 10), skin);
+  add(gl, scene, b('Head'), new SpherePrimitive(0.105, 18, 12), skin, [0, 0.15, -0.005], [0.95, 1.05, 1]);
+  add(gl, scene, b('Head'), new SpherePrimitive(0.11, 18, 12), hair, [0, 0.17, 0.012], [0.98, 0.95, 1]);
+  for (const side of ['R', 'L']) {
+    add(gl, scene, b(`Shoulder${side}`), limb(0.31, 0.052, 0.042), shirt);
+    add(gl, scene, b(`Elbow${side}`), limb(0.27, 0.04, 0.032), skin);
+    add(gl, scene, b(`Hand${side}`), new SpherePrimitive(0.045, 12, 8), skin, [0, -0.04, 0], [0.8, 1.2, 0.6]);
+    add(gl, scene, b(`Hip${side}`), limb(0.44, 0.078, 0.058), pants);
+    add(gl, scene, b(`Knee${side}`), limb(0.44, 0.056, 0.042), pants);
+    add(gl, scene, b(`Foot${side}`), new CubePrimitive(2), shoe, [0, -0.025, -0.055], [0.05, 0.035, 0.12]);
+    add(gl, scene, b(`Foot${side}`), new CubePrimitive(2), sole, [0, -0.055, -0.055], [0.052, 0.006, 0.122]);
+  }
+  render(gl, rig.ball, ball.ballMesh, ball.ballMaterial);
+  return {
+    setShirt(player: number) {
+      const c = SHIRTS[player % SHIRTS.length];
+      shirt.color = new Color(c[0], c[1], c[2], 1);
+    },
+    setVisible(visible: boolean) {
+      for (const p of parts) p.show = visible;
+    },
+  };
 }
 
 /**
