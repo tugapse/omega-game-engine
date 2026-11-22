@@ -18,3 +18,4 @@ export * from './resources/resource-loader';
 export * from './resources/resource-manager';
 export * from './resources/resources';
 export * from './resources/builtin-textures';
+export * from './pointer'

@@ -9,6 +9,9 @@
   - `RigidBodyBehaviour`: dynamic, kinematic (follows its entity's transform) or fixed; mass, damping, CCD, gravity scale, sleeping; velocities, impulses, forces, `teleport`.
   - `ColliderBehaviour`: sphere, box, capsule, cylinder, convex hull and triangle mesh shapes, scaled by the entity; friction, restitution, density or mass, sensors, per-collider `onContact`. Colliders on child entities join the parent's body (compound bodies); with no body they are fixed.
   - `PhysicsBackend` / `PhysicsBackendWorld`: the interface a physics engine implements. `RapierBackend` wraps Rapier 3D (`@dimforge/rapier3d-compat`, an optional peer dependency): the game passes the module in (`await RapierBackend.load(RAPIER)`), so the engine never loads the WebAssembly itself.
+- `Pointer`: touch, pen and mouse input through pointer events (several pointers, a short position history, `velocity()` for swipes, `onDown` / `onMove` / `onUp`). The canvas gets `touch-action: none`.
+- `LathePrimitive`: a surface of revolution from a [radius, height] profile (smooth normals, UV v along the profile, optional partial sweep).
+- Games: `games/<name>/` holds a game's source and `npm run build:games` bundles it into `docs/games/<name>/` for GitHub Pages. First game: Omega Bowling (phase 0: lane, ball, ten pins, swipe to bowl). `build-docs` no longer empties `docs/`.
 
 ## 5.0.0 (2026-11-21)
 
