@@ -93,7 +93,8 @@ export function buildLane(world: PhysicsWorld): LaneEntities {
     block(`gutter-${s}`, [side * (hw + gw / 2), -gd - t, deckEnd / 2], [gw / 2, t, -deckEnd / 2], 0.3);
     block(`divider-${s}`, [side * (outer + 0.02), 0.04, deckEnd / 2 + 0.5], [0.02, 0.12, -deckEnd / 2 - 0.5], 0.3);
     // Kickbacks: the tall side walls around the pin deck.
-    block(`kickback-${s}`, [side * (outer + 0.02), 0.35, -19.1], [0.02, 0.43, 1.6], 0.3, 0.3);
+    // Down to the pit floor, so nothing rolls out under them.
+    block(`kickback-${s}`, [side * (outer + 0.02), 0.14, -19.1], [0.02, 0.64, 1.6], 0.3, 0.3);
   }
   // The pit behind the deck and its back cushion.
   block('pit', [0, -0.45, -20.1], [outer + 0.04, t, 0.7], 0.6);
