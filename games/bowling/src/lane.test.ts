@@ -84,4 +84,9 @@ describe('bowling lane', () => {
     // A faster ball has less time on the dry boards, so it hooks less.
     expect(Math.abs(path({ speed: 9, angle: 0, spin: 20 }, [-18]).x[0])).toBeLessThan(Math.abs(left.x[1]));
   });
+
+  it('a hook from the right into the pocket (between pins 1 and 3) is a strike', () => {
+    const { down } = bowl({ speed: 8, angle: 0, spin: 10 }, 0.3);
+    expect(down).toBe(10);
+  });
 });
