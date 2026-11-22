@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Omega Bowling</title>
+  <style>
+    :root { color-scheme: dark; --fg: #f3eee6; --muted: #b9b0a4; --accent: #ffcf5a; }
+    html, body { margin: 0; height: 100%; background: #050507; color: var(--fg); font: 15px/1.4 system-ui, sans-serif; overflow: hidden; }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+    .hud { position: fixed; left: 0; right: 0; pointer-events: none; text-align: center; padding: 0 16px; }
+    #top { top: max(12px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: flex-start; }
+    #stats { font-size: 12px; color: var(--muted); }
+    #pins { display: grid; grid-template-columns: repeat(7, 10px); gap: 3px 0; }
+    #pins i { width: 10px; height: 10px; border-radius: 50%; background: var(--fg); transition: background .2s; }
+    #pins i.down { background: #4a4540; }
+    #hint { bottom: max(24px, env(safe-area-inset-bottom)); color: var(--muted); transition: opacity .3s; }
+    #hint.hidden { opacity: 0; }
+    #result { top: 38%; font-size: 44px; font-weight: 700; color: var(--accent); opacity: 0; transform: scale(.9); transition: opacity .25s, transform .25s; text-shadow: 0 2px 12px #000; }
+    #result.show { opacity: 1; transform: scale(1); }
+    #result.show::after { content: 'Toca para continuar'; display: block; font-size: 14px; font-weight: 400; color: var(--muted); }
+    #loading { position: fixed; inset: 0; display: grid; place-items: center; background: #050507; transition: opacity .4s; }
+    #loading.done { opacity: 0; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <canvas id="view"></canvas>
+  <div class="hud" id="top">
+    <!-- Pins 7 8 9 10 / 4 5 6 / 2 3 / 1, as seen from the foul line. -->
+    <div id="pins" aria-label="Pinos de pé">
+      <i style="grid-area:4/4"></i>
+      <i style="grid-area:3/3"></i><i style="grid-area:3/5"></i>
+      <i style="grid-area:2/2"></i><i style="grid-area:2/4"></i><i style="grid-area:2/6"></i>
+      <i style="grid-area:1/1"></i><i style="grid-area:1/3"></i><i style="grid-area:1/5"></i><i style="grid-area:1/7"></i>
+    </div>
+    <div id="stats"></div>
+  </div>
+  <div class="hud" id="hint">Arrasta para os lados para te posicionares · desliza para cima para lançar</div>
+  <div class="hud" id="result"></div>
+  <div id="loading">A carregar…</div>
+  <script type="module" src="game.js"></script>
+</body>
+</html>
