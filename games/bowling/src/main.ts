@@ -1,17 +1,18 @@
 // Omega Bowling: a ten-frame game on a physics lane, thrown with a swipe.
 import RAPIER from '@dimforge/rapier3d-compat';
-import { vec3 } from 'gl-matrix';
+import { vec2, vec3 } from 'gl-matrix';
 import {
-  Camera, CanvasViewport, DefaultResourceLoader, DependencyManager, Engine, PhysicsWorld, RapierBackend,
+  Camera, CanvasViewport, Pointer, DefaultResourceLoader, DependencyManager, Engine, PhysicsWorld, RapierBackend,
   RenderPipelineSettings, Resources, Scene, ToneMapping,
 } from '../../../src';
 import { bindSwipe } from './controls';
+import { GyroThrow } from './gyro';
 import { BowlingGame } from './scoring';
 import {
   allStill, BALL, buildLane, isPinDown, LANE, LaneEntities, rackPins, removePin, resetBall, standingPins,
   ThrowParams, throwBall,
 } from './lane';
-import { dressLane, makeSweepBar } from './look';
+import { dressLane, makeAimGuide, makeSweepBar } from './look';
 
 const canvas = document.getElementById('view') as HTMLCanvasElement;
 const hint = document.getElementById('hint')!;
@@ -20,6 +21,8 @@ const pinDiagram = document.getElementById('pins')!;
 const stats = document.getElementById('stats')!;
 const frameInfo = document.getElementById('frame-info')!;
 const scoreboard = document.getElementById('score')!;
+const throwInfo = document.getElementById('throw-info')!;
+const gyroButton = document.getElementById('gyro') as HTMLButtonElement;
 
 type State = 'loading' | 'aim' | 'rolling' | 'settling' | 'result' | 'sweep' | 'over';
 let state: State = 'loading';
@@ -30,6 +33,11 @@ let wentInGutter = false;
 /** The sweep in progress: whether it ends with a fresh rack, and the standing pins it lifts. */
 let sweep = { fresh: true, lifted: [] as { index: number; x: number; z: number }[], cleared: false, racked: false };
 let sweepBar: import('../../../src').SceneEntity;
+let aimGuide: import('../../../src').SceneEntity;
+/** Aim, radians from straight down the lane (positive = right); a swipe's own angle adds to it. */
+let aimAngle = 0;
+const MAX_AIM = 0.07;
+const gyro = new GyroThrow();
 const BAR_REST = vec3.fromValues(0, 1.3, -17.75); // above the pin camera's view
 let stateTime = 0;
 let ballX = 0;
@@ -82,13 +90,41 @@ function setState(next: State): void {
     const n = game.next!;
     frameInfo.textContent = `Frame ${n.frame + 1} · ${n.roll + 1}.º lançamento`;
   }
+  placeAimGuide();
+}
+
+/** The guide sits in front of the ball while aiming, and under the floor otherwise. */
+function placeAimGuide(): void {
+  if (!aimGuide) return;
+  aimGuide.transform.setLocalPosition(ballX, state === 'aim' ? 0.012 : -5, BALL.start[2]);
+  aimGuide.transform.setLocalRotation(0, (-aimAngle * 180) / Math.PI, 0);
+}
+
+/** A tap on the lane while aiming points the throw at that spot. */
+function aimAt(x: number, y: number): void {
+  camera.transform.lookAt(look); // keep the view matrix current for the ray
+  const ray = camera.screenToWorldRay(vec2.fromValues(x, y), canvas.clientWidth, canvas.clientHeight);
+  if (ray.direction[1] >= -1e-4) return;
+  const d = -ray.origin[1] / ray.direction[1];
+  const px = ray.origin[0] + ray.direction[0] * d, pz = ray.origin[2] + ray.direction[2] * d;
+  if (pz > BALL.start[2] - 2) return; // too close to the ball to give a direction
+  aimAngle = Math.max(-MAX_AIM, Math.min(MAX_AIM, Math.atan2(px - ballX, BALL.start[2] - pz)));
+  placeAimGuide();
+}
+
+function describeThrow(t: ThrowParams, angle: number): string {
+  const hook = Math.abs(t.spin) < 1 ? 'sem efeito' : `efeito ${t.spin > 0 ? '←' : '→'} ${Math.round((Math.abs(t.spin) / 25) * 100)}%`;
+  const dir = Math.abs(angle) < 0.002 ? 'em frente' : `${angle > 0 ? '→' : '←'} ${((Math.abs(angle) * 180) / Math.PI).toFixed(1)}°`;
+  return `${(t.speed * 3.6).toFixed(0)} km/h · ${dir} · ${hook}`;
 }
 
 function bowl(t: ThrowParams): void {
   if (state !== 'aim') return;
   standingBefore = standingPins(lane);
   wentInGutter = false;
-  throwBall(lane, t);
+  const angle = Math.max(-0.1, Math.min(0.1, aimAngle + t.angle));
+  throwInfo.textContent = describeThrow(t, angle);
+  throwBall(lane, { ...t, angle });
   setState('rolling');
 }
 
@@ -97,7 +133,35 @@ function moveBall(dx: number): void {
   const limit = LANE.halfWidth - BALL.radius;
   ballX = Math.max(-limit, Math.min(limit, ballX + dx));
   resetBall(lane, ballX);
+  placeAimGuide();
 }
+
+function turnAim(da: number): void {
+  if (state !== 'aim') return;
+  aimAngle = Math.max(-MAX_AIM, Math.min(MAX_AIM, aimAngle + da));
+  placeAimGuide();
+}
+
+/** Taps: aim (or a motion throw) while aiming, otherwise continue. */
+function tap(x: number, y: number): void {
+  if (state !== 'aim') { advance(); return; }
+  const motion = gyro.enabled ? gyro.release() : null;
+  if (motion) bowl(motion);
+  else aimAt(x, y);
+}
+
+async function toggleGyro(): Promise<void> {
+  if (gyro.enabled) gyro.disable();
+  else if (!(await gyro.enable().catch(() => false))) {
+    hint.textContent = 'Sem acesso ao giroscópio.';
+    return;
+  }
+  gyroButton.classList.toggle('on', gyro.enabled);
+  hint.textContent = gyro.enabled ? GYRO_HINT : SWIPE_HINT;
+}
+
+const SWIPE_HINT = hint.textContent ?? '';
+const GYRO_HINT = 'Mantém o dedo no ecrã, balança o telemóvel como o braço e larga para lançar · roda o pulso para dar efeito';
 
 /** After a result (tap or timeout): sweep and set up the next roll, or start a new game. */
 function advance(): void {
@@ -262,6 +326,7 @@ async function start(): Promise<void> {
   await dressLane(gl, scene, lane);
   sweepBar = await makeSweepBar(gl, scene);
   sweepBar.transform.setLocalPosition(BAR_REST[0], BAR_REST[1], BAR_REST[2]);
+  aimGuide = await makeAimGuide(gl, scene);
   renderScore();
   scene.setGlRenderingContext(gl);
   engine = new Engine();
@@ -274,16 +339,26 @@ async function start(): Promise<void> {
   settings.applyQuality(q && q in named ? named[q] : RenderPipelineSettings.suggestedQuality(gl));
   scene.isRunning = true;
 
-  bindSwipe(canvas, { onMove: (f) => moveBall(f * 1.5), onThrow: bowl, onTap: advance });
+  bindSwipe(canvas, { onMove: (f) => moveBall(f * 1.5), onThrow: bowl, onTap: tap });
+  Pointer.onDown(() => { if (gyro.enabled && state === 'aim') gyro.hold(); });
+  if (GyroThrow.available && matchMedia('(pointer: coarse)').matches) gyroButton.hidden = false;
+  gyroButton.addEventListener('click', () => { void toggleGyro(); });
   window.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft') moveBall(-0.03);
     else if (e.key === 'ArrowRight') moveBall(0.03);
-    else if (e.key === ' ' || e.key === 'Enter') {
-      if (state === 'aim') bowl({ speed: 8, angle: 0, spin: 0 });
+    else if (e.key === 'a' || e.key === 'A') turnAim(-0.005);
+    else if (e.key === 'd' || e.key === 'D') turnAim(0.005);
+    else if (e.key === ' ' || e.key === 'Enter' || e.key === 'q' || e.key === 'e') {
+      // Space or Enter: straight; Q: hook left; E: hook right.
+      const spin = e.key === 'q' ? 15 : e.key === 'e' ? -15 : 0;
+      if (state === 'aim') bowl({ speed: 8, angle: 0, spin });
       else advance();
     }
   });
-  (window as any).bowling = { lane, world, scene, bowl, advance, get game() { return game; }, get state() { return state; } };
+  (window as any).bowling = {
+    lane, world, scene, bowl, advance, aimAt, get aimAngle() { return aimAngle; },
+    get game() { return game; }, get state() { return state; },
+  };
   document.getElementById('loading')!.classList.add('done');
   setState('aim');
   requestAnimationFrame(frame);

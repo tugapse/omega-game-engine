@@ -72,6 +72,7 @@ export class PhysicsWorld extends EntityBehaviour implements SceneEntityBehaviou
   private readonly colliders = new Map<number, ColliderBehaviour>();
   private readonly contactListeners = new Set<(e: ContactEvent) => void>();
   private readonly forceListeners = new Set<(e: ContactForceEvent) => void>();
+  private readonly stepListeners = new Set<(dt: number) => void>();
 
   constructor(backend: PhysicsBackend, options: PhysicsWorldOptions = {}) {
     super();
@@ -83,7 +84,7 @@ export class PhysicsWorld extends EntityBehaviour implements SceneEntityBehaviou
     this.world = backend.createWorld(this._gravity);
     PhysicsWorld.main ??= this;
     this._serializationIgnoreKeys.push('backend', 'world', 'bodies', 'pendingBodies', 'pendingColliders',
-      'colliders', 'contactListeners', 'forceListeners', 'accumulator');
+      'colliders', 'contactListeners', 'forceListeners', 'stepListeners', 'accumulator');
   }
 
   get gravity(): vec3 {
@@ -108,6 +109,16 @@ export class PhysicsWorld extends EntityBehaviour implements SceneEntityBehaviou
   }
 
   /**
+   * Calls `listener` before every fixed step with the step length, for forces
+   * and impulses that must follow the fixed timestep (custom friction, wind,
+   * buoyancy). Returns a function that unsubscribes.
+   */
+  onBeforeStep(listener: (dt: number) => void): () => void {
+    this.stepListeners.add(listener);
+    return () => this.stepListeners.delete(listener);
+  }
+
+  /**
    * Advances the simulation by `elapsed` seconds (times {@link timeScale}) in
    * fixed steps, then writes the bodies' poses to their entities.
    */
@@ -129,6 +140,7 @@ export class PhysicsWorld extends EntityBehaviour implements SceneEntityBehaviou
   /** Exactly one fixed step, with no interpolation (for tests and replays). */
   stepOnce(): void {
     this.flush();
+    for (const listener of this.stepListeners) listener(this.fixedTimeStep);
     for (const body of this.bodies) {
       if (body.bodyType === RigidBodyType.Kinematic && body.transform) {
         this.world.setKinematicTarget(body._handle, body.transform.worldPosition, body.transform.worldRotationQuat);

@@ -5,13 +5,13 @@
 ### Added
 
 - Physics module (`src/physics`), with Omega's own API and the engine behind it swappable:
-  - `PhysicsWorld`: gravity, fixed steps (1/60 s by default, at most 5 per frame) with interpolated drawing, `raycast`, contact events (`onContact`) and contact forces (`onContactForce`), `timeScale` for slow motion, `stepOnce()` for tests and replays. Add it to a scene with `scene.addBehaviour(world)` to step it every frame, or call `step(elapsed)`.
+  - `PhysicsWorld`: gravity, fixed steps (1/60 s by default, at most 5 per frame) with interpolated drawing, `raycast`, contact events (`onContact`) and contact forces (`onContactForce`), `onBeforeStep` for custom forces on the fixed timestep, `timeScale` for slow motion, `stepOnce()` for tests and replays. Add it to a scene with `scene.addBehaviour(world)` to step it every frame, or call `step(elapsed)`.
   - `RigidBodyBehaviour`: dynamic, kinematic (follows its entity's transform) or fixed; mass, damping, CCD, gravity scale, sleeping; velocities, impulses, forces, `teleport`.
   - `ColliderBehaviour`: sphere, box, capsule, cylinder, convex hull and triangle mesh shapes, scaled by the entity; friction, restitution, density or mass, sensors, per-collider `onContact`. Colliders on child entities join the parent's body (compound bodies); with no body they are fixed.
   - `PhysicsBackend` / `PhysicsBackendWorld`: the interface a physics engine implements. `RapierBackend` wraps Rapier 3D (`@dimforge/rapier3d-compat`, an optional peer dependency): the game passes the module in (`await RapierBackend.load(RAPIER)`), so the engine never loads the WebAssembly itself.
 - `Pointer`: touch, pen and mouse input through pointer events (several pointers, a short position history, `velocity()` for swipes, `onDown` / `onMove` / `onUp`). The canvas gets `touch-action: none`.
 - `LathePrimitive`: a surface of revolution from a [radius, height] profile (smooth normals, UV v along the profile, optional partial sweep).
-- Games: `games/<name>/` holds a game's source and `npm run build:games` bundles it into `docs/games/<name>/` for GitHub Pages. First game: Omega Bowling (a ten-frame game with scoring, a pinsetter sweep and a scoreboard; lane, ball and ten pins on the physics module; swipe to bowl). `build-docs` no longer empties `docs/`.
+- Games: `games/<name>/` holds a game's source and `npm run build:games` bundles it into `docs/games/<name>/` for GitHub Pages. First game: Omega Bowling (a ten-frame game with scoring, a pinsetter sweep and a scoreboard; lane, ball and ten pins on the physics module; swipe to bowl, curve the swipe for a hook that bends on the dry back end, tap the lane to aim; optional motion control with the gyroscope). `build-docs` no longer empties `docs/`.
 
 ## 5.0.0 (2026-11-21)
 

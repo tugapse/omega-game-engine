@@ -9,8 +9,11 @@ export const LANE = {
   halfWidth: 1.0541 / 2,
   /** Foul line to head pin. */
   headPin: -18.29,
-  /** Where the oil ends and the ball starts to grip (hook, phase 2). */
+  /** Where the oil ends and the ball starts to grip and hook. */
   oilEnd: -12.2,
+  /** Ball-on-lane sliding friction on the oil and on the dry back end (see laneFriction). */
+  oilFriction: 0.008,
+  dryFriction: 0.12,
   /** End of the pin deck; the pit is beyond. */
   deckEnd: -19.4,
   gutterWidth: 0.235,
@@ -84,9 +87,9 @@ export function buildLane(world: PhysicsWorld): LaneEntities {
   // Approach, oiled lane, dry lane and pin deck: the top face is y = 0.
   block('approach', [0, -t, 2.3], [outer + 0.6, t, 2.3], 0.4);
   // Lane and pin deck are one slab: the ball catches the seam between two slabs and jumps.
-  // Friction combines as the average: ball 0 + lane 0.1 = 0.05 (oiled); pins 0.4 + lane 0.1 = 0.25.
-  // The dry back end, where the ball grips and hooks, is done in code (phase 2).
-  block('lane', [0, -t, deckEnd / 2], [hw, t, -deckEnd / 2], 0.1);
+  // Friction combines as the average: ball 0 + lane 0 = 0, pins 0.5 + lane 0 = 0.25.
+  // The ball's grip on the lane (oil, then the dry back end) is applied in code: see laneFriction.
+  block('lane', [0, -t, deckEnd / 2], [hw, t, -deckEnd / 2], 0);
   // Gutters, lower than the lane, with dividers outside them.
   for (const side of [-1, 1]) {
     const s = side < 0 ? 'left' : 'right';
@@ -119,14 +122,57 @@ export function buildLane(world: PhysicsWorld): LaneEntities {
     pin.addBehaviour(body);
     for (const part of PIN_PARTS) {
       pin.addBehaviour(Object.assign(new ColliderBehaviour(part.shape), {
-        offset: part.offset, mass: part.mass, friction: 0.4, restitution: 0.7, world, contactForceThreshold: 20,
+        offset: part.offset, mass: part.mass, friction: 0.5, restitution: 0.7, world, contactForceThreshold: 20,
       }));
     }
     pins.push(pin);
     pinBodies.push(body);
   });
   world.flush();
-  return { ball, ballBody, pins, pinBodies, blocks };
+  const lane = { ball, ballBody, pins, pinBodies, blocks };
+  world.onBeforeStep((dt) => laneFriction(lane, dt));
+  return lane;
+}
+
+/** Sliding friction at distance z along the lane: oil, a 1 m blend, then dry. */
+export function frictionAt(z: number): number {
+  const t = Math.min(1, Math.max(0, (LANE.oilEnd + 0.5 - z) / 1));
+  return LANE.oilFriction + (LANE.dryFriction - LANE.oilFriction) * t;
+}
+
+const GRAVITY = 9.81;
+/** Contact point velocity change per unit impulse for a solid sphere: 1/m + R²/I = 3.5/m. */
+const SLIP_PER_IMPULSE = 3.5;
+
+/**
+ * The ball's friction on the lane, one fixed step. The ball's own collider
+ * has no friction; this applies Coulomb friction at the contact point with
+ * the coefficient of the zone it is on. The contact point slides at
+ * v + ω × r: a ball thrown without roll skids and starts to roll, and side
+ * spin makes it slide sideways, so friction pushes it across the lane. On the
+ * oil that push is small; on the dry back end it bends the ball's path (the hook).
+ */
+export function laneFriction(lane: LaneEntities, dt: number): void {
+  const body = lane.ballBody;
+  if (!body.created || body.isSleeping) return;
+  const p = lane.ball.transform.worldPosition;
+  const onLane = p[1] < BALL.radius + 0.004 && p[1] > BALL.radius - 0.02 && Math.abs(p[0]) < LANE.halfWidth
+    && p[2] < 0 && p[2] > LANE.deckEnd;
+  if (!onLane) return;
+  const v = body.getLinearVelocity();
+  const w = body.getAngularVelocity();
+  // Contact point at r = (0, -R, 0): slip = v + ω × r, in the lane plane.
+  const R = BALL.radius;
+  const sx = v[0] + w[2] * R;
+  const sz = v[2] - w[0] * R;
+  const slip = Math.hypot(sx, sz);
+  if (slip < 1e-4) return;
+  // Friction impulse against the slip, no larger than what stops the slip.
+  const j = Math.min(frictionAt(p[2]) * BALL.mass * GRAVITY * dt, (BALL.mass * slip) / SLIP_PER_IMPULSE);
+  const jx = (-sx / slip) * j, jz = (-sz / slip) * j;
+  body.applyImpulse(vec3.fromValues(jx, 0, jz));
+  // Torque r × J with r = (0, -R, 0): (-R·jz, 0, R·jx).
+  body.applyTorqueImpulse(vec3.fromValues(-R * jz, 0, R * jx));
 }
 
 const ZERO = vec3.create();
@@ -166,16 +212,25 @@ export interface ThrowParams {
   speed: number;
   /** Radians from straight down the lane; positive = to the right (+X). */
   angle: number;
-  /** Side spin in rad/s around the direction of travel; positive hooks to the left. */
+  /** Side spin in rad/s around the direction of travel; positive hooks to the left (-X). */
   spin: number;
 }
 
 export function throwBall(lane: LaneEntities, t: ThrowParams): void {
   const dir = vec3.fromValues(Math.sin(t.angle), 0, -Math.cos(t.angle));
   lane.ballBody.setLinearVelocity(vec3.scale(vec3.create(), dir, t.speed));
-  // Side spin: rotation about the direction of travel.
-  lane.ballBody.setAngularVelocity(vec3.scale(vec3.create(), dir, t.spin));
+  // Side spin: rotation about the direction of travel. Spinning clockwise as
+  // seen from behind (about +dir) slides the bottom to the left, so friction
+  // pushes the ball right; a left hook spins the other way.
+  const w = vec3.scale(vec3.create(), dir, -t.spin);
+  // Forward roll: a bowler releases the ball already turning forward (about
+  // the axis to its left), so it skids only a little before it rolls.
+  vec3.scaleAndAdd(w, w, vec3.fromValues(-dir[2], 0, dir[0]), -RELEASE_ROLL * t.speed / BALL.radius);
+  lane.ballBody.setAngularVelocity(w);
 }
+
+/** The fraction of rolling speed the ball has as it leaves the hand. */
+const RELEASE_ROLL = 0.85;
 
 /**
  * True when the pin is down: tilted more than 45° or off the deck (gutter,
