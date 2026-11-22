@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Physics module (`src/physics`), with Omega's own API and the engine behind it swappable:
+  - `PhysicsWorld`: gravity, fixed steps (1/60 s by default, at most 5 per frame) with interpolated drawing, `raycast`, contact events (`onContact`) and contact forces (`onContactForce`), `timeScale` for slow motion, `stepOnce()` for tests and replays. Add it to a scene with `scene.addBehaviour(world)` to step it every frame, or call `step(elapsed)`.
+  - `RigidBodyBehaviour`: dynamic, kinematic (follows its entity's transform) or fixed; mass, damping, CCD, gravity scale, sleeping; velocities, impulses, forces, `teleport`.
+  - `ColliderBehaviour`: sphere, box, capsule, cylinder, convex hull and triangle mesh shapes, scaled by the entity; friction, restitution, density or mass, sensors, per-collider `onContact`. Colliders on child entities join the parent's body (compound bodies); with no body they are fixed.
+  - `PhysicsBackend` / `PhysicsBackendWorld`: the interface a physics engine implements. `RapierBackend` wraps Rapier 3D (`@dimforge/rapier3d-compat`, an optional peer dependency): the game passes the module in (`await RapierBackend.load(RAPIER)`), so the engine never loads the WebAssembly itself.
+
 ## 5.0.0 (2026-11-21)
 
 ### Added
