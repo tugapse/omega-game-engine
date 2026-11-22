@@ -6,20 +6,29 @@ vi.hoisted(() => {
 import { gestureToThrow, THROW } from './controls';
 
 describe('gestureToThrow', () => {
+  const up = (vy: number, dx = 0, dy = -400) => gestureToThrow(0, vy, dx, dy, 800);
   it('ignores slow or downward swipes', () => {
-    expect(gestureToThrow(0, -100, 800)).toBeNull();
-    expect(gestureToThrow(0, 900, 800)).toBeNull();
+    expect(up(-100)).toBeNull();
+    expect(gestureToThrow(0, 900, 0, 300, 800)).toBeNull();
   });
   it('maps speed to screens per second, within the limits', () => {
-    expect(gestureToThrow(0, -2400, 800)!.speed).toBeCloseTo(7.8); // 3 screens/s
-    expect(gestureToThrow(0, -300, 800)!.speed).toBe(THROW.minSpeed);
-    expect(gestureToThrow(0, -20000, 800)!.speed).toBe(THROW.maxSpeed);
+    expect(up(-2400)!.speed).toBeCloseTo(7.8); // 3 screens/s
+    expect(up(-300)!.speed).toBe(THROW.minSpeed);
+    expect(up(-20000)!.speed).toBe(THROW.maxSpeed);
   });
-  it('turns a slanted swipe into a small angle, capped', () => {
-    expect(gestureToThrow(0, -2000, 800)!.angle).toBe(0);
-    const right = gestureToThrow(400, -2000, 800)!.angle;
-    expect(right).toBeGreaterThan(0);
-    expect(right).toBeLessThan(0.03);
-    expect(gestureToThrow(-5000, -1000, 800)!.angle).toBe(-THROW.maxAngle);
+  it('throws straight for swipes near straight up, whatever the release does', () => {
+    const tan = (deg: number) => Math.tan((deg * Math.PI) / 180) * 400;
+    expect(up(-2000, tan(10))!.angle).toBe(0);
+    expect(up(-2000, -tan(10))!.angle).toBe(0);
+    // A sideways flick at release does not count: only the whole swipe does.
+    expect(gestureToThrow(3000, -2000, 0, -400, 800)!.angle).toBe(0);
+  });
+  it('grows the angle slowly past the dead zone, capped', () => {
+    const tan = (deg: number) => Math.tan((deg * Math.PI) / 180) * 400;
+    const a20 = up(-2000, tan(20))!.angle;
+    expect(a20).toBeGreaterThan(0);
+    expect(a20).toBeLessThan(0.01); // under 20 cm at the pins
+    expect(up(-2000, -tan(30))!.angle).toBeLessThan(0);
+    expect(up(-2000, tan(60))!.angle).toBeCloseTo(THROW.maxAngle);
   });
 });

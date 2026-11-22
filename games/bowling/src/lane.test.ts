@@ -23,7 +23,6 @@ function bowl(t: ThrowParams, x = 0): { down: number; minZ: number; lane: LaneEn
   for (let i = 0; i < 12 * 120; i++) {
     world.stepOnce();
     minZ = Math.min(minZ, lane.ball.transform.worldPosition[2]);
-    if (i > 240 && allStill(lane)) break;
   }
   return { down: pinsDown(lane), minZ, lane };
 }
@@ -42,6 +41,7 @@ describe('bowling lane', () => {
     expect(down).toBeGreaterThanOrEqual(6);
     expect(minZ).toBeLessThan(LANE.deckEnd); // reached the pit
     expect(lane.ball.transform.worldPosition[1]).toBeLessThan(0); // and fell in
+    expect(Math.abs(lane.ball.transform.worldPosition[0])).toBeLessThan(0.8); // and stayed in it
   });
 
   it('a gutter ball knocks nothing down', () => {

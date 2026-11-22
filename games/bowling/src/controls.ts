@@ -2,20 +2,33 @@
 import { Pointer, PointerState } from '../../../src';
 import { ThrowParams } from './lane';
 
-export const THROW = { minSpeed: 4, maxSpeed: 10, maxAngle: 0.06 };
+export const THROW = {
+  minSpeed: 4,
+  maxSpeed: 10,
+  /** Largest throw angle, in radians (about 1 m sideways at the pins). */
+  maxAngle: 0.06,
+  /** Swipes within this many degrees of straight up throw straight. */
+  deadZoneDeg: 12,
+  /** A swipe this slanted (degrees) gives the largest angle. */
+  fullAngleDeg: 45,
+};
 
 /**
- * A swipe's release velocity (CSS px/s, y down) to a throw, or null when it
- * was not an upward swipe. `screenHeight` makes it the same on every screen:
- * speed follows screen heights per second.
+ * A swipe to a throw, or null when it was not an upward swipe.
+ * Speed comes from the release velocity (CSS px/s, y down), as screen heights
+ * per second, so it is the same on every screen. Direction comes from the
+ * whole swipe (start to release), not the last moment: a thumb curls
+ * sideways as it lets go. Swipes near straight up throw straight, and the
+ * angle grows slowly past that, so an aimed throw takes a clearly slanted swipe.
  */
-export function gestureToThrow(vx: number, vy: number, screenHeight: number): ThrowParams | null {
-  if (vy > -200) return null;
+export function gestureToThrow(vx: number, vy: number, dx: number, dy: number, screenHeight: number): ThrowParams | null {
+  if (vy > -200 || dy >= 0) return null;
   const screensPerSecond = -vy / Math.max(1, screenHeight);
   const speed = Math.min(THROW.maxSpeed, Math.max(THROW.minSpeed, 3 + 1.6 * screensPerSecond));
-  // A tenth of the swipe's angle, so a slanted swipe still stays on the lane.
-  const angle = Math.max(-THROW.maxAngle, Math.min(THROW.maxAngle, Math.atan2(vx, -vy) * 0.12));
-  return { speed, angle, spin: 0 };
+  const deg = (Math.atan2(dx, -dy) * 180) / Math.PI;
+  const past = Math.min(1, Math.max(0, (Math.abs(deg) - THROW.deadZoneDeg) / (THROW.fullAngleDeg - THROW.deadZoneDeg)));
+  const angle = Math.sign(deg) * past ** 1.5 * THROW.maxAngle;
+  return { speed, angle: angle || 0, spin: 0 };
 }
 
 export interface SwipeHandlers {
@@ -45,7 +58,7 @@ export function bindSwipe(canvas: HTMLCanvasElement, handlers: SwipeHandlers): (
     if (m.mode === 'none') { handlers.onTap(); return; }
     if (m.mode !== 'throw') return;
     const v = Pointer.velocity(p, 100);
-    const t = gestureToThrow(v.x, v.y, canvas.clientHeight);
+    const t = gestureToThrow(v.x, v.y, p.x - p.startX, p.y - p.startY, canvas.clientHeight);
     if (t) handlers.onThrow(t);
   });
   return () => { offDown(); offMove(); offUp(); };
