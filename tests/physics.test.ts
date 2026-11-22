@@ -170,4 +170,21 @@ describe('PhysicsWorld', () => {
     world.stepOnce();
     expect(world.raycast(vec3.fromValues(0, 5, 0), vec3.fromValues(0, -1, 0))!.distance).toBeCloseTo(5);
   });
+
+  it('calls step listeners before every fixed step', () => {
+    world = new PhysicsWorld(backend, { gravity: [0, 0, 0], fixedTimeStep: 0.1 });
+    const rb = body(RigidBodyType.Dynamic, { mass: 2 });
+    entity([0, 0, 0], rb, collider({ type: 'sphere', radius: 0.5 }));
+    const steps: number[] = [];
+    const off = world.onBeforeStep((dt) => {
+      steps.push(dt);
+      rb.applyImpulse(vec3.fromValues(1, 0, 0)); // +0.5 m/s per step on 2 kg
+    });
+    world.step(0.3);
+    expect(steps).toEqual([0.1, 0.1, 0.1]);
+    expect(rb.getLinearVelocity()[0]).toBeCloseTo(1.5);
+    off();
+    world.stepOnce();
+    expect(steps.length).toBe(3);
+  });
 });

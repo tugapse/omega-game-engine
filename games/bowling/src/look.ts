@@ -217,3 +217,33 @@ export async function dressLane(gl: Gl, scene: Scene, lane: LaneEntities): Promi
   spot('Lane light 2', [0, 3.2, -12], [0, 0, -14], [30, 45], false, 0.8);
   spot('Pin light', [0, 1.6, -17.0], [0, 0.1, -18.8], [28, 42], true, 1.2);
 }
+
+/**
+ * The aim guide: glowing chevrons on the lane in front of the ball, pointing
+ * where a straight swipe sends it. Built along -Z from the origin; the game
+ * places it at the ball and turns it about Y.
+ */
+export async function makeAimGuide(gl: Gl, scene: Scene): Promise<SceneEntity> {
+  const v: vec3[] = [], n: vec3[] = [], uv: vec2[] = [], idx: number[] = [];
+  const tri = (a: vec3, b: vec3, c: vec3) => {
+    // Counter-clockwise seen from above (normal +Y).
+    const up = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
+    const base = v.length;
+    v.push(a, ...(up > 0 ? [b, c] : [c, b]));
+    n.push([0, 1, 0], [0, 1, 0], [0, 1, 0]);
+    uv.push([0.5, 0.5], [0.5, 0.5], [0.5, 0.5]);
+    idx.push(base, base + 1, base + 2);
+  };
+  // Solid arrowheads, long along the lane: the camera sees the lane at a grazing angle.
+  for (let k = 0; k < 6; k++) {
+    const z = -0.9 - k * 0.85, w = 0.06, len = 0.4;
+    tri([0, 0, z - len], [-w, 0, z], [w, 0, z]);
+  }
+  const guide = new SceneEntity('Aim guide');
+  const glow = await canvasTexture(gl, 4, 4, (c) => { c.fillStyle = '#ff4d0a'; c.fillRect(0, 0, 4, 4); });
+  const m = await material(gl, [0, 0, 0], { specular: 0 });
+  m.emissiveTex = glow;
+  render(gl, guide, new MeshData(v, n, uv, idx), m);
+  scene.addEntity(guide);
+  return guide;
+}

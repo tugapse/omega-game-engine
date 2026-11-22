@@ -6,7 +6,7 @@ vi.hoisted(() => {
   (globalThis as any).WebGL2RenderingContext ??= new Proxy({}, { get: () => 0 });
 });
 import { PhysicsBackend, PhysicsWorld, RapierBackend } from '../../../src';
-import { BALL, buildLane, LaneEntities, LANE, pinsDown, ThrowParams, throwBall, resetBall, allStill } from './lane';
+import { BALL, buildLane, LaneEntities, LANE, pinsDown, removePin, ThrowParams, throwBall, resetBall } from './lane';
 
 let backend: PhysicsBackend;
 let world: PhysicsWorld;
@@ -47,5 +47,41 @@ describe('bowling lane', () => {
   it('a gutter ball knocks nothing down', () => {
     const { down } = bowl({ speed: 7, angle: 0, spin: 0 }, LANE.halfWidth + 0.12);
     expect(down).toBe(0);
+  });
+
+  /** Throws on an empty deck; returns the ball's x as it passes each z in `marks`, and its speed at the last. */
+  function path(t: ThrowParams, marks: number[]): { x: number[]; speed: number } {
+    world = new PhysicsWorld(backend, { fixedTimeStep: 1 / 120 });
+    const lane = buildLane(world);
+    lane.pins.forEach((_, i) => removePin(lane, i));
+    resetBall(lane, 0);
+    throwBall(lane, t);
+    const x: number[] = [];
+    let speed = 0;
+    for (let i = 0; i < 6 * 120 && x.length < marks.length; i++) {
+      world.stepOnce();
+      const p = lane.ball.transform.worldPosition;
+      if (p[2] < marks[x.length]) {
+        x.push(p[0]);
+        speed = Math.hypot(...lane.ballBody.getLinearVelocity());
+      }
+    }
+    return { x, speed };
+  }
+
+  it('rolls a ball without spin straight, keeping most of its speed', () => {
+    const { x, speed } = path({ speed: 7, angle: 0, spin: 0 }, [-6, -18]);
+    expect(Math.abs(x[1])).toBeLessThan(0.005);
+    expect(speed).toBeGreaterThan(6);
+  });
+
+  it('hooks a spinning ball late, on the dry back end, by the spin direction', () => {
+    const left = path({ speed: 7, angle: 0, spin: 20 }, [-12, -18]);
+    expect(Math.abs(left.x[0])).toBeLessThan(0.15); // little drift on the oil
+    expect(left.x[1]).toBeLessThan(-0.3); // most of the hook after it
+    const right = path({ speed: 7, angle: 0, spin: -20 }, [-12, -18]);
+    expect(right.x[1]).toBeCloseTo(-left.x[1], 2);
+    // A faster ball has less time on the dry boards, so it hooks less.
+    expect(Math.abs(path({ speed: 9, angle: 0, spin: 20 }, [-18]).x[0])).toBeLessThan(Math.abs(left.x[1]));
   });
 });
