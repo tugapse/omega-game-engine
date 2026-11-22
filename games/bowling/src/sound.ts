@@ -9,7 +9,7 @@ export function forceToGain(force: number, threshold = 20): number {
 }
 
 export class BowlingSound {
-  private readonly audio: AudioEngine;
+  readonly audio: AudioEngine;
   private readonly ctx: AudioContext;
   private readonly out: GainNode;
   private readonly noise: AudioBuffer;
@@ -36,8 +36,8 @@ export class BowlingSound {
   }
 
   /** Call from a user gesture: browsers start audio suspended. */
-  unlock(): void {
-    void this.audio.initialize().then(() => this.startRoll());
+  unlock(): Promise<void> {
+    return this.audio.initialize().then(() => this.startRoll());
   }
 
   get running(): boolean {

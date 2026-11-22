@@ -14,6 +14,7 @@ import {
 } from './lane';
 import { dressLane, makeAimGuide, makeSweepBar } from './look';
 import { ReplayRecorder } from './replay';
+import { BackgroundMusic } from './music';
 import { BowlingSound, forceToGain } from './sound';
 
 const canvas = document.getElementById('view') as HTMLCanvasElement;
@@ -26,6 +27,7 @@ const scoreboard = document.getElementById('score')!;
 const throwInfo = document.getElementById('throw-info')!;
 const gyroButton = document.getElementById('gyro') as HTMLButtonElement;
 const soundButton = document.getElementById('sound') as HTMLButtonElement;
+const musicButton = document.getElementById('music') as HTMLButtonElement;
 const replayTag = document.getElementById('replay-tag')!;
 const trailCanvas = document.getElementById('trail') as HTMLCanvasElement;
 const trail2d = trailCanvas.getContext('2d')!;
@@ -46,6 +48,8 @@ const MAX_AIM = 0.07;
 const gyro = new GyroThrow();
 const BAR_REST = vec3.fromValues(0, 1.3, -17.75); // above the pin camera's view
 const sound = new BowlingSound();
+const music = new BackgroundMusic(sound.audio);
+let musicOn = true;
 let recorder: ReplayRecorder;
 /** Seconds since the ball was thrown (recording clock). */
 let rollTime = 0;
@@ -309,6 +313,12 @@ function renderScore(): void {
   });
 }
 
+/** Starts the audio on the first gesture, and the music with it if it is on. */
+function unlockAudio(): void {
+  if (sound.running) { if (musicOn && !music.playing) music.start(); return; }
+  void sound.unlock().then(() => { if (musicOn) music.start(); });
+}
+
 /** The ball's rumble: on the lane or in a gutter, silent in the air, the pit or at rest. */
 function updateRollSound(): void {
   const b = lane.ball.transform.worldPosition;
@@ -365,6 +375,7 @@ function update(dt: number): void {
     recorder.record(rollTime);
   }
   updateRollSound();
+  music.duck(state === 'rolling' || state === 'settling' || state === 'replay');
   if (state === 'rolling') {
     const speed = vec3.length(lane.ballBody.getLinearVelocity());
     if (Math.abs(ball[0]) > LANE.halfWidth + 0.03 && ball[2] > LANE.headPin) wentInGutter = true;
@@ -476,7 +487,7 @@ async function start(): Promise<void> {
 
   bindSwipe(canvas, { onMove: (f) => moveBall(f * 1.5), onThrow: bowl, onTap: tap });
   Pointer.onDown((p) => {
-    if (!sound.running && !sound.muted) sound.unlock(); // browsers allow audio only after a gesture
+    unlockAudio(); // browsers allow audio only after a gesture
     if (gyro.enabled && state === 'aim') gyro.hold();
     const r = canvas.getBoundingClientRect();
     trail = state === 'aim' ? [{ x: p.x - r.left, y: p.y - r.top }] : [];
@@ -488,6 +499,15 @@ async function start(): Promise<void> {
     trail.push({ x: p.x - r.left, y: p.y - r.top });
   });
   Pointer.onUp(() => { trailUp = performance.now(); });
+  try { musicOn = localStorage.getItem('bowling.music') !== '0'; } catch { /* no storage */ }
+  const showMusic = () => { musicButton.textContent = musicOn ? 'Música: sim' : 'Música: não'; musicButton.classList.toggle('on', musicOn); };
+  showMusic();
+  musicButton.addEventListener('click', () => {
+    musicOn = !musicOn;
+    if (musicOn) void sound.unlock().then(() => music.start()); else music.stop();
+    try { localStorage.setItem('bowling.music', musicOn ? '1' : '0'); } catch { /* no storage */ }
+    showMusic();
+  });
   let muted = false;
   try { muted = localStorage.getItem('bowling.muted') === '1'; } catch { /* no storage */ }
   const showSound = () => { soundButton.textContent = muted ? 'Som: não' : 'Som: sim'; soundButton.classList.toggle('on', !muted); };
@@ -496,7 +516,7 @@ async function start(): Promise<void> {
   soundButton.addEventListener('click', () => {
     muted = !muted;
     sound.setMuted(muted);
-    if (!muted) sound.unlock();
+    if (!muted) void sound.unlock();
     try { localStorage.setItem('bowling.muted', muted ? '1' : '0'); } catch { /* no storage */ }
     showSound();
   });
@@ -504,7 +524,7 @@ async function start(): Promise<void> {
   if (GyroThrow.available && new URLSearchParams(location.search).has('gyro')) gyroButton.hidden = false;
   gyroButton.addEventListener('click', () => { void toggleGyro(); });
   window.addEventListener('keydown', (e) => {
-    if (!sound.running && !sound.muted) sound.unlock();
+    unlockAudio();
     if (e.key === 'ArrowLeft') moveBall(-0.03);
     else if (e.key === 'ArrowRight') moveBall(0.03);
     else if (e.key === 'a' || e.key === 'A') turnAim(-0.005);
@@ -518,7 +538,7 @@ async function start(): Promise<void> {
     }
   });
   (window as any).bowling = {
-    lane, world, scene, bowl, advance, aimAt, sound, recorder, startReplay, get aimAngle() { return aimAngle; },
+    lane, world, scene, bowl, advance, aimAt, sound, music, recorder, startReplay, get aimAngle() { return aimAngle; },
     get game() { return game; }, get state() { return state; },
   };
   document.getElementById('loading')!.classList.add('done');
