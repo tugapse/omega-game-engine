@@ -34,7 +34,31 @@
     #top[hidden], #map[hidden] { display: none; }
     #load-title { font-size: clamp(24px, 6vw, 40px) !important; padding: 0 16px; }
     #big-chip b { color: var(--gold); letter-spacing: .12em; }
-    #map-button { pointer-events: auto; cursor: pointer; font: inherit; color: var(--fg); }
+    #pause-button { pointer-events: auto; cursor: pointer; font: inherit; font-size: 11px; color: var(--fg); padding: 5px 11px; }
+    #boss-chip { border-color: var(--pink); color: var(--fg); }
+    #boss-chip b { color: var(--pink); letter-spacing: .1em; }
+    #boss-chip[hidden], #pause[hidden], #end[hidden], #title[hidden] { display: none; }
+
+    /* Screens over the game: the title (the bot plays behind it), pause and the end. */
+    .screen { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px; padding: 16px; text-align: center; }
+    .screen .panel { min-width: min(320px, 92vw); max-width: 460px; padding: 20px 22px; background: var(--panel); border: 1px solid var(--teal); border-radius: 20px; box-shadow: 0 0 30px rgba(38, 217, 191, .3); }
+    .screen h2 { margin: 0 0 6px; font-family: var(--display); font-weight: 400; font-size: 30px; color: var(--gold); text-shadow: 0 0 12px rgba(255, 210, 63, .5); }
+    .screen p { margin: 4px 0; color: var(--muted); }
+    .screen .actions { flex-wrap: wrap; }
+    #pause, #end { background: rgba(8, 6, 18, .55); }
+    #title { background: linear-gradient(180deg, rgba(8, 6, 18, .55), rgba(8, 6, 18, .1) 45%, rgba(8, 6, 18, .6)); align-content: space-between; padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom)); }
+    #title h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(44px, 11vw, 92px); line-height: 1; color: var(--teal); text-shadow: 0 0 24px rgba(38, 217, 191, .7), 0 4px 0 #0c0918; }
+    #title .tag { color: var(--fg); text-shadow: 0 1px 4px #000; margin-top: 6px; }
+    #title .bottom { display: grid; gap: 8px; justify-items: center; }
+    #title .bottom button { font-size: 20px; padding: 12px 34px; animation: glow 1.6s ease-in-out infinite alternate; }
+    @keyframes glow { to { box-shadow: 0 0 22px rgba(38, 217, 191, .8); } }
+    #title .keys { font-size: 12px; color: var(--fg); text-shadow: 0 1px 3px #000; opacity: .85; }
+    #end-stats { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 4px; }
+    #end-stats b { font-family: var(--display); font-weight: 400; color: var(--cyan); }
+    .node.locked { opacity: .45; cursor: not-allowed; }
+    #map-head { display: flex; align-items: center; justify-content: center; gap: 12px; position: relative; }
+    #map-head .actions { position: absolute; left: 0; top: 0; margin: 0; }
+    #map-head .actions button { font-size: 12px; padding: 6px 10px; background: transparent; color: var(--fg); }
 
     .actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
     .actions button, .node { font: inherit; color: var(--fg); cursor: pointer; }
@@ -102,20 +126,21 @@
   <canvas id="view"></canvas>
   <div id="top" class="hud">
     <div class="group">
-      <button class="chip" id="map-button" title="Voltar ao mapa (Esc)">☰</button>
+      <button class="chip" id="pause-button" title="Pausa (Esc ou P)">❚❚</button>
       <span class="chip"><b id="level-name">Prado 1</b></span>
       <span class="chip" id="lives-chip" title="Vidas"><i>♥</i><b id="lives">3</b></span>
       <span class="chip" id="coins-chip" title="Moedas"><i>●</i><b id="coins">0</b></span>
       <span class="chip" id="big-chip" title="Moedas grandes"><b id="big">◇◇◇</b></span>
     </div>
     <div class="group">
+      <span class="chip" id="boss-chip" hidden></span>
       <span class="chip" id="score-chip"><b id="score">000000</b></span>
       <span class="chip" id="time-chip" title="Tempo"><i>⏱</i><b id="time">5:00</b></span>
     </div>
   </div>
   <div id="banner" hidden></div>
   <div id="map" hidden>
-    <h1>Omega Run</h1>
+    <div id="map-head"><div class="actions"><button data-act="title">← Início</button></div><h1>Omega Run</h1></div>
     <div id="worlds"></div>
     <p class="hint">Escolhe um nível: setas e Enter, ou toca.</p>
   </div>
@@ -123,6 +148,25 @@
     <div id="pad"><i class="l">◀</i><i class="r">▶</i></div>
     <div id="btn-b" class="btn">B</div>
     <div id="btn-a" class="btn">A</div>
+  </div>
+  <div id="title" class="screen" hidden>
+    <div><h1>Omega Run</h1><p class="tag">Leva o Bit até à bandeira em três mundos.</p></div>
+    <div class="bottom">
+      <div class="actions"><button data-act="start">Jogar</button></div>
+      <p class="keys">Setas para andar · Espaço para saltar · Shift para correr · Esc para pausa</p>
+    </div>
+  </div>
+  <div id="pause" class="screen" hidden>
+    <div class="panel"><h2>Pausa</h2>
+      <div class="actions"><button data-act="resume">Continuar</button><button data-act="retry">Recomeçar</button><button data-act="map">Mapa</button></div>
+    </div>
+  </div>
+  <div id="end" class="screen" hidden>
+    <div class="panel"><h2>Fim!</h2>
+      <p>O Bit venceu a Turbina e chegou ao topo da Torre do Vento.</p>
+      <ul id="end-stats"></ul>
+      <div class="actions"><button data-act="map">Mapa</button><button data-act="title">Início</button></div>
+    </div>
   </div>
   <div id="turn-phone">↻ Vira o telemóvel para veres mais do nível</div>
   <div id="stats" class="hud" hidden></div>

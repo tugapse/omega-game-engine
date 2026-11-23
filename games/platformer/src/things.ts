@@ -9,6 +9,7 @@ import { blockMaterials, canvasTexture, makeEntity, material, render } from './l
 import { Enemy, ItemKind, World } from './world';
 import { PLATFORMS } from './platforms';
 import { THEMES } from './themes';
+import { Boss } from './boss';
 
 type Gl = WebGL2RenderingContext;
 
@@ -143,6 +144,23 @@ export async function dressThings(gl: Gl, scene: Scene, w: World): Promise<Thing
     }
     return g;
   });
+
+  // Gates of a boss arena: glowing bars, shown while their tile is a gate.
+  const barMat = await material(gl, [1, 0.3, 0.6], { glow: await glow('#a01450'), specular: 0.6, roughness: 0.3 });
+  const frameMat = await material(gl, [0.3, 0.3, 0.38], { specular: 0.6, roughness: 0.3 });
+  const gateSpots = [...w.backGates];
+  for (let x = 0; x < level.width; x++) for (let y = 0; y < level.height; y++) if (level.tiles[x][y] === 'gate') gateSpots.push({ x, y });
+  const gates = gateSpots.map((g, i) => {
+    const look = group(scene, `Gate ${i}`);
+    look.root.transform.setLocalPosition(g.x + 0.5, g.y, 0);
+    for (const bx of [-0.3, 0, 0.3]) look.add(gl, cube, barMat, [bx, 0.5, 0], [0.09, 1, 0.09]);
+    look.add(gl, cube, frameMat, [0, 0.03, 0], [1, 0.06, 0.4]);
+    look.show(false);
+    return { look, ...g };
+  });
+
+  // The boss, and its shots.
+  const boss = w.boss ? await bossLook(gl, scene, w.boss, cube, ball, glow) : null;
 
   // The enemies.
   const purple = await material(gl, [0.62, 0.32, 0.9], { specular: 0.5, roughness: 0.35 });
@@ -328,6 +346,8 @@ export async function dressThings(gl: Gl, scene: Scene, w: World): Promise<Thing
         g.root.transform.setLocalPosition(c.x, c.y + Math.sin(time * 2.5 + c.x) * 0.08, 0);
         spin.transform.setLocalRotation(0, time * 120, 0);
       });
+      for (const g of gates) g.look.show(world.level.tiles[g.x][g.y] === 'gate' && near(g.x, view));
+      if (boss && world.boss) boss.place(world.boss, time);
       world.platforms.forEach((p, i) => {
         const g = platformLooks[i];
         const on = p.state !== 'gone' && p.x + p.w > view.left - 2 && p.x < view.right + 2;
@@ -398,6 +418,102 @@ export async function dressThings(gl: Gl, scene: Scene, w: World): Promise<Thing
       for (const c of checkpoints) c.g.show(false);
       for (const b of bigCoins) b.g.show(false);
       for (const g of platformLooks) g.show(false);
+      for (const g of gates) g.look.show(false);
+      boss?.hide();
     },
+  };
+}
+
+/** The boss: Rei Bolota (a crowned slime), Geodo (a rock golem with crystals on its back) or Turbina (a flying drone). */
+async function bossLook(
+  gl: Gl, scene: Scene, b: Boss, cube: MeshData, ball: MeshData, glow: (css: string) => Promise<import('../../../src').Texture>,
+) {
+  const g = group(scene, `Boss ${b.kind}`);
+  const body = makeEntity(scene, 'Boss body', g.root);
+  const white = await material(gl, [1, 1, 1], { specular: 0.2 });
+  const black = await material(gl, [0.05, 0.05, 0.08], { specular: 0.6, roughness: 0.2 });
+  const spin: SceneEntity[] = [];
+  const add = (mesh: MeshData, m: LitMaterial, at: number[], scale: number[], rot?: number[]) => {
+    const e = g.add(gl, mesh, m, at, scale, body);
+    if (rot) e.transform.setLocalRotation(rot[0], rot[1], rot[2]);
+    return e;
+  };
+  if (b.kind === 'king') {
+    const slime = await material(gl, [0.6, 0.28, 0.92], { specular: 0.6, roughness: 0.3 });
+    const gold = await material(gl, [1, 0.78, 0.2], { glow: await glow('#5a3a00'), specular: 0.9, roughness: 0.2 });
+    add(ball, slime, [0, 0.95, 0], [1.15, 0.95, 1]);
+    add(cube, gold, [0, 1.85, 0], [0.9, 0.22, 0.75]);
+    for (const cx of [-0.32, 0, 0.32]) add(cube, gold, [cx, 2.02, 0], [0.18, 0.18, 0.18], [0, 0, 45]);
+    for (const sx of [-1, 1]) {
+      add(ball, white, [sx * 0.32, 1.2, 0.85], [0.22, 0.26, 0.12]);
+      add(ball, black, [sx * 0.3, 1.17, 0.95], [0.1, 0.13, 0.06]);
+      add(cube, black, [sx * 0.33, 1.52, 0.88], [0.4, 0.07, 0.05], [0, 0, sx * -20]);
+      add(ball, black, [sx * 0.55, 0.08, 0.2], [0.3, 0.12, 0.35]);
+    }
+  } else if (b.kind === 'golem') {
+    const rock = await material(gl, [0.42, 0.38, 0.5], { specular: 0.15 });
+    const dark = await material(gl, [0.28, 0.25, 0.35], { specular: 0.15 });
+    const crystal = await material(gl, [0.25, 0.95, 0.9], { glow: await glow('#0d6a64'), specular: 0.9, roughness: 0.15 });
+    const eye = await material(gl, [1, 0.6, 0.2], { glow: await glow('#ff8a20'), specular: 0 });
+    add(cube, rock, [0, 1.0, 0], [1.7, 1.3, 1.2]);
+    add(cube, rock, [0, 1.95, 0.05], [1.0, 0.7, 0.9]);
+    for (const sx of [-1, 1]) {
+      add(cube, dark, [sx * 1.0, 1.0, 0], [0.4, 1.1, 0.5]);
+      add(cube, dark, [sx * 0.45, 0.18, 0], [0.5, 0.36, 0.6]);
+      add(cube, eye, [sx * 0.22, 2.0, 0.5], [0.18, 0.1, 0.05]);
+    }
+    for (const [cx, cy, r] of [[-0.5, 1.75, 25], [0, 2.0, 0], [0.5, 1.75, -25], [-0.3, 1.4, 35], [0.35, 1.45, -30]]) {
+      add(cube, crystal, [cx, cy + 0.3, -0.5], [0.22, 0.8, 0.22], [0, 45, r]);
+    }
+  } else {
+    const metal = await material(gl, [0.75, 0.78, 0.85], { specular: 0.9, roughness: 0.2 });
+    const orange = await material(gl, [1, 0.5, 0.15], { specular: 0.6, roughness: 0.3 });
+    const eye = await material(gl, [1, 0.2, 0.25], { glow: await glow('#ff2030'), specular: 0 });
+    add(ball, metal, [0, 0.4, 0], [1.15, 0.35, 0.9]);
+    add(ball, orange, [0, 0.62, 0], [0.55, 0.38, 0.5]);
+    add(ball, black, [0, 0.42, 0.75], [0.32, 0.2, 0.15]);
+    add(ball, eye, [0, 0.42, 0.85], [0.15, 0.12, 0.08]);
+    for (const sx of [-1, 1]) {
+      add(cube, metal, [sx * 0.75, 0.9, 0], [0.08, 0.5, 0.08]);
+      const pivot = makeEntity(scene, 'Rotor', body);
+      pivot.transform.setLocalPosition(sx * 0.75, 1.17, 0);
+      g.add(gl, cube, black, [0, 0, 0], [1.1, 0.04, 0.16], pivot);
+      spin.push(pivot);
+      add(ball, metal, [sx * 1.05, 0.25, 0], [0.18, 0.18, 0.18]);
+    }
+  }
+  // Shots: shards (golem) or bolts (drone), a few of each, reused.
+  const shardMat = await material(gl, [0.3, 1, 0.95], { glow: await glow('#20b0a8'), specular: 0.9, roughness: 0.1 });
+  const boltMat = await material(gl, [1, 0.85, 0.2], { glow: await glow('#ffb020'), specular: 0.2 });
+  const shots = Array.from({ length: 6 }, (_, i) => {
+    const e = makeEntity(scene, `Boss shot ${i}`);
+    if (b.kind === 'drone') { render(gl, e, ball, boltMat); e.transform.setLocalScale(0.24, 0.24, 0.24); }
+    else { render(gl, e, cube, shardMat); e.transform.setLocalScale(0.6, 0.2, 0.2); }
+    e.show = false;
+    return e;
+  });
+  return {
+    place(boss: Boss, time: number) {
+      const on = boss.state !== 'gone' && !(boss.hurt > 0 && Math.floor(boss.hurt / 0.08) % 2 === 0);
+      g.show(on);
+      const bd = boss.body;
+      g.root.transform.setLocalPosition(bd.x, bd.y + (boss.state === 'down' ? bd.h : 0), 0);
+      let sy = 1;
+      if (boss.state === 'crouch' || boss.state === 'aim') sy = 0.82;
+      else if (boss.state === 'leap') sy = 1.12;
+      else if (boss.kind === 'king' && boss.state === 'walk') sy = 1 + Math.sin(time * 9) * 0.05;
+      body.transform.setLocalScale(1 / Math.sqrt(sy), sy, 1);
+      const yaw = boss.kind === 'drone' ? 0 : boss.dir < 0 ? -40 : 40;
+      g.root.transform.setLocalRotation(0, yaw, boss.state === 'down' ? 180 : boss.kind === 'drone' ? -boss.body.vx * 3 : 0);
+      for (const p of spin) p.transform.setLocalRotation(0, time * 1500, 0);
+      shots.forEach((e, i) => {
+        const s = boss.shots[i];
+        e.show = !!s;
+        if (!s) return;
+        e.transform.setLocalPosition(s.body.x, s.body.y + s.body.h / 2, 0);
+        e.transform.setLocalRotation(boss.kind === 'drone' ? 0 : time * 600, 0, 0);
+      });
+    },
+    hide() { g.show(false); for (const e of shots) e.show = false; },
   };
 }

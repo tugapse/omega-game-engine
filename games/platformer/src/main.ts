@@ -15,7 +15,9 @@ import { clipFor } from './bit';
 import { dressGoal, dressHero, dressLevel, dressWorld, FLAG_BOTTOM, FLAG_TOP, GoalLook, HeroLook, LevelLook } from './look';
 import { STEP } from './physics';
 import { dressThings, ThingsLook } from './things';
-import { BIG_COINS, makeWorld, nextTry, stepWorld, World } from './world';
+import { makeWorld, nextTry, stepWorld, World } from './world';
+import { BOSS_NAME } from './boss';
+import { loadProgress, recordClear, saveProgress, totals, unlocked } from './progress';
 
 const $ = (id: string) => document.getElementById(id)!;
 const canvas = $('view') as HTMLCanvasElement;
@@ -24,7 +26,7 @@ const params = new URLSearchParams(location.search);
 const debug = params.has('debug');
 
 /** map: choosing a level; play; dead: the hero pops up and falls, then the next try; over: no lives left; clear: the flag. */
-type State = 'loading' | 'map' | 'play' | 'dead' | 'over' | 'clear';
+type State = 'loading' | 'map' | 'play' | 'dead' | 'over' | 'clear' | 'pause' | 'end';
 let state: State = 'loading';
 let stateTime = 0;
 
@@ -100,8 +102,15 @@ let autoplay: Bot | null = params.has('auto') ? makeBot() : null;
 /** For measuring: when the last jump was pressed and when the hero left the ground (ms). */
 const timing = { pressed: 0, jumped: 0 };
 
-/** What has been done on each level this session (saving it comes with phase 5). */
-const progress = LEVELS.map(() => ({ done: false, big: Array<boolean>(BIG_COINS).fill(false), best: 0 }));
+/** What has been done on each level, kept in the browser. `?unlock` opens every level. */
+const store = (() => { try { return window.localStorage; } catch { return null; } })();
+const progress = loadProgress(store, LEVELS.length);
+const allOpen = params.has('unlock');
+const isOpen = (i: number) => allOpen || unlocked(progress, i);
+/** The title screen: the bot plays the first level behind it. */
+let demo = false;
+/** The boss arena (columns): from the gate that closes behind Bit to past the gate ahead. */
+let arena: { left: number; right: number } | null = null;
 /** The level being played (index into LEVELS), and the one picked on the map. */
 let current = -1;
 let picked = 0;
@@ -109,11 +118,15 @@ let picked = 0;
 function setState(s: State): void {
   state = s;
   stateTime = 0;
-  banner.hidden = s !== 'over';
+  banner.hidden = s !== 'over' || demo;
   $('map').hidden = s !== 'map';
-  $('top').hidden = s === 'map' || s === 'loading';
-  $('touch').hidden = !touchOn || s === 'map' || s === 'loading';
-  if (s === 'over') {
+  $('pause').hidden = s !== 'pause';
+  $('end').hidden = s !== 'end';
+  $('title').hidden = !demo || s === 'loading' || s === 'map';
+  const playing = s === 'play' || s === 'dead' || s === 'clear' || s === 'over';
+  $('top').hidden = demo || !(playing || s === 'pause');
+  $('touch').hidden = !touchOn || demo || !playing;
+  if (s === 'over' && !demo) {
     banner.innerHTML = `<b>Fim do jogo</b><span>${world.score} pontos</span>
       <div class="actions"><button data-act="retry">Tentar outra vez</button><button data-act="map">Mapa</button></div>`;
   }
@@ -123,16 +136,36 @@ function setState(s: State): void {
 const diamonds = (taken: boolean[]) => taken.map((t) => (t ? '◆' : '◇')).join('');
 
 function showClearBanner(): void {
+  if (demo) { restart(); return; }
   banner.hidden = false;
+  const last = current === LEVELS.length - 1;
   const flag = world.flag ? `<small>Bandeira: +${world.flag.points}</small>` : '';
   const big = world.bigCoins.map((c) => c.taken);
   banner.innerHTML = `<b>Nível completo!</b><span>${world.score} pontos</span>${flag}
     <small class="big">Moedas grandes: <i>${diamonds(big)}</i></small>
-    <div class="actions"><button data-act="next">Continuar</button><button data-act="retry">Repetir</button></div>`;
-  const p = progress[current];
-  p.done = true;
-  p.best = Math.max(p.best, world.score);
-  big.forEach((t, i) => { if (t) p.big[i] = true; });
+    <div class="actions"><button data-act="${last ? 'end' : 'next'}">Continuar</button><button data-act="retry">Repetir</button></div>`;
+  recordClear(progress, current, world.score, big);
+  saveProgress(store, progress);
+}
+
+/** After the last level: the totals, and the way back. */
+function showEnd(): void {
+  const t = totals(progress);
+  $('end-stats').innerHTML = `<li><b>${t.done}/${LEVELS.length}</b> níveis</li><li><b>${t.big}/${t.bigOf}</b> moedas grandes</li><li><b>${t.score}</b> pontos (melhores de cada nível)</li>`;
+  setState('end');
+}
+
+function pause(): void {
+  if (state !== 'play' || demo) return;
+  controls.clear();
+  setState('pause');
+}
+
+function resume(): void {
+  if (state !== 'pause') return;
+  controls.clear();
+  state = 'play';
+  setState('play');
 }
 
 function formatTime(t: number): string {
@@ -141,6 +174,10 @@ function formatTime(t: number): string {
 }
 
 function showHud(): void {
+  const boss = world.boss;
+  const fight = !!boss && boss.state !== 'idle' && boss.hp > 0;
+  $('boss-chip').hidden = !fight;
+  if (fight) $('boss-chip').innerHTML = `${BOSS_NAME[boss!.kind]} <b>${'♥'.repeat(boss!.hp)}</b>`;
   $('big').textContent = diamonds(world.bigCoins.map((c) => c.taken));
   $('lives').textContent = String(world.lives);
   $('coins').textContent = String(world.coinCount);
@@ -160,6 +197,9 @@ function begin(w: World): void {
   deathFall = { y: 0, vy: 0 };
   goalLook.setFlag(1);
   thingsLook.hide();
+  const gates: number[] = [];
+  for (let x = 0; x < w.level.width; x++) for (let y = 0; y < w.level.height; y++) if (w.level.tiles[x][y] === 'gate') gates.push(x);
+  arena = w.backGates.length && gates.length ? { left: w.backGates[0].x, right: Math.max(...gates) + 1 } : null;
   setState('play');
   showHud();
 }
@@ -178,6 +218,7 @@ async function loadLevel(index: number): Promise<void> {
   await loaded(0.1, 'A montar o nível…');
   const w = makeWorld(spec);
   const theme = THEMES[w.level.theme];
+  if (current === index && world && scene) { begin(w); $('loading').classList.add('done'); return; }
   scene?.destroy();
   scene = new Scene();
   scene.name = spec.name;
@@ -212,8 +253,9 @@ function showMap(): void {
       <ol>${wd.levels.map((spec, li) => {
         const i = wi * 3 + li, p = progress[i];
         const name = spec.name.split(' · ')[1] ?? spec.name;
-        return `<li><button class="node${p.done ? ' done' : ''}${i === picked ? ' picked' : ''}" data-level="${i}">
-          <span class="num">${wi + 1}-${li + 1}</span><span class="name">${name}</span>
+        const locked = !isOpen(i);
+        return `<li><button class="node${p.done ? ' done' : ''}${locked ? ' locked' : ''}${i === picked ? ' picked' : ''}" data-level="${i}"${locked ? ' aria-disabled="true"' : ''}>
+          <span class="num">${wi + 1}-${li + 1}</span><span class="name">${locked ? '🔒 ' : ''}${name}</span>
           <span class="big">${diamonds(p.big)}</span>${p.best ? `<span class="best">${p.best}</span>` : ''}</button></li>`;
       }).join('')}</ol>
     </section>`).join('');
@@ -227,7 +269,9 @@ function pick(i: number): void {
 }
 
 function play(i: number): void {
+  if (!isOpen(i)) return;
   picked = i;
+  if (demo) leaveDemo();
   loadLevel(i).catch((err) => { $('load-text').textContent = `Erro: ${err?.message ?? err}`; console.error(err); });
 }
 
@@ -255,7 +299,15 @@ function step(): void {
   const left = cam.x - halfWidth + b.w / 2;
   if (b.x < left) { b.x = left; if (b.vx < 0) b.vx = 0; }
   const ridden = hero.riding >= 0 ? world.platforms[hero.riding] : null;
-  followHero(cam, b, halfWidth, world.level.width, STEP, world.level.start.y + VIEW.above, topRoom, b.h, !!ridden && ridden.dx < 0);
+  const boss = world.boss;
+  const fight = !!arena && !!boss && boss.state !== 'idle' && boss.state !== 'down' && boss.state !== 'gone';
+  followHero(cam, b, halfWidth, world.level.width, STEP, world.level.start.y + VIEW.above, topRoom, b.h, fight || (!!ridden && ridden.dx < 0));
+  if (fight) {
+    // In the boss's arena the camera may go back and forth, but keeps to the arena.
+    const lo = arena!.left + halfWidth, hi = Math.max(lo, arena!.right + 0.5 - halfWidth);
+    cam.x = Math.min(hi, Math.max(lo, cam.x));
+    cam.minX = Math.min(cam.minX, cam.x);
+  }
   if (world.cleared) {
     // Hold on to the pole (or, touching it below the top of its base, stand beside the base).
     const base = world.level.goal.y + 1;
@@ -267,7 +319,7 @@ function step(): void {
 
 function update(dt: number): void {
   stateTime += dt;
-  if (!world || state === 'map' || state === 'loading') return;
+  if (!world || state === 'map' || state === 'loading' || state === 'end') return;
   if (state === 'play') {
     accumulator += dt;
     let n = 0;
@@ -293,7 +345,7 @@ function update(dt: number): void {
     if (stateTime > 0.35) { deathFall.vy -= 40 * dt; deathFall.y += deathFall.vy * dt; }
     if (stateTime > 2) {
       const next = nextTry(world);
-      if (next) begin(next); else setState('over');
+      if (next) begin(next); else if (demo) restart(); else setState('over');
     }
   }
   showHud();
@@ -331,7 +383,7 @@ function frame(now: number): void {
   last = now;
   resize();
   update(dt);
-  engine.update(dt);
+  engine.update(state === 'pause' ? 0 : dt);
   engine.render();
   fpsFrames++; fpsTime += dt;
   if (fpsTime >= 0.5) {
@@ -345,6 +397,27 @@ function loaded(fraction: number, text: string): Promise<void> {
   $('load-bar').style.width = `${Math.round(fraction * 100)}%`;
   $('load-text').textContent = text;
   return new Promise((r) => requestAnimationFrame(() => r()));
+}
+
+/** The first level not yet finished (that can be played), for the map to open on. */
+function firstOpen(): number {
+  const i = progress.findIndex((p, k) => !p.done && isOpen(k));
+  return i < 0 ? 0 : i;
+}
+
+/** The title screen: the bot plays the first level behind it. */
+async function enterDemo(): Promise<void> {
+  demo = true;
+  autoplay = makeBot();
+  if (current !== 0 || !world) await loadLevel(0);
+  else restart();
+  setState('play');
+}
+
+function leaveDemo(): void {
+  demo = false;
+  autoplay = params.has('auto') ? makeBot() : null;
+  $('title').hidden = true;
 }
 
 let quality = 1;
@@ -363,43 +436,53 @@ async function start(): Promise<void> {
   quality = q && q in named ? named[q] : RenderPipelineSettings.suggestedQuality(gl);
 
   touchOn = params.has('touch') || matchMedia('(pointer: coarse)').matches;
-  if (touchOn) { touchShift = 1.4; measureTop(); }
+  if (touchOn) { touchShift = 1.4; measureTop(); document.querySelector('#title .keys')!.textContent = '◀ ▶ para andar · A salta · B corre · ❚❚ para pausa'; }
   controls.bindTouch($('pad'), $('btn-a'), $('btn-b'));
   // The banners' buttons, and taps on the map.
   const act = (what: string) => {
     if (what === 'next') pick(Math.min(LEVELS.length - 1, current + 1));
     else if (what === 'retry') { banner.hidden = true; restart(); }
-    else if (what === 'map') pick(current);
+    else if (what === 'map') pick(Math.max(0, current));
+    else if (what === 'end') showEnd();
+    else if (what === 'resume') resume();
+    else if (what === 'title') enterDemo();
+    else if (what === 'start') { leaveDemo(); pick(firstOpen()); }
   };
-  banner.addEventListener('click', (e) => {
-    const b = (e.target as HTMLElement).closest('button');
-    if (b?.dataset.act) act(b.dataset.act);
-  });
+  for (const id of ['banner', 'pause', 'end', 'title', 'map-head']) {
+    $(id).addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (b?.dataset.act) act(b.dataset.act);
+    });
+  }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
   $('worlds').addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest('button');
     if (b?.dataset.level) play(Number(b.dataset.level));
   });
-  $('map-button').addEventListener('click', () => { if (state !== 'loading') pick(current); });
+  $('pause-button').addEventListener('click', () => pause());
   window.addEventListener('keydown', (e) => {
     if (state === 'map') {
       const moves: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -3, ArrowDown: 3, KeyA: -1, KeyD: 1 };
       if (e.code in moves) { e.preventDefault(); pick(picked + moves[e.code]); }
       else if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); play(picked); }
-    } else if (state === 'clear' && !banner.hidden && e.code === 'Enter') act('next');
+    } else if (demo && (e.code === 'Enter' || e.code === 'Space') && state !== 'loading') { e.preventDefault(); act('start'); }
+    else if (state === 'clear' && !banner.hidden && e.code === 'Enter') act(current === LEVELS.length - 1 ? 'end' : 'next');
     else if (state === 'over' && e.code === 'Enter') act('retry');
-    else if (e.code === 'Escape' && (state === 'play' || state === 'clear' || state === 'over')) act('map');
+    else if (state === 'play' && (e.code === 'Escape' || e.code === 'KeyP')) pause();
+    else if (state === 'pause' && (e.code === 'Escape' || e.code === 'KeyP' || e.code === 'Enter')) resume();
+    else if (e.code === 'Escape' && (state === 'clear' || state === 'over' || state === 'end')) act('map');
   });
   $('stats').hidden = !debug;
 
   (window as any).platformer = {
     get state() { return state; }, get world() { return world; }, get hero() { return world.hero; }, get level() { return world.level; }, get cam() { return cam; },
-    get halfWidth() { return halfWidth; }, controls, restart, timing, play, pick, progress,
+    get halfWidth() { return halfWidth; }, controls, restart, timing, play, pick, progress, pause, resume, showEnd, get demo() { return demo; },
     get autoplay() { return !!autoplay; }, set autoplay(on: boolean) { autoplay = on ? makeBot() : null; },
   };
   requestAnimationFrame(frame);
   const start = params.get('level');
   if (start !== null) await loadLevel(Math.max(0, Math.min(LEVELS.length - 1, Number(start) || 0)));
-  else { $('loading').classList.add('done'); showMap(); }
+  else await enterDemo();
 }
 
 start().catch((err) => {

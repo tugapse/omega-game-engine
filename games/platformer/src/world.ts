@@ -6,6 +6,7 @@ import { fellOut, Hero, HERO, HeroInput, makeHero } from './hero';
 import { Level, LevelSpec, parseLevel, solidAt, Tile, tileAt } from './level';
 import { Body, boxBlocked, moveBody, STEP } from './physics';
 import { makePlatforms, Platform, stepHeroOnStage } from './platforms';
+import { Boss, BOSS, BOSS_OF, bossContact, makeBoss, stepBoss, wakeBoss } from './boss';
 
 export const RULES = {
   lives: 3,
@@ -83,6 +84,9 @@ export const BIG_COINS = 3;
 export type WorldEvent =
   | { type: 'coin'; x: number; y: number; fromBlock: boolean }
   | { type: 'big'; x: number; y: number; index: number; points: number }
+  | { type: 'bossWake' | 'bossHit' | 'bossDown'; x: number; y: number; points: number }
+  /** What the boss did: 'thud' (landed), 'shoot', 'drop'. */
+  | { type: 'boss'; what: string; x: number; y: number }
   | { type: 'bump'; x: number; y: number; tile: Tile }
   | { type: 'stomp' | 'kick' | 'knock'; x: number; y: number; points: number; enemy: number }
   | { type: 'item'; x: number; y: number; kind: ItemKind; id: number }
@@ -100,6 +104,9 @@ export interface World {
   /** The level's big coins, in order across it (taken ones stay taken on the next try). */
   bigCoins: Coin[];
   platforms: Platform[];
+  /** The world's boss, in its arena (levels that end with one), and the tiles that close behind Bit when the fight starts. */
+  boss: Boss | null;
+  backGates: { x: number; y: number }[];
   /** Seconds since this try began (the platforms move with it). */
   elapsed: number;
   checkpoints: { x: number; y: number }[];
@@ -140,10 +147,14 @@ export function makeWorld(spec: LevelSpec, carry?: Carry): World {
   const enemies: Enemy[] = [];
   const coins: Coin[] = [];
   const bigCoins: Coin[] = [];
+  let boss: Boss | null = null;
+  const backGates: { x: number; y: number }[] = [];
   const checkpoints: { x: number; y: number }[] = [];
   for (const t of level.things) {
     if (t.kind === 'coin') coins.push({ x: t.x, y: t.y + 0.5, taken: false });
     else if (t.kind === 'big') bigCoins.push({ x: t.x, y: t.y + 0.5, taken: false });
+    else if (t.kind === 'boss') boss = makeBoss(BOSS_OF[level.theme], t.x, t.y);
+    else if (t.kind === 'backGate') backGates.push({ x: Math.floor(t.x), y: t.y });
     else if (t.kind === 'checkpoint') checkpoints.push({ x: t.x, y: t.y });
     else {
       const size = ENEMY[t.kind];
@@ -156,7 +167,7 @@ export function makeWorld(spec: LevelSpec, carry?: Carry): World {
   bigCoins.sort((a, b) => a.x - b.x);
   bigCoins.forEach((c, i) => { c.taken = !!carry?.bigTaken?.[i]; });
   return {
-    spec, level, hero: makeHero(start.x, start.y), enemies, coins, bigCoins, platforms: makePlatforms(level.platforms), elapsed: 0, checkpoints,
+    spec, level, hero: makeHero(start.x, start.y), enemies, coins, bigCoins, platforms: makePlatforms(level.platforms), boss, backGates, elapsed: 0, checkpoints,
     checkpoint: carry?.checkpoint ?? null,
     lives: carry?.lives ?? RULES.lives, coinCount: carry?.coinCount ?? 0, score: carry?.score ?? 0,
     time: RULES.time, chain: 0, power: 'small', growing: false, hurt: 0, star: 0, items: [], sparks: [], runHeld: false,
@@ -463,6 +474,36 @@ export function stepWorld(w: World, input: HeroInput, viewRight: number, dt = ST
     if (e.grace > 0) continue;
     hurtHero(w);
     if (w.dead) return;
+  }
+
+  // The boss: the fight starts once Bit is in the arena (the gate closes behind him); three stomps open the way on.
+  const boss = w.boss;
+  if (boss) {
+    if (boss.state === 'idle' && w.backGates.length && hb.x > w.backGates[0].x + 1 + BOSS.wakeAfter) {
+      for (const g of w.backGates) w.level.tiles[g.x][g.y] = 'gate';
+      wakeBoss(boss);
+      w.events.push({ type: 'bossWake', x: boss.body.x, y: boss.body.y, points: 0 });
+    }
+    for (const what of stepBoss(boss, hb, w.level, dt)) w.events.push({ type: 'boss', what, x: boss.body.x, y: boss.body.y });
+    const c = bossContact(boss, hb, feetBefore, w.star > 0);
+    if (c === 'stomp' || c === 'down' || c === 'bounce') {
+      if (feetBefore >= boss.body.y + boss.body.h * 0.5) {
+        hb.y = Math.max(hb.y, boss.body.y + boss.body.h);
+        hb.vy = input.jump ? BOSS.bounceHeld : BOSS.bounce;
+        hero.jumping = input.jump;
+      }
+      if (c !== 'bounce') {
+        const points = c === 'down' ? BOSS.points.hit + BOSS.points.down : BOSS.points.hit;
+        w.score += points;
+        w.events.push({ type: c === 'down' ? 'bossDown' : 'bossHit', x: boss.body.x, y: boss.body.y + boss.body.h, points });
+      }
+      if (c === 'down') {
+        for (let x = 0; x < w.level.width; x++) for (let y = 0; y < w.level.height; y++) if (w.level.tiles[x][y] === 'gate') w.level.tiles[x][y] = 'empty';
+      }
+    } else if (c === 'hurt') {
+      hurtHero(w);
+      if (w.dead) return;
+    }
   }
 
   // Checkpoints and the goal.
