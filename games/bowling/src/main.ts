@@ -9,6 +9,7 @@ import { bindSwipe } from './controls';
 import { GyroThrow } from './gyro';
 import { Match, MAX_PLAYERS } from './match';
 import { ArcadeGame, multiplierFor } from './arcade';
+import { LEAVES, SparesGame } from './spares';
 import { levelLayout, ObstacleField, ObstacleSpec } from './obstacles';
 import { BowlerRig, buildBowler, RELEASE_TIME } from './bowler';
 import {
@@ -43,11 +44,14 @@ type State = 'loading' | 'setup' | 'aim' | 'approach' | 'rolling' | 'settling' |
 let state: State = 'loading';
 let match = Match.withPlayers(1);
 /** Classic ten frames, or the obstacle mode (each player's lane gets harder as they knock pins down). */
-type Mode = 'classic' | 'obstacles';
+type Mode = 'classic' | 'obstacles' | 'spares';
+const MODES: Mode[] = ['classic', 'obstacles', 'spares'];
 let mode: Mode = 'classic';
 let field: ObstacleField;
 /** Player `i`'s game in the obstacle mode. */
 const arcade = (i = match.current) => match.players[i].game as ArcadeGame;
+/** Player `i`'s game in the spare challenge. */
+const spares = (i = match.current) => match.players[i].game as SparesGame;
 /** The lane the current player plays on. */
 const layoutNow = (): ObstacleSpec[] => (mode === 'obstacles' ? levelLayout(arcade().level) : []);
 /** A player went up a level with the last roll: who and to what, for the banner. */
@@ -76,6 +80,8 @@ let sweep = {
   fresh: true, lifted: [] as { index: number; x: number; z: number }[], cleared: false, racked: false,
   /** The next lane, when it changes (the obstacles sink, swap and rise during the sweep). */
   relayout: null as ObstacleSpec[] | null, swapped: false,
+  /** Set only these pins (the spare challenge), or all ten when null. */
+  rack: null as number[] | null,
 };
 let sweepBar: import('../../../src').SceneEntity;
 let aimGuide: import('../../../src').SceneEntity;
@@ -153,9 +159,11 @@ function setState(next: State): void {
   if (next === 'aim') {
     const n = game().next!;
     const who = match.players.length > 1 ? `${match.player.name} · ` : '';
+    const leave = LEAVES[n.frame];
     frameInfo.textContent = mode === 'obstacles'
       ? `${who}Nível ${arcade().level} (×${multiplierFor(arcade().level)}) · Ronda ${n.frame + 1} · ${n.roll + 1}.º lançamento`
-      : `${who}Frame ${n.frame + 1} · ${n.roll + 1}.º lançamento`;
+      : mode === 'spares' ? `${who}Desafio ${n.frame + 1}/10 · ${leave.name} · ${'★'.repeat(leave.stars)}`
+        : `${who}Frame ${n.frame + 1} · ${n.roll + 1}.º lançamento`;
     readyBowler();
   }
   placeAimGuide();
@@ -304,14 +312,15 @@ function advance(): void {
     if (turnPassed) nextPlayer();
     else if (levelUp) announce(`Nível ${levelUp.level} · pontos ×${multiplierFor(levelUp.level)}`, match.current);
     levelUp = null;
-    const fresh = game().next!.freshRack;
+    const next = game().next!;
+    const fresh = next.freshRack || !!next.rack;
     const lifted = fresh ? [] : standingPins(lane).map((index) => {
       const p = lane.pins[index].transform.worldPosition;
       return { index, x: p[0], z: p[2] };
     });
     const layout = layoutNow();
     const relayout = JSON.stringify(layout) === JSON.stringify(field.current) ? null : layout;
-    sweep = { fresh, lifted, cleared: false, racked: false, relayout, swapped: false };
+    sweep = { fresh, lifted, cleared: false, racked: false, relayout, swapped: false, rack: next.rack ?? null };
     resetBall(lane, ballX);
     sound.pinsetter(1.4);
     setState('sweep');
@@ -348,7 +357,7 @@ function choosePlayers(count: number): void {
   if (state !== 'setup') return;
   unlockAudio();
   try { localStorage.setItem('bowling.players', String(count)); } catch { /* no storage */ }
-  match = Match.withPlayers(count, mode === 'obstacles' ? () => new ArcadeGame() : undefined);
+  match = Match.withPlayers(count, mode === 'obstacles' ? () => new ArcadeGame() : mode === 'spares' ? () => new SparesGame() : undefined);
   levelUp = null;
   rising = false;
   spots = match.players.map(() => ({ x: 0, aim: 0 }));
@@ -359,12 +368,18 @@ function choosePlayers(count: number): void {
   bowlerLook.setShirt(0);
   scoreboard.replaceChildren();
   renderScore();
-  rackPins(lane);
+  rack(game().next!.rack ?? null);
   resetBall(lane, ballX);
   field.setLayout(layoutNow());
   field.setRaised(1);
   showPins();
   setState('aim');
+}
+
+/** Sets the pins: all ten, or only `pins` (0-based) for a spare leave. */
+function rack(pins: number[] | null): void {
+  rackPins(lane);
+  if (pins) lane.pins.forEach((_, i) => { if (!pins.includes(i)) removePin(lane, i); });
 }
 
 /** Picks the mode on the start screen (remembered). */
@@ -374,7 +389,17 @@ function chooseMode(next: Mode): void {
   setupPanel.querySelectorAll<HTMLButtonElement>('button[data-mode]').forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
   modeInfo.textContent = mode === 'obstacles'
     ? '10 rondas. Quanto mais pinos derrubas, mais obstáculos aparecem na tua pista, e mais vale cada pino.'
-    : '10 frames, com as regras do bowling.';
+    : mode === 'spares' ? '10 formações difíceis, uma bola para cada. Limpar vale as estrelas × 10.'
+      : '10 frames, com as regras do bowling.';
+}
+
+/** The best solo score of a mode on this device: updates it and says how this one compares. */
+function bestOf(key: string, score: number): string {
+  let best = 0;
+  try { best = Number(localStorage.getItem(`bowling.best.${key}`)) || 0; } catch { /* no storage */ }
+  if (score <= best) return `<small>Recorde: ${best}</small>`;
+  try { localStorage.setItem(`bowling.best.${key}`, String(score)); } catch { /* no storage */ }
+  return best > 0 ? '<small>Novo recorde!</small>' : '';
 }
 
 /** The end of the match: the score, or the ranking for several players. */
@@ -383,21 +408,16 @@ function showFinal(): void {
     const score = match.player.game.score;
     let record = '';
     if (mode === 'obstacles') {
-      // The best obstacle-mode score on this device.
-      let best = 0;
-      try { best = Number(localStorage.getItem('bowling.best.obstacles')) || 0; } catch { /* no storage */ }
-      if (score > best) {
-        try { localStorage.setItem('bowling.best.obstacles', String(score)); } catch { /* no storage */ }
-        record = best > 0 ? '<small>Novo recorde!</small>' : '';
-      } else record = `<small>Recorde: ${best}</small>`;
-      record += `<small>Nível ${arcade(0).level}</small>`;
+      record = `${bestOf('obstacles', score)}<small>Nível ${arcade(0).level}</small>`;
     }
+    if (mode === 'spares') record = `<small>Limpaste ${spares(0).cleared} de 10</small>${bestOf('spares', score)}`;
     result.innerHTML = `Fim do jogo<br><b>${score}</b>${record}`;
     return;
   }
   const rows = match.ranking().map((p, i) => {
     const colour = cssColor(SHIRTS[match.players.indexOf(p)]);
-    const level = mode === 'obstacles' ? `<em>Nv ${(p.game as ArcadeGame).level}</em>` : '';
+    const level = mode === 'obstacles' ? `<em>Nv ${(p.game as ArcadeGame).level}</em>`
+      : mode === 'spares' ? `<em>${(p.game as SparesGame).cleared}/10</em>` : '';
     return `<li><i style="background:${colour}"></i>${i === 0 ? '🏆 ' : ''}${p.name}${level}<b>${p.game.score}</b></li>`;
   }).join('');
   result.innerHTML = `Fim do jogo<ol class="ranking">${rows}</ol>`;
@@ -437,7 +457,7 @@ function updateSweep(): void {
   }
   if (sweep.fresh && !sweep.racked && t > 1.2) {
     sweep.racked = true;
-    rackPins(lane);
+    rack(sweep.rack);
   }
   if (t > 1.4) {
     sweepBar.transform.setLocalPosition(BAR_REST[0], BAR_REST[1], BAR_REST[2]);
@@ -571,9 +591,16 @@ function update(dt: number): void {
           result.insertAdjacentHTML('beforeend', `<small>Subiste ao nível ${g.level}!</small>`);
         }
       }
+      if (mode === 'spares') {
+        const leave = LEAVES[before.frame];
+        result.textContent = spare ? 'Limpo!' : pins === 0 ? (wentInGutter ? 'Calha' : 'Falhaste') : `${pins} de ${before.pinsLeft}`;
+        result.insertAdjacentHTML('beforeend', `<small>+${spare ? leave.stars * 10 : pins} pontos</small>`);
+      }
       result.classList.toggle('big', strike || spare);
       if (strike || spare) sound.chime(strike);
-      replayNext = strike && recorder.impactTime !== null;
+      // Replays: strikes, and the hard leaves cleared.
+      const hardClear = mode === 'spares' && spare && LEAVES[before.frame].stars >= 3;
+      replayNext = (strike || hardClear) && recorder.impactTime !== null;
       setState('result');
     }
   } else if (state === 'result') {
@@ -734,7 +761,7 @@ async function start(): Promise<void> {
     b.addEventListener('click', () => chooseMode(b.dataset.mode as Mode));
   });
   let savedMode: Mode = 'classic';
-  try { savedMode = localStorage.getItem('bowling.mode') === 'obstacles' ? 'obstacles' : 'classic'; } catch { /* no storage */ }
+  try { savedMode = (MODES as string[]).includes(localStorage.getItem('bowling.mode') ?? '') ? localStorage.getItem('bowling.mode') as Mode : 'classic'; } catch { /* no storage */ }
   chooseMode(savedMode);
   setupPanel.querySelectorAll<HTMLButtonElement>('button[data-players]').forEach((b) => {
     b.addEventListener('click', () => choosePlayers(Number(b.dataset.players)));
@@ -747,7 +774,7 @@ async function start(): Promise<void> {
     if (state === 'setup') {
       const n = Number(e.key);
       if (n >= 1 && n <= MAX_PLAYERS) choosePlayers(n);
-      else if (e.key === 'm' || e.key === 'M' || e.key === 'Tab') { e.preventDefault(); chooseMode(mode === 'classic' ? 'obstacles' : 'classic'); }
+      else if (e.key === 'm' || e.key === 'M' || e.key === 'Tab') { e.preventDefault(); chooseMode(MODES[(MODES.indexOf(mode) + 1) % MODES.length]); }
       else if (e.key === 'Enter' || e.key === ' ') choosePlayers(Math.min(MAX_PLAYERS, lastCount));
       return;
     }
