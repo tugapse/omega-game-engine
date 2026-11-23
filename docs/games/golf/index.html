@@ -70,6 +70,69 @@
     #intro.show { opacity: 1; }
     #intro small { display: block; font-size: 15px; color: var(--gold); letter-spacing: .1em; }
 
+    /* Hidden on the start screen. */
+    .gone { visibility: hidden; }
+    #player-chip { border-left: 4px solid var(--shirt, var(--cyan)); font-weight: 700; }
+    #player-chip[hidden] { display: none; }
+    #pause { position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: max(128px, calc(env(safe-area-inset-bottom) + 112px)); width: 44px; height: 44px; border-radius: 50%; background: var(--panel); border: 1px solid var(--cyan); box-shadow: 0 0 10px rgba(45, 226, 255, .35); font-size: 15px; font-weight: 800; letter-spacing: 1px; color: var(--cyan); }
+    #pause[hidden] { display: none; }
+    #turn { top: 26%; left: 0; right: 0; text-align: center; font-family: var(--display); font-size: 26px; color: var(--fg); opacity: 0; text-shadow: 0 0 10px var(--shirt, var(--cyan)), 0 2px 12px #000; }
+    #turn.show { animation: turn 1.8s ease-out forwards; }
+    #turn::after { content: ''; display: block; width: 140px; height: 4px; margin: 10px auto 0; border-radius: 2px; background: var(--shirt, var(--cyan)); box-shadow: 0 0 12px var(--shirt, var(--cyan)); }
+    @keyframes turn { 0% { opacity: 0; transform: translateY(12px); } 15%, 75% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+
+    /* Full screens: start, pause, scorecard, end. */
+    .screen { position: fixed; inset: 0; display: none; padding: 16px; box-sizing: border-box; background: rgba(7, 5, 13, .55); overflow-y: auto; z-index: 3; }
+    .screen .card { margin: auto; }
+    .screen.show { display: grid; }
+    .card { width: min(100%, 380px); box-sizing: border-box; padding: 20px 18px; text-align: center; background: var(--panel); border: 1px solid rgba(157, 255, 63, .5); border-radius: 16px; box-shadow: 0 0 24px rgba(157, 255, 63, .18); backdrop-filter: blur(4px); }
+    .card.wide { width: min(100%, 640px); }
+    .logo { margin: 0 0 14px; font-family: var(--display); font-weight: 400; font-size: 34px; line-height: 1; color: var(--lime); text-shadow: 0 0 10px rgba(157, 255, 63, .8), 0 0 26px rgba(157, 255, 63, .4); }
+    .logo span { display: block; font-size: 22px; letter-spacing: .12em; color: var(--cyan); text-shadow: 0 0 10px rgba(45, 226, 255, .9); }
+    .card h2 { margin: 0 0 14px; font-family: var(--display); font-weight: 400; font-size: 24px; color: var(--gold); text-shadow: 0 0 10px rgba(255, 210, 63, .6); }
+    .label { display: block; margin: 14px 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+    .seg { display: flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .seg button { flex: 1; padding: 9px 4px; font-size: 14px; font-weight: 600; color: var(--muted); background: transparent; border: 0; border-left: 1px solid var(--line); }
+    .seg button:first-child { border-left: 0; }
+    .seg button.on { color: #07050d; background: var(--lime); box-shadow: 0 0 12px rgba(157, 255, 63, .6); }
+    .seg button:disabled { opacity: .3; }
+    #mode-info { margin: 8px 0 0; min-height: 2.8em; font-size: 13px; color: var(--muted); }
+    #names { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+    #names input { width: 100%; box-sizing: border-box; padding: 7px 9px 7px 26px; font: inherit; font-size: 14px; color: var(--fg); border: 1px solid var(--line); border-radius: 10px; background: rgba(255, 255, 255, .04) radial-gradient(circle at 13px 50%, var(--dot) 4px, transparent 5px); }
+    #names input:focus { outline: none; border-color: var(--lime); }
+    .big { display: block; width: 100%; margin-top: 18px; padding: 13px; font-family: var(--display); font-size: 20px; color: #07050d; background: linear-gradient(90deg, var(--lime), var(--cyan)); border: 0; border-radius: 14px; box-shadow: 0 0 18px rgba(157, 255, 63, .5); }
+    .big:active, .ghost:active { transform: scale(.97); }
+    .ghost { display: block; width: 100%; margin-top: 10px; padding: 11px; font-size: 15px; font-weight: 700; color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 14px; }
+    .scroll { overflow-x: auto; }
+    #card-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    #card-table th, #card-table td { padding: 5px 4px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
+    #card-table td:first-child { text-align: left; font-weight: 700; }
+    #card-table tr.par td { color: var(--muted); font-weight: 400; }
+    #card-table td.under { color: var(--lime); font-weight: 800; }
+    #card-table td.over { color: var(--orange); }
+    #card-table i, .rank i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+    #card-table small { color: var(--muted); }
+    .ranking { list-style: none; padding: 0; margin: 0; text-align: left; }
+    .rank { padding: 8px 0; border-bottom: 1px solid var(--line); }
+    .rank:last-child { border-bottom: 0; }
+    .rank .head { display: flex; align-items: center; font-size: 17px; font-weight: 700; }
+    .rank .head em { font-style: normal; font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 8px; }
+    .rank .head b { margin-left: auto; font-family: var(--display); font-weight: 400; font-size: 22px; color: var(--gold); }
+    .rank.first .head { color: var(--gold); }
+    #final-note { margin: 10px 0 0; font-size: 14px; font-weight: 600; color: var(--cyan); }
+    #final-note:empty { display: none; }
+    @media (max-height: 520px) {
+      .card { padding: 12px 16px; width: min(100%, 520px); }
+      .logo { font-size: 24px; margin-bottom: 6px; }
+      .logo span { display: inline; font-size: 24px; margin-left: 8px; letter-spacing: .04em; }
+      .label { margin: 8px 0 4px; }
+      #mode-info { min-height: 0; margin-top: 4px; font-size: 12px; }
+      .seg button { padding: 7px 4px; }
+      .big { margin-top: 10px; padding: 10px; font-size: 18px; }
+      .ghost { padding: 8px; margin-top: 6px; }
+      #names { grid-template-columns: repeat(4, 1fr); }
+    }
+
     /* Loading. */
     #loading { position: fixed; inset: 0; display: grid; place-items: center; background: #07050d; transition: opacity .4s; z-index: 5; }
     #loading.done { opacity: 0; pointer-events: none; }
@@ -85,6 +148,7 @@
   <canvas id="trail"></canvas>
 
   <div id="top" class="hud">
+    <span class="chip" id="player-chip" hidden></span>
     <span class="chip" id="hole-chip"><b id="hole-num">1</b><span id="hole-name">Buraco</span></span>
     <span class="chip" id="par"><b>Par</b>4</span>
     <span class="chip" id="strokes"><b>Pancadas</b>0</span>
@@ -111,6 +175,50 @@
 
   <div id="result" class="hud"></div>
   <div id="intro" class="hud"></div>
+  <div id="turn" class="hud"></div>
+  <button id="pause" aria-label="Pausa" hidden>II</button>
+
+  <div id="setup" class="screen">
+    <div class="card">
+      <h1 class="logo">Omega<span>Golf</span></h1>
+      <span class="label">Jogo</span>
+      <div class="seg"><button data-mode="round9">9 buracos</button><button data-mode="round3">3 buracos</button></div>
+      <p id="mode-info"></p>
+      <span class="label">Jogadores</span>
+      <div class="seg"><button data-players="1">1</button><button data-players="2">2</button><button data-players="3">3</button><button data-players="4">4</button></div>
+      <div id="names"></div>
+      <span class="label">Contra o computador</span>
+      <div class="seg"><button data-cpu="">Não</button><button data-cpu="easy">Fácil</button><button data-cpu="medium">Médio</button><button data-cpu="hard">Difícil</button></div>
+      <button id="play" class="big">Jogar</button>
+    </div>
+  </div>
+
+  <div id="pause-menu" class="screen">
+    <div class="card">
+      <h2>Pausa</h2>
+      <button id="resume" class="big">Continuar</button>
+      <button id="restart" class="ghost">Recomeçar</button>
+      <button id="to-menu" class="ghost">Menu</button>
+    </div>
+  </div>
+
+  <div id="card" class="screen">
+    <div class="card wide">
+      <h2 id="card-title">Cartão</h2>
+      <div class="scroll"><table id="card-table"></table></div>
+      <button id="card-next" class="big">Continuar</button>
+    </div>
+  </div>
+
+  <div id="final" class="screen">
+    <div class="card">
+      <h2 id="final-title">Fim da volta</h2>
+      <ul id="final-list" class="ranking"></ul>
+      <p id="final-note"></p>
+      <button id="again" class="big">Jogar outra vez</button>
+      <button id="final-menu" class="ghost">Menu</button>
+    </div>
+  </div>
   <button id="map" hidden>Mapa</button>
   <button id="gyro" hidden>Giroscópio</button>
   <div id="stats" class="hud" hidden></div>

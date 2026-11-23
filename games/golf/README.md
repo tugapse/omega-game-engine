@@ -8,7 +8,7 @@ Plan and decisions: the "Omega Golf: plano" doc. The ball has its own physics
 
 Phases done: 1 (ball, clubs, swing), 2 (the course: nine holes with bunkers,
 water and trees, and wind), 3 (the green: slope dashes, the lip, the map view,
-the fly-in over each hole), 4 (the golfer, animated, and the optional motion swing).
+the fly-in over each hole), 4 (the golfer, animated, and the optional motion swing), 5 (the full game: 9 or 3 holes, one to four players and the computer, scorecard, pause, end screen).
 
 - `src/terrain.ts`: the ground: a height grid sampled bilinearly (height, normal, `downhill`) and a surface grid (tee, fairway, rough, sand, green, water, out), with how each surface plays (bounce, rolling resistance).
 - `src/ball.ts`: the ball: flight with gravity, drag and the Magnus effect (backspin lifts, sidespin curves), wind, bounces (backspin bites), rolling down slopes (5/7 g), the cup (catches rolls under 1.5 m/s; a faster ball catches the lip once and turns away), water and out of bounds, trees (trunks bounce the ball back, leaves slow it); `simulate` plays a shot to the end without drawing.
@@ -18,9 +18,11 @@ the fly-in over each hole), 4 (the golfer, animated, and the optional motion swi
 - `src/swing.ts`: the gesture: drag down to take the club back (power, on the bar), flick up to hit, a slanted flick curves; a sideways drag aims.
 - `src/golfer.ts`: the golfer: the bowler's skeleton holding a club (shaft length per club), with Idle, Swing (top at 0.9 s, impact at 1.12 s) and Putt clips keyed in code; the backswing follows the power bar and the ball leaves when the club reaches it.
 - `src/gyro.ts`: optional motion swing: hold a finger, swing the phone, let go; the peak rate is the power, a wrist twist curves. Hidden unless the page has `?gyro`.
+- `src/match.ts`: a round for one to four players (the computer last): each plays a hole in turn, then the next hole; a hole ends at 10 strokes (pick-up); totals, against par, ranking.
+- `src/cpu.ts`: the computer (easy, medium, hard): tries clubs, powers and aims with the ball's own simulation (wind and trees included; the easy one ignores the wind), avoiding water, sand and rough; on the green it searches the putt that drops; then swings with errors by skill (over six holes of par 20 in the test: about 26, 23 and 22 strokes).
 - `src/score.ts`: names of a score on a hole (birdie, par, bogey…).
 - `src/look.ts`: the golfer's meshes (cap, glove, club heads: wood, blade, putter); per hole, built the first time it is played: the terrain mesh and its painted surfaces, water surfaces, trees merged into two meshes (the engine has no instancing); shared: ball, flag and cup, the landing marker, sun and sky.
-- `src/main.ts`: start-up, states (intro fly-in, aim, flight, result), HUD, camera, the trail, the green's slope (dashes flowing downhill: white, gold, pink as it steepens), the map view from above, the pole taken out for short putts. Keys: M map, arrows aim and change club, hold space (or Enter) for power and let go to hit, Q/E while holding curve left/right.
+- `src/main.ts`: start-up, the start screen (game, players and names, computer), turns with a banner, the scorecard after each hole, pause (Esc, P, leaving the page), the end screen with the ranking and a record per device, states (intro fly-in, aim, swing, flight, result), HUD, camera, the trail, the green's slope (dashes flowing downhill: white, gold, pink as it steepens), the map view from above, the pole taken out for short putts. Keys: M map, arrows aim and change club, hold space (or Enter) for power and let go to hit, Q/E while holding curve left/right.
 
 ```sh
 npm test
