@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Omega Run</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
+  <style>
+    /* The Omega neon look of the other games, over a bright meadow. */
+    :root {
+      color-scheme: dark;
+      --fg: #f6f1ff; --muted: #b9b3cd; --line: #3b3352;
+      --cyan: #2de2ff; --pink: #ff3ea5; --gold: #ffd23f; --teal: #26d9bf;
+      --panel: rgba(12, 9, 24, .72);
+      --display: 'Bungee', system-ui, sans-serif;
+    }
+    html, body { margin: 0; height: 100%; background: #9fd2ff; color: var(--fg); font: 15px/1.4 system-ui, sans-serif; overflow: hidden; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+    .hud { position: fixed; pointer-events: none; text-shadow: 0 1px 4px #000; }
+
+    #top { top: max(10px, env(safe-area-inset-top)); left: max(16px, env(safe-area-inset-left)); right: max(16px, env(safe-area-inset-right)); display: flex; justify-content: space-between; gap: 8px; }
+    .chip { padding: 5px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; font-size: 13px; }
+    .chip b { font-family: var(--display); font-weight: 400; color: var(--cyan); }
+    #time-chip b { color: var(--gold); }
+
+    #banner { position: fixed; top: 28%; left: 16px; right: 16px; margin: 0 auto; max-width: 420px; text-align: center; padding: 18px 16px; background: var(--panel); border: 1px solid var(--teal); border-radius: 18px; box-shadow: 0 0 24px rgba(38, 217, 191, .35); animation: pop .4s cubic-bezier(.2, 1.6, .4, 1); }
+    #banner b { display: block; font-family: var(--display); font-weight: 400; font-size: 34px; color: var(--gold); text-shadow: 0 0 12px rgba(255, 210, 63, .6); }
+    #banner span { display: block; font-family: var(--display); font-size: 22px; color: var(--cyan); margin-top: 4px; }
+    #banner small { display: block; margin-top: 10px; color: var(--muted); }
+    @keyframes pop { from { transform: scale(.5); opacity: 0; } }
+
+    /* Touch: the pad on the left (left and right halves), A and B on the right. */
+    #touch[hidden] { display: none; }
+    #pad, .btn { position: fixed; bottom: max(22px, env(safe-area-inset-bottom)); touch-action: none; background: var(--panel); border: 2px solid var(--line); }
+    #pad { left: max(18px, env(safe-area-inset-left)); width: 168px; height: 84px; border-radius: 42px; display: flex; }
+    #pad i { flex: 1; display: grid; place-items: center; font-style: normal; font-size: 26px; color: var(--muted); border-radius: 40px; }
+    #pad[data-side="left"] .l, #pad[data-side="right"] .r { background: rgba(45, 226, 255, .25); color: var(--cyan); }
+    .btn { width: 78px; height: 78px; border-radius: 50%; display: grid; place-items: center; font-family: var(--display); font-size: 24px; }
+    #btn-a { right: max(20px, env(safe-area-inset-right)); bottom: max(46px, calc(env(safe-area-inset-bottom) + 24px)); border-color: var(--teal); color: var(--teal); }
+    #btn-b { right: max(110px, calc(env(safe-area-inset-right) + 110px)); border-color: var(--pink); color: var(--pink); width: 64px; height: 64px; font-size: 20px; }
+    .btn.down { background: rgba(255, 255, 255, .22); transform: scale(.94); }
+
+    /* Phones held upright: the level is wide, so ask for landscape. */
+    #turn-phone { display: none; }
+    @media (pointer: coarse) and (orientation: portrait) {
+      #turn-phone { display: block; position: fixed; top: 64px; left: 16px; right: 16px; text-align: center; padding: 8px 12px; background: var(--panel); border: 1px solid var(--gold); border-radius: 14px; color: var(--gold); font-size: 14px; pointer-events: none; }
+    }
+    #stats { position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 12px; color: var(--muted); }
+
+    #loading { position: fixed; inset: 0; display: grid; place-content: center; gap: 14px; text-align: center; background: #0c0918; transition: opacity .5s; }
+    #loading.done { opacity: 0; pointer-events: none; }
+    #loading h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 40px; color: var(--teal); text-shadow: 0 0 16px rgba(38, 217, 191, .6); }
+    #load-track { width: 220px; height: 6px; margin: 0 auto; background: var(--line); border-radius: 3px; overflow: hidden; }
+    #load-bar { height: 100%; width: 0; background: var(--teal); transition: width .2s; }
+    #load-text { color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <canvas id="view"></canvas>
+  <div id="top" class="hud">
+    <span class="chip"><b id="level-name">Prado 1</b></span>
+    <span class="chip" id="time-chip"><b id="time">0:00</b></span>
+  </div>
+  <div id="banner" hidden></div>
+  <div id="touch" hidden>
+    <div id="pad"><i class="l">◀</i><i class="r">▶</i></div>
+    <div id="btn-b" class="btn">B</div>
+    <div id="btn-a" class="btn">A</div>
+  </div>
+  <div id="turn-phone">↻ Vira o telemóvel para veres mais do nível</div>
+  <div id="stats" class="hud" hidden></div>
+  <div id="loading">
+    <h1>Omega Run</h1>
+    <div id="load-track"><div id="load-bar"></div></div>
+    <div id="load-text">A carregar…</div>
+  </div>
+  <script type="module" src="game.js"></script>
+</body>
+</html>
