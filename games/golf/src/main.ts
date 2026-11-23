@@ -1,5 +1,5 @@
-// Omega Golf, phase 1: one test hole, the five clubs, the swing gesture and the
-// ball's own physics; the camera follows the ball.
+// Omega Golf: a round on Vale Omega for one to four players (and the computer),
+// a swing gesture, the ball's own physics, a golfer, and the camera following it all.
 import { mat4, vec3, vec4 } from 'gl-matrix';
 import {
   Camera, CanvasViewport, Color, DefaultResourceLoader, DependencyManager, Engine, Pointer, RenderPipelineSettings,
@@ -9,7 +9,10 @@ import { BALL, BallState, Course, hit, restingBall, Shot, simulate, stepBall } f
 import { club, ClubId, CLUBS, lieFactor, MAX_PUTT, shotFor, suggestClub } from './clubs';
 import { buildHole, dropPoint, Hole } from './course';
 import { COURSE_NAME, HOLES } from './holes';
-import { BALL_LOOK, CourseLook, dressCourse, dressGolfer, GolferLook } from './look';
+import { BALL_LOOK, CourseLook, dressCourse, dressGolfer, GolferLook, SHIRTS } from './look';
+import { formatToPar, GolfMatch, MAX_PLAYERS, MAX_STROKES } from './match';
+import { CPU_NAMES, CpuPlan, CpuSkill, planShot } from './cpu';
+import { seeded } from './course';
 import { buildGolfer, GolferRig, IMPACT_TIME, PUTT_BACK_TIME, PUTT_IMPACT_TIME, setShaft, SHAFT, TOP_TIME } from './golfer';
 import { GyroSwing } from './gyro';
 import { scoreName } from './score';
@@ -27,9 +30,37 @@ const powerFill = $('power-fill');
 const powerLabel = $('power-label');
 const mapButton = $('map') as HTMLButtonElement;
 const intro = $('intro');
+const setupPanel = $('setup');
+const namesBox = $('names');
+const cardScreen = $('card');
+const finalScreen = $('final');
+const pauseMenu = $('pause-menu');
+const pauseButton = $('pause') as HTMLButtonElement;
+const turnBanner = $('turn');
 const debug = new URLSearchParams(location.search).has('debug');
 
-type State = 'loading' | 'intro' | 'aim' | 'swinging' | 'flight' | 'result';
+type State = 'loading' | 'setup' | 'intro' | 'aim' | 'swinging' | 'flight' | 'result' | 'card' | 'over';
+/** What a game is: a full round, or the front three holes. */
+type Mode = 'round9' | 'round3';
+const MODES: Mode[] = ['round9', 'round3'];
+const MODE_INFO: Record<Mode, string> = {
+  round9: 'Os nove buracos de Vale Omega, par 36. Ganha quem fizer menos pancadas.',
+  round3: 'Os três primeiros buracos, par 12: uma volta rápida.',
+};
+let mode: Mode = 'round9';
+let match = new GolfMatch<CpuSkill>(['Jogador 1'], [4]);
+/** The holes of this game (indices into HOLES). */
+let holeOrder: number[] = [];
+let paused = false;
+let selectedCount = 1;
+let names: string[] = [];
+let cpuSkill: CpuSkill | null = null;
+/** The computer's turn: its plan once made, and the time line of its swing. */
+let cpuTurn: { plan: CpuPlan | null; ready: boolean } | null = null;
+const cpuRandom = seeded(Date.now() % 100000);
+/** The current player is the computer: people's input is ignored. */
+const computerPlays = () => !!match.player.cpu && state !== 'setup' && state !== 'over' && state !== 'card';
+const humanAims = () => state === 'aim' && !paused && !computerPlays();
 /** The view from above the hole, while aiming. */
 let mapView = false;
 /** Where the marker stands (for the map view). */
@@ -55,11 +86,10 @@ let trail: number[][] = [];
 let trailFade = 1;
 let accumulator = 0;
 /** What the result banner leads to. */
-let afterResult: 'next-shot' | 'next-hole' = 'next-shot';
+let afterResult: 'next-shot' | 'end-turn' = 'next-shot';
 /** The hole being played (0-based), holes built so far, strokes on finished holes and their par. */
 let holeIndex = 0;
 const built = new Map<number, Hole>();
-let roundStrokes = 0, roundPar = 0;
 /** This hole's wind, m/s, and where it blows to (radians, like the aim). */
 let wind = { speed: 0, dir: 0 };
 let shotsMade = 0;
@@ -129,11 +159,17 @@ function readyShot(): void {
   placeGolfer();
 }
 
+const shirtCss = (i: number) => `rgb(${SHIRTS[i % SHIRTS.length].map((c) => Math.round(c * 255)).join(',')})`;
+
 function showHud(): void {
   $('hole-num').textContent = String(holeIndex + 1);
   $('hole-name').textContent = hole.spec.name;
-  const toPar = roundStrokes - roundPar;
-  $('total').innerHTML = `<b>Total</b>${roundPar ? (toPar === 0 ? 'par' : toPar > 0 ? `+${toPar}` : toPar) : '–'}`;
+  const done = match.player.strokes.length > 0;
+  $('total').innerHTML = `<b>Total</b>${done ? formatToPar(match.toPar(match.player)) : '–'}`;
+  const who = $('player-chip');
+  who.hidden = match.players.length < 2;
+  who.textContent = match.player.name;
+  who.style.setProperty('--shirt', shirtCss(match.current));
   $('wind-speed').textContent = `${wind.speed.toFixed(1)} m/s`;
   // The arrow points where the wind blows, seen from behind the ball.
   ($('wind-arrow') as HTMLElement).style.transform = `rotate(${((wind.dir - aim) * 180) / Math.PI}deg)`;
@@ -167,18 +203,28 @@ function placeMarker(p = 1): void {
 function setState(next: State): void {
   state = next;
   stateTime = 0;
-  hint.classList.toggle('hidden', next !== 'aim' || shotsMade >= HINT_SHOTS);
+  hint.classList.toggle('hidden', next !== 'aim' || shotsMade >= HINT_SHOTS || computerPlays());
+  setupPanel.classList.toggle('show', next === 'setup');
+  cardScreen.classList.toggle('show', next === 'card');
+  finalScreen.classList.toggle('show', next === 'over');
+  pauseButton.hidden = next === 'setup' || next === 'over' || next === 'loading' || next === 'card';
+  $('top').classList.toggle('gone', next === 'setup' || next === 'loading');
+  $('clubs').classList.toggle('gone', next === 'setup' || next === 'loading' || next === 'card' || next === 'over');
   result.classList.toggle('show', next === 'result');
   look.marker.show = next === 'aim';
+  if (next === 'card' || next === 'over' || next === 'setup') golferLook?.setVisible(false);
   if (next !== 'aim' && mapView) { mapView = false; scene.sceneFog.density = FOG; }
-  mapButton.hidden = next !== 'aim';
+  mapButton.hidden = next !== 'aim' || computerPlays();
   mapButton.classList.toggle('on', mapView);
   intro.classList.toggle('show', next === 'intro');
-  if (next === 'aim') readyShot();
+  if (next === 'aim') {
+    readyShot();
+    cpuTurn = computerPlays() ? { plan: null, ready: false } : null;
+  }
 }
 
-function swing(s: Swing): void {
-  if (state !== 'aim') return;
+function swing(s: Swing, byComputer = false): void {
+  if (state !== 'aim' || paused || (computerPlays() && !byComputer)) return;
   const c = club(clubId);
   // Off the fairway the ball comes out slower.
   const shot = shotFor(c, s.power, aim, s.curve);
@@ -256,15 +302,20 @@ function showResult(text: string, sub: string, big = false): void {
 function shotOver(): void {
   const travelled = Math.round(Math.hypot(ball.pos[0] - shotFrom.x, ball.pos[2] - shotFrom.z));
   if (ball.phase === 'holed') {
-    afterResult = 'next-hole';
-    roundStrokes += strokes;
-    roundPar += hole.spec.par;
+    afterResult = 'end-turn';
     const name = scoreName(strokes, hole.spec.par);
-    showHud();
-    showResult(name, `${strokes} pancada${strokes === 1 ? '' : 's'} · toca para o buraco ${(holeIndex + 1) % HOLES.length + 1}`, strokes < hole.spec.par || strokes === 1);
+    const who = match.players.length > 1 ? `${match.player.name} · ` : '';
+    showResult(name, `${who}${strokes} pancada${strokes === 1 ? '' : 's'}`, strokes < hole.spec.par || strokes === 1);
     return;
   }
   afterResult = 'next-shot';
+  // The pick-up rule: at the limit the hole ends where the ball is.
+  if (strokes >= MAX_STROKES - (ball.phase === 'water' || ball.phase === 'out' ? 1 : 0)) {
+    afterResult = 'end-turn';
+    strokes = MAX_STROKES;
+    showResult('Apanha a bola', `${MAX_STROKES} pancadas neste buraco`);
+    return;
+  }
   if (ball.phase === 'water') {
     // A penalty stroke, and a drop on dry ground back along the line it came in on.
     strokes++;
@@ -286,35 +337,180 @@ function shotOver(): void {
 function advance(): void {
   if (state === 'intro' && stateTime > 0.3) { setState('aim'); return; }
   if (state !== 'result' || stateTime < 0.4) return;
-  if (afterResult === 'next-hole') void startHole((holeIndex + 1) % HOLES.length);
+  if (afterResult === 'end-turn') finishTurn();
   else setState('aim');
+}
+
+/** The player holed out (or picked up): the next player, the scorecard after a hole, or the end. */
+function finishTurn(): void {
+  const next = match.finish(strokes);
+  if (next === 'player') { startTurn(false); return; }
+  showCard(next === 'over');
+}
+
+/** The next player on the tee of this hole (the first one gets the fly-in). */
+function startTurn(first: boolean): void {
+  strokes = 0;
+  ball = restingBall(hole.ground, hole.spec.tee.x, hole.spec.tee.z);
+  trail = [];
+  golferLook.setShirt(match.current);
+  showHud();
+  if (first) { golferLook.setVisible(false); setState('intro'); snapCamera(); return; }
+  setState('aim');
+  snapCamera();
+  if (match.players.length > 1) announce(`Vez de ${match.player.name}`, match.current);
+}
+
+function announce(text: string, player: number): void {
+  turnBanner.textContent = text;
+  turnBanner.style.setProperty('--shirt', shirtCss(player));
+  turnBanner.classList.remove('show');
+  void turnBanner.offsetWidth; // restart the animation
+  turnBanner.classList.add('show');
 }
 
 /** Builds (the first time) and shows hole `i`, draws its wind, and sets the ball on the tee. */
 async function startHole(i: number): Promise<void> {
-  if (i === 0) { roundStrokes = 0; roundPar = 0; }
   holeIndex = i;
   if (!built.has(i)) built.set(i, buildHole(HOLES[i]));
   hole = built.get(i)!;
   wind = { speed: Math.round(Math.random() * hole.spec.windMax * 10) / 10, dir: Math.random() * Math.PI * 2 };
   course = { ground: hole.ground, cup: hole.spec.pin, trees: hole.trees, wind: { x: Math.sin(wind.dir) * wind.speed, z: -Math.cos(wind.dir) * wind.speed } };
   await look.showHole(hole);
-  strokes = 0;
-  ball = restingBall(hole.ground, hole.spec.tee.x, hole.spec.tee.z);
-  showHud();
-  ball = restingBall(hole.ground, hole.spec.tee.x, hole.spec.tee.z);
-  trail = [];
   const p = hole.spec.pin;
   look.placeFlag(p.x, hole.ground.height(p.x, p.z), p.z);
   const length = Math.round(Math.hypot(p.x - hole.spec.tee.x, p.z - hole.spec.tee.z));
   intro.innerHTML = `<small>Buraco ${holeIndex + 1}</small>${hole.spec.name}<small>Par ${hole.spec.par} · ${length} m</small>`;
-  golferLook.setVisible(false);
-  setState('intro');
-  snapCamera();
+  startTurn(true);
+}
+
+/** The scorecard after a hole (and at the end, before the final screen). */
+function showCard(over: boolean): void {
+  const holes = holeOrder.slice(0, Math.max(1, match.hole));
+  const head = `<tr><th></th>${holes.map((h) => `<th>${h + 1}</th>`).join('')}<th>Total</th></tr>`;
+  const par = `<tr class="par"><td>Par</td>${holes.map((h) => `<td>${HOLES[h].par}</td>`).join('')}<td>${holes.reduce((s, h) => s + HOLES[h].par, 0)}</td></tr>`;
+  const rows = match.players.map((pl, i) => `<tr><td><i style="background:${shirtCss(i)}"></i>${pl.name}</td>${holes.map((h, k) => {
+    const v = pl.strokes[k], d = v - HOLES[h].par;
+    return `<td class="${d < 0 ? 'under' : d > 0 ? 'over' : ''}">${v ?? ''}</td>`;
+  }).join('')}<td><b>${match.total(pl)}</b> <small>${formatToPar(match.toPar(pl))}</small></td></tr>`).join('');
+  $('card-table').innerHTML = head + par + rows;
+  $('card-title').textContent = over ? 'Cartão final' : `Depois do buraco ${match.hole}`;
+  $('card-next').textContent = over ? 'Ver resultado' : `Buraco ${holeOrder[match.hole] + 1}`;
+  setState('card');
+}
+
+function leaveCard(): void {
+  if (state !== 'card' || stateTime < 0.3) return;
+  if (match.isOver) showFinal();
+  else void startHole(holeOrder[match.hole]);
+}
+
+/** The best score on this device for a mode, and whether this one beats it. */
+function bestOf(key: string, total: number): string {
+  let best = Infinity;
+  try { best = Number(localStorage.getItem(`golf.best.${key}`)) || Infinity; } catch { /* no storage */ }
+  if (total < best) {
+    try { localStorage.setItem(`golf.best.${key}`, String(total)); } catch { /* no storage */ }
+    return best === Infinity ? '' : 'Novo recorde neste aparelho!';
+  }
+  return `Recorde neste aparelho: ${best}`;
+}
+
+function showFinal(): void {
+  const ranking = match.ranking();
+  $('final-list').innerHTML = ranking.map((pl, k) => {
+    const i = match.players.indexOf(pl);
+    return `<li class="rank${k === 0 ? ' first' : ''}"><div class="head"><i style="background:${shirtCss(i)}"></i>${pl.name}<em>${formatToPar(match.toPar(pl))}</em><b>${match.total(pl)}</b></div></li>`;
+  }).join('');
+  const humans = ranking.filter((pl) => !pl.cpu);
+  $('final-note').textContent = humans.length === 1 ? bestOf(mode, match.total(humans[0])) : '';
+  $('final-title').textContent = match.players.length > 1 ? `Ganhou ${ranking[0].name}!` : 'Fim da volta';
+  setState('over');
+}
+
+/** Starts a game with the start screen's choices. */
+function startMatch(): void {
+  const chosen = Array.from({ length: selectedCount }, (_, i) => names[i]?.trim() || `Jogador ${i + 1}`);
+  holeOrder = mode === 'round3' ? [0, 1, 2] : HOLES.map((_, i) => i);
+  match = new GolfMatch<CpuSkill>(chosen, holeOrder.map((h) => HOLES[h].par), cpuSkill ?? undefined);
+  try {
+    localStorage.setItem('golf.names', JSON.stringify(names));
+    localStorage.setItem('golf.players', String(selectedCount));
+    localStorage.setItem('golf.mode', mode);
+    localStorage.setItem('golf.cpu', cpuSkill ?? '');
+  } catch { /* no storage */ }
+  closePause();
+  void startHole(holeOrder[0]);
+}
+
+function selectCount(count: number): void {
+  const max = cpuSkill ? MAX_PLAYERS - 1 : MAX_PLAYERS;
+  selectedCount = Math.max(1, Math.min(max, count));
+  setupPanel.querySelectorAll<HTMLButtonElement>('button[data-players]').forEach((b) => {
+    b.classList.toggle('on', Number(b.dataset.players) === selectedCount);
+    b.disabled = Number(b.dataset.players) > max;
+  });
+  namesBox.innerHTML = '';
+  for (let i = 0; i < selectedCount; i++) {
+    const input = document.createElement('input');
+    input.maxLength = 12;
+    input.placeholder = `Jogador ${i + 1}`;
+    input.value = names[i] ?? '';
+    input.style.setProperty('--dot', shirtCss(i));
+    input.addEventListener('input', () => { names[i] = input.value; });
+    namesBox.appendChild(input);
+  }
+}
+
+function chooseMode(next: Mode): void {
+  mode = next;
+  setupPanel.querySelectorAll<HTMLButtonElement>('button[data-mode]').forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
+  $('mode-info').textContent = MODE_INFO[mode];
+}
+
+function chooseCpu(skill: CpuSkill | null): void {
+  cpuSkill = skill;
+  setupPanel.querySelectorAll<HTMLButtonElement>('button[data-cpu]').forEach((b) => b.classList.toggle('on', (b.dataset.cpu || null) === skill));
+  selectCount(selectedCount);
+}
+
+function openPause(): void {
+  if (state === 'setup' || state === 'over' || state === 'loading' || paused) return;
+  paused = true;
+  pauseMenu.classList.add('show');
+}
+
+function closePause(): void {
+  paused = false;
+  pauseMenu.classList.remove('show');
+}
+
+function goToMenu(): void {
+  closePause();
+  setState('setup');
+}
+
+/** The computer's turn: think, line up, take the club back, swing. */
+function updateCpu(): void {
+  if (!cpuTurn || state !== 'aim' || paused) return;
+  if (!cpuTurn.plan && stateTime > 0.8) {
+    cpuTurn.plan = planShot(match.player.cpu!, hole, course, { x: ball.pos[0], z: ball.pos[2] }, reach, cpuRandom);
+    clubId = cpuTurn.plan.club;
+    aim = cpuTurn.plan.aim;
+    showHud();
+    placeMarker();
+    placeGolfer();
+    stateTime = 0.8;
+    return;
+  }
+  if (!cpuTurn.plan) return;
+  const back = (stateTime - 1.6) / 0.7;
+  if (back > 0 && back < 1) showPower(back * cpuTurn.plan.swing.power);
+  else if (back >= 1) { const plan = cpuTurn.plan; cpuTurn = null; swing(plan.swing, true); }
 }
 
 function changeClub(step: number): void {
-  if (state !== 'aim') return;
+  if (!humanAims()) return;
   const i = CLUBS.findIndex((c) => c.id === clubId);
   clubId = CLUBS[(i + step + CLUBS.length) % CLUBS.length].id;
   showHud();
@@ -323,7 +519,7 @@ function changeClub(step: number): void {
 }
 
 function turnAim(da: number): void {
-  if (state !== 'aim') return;
+  if (!humanAims()) return;
   aim += da;
   placeMarker(power ?? 1);
   if (power === null) placeGolfer();
@@ -397,6 +593,7 @@ function update(dt: number): void {
   if (state === 'intro' && stateTime > INTRO_TIME + 0.4) setState('aim');
   // The pole would block a short putt: it comes out when the ball is close.
   look.setPole(!(state !== 'intro' && pinDistance() < 6 && lie() === 'green'));
+  updateCpu();
   if (state === 'swinging' && golfer.animator.time >= impactTime()) strike();
   if (state === 'flight') {
     // A little faster than real time in the air: long shots take a while.
@@ -413,7 +610,7 @@ function update(dt: number): void {
   } else if (state === 'result') {
     trailFade = Math.max(0, trailFade - dt * 0.5);
   }
-  if (keySwing && state === 'aim') {
+  if (keySwing && humanAims()) {
     power = Math.min(1, (performance.now() - keySwing.start) / 1100);
     showPower(power);
   }
@@ -426,6 +623,7 @@ function update(dt: number): void {
 function showPower(p: number | null): void {
   power = p;
   if (state === 'aim') scrubBackswing(p);
+  if (p !== null && state !== 'aim') return;
   powerBox.classList.toggle('show', p !== null && state === 'aim');
   powerLabel.classList.toggle('show', p !== null && state === 'aim');
   if (p === null) return;
@@ -435,7 +633,7 @@ function showPower(p: number | null): void {
 }
 
 function toggleMap(): void {
-  if (state !== 'aim') return;
+  if (!humanAims()) return;
   mapView = !mapView;
   scene.sceneFog.density = mapView ? 0.0003 : FOG;
   mapButton.classList.toggle('on', mapView);
@@ -518,8 +716,10 @@ function frame(now: number): void {
   const dt = last ? Math.min((now - last) / 1000, 0.1) : 0;
   last = now;
   resize();
-  update(dt);
-  engine.update(dt);
+  if (!paused) {
+    update(dt);
+    engine.update(dt);
+  }
   engine.render();
   drawTrail(now);
   fpsFrames++; fpsTime += dt;
@@ -572,16 +772,17 @@ async function start(): Promise<void> {
 
   bindSwing(canvas, {
     onAim: (f) => turnAim(f * 0.6),
-    onPower: (p) => { if (state === 'aim' && !gyro.enabled) showPower(p); },
+    onPower: (p) => { if (humanAims() && !gyro.enabled) showPower(p); },
     onSwing: (sw) => { if (!gyro.enabled) swing(sw); },
-    onTap: () => advance(),
+    onTap: () => { if (state === 'card') leaveCard(); else advance(); },
   });
   Pointer.onDown(() => {
+    if (paused) return;
     if (state === 'result' || state === 'intro') advance();
-    else if (state === 'aim' && gyro.enabled) gyro.hold();
+    else if (humanAims() && gyro.enabled) gyro.hold();
   });
   Pointer.onUp(() => {
-    if (!gyro.enabled || state !== 'aim') return;
+    if (!gyro.enabled || !humanAims()) return;
     const sw = gyro.release();
     if (sw) swing(sw);
   });
@@ -594,11 +795,44 @@ async function start(): Promise<void> {
   mapButton.addEventListener('click', toggleMap);
   $('club-prev').addEventListener('click', () => changeClub(-1));
   $('club-next').addEventListener('click', () => changeClub(1));
+  setupPanel.querySelectorAll<HTMLButtonElement>('button[data-mode]').forEach((b) => b.addEventListener('click', () => chooseMode(b.dataset.mode as Mode)));
+  setupPanel.querySelectorAll<HTMLButtonElement>('button[data-cpu]').forEach((b) => b.addEventListener('click', () => chooseCpu((b.dataset.cpu || null) as CpuSkill | null)));
+  setupPanel.querySelectorAll<HTMLButtonElement>('button[data-players]').forEach((b) => b.addEventListener('click', () => selectCount(Number(b.dataset.players))));
+  try {
+    names = JSON.parse(localStorage.getItem('golf.names') ?? '[]');
+    const m = localStorage.getItem('golf.mode') as Mode;
+    if (MODES.includes(m)) mode = m;
+    const c = localStorage.getItem('golf.cpu');
+    cpuSkill = c && c in CPU_NAMES ? c as CpuSkill : null;
+    selectedCount = Number(localStorage.getItem('golf.players')) || 1;
+  } catch { names = []; }
+  if (!Array.isArray(names)) names = [];
+  chooseMode(mode);
+  chooseCpu(cpuSkill);
+  $('play').addEventListener('click', startMatch);
+  pauseButton.addEventListener('click', openPause);
+  $('resume').addEventListener('click', closePause);
+  $('restart').addEventListener('click', startMatch);
+  $('to-menu').addEventListener('click', goToMenu);
+  $('again').addEventListener('click', startMatch);
+  $('final-menu').addEventListener('click', goToMenu);
+  $('card-next').addEventListener('click', leaveCard);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) openPause(); });
   window.addEventListener('keydown', (e) => {
-    if (e.repeat) return;
+    if (e.repeat || (e.target as HTMLElement)?.tagName === 'INPUT') return;
+    if (state === 'setup') {
+      const n = Number(e.key);
+      if (n >= 1 && n <= MAX_PLAYERS) selectCount(n);
+      else if (e.key === 'Enter') startMatch();
+      return;
+    }
+    if (state === 'over') { if (e.key === 'Enter' || e.key === ' ') startMatch(); else if (e.key === 'Escape') goToMenu(); return; }
+    if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') { if (paused) closePause(); else openPause(); return; }
+    if (paused) return;
+    if (state === 'card' && (e.key === ' ' || e.key === 'Enter')) { leaveCard(); return; }
     if ((state === 'result' || state === 'intro') && (e.key === ' ' || e.key === 'Enter')) { advance(); return; }
-    if (state === 'aim' && (e.key === 'm' || e.key === 'M')) { toggleMap(); return; }
-    if (state !== 'aim') return;
+    if (!humanAims()) return;
+    if (e.key === 'm' || e.key === 'M') { toggleMap(); return; }
     if (e.key === 'ArrowLeft') turnAim(-0.01);
     else if (e.key === 'ArrowRight') turnAim(0.01);
     else if (e.key === 'ArrowUp') changeClub(-1);
@@ -608,7 +842,7 @@ async function start(): Promise<void> {
     else if (keySwing && (e.key === 'e' || e.key === 'E')) keySwing.curve = 0.7;
   });
   window.addEventListener('keyup', (e) => {
-    if ((e.key === ' ' || e.key === 'Enter') && keySwing && state === 'aim') {
+    if ((e.key === ' ' || e.key === 'Enter') && keySwing && humanAims()) {
       const p = power ?? 0;
       const curve = keySwing.curve;
       keySwing = null;
@@ -618,15 +852,18 @@ async function start(): Promise<void> {
   });
   (window as any).golf = {
     get state() { return state; }, get ball() { return ball; }, get strokes() { return strokes; }, get aim() { return aim; },
-    get club() { return clubId; }, get golfer() { return golfer; }, reach, get hole() { return hole; }, get holeIndex() { return holeIndex; }, startHole, get wind() { return wind; }, swing, advance, turnAim, changeClub,
+    get club() { return clubId; }, get golfer() { return golfer; }, reach, get hole() { return hole; }, get holeIndex() { return holeIndex; }, startHole, get match() { return match; }, startMatch, chooseMode, chooseCpu, selectCount, leaveCard, goToMenu, openPause, closePause, get paused() { return paused; }, get wind() { return wind; }, swing, advance, turnAim, changeClub,
     placeBall(x: number, z: number) { ball = restingBall(hole.ground, x, z); setState('aim'); snapCamera(); },
     toggleMap, showPower,
     setClub(id: ClubId) { clubId = id; showHud(); placeMarker(); },
   };
   $('stats').hidden = !debug;
+  // A first hole behind the start screen.
+  holeOrder = HOLES.map((_, i) => i);
   await startHole(0);
   await loaded(1, 'Pronto');
   $('loading').classList.add('done');
+  setState('setup');
   requestAnimationFrame(frame);
 }
 
