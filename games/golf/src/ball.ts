@@ -54,6 +54,8 @@ export interface BallState {
   /** Times it hit a trunk, and steps spent in leaves (for sounds). */
   trunkHits: number;
   inLeaves: number;
+  /** It has run over the cup's lip already (once per shot). */
+  lipped?: boolean;
 }
 
 /** A tree: a trunk (a cylinder from the ground) and a canopy (a ball of leaves). */
@@ -94,6 +96,7 @@ export function hit(ball: BallState, shot: Shot): void {
   ball.landed = null;
   ball.trunkHits = 0;
   ball.inLeaves = 0;
+  ball.lipped = false;
 }
 
 const n = [0, 1, 0];
@@ -233,6 +236,17 @@ function roll(ball: BallState, course: Course, dt: number): void {
   // The cup.
   const d = Math.hypot(p[0] - course.cup.x, p[2] - course.cup.z);
   if (d < BALL.cupRadius && speed < BALL.cupCatch) { hole(ball, course); return; }
+  // Too fast: it catches the lip once on the way over, turning away from the cup's
+  // centre and losing some speed.
+  if (d < BALL.cupRadius && !ball.lipped && speed > 1e-6) {
+    ball.lipped = true;
+    const ox = (p[0] - course.cup.x) / (d || 1), oz = (p[2] - course.cup.z) / (d || 1);
+    const side = (v[0] * oz - v[2] * ox) >= 0 ? 1 : -1; // which side of the centre line it passes
+    const turn = side * 0.25 * (1 - d / BALL.cupRadius);
+    const c = Math.cos(turn), sn = Math.sin(turn);
+    const vx = v[0] * c - v[2] * sn, vz = v[0] * sn + v[2] * c;
+    v[0] = vx * 0.7; v[2] = vz * 0.7;
+  }
   const pull = Math.hypot(slope[0], slope[2]);
   if (Math.hypot(v[0], v[2]) < BALL.restBelow && pull < decel) {
     ball.phase = 'rest';

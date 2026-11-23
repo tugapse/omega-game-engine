@@ -161,6 +161,8 @@ export interface CourseLook {
   marker: SceneEntity;
   /** Puts the flag (and cup) at a point on the ground. */
   placeFlag(x: number, y: number, z: number): void;
+  /** Shows or takes out the pole and its flag (the cup stays). */
+  setPole(visible: boolean): void;
   /** Shows this hole's ground, water and trees (built the first time), hides the others. */
   showHole(hole: Hole): Promise<void>;
 }
@@ -246,6 +248,7 @@ export async function dressCourse(gl: Gl, scene: Scene): Promise<CourseLook> {
   return {
     ball, flag, marker,
     placeFlag(x, y, z) { flag.transform.setLocalPosition(x, y, z); },
+    setPole(visible) { pole.show = visible; cloth.show = visible; },
     async showHole(hole) {
       if (!looks.has(hole)) looks.set(hole, await dressHole(gl, scene, hole, mats));
       for (const [h, l] of looks) for (const e of l.parts) e.show = h === hole;

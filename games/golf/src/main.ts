@@ -12,7 +12,7 @@ import { COURSE_NAME, HOLES } from './holes';
 import { BALL_LOOK, CourseLook, dressCourse } from './look';
 import { scoreName } from './score';
 import { bindSwing, Swing } from './swing';
-import { HeightField, Surface } from './terrain';
+import { downhill, HeightField, Surface } from './terrain';
 
 const $ = (id: string) => document.getElementById(id)!;
 const canvas = $('view') as HTMLCanvasElement;
@@ -23,9 +23,15 @@ const hint = $('hint');
 const powerBox = $('power');
 const powerFill = $('power-fill');
 const powerLabel = $('power-label');
+const mapButton = $('map') as HTMLButtonElement;
+const intro = $('intro');
 const debug = new URLSearchParams(location.search).has('debug');
 
-type State = 'loading' | 'aim' | 'flight' | 'result';
+type State = 'loading' | 'intro' | 'aim' | 'flight' | 'result';
+/** The view from above the hole, while aiming. */
+let mapView = false;
+/** Where the marker stands (for the map view). */
+const markerAt = { x: 0, z: 0 };
 let state: State = 'loading';
 let stateTime = 0;
 let hole: Hole;
@@ -143,6 +149,7 @@ function placeMarker(p = 1): void {
     const at = r.carry ?? r.end;
     x = at[0]; z = at[2];
   }
+  markerAt.x = x; markerAt.z = z;
   look.marker.transform.setLocalPosition(x, hole.ground.height(x, z), z);
   const s = c.id === 'putter' ? 0.15 : Math.max(0.6, Math.hypot(x - ball.pos[0], z - ball.pos[2]) / 60);
   look.marker.transform.setLocalScale(s, 1, s);
@@ -154,6 +161,10 @@ function setState(next: State): void {
   hint.classList.toggle('hidden', next !== 'aim' || shotsMade >= HINT_SHOTS);
   result.classList.toggle('show', next === 'result');
   look.marker.show = next === 'aim';
+  if (next !== 'aim' && mapView) { mapView = false; scene.sceneFog.density = FOG; }
+  mapButton.hidden = next !== 'aim';
+  mapButton.classList.toggle('on', mapView);
+  intro.classList.toggle('show', next === 'intro');
   if (next === 'aim') readyShot();
 }
 
@@ -212,6 +223,7 @@ function shotOver(): void {
 }
 
 function advance(): void {
+  if (state === 'intro' && stateTime > 0.3) { setState('aim'); return; }
   if (state !== 'result' || stateTime < 0.4) return;
   if (afterResult === 'next-hole') void startHole((holeIndex + 1) % HOLES.length);
   else setState('aim');
@@ -228,10 +240,14 @@ async function startHole(i: number): Promise<void> {
   await look.showHole(hole);
   strokes = 0;
   ball = restingBall(hole.ground, hole.spec.tee.x, hole.spec.tee.z);
+  showHud();
+  ball = restingBall(hole.ground, hole.spec.tee.x, hole.spec.tee.z);
   trail = [];
   const p = hole.spec.pin;
   look.placeFlag(p.x, hole.ground.height(p.x, p.z), p.z);
-  setState('aim');
+  const length = Math.round(Math.hypot(p.x - hole.spec.tee.x, p.z - hole.spec.tee.z));
+  intro.innerHTML = `<small>Buraco ${holeIndex + 1}</small>${hole.spec.name}<small>Par ${hole.spec.par} · ${length} m</small>`;
+  setState('intro');
   snapCamera();
 }
 
@@ -253,11 +269,32 @@ function turnAim(da: number): void {
 function cameraGoal(outEye: vec3, outLook: vec3): void {
   const b = ball.pos;
   const putting = clubId === 'putter';
+  if (state === 'intro') {
+    // From high over the green down to behind the tee.
+    const t = Math.min(1, stateTime / INTRO_TIME), e = t * t * (3 - 2 * t);
+    const p = hole.spec.pin, tee = hole.spec.tee;
+    const dx = p.x - tee.x, dz = p.z - tee.z, len = Math.hypot(dx, dz) || 1;
+    const fromEye = [p.x + (dx / len) * 40, hole.ground.height(p.x, p.z) + 45, p.z + (dz / len) * 40];
+    const toEye = [tee.x - (dx / len) * 6, hole.ground.height(tee.x, tee.z) + 3, tee.z - (dz / len) * 6];
+    vec3.set(outEye, fromEye[0] + (toEye[0] - fromEye[0]) * e, fromEye[1] + (toEye[1] - fromEye[1]) * e, fromEye[2] + (toEye[2] - fromEye[2]) * e);
+    const lookFrom = [tee.x + dx * 0.5, hole.ground.height(tee.x + dx * 0.5, tee.z + dz * 0.5), tee.z + dz * 0.5];
+    vec3.set(outLook, lookFrom[0] + (p.x - lookFrom[0]) * (1 - e) * 0.6, lookFrom[1], lookFrom[2] + (p.z - lookFrom[2]) * (1 - e) * 0.6);
+    return;
+  }
+  if (state === 'aim' && mapView) {
+    // Straight-ish down over the middle of the ball, the marker and the pin.
+    const mx = (b[0] + markerAt.x + hole.spec.pin.x) / 3, mz = (b[2] + markerAt.z + hole.spec.pin.z) / 3;
+    const span = Math.max(Math.hypot(b[0] - hole.spec.pin.x, b[2] - hole.spec.pin.z), Math.hypot(b[0] - markerAt.x, b[2] - markerAt.z), 20);
+    const fx = Math.sin(aim), fz = -Math.cos(aim);
+    vec3.set(outEye, mx - fx * span * 0.15, hole.ground.height(mx, mz) + span * 1.1 + 10, mz - fz * span * 0.15);
+    vec3.set(outLook, mx, hole.ground.height(mx, mz), mz);
+    return;
+  }
   if (state === 'aim') {
     const fx = Math.sin(aim), fz = -Math.cos(aim);
-    const back = putting ? 2.4 : 4.6, up = putting ? 1.2 : 2.3;
+    const back = putting ? 2.8 : 4.6, up = putting ? 1.7 : 2.3;
     vec3.set(outEye, b[0] - fx * back, b[1] + up, b[2] - fz * back);
-    const ahead = putting ? Math.min(pinDistance(), 5) : 9;
+    const ahead = putting ? Math.min(pinDistance(), 4) : 9;
     vec3.set(outLook, b[0] + fx * ahead, hole.ground.height(b[0] + fx * ahead, b[2] + fz * ahead), b[2] + fz * ahead);
     return;
   }
@@ -272,6 +309,8 @@ function cameraGoal(outEye: vec3, outLook: vec3): void {
 }
 
 const goalEye = vec3.create(), goalLook = vec3.create();
+const INTRO_TIME = 3.2;
+const FOG = 0.0011;
 function snapCamera(): void {
   cameraGoal(goalEye, goalLook);
   vec3.copy(eye, goalEye);
@@ -289,6 +328,9 @@ function updateCamera(dt: number): void {
 
 function update(dt: number): void {
   stateTime += dt;
+  if (state === 'intro' && stateTime > INTRO_TIME + 0.4) setState('aim');
+  // The pole would block a short putt: it comes out when the ball is close.
+  look.setPole(!(state !== 'intro' && pinDistance() < 6 && lie() === 'green'));
   if (state === 'flight') {
     // A little faster than real time in the air: long shots take a while.
     accumulator += dt * (ball.phase === 'flying' ? 1.4 : 1.2);
@@ -320,12 +362,56 @@ function showPower(p: number | null): void {
   powerLabel.classList.toggle('show', p !== null && state === 'aim');
   if (p === null) return;
   powerFill.style.height = `${Math.round(p * 100)}%`;
-  powerLabel.textContent = `${Math.round(p * 100)}%`;
+  powerLabel.textContent = clubId === 'putter' ? `${(Math.max(0.05, p) * MAX_PUTT).toFixed(1)} m` : `${Math.round(p * 100)}%`;
   placeMarker(Math.max(0.05, p));
 }
 
+function toggleMap(): void {
+  if (state !== 'aim') return;
+  mapView = !mapView;
+  scene.sceneFog.density = mapView ? 0.0003 : FOG;
+  mapButton.classList.toggle('on', mapView);
+}
+
+/** Moving dots on the green around the ball, flowing downhill: faster and warmer where it is steeper. */
+function drawGreen(now: number): void {
+  if (state !== 'aim' || lie() !== 'green') return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const range = Math.min(14, pinDistance() + 5);
+  const step = range > 8 ? 1 : 0.7;
+  const t = now / 1000;
+  trail2d.lineCap = 'round';
+  trail2d.shadowColor = 'rgba(0, 0, 0, .5)';
+  trail2d.shadowBlur = 3 * dpr;
+  for (let gz = -range; gz <= range; gz += step) {
+    for (let gx = -range; gx <= range; gx += step) {
+      const x = Math.round((ball.pos[0] + gx) / step) * step, z = Math.round((ball.pos[2] + gz) / step) * step;
+      if (Math.hypot(x - ball.pos[0], z - ball.pos[2]) > range || hole.ground.surface(x, z) !== 'green') continue;
+      const d = downhill(hole.ground, x, z);
+      const k = Math.min(1, d.slope / 0.03);
+      const phase = (((t * (0.4 + k) + (x * 0.37 + z * 0.61)) % 1) + 1) % 1;
+      const off = (phase - 0.5) * step * 0.8;
+      const px = x + d.x * off, pz = z + d.z * off;
+      const len = 0.18 + 0.25 * k;
+      const a = project([px, hole.ground.height(px, pz) + 0.02, pz]);
+      const b = project([px + d.x * len, hole.ground.height(px + d.x * len, pz + d.z * len) + 0.02, pz + d.z * len]);
+      if (!a || !b) continue;
+      const alpha = Math.sin(phase * Math.PI);
+      // White on a gentle slope, gold on a medium one, pink on a steep one.
+      const r = 255, g = Math.round(k < 0.5 ? 255 - 90 * k : 210 - 296 * (k - 0.5)), bl = Math.round(k < 0.5 ? 255 - 384 * k : 63 + 204 * (k - 0.5));
+      trail2d.strokeStyle = `rgba(${r}, ${g}, ${bl}, ${alpha})`;
+      trail2d.lineWidth = 3 * dpr;
+      trail2d.beginPath();
+      trail2d.moveTo(a[0], a[1]);
+      trail2d.lineTo(b[0], b[1]);
+      trail2d.stroke();
+    }
+  }
+  trail2d.shadowBlur = 0;
+}
+
 /** Projects a world point to canvas pixels, or null behind the camera. */
-const viewProj = mat4.create(), clip = vec4.create();
+const viewProj = mat4.create(), viewMat = mat4.create(), clip = vec4.create();
 function project(p: number[]): [number, number] | null {
   vec4.set(clip, p[0], p[1], p[2], 1);
   vec4.transformMat4(clip, clip, viewProj);
@@ -333,10 +419,13 @@ function project(p: number[]): [number, number] | null {
   return [(clip[0] / clip[3] * 0.5 + 0.5) * trailCanvas.width, (-clip[1] / clip[3] * 0.5 + 0.5) * trailCanvas.height];
 }
 
-function drawTrail(): void {
+function drawTrail(now: number): void {
   trail2d.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+  // The view from where the camera was put this frame (eye looking at target).
+  mat4.lookAt(viewMat, eye, target, [0, 1, 0]);
+  mat4.multiply(viewProj, camera.projectionMatrix, viewMat);
+  drawGreen(now);
   if (trail.length < 2 || trailFade <= 0) return;
-  mat4.multiply(viewProj, camera.projectionMatrix, camera.viewMatrix);
   const pts = [...trail, ball.phase === 'flying' ? ball.pos : trail[trail.length - 1]];
   trail2d.lineCap = 'round';
   trail2d.lineJoin = 'round';
@@ -364,7 +453,7 @@ function frame(now: number): void {
   update(dt);
   engine.update(dt);
   engine.render();
-  drawTrail();
+  drawTrail(now);
   fpsFrames++; fpsTime += dt;
   if (fpsTime >= 0.5) {
     if (debug) $('stats').textContent = `${Math.round(fpsFrames / fpsTime)} fps`;
@@ -397,7 +486,7 @@ async function start(): Promise<void> {
   await loaded(0.8, 'A acender o sol…');
   scene.sceneFog.enabled = true;
   scene.sceneFog.fogType = 1;
-  scene.sceneFog.density = 0.0011;
+  scene.sceneFog.density = FOG;
   scene.sceneFog.color = new Color(0.55, 0.72, 0.92, 1);
   scene.setGlRenderingContext(gl);
   engine = new Engine();
@@ -416,12 +505,14 @@ async function start(): Promise<void> {
     onSwing: swing,
     onTap: () => advance(),
   });
-  Pointer.onDown(() => { if (state === 'result') advance(); });
+  Pointer.onDown(() => { if (state === 'result' || state === 'intro') advance(); });
+  mapButton.addEventListener('click', toggleMap);
   $('club-prev').addEventListener('click', () => changeClub(-1));
   $('club-next').addEventListener('click', () => changeClub(1));
   window.addEventListener('keydown', (e) => {
     if (e.repeat) return;
-    if (state === 'result' && (e.key === ' ' || e.key === 'Enter')) { advance(); return; }
+    if ((state === 'result' || state === 'intro') && (e.key === ' ' || e.key === 'Enter')) { advance(); return; }
+    if (state === 'aim' && (e.key === 'm' || e.key === 'M')) { toggleMap(); return; }
     if (state !== 'aim') return;
     if (e.key === 'ArrowLeft') turnAim(-0.01);
     else if (e.key === 'ArrowRight') turnAim(0.01);
@@ -443,6 +534,8 @@ async function start(): Promise<void> {
   (window as any).golf = {
     get state() { return state; }, get ball() { return ball; }, get strokes() { return strokes; }, get aim() { return aim; },
     get club() { return clubId; }, reach, get hole() { return hole; }, get holeIndex() { return holeIndex; }, startHole, get wind() { return wind; }, swing, advance, turnAim, changeClub,
+    placeBall(x: number, z: number) { ball = restingBall(hole.ground, x, z); setState('aim'); snapCamera(); },
+    toggleMap,
     setClub(id: ClubId) { clubId = id; showHud(); placeMarker(); },
   };
   $('stats').hidden = !debug;
