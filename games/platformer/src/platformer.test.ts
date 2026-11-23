@@ -173,6 +173,28 @@ describe('camera', () => {
     expect(settle(4)).toBeCloseTo(4.4, 3);
     expect(settle(7)).toBeCloseTo(7, 3);
   });
+  it('on a narrow (upright phone) screen the hero never gets near the right edge', () => {
+    for (const halfWidth of [2, 2.5, 3.5, 12]) {
+      const cam = makeCamera(2, 2, halfWidth);
+      const hero = { x: 2, y: 2, vx: 0, onGround: true };
+      let worst = Infinity;
+      // From standing, then at full run, then a sudden stop and start again.
+      for (let i = 0; i < 1800; i++) {
+        hero.vx = i < 600 ? Math.min(9.5, i * 0.3) : i < 700 ? 0 : 9.5;
+        hero.x += hero.vx / 120;
+        followHero(cam, hero, halfWidth, 400, 1 / 120);
+        worst = Math.min(worst, cam.x + halfWidth - hero.x);
+      }
+      expect(worst, `halfWidth ${halfWidth}`).toBeGreaterThanOrEqual(Math.min(3.25, halfWidth * 1.3) - 1e-9);
+    }
+  });
+  it('climbs at once when the head would go above the room on top', () => {
+    const cam = makeCamera(2, 2, 2.5);
+    for (let y = 2; y < 12; y += 0.05) {
+      followHero(cam, { x: 5, y, vx: 0, onGround: false }, 2.5, 200, 1 / 120, 4.4, 3, 0.9);
+      expect(y + 0.9 - cam.y).toBeLessThanOrEqual(3 + 1e-9);
+    }
+  });
   it('stops at the level end', () => {
     const cam = makeCamera(2, 2, 8);
     for (let i = 0; i < 1200; i++) followHero(cam, { x: 49, y: 2, vx: 9.5, onGround: true }, 8, 50, 1 / 120);
