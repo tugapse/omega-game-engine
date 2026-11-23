@@ -41,10 +41,13 @@ describe('computer opponent', () => {
     expect(Math.abs(plan.throw.spin)).toBeLessThan(2); // straight, but for its error
   });
 
-  it('stands in the corridor past obstacles and only aims a little', () => {
-    const plan = planThrow('hard', PIN_SPOTS.map((p) => ({ x: p[0], z: p[2] })), () => 0.5, -0.25);
-    expect(plan.x).toBeCloseTo(-0.25, 1);
-    expect(Math.abs(plan.aim)).toBeLessThan(0.015);
+  it('finds a line past fixed obstacles that still ends at the pocket', () => {
+    const discs = [{ x: 0.05, z: -6, r: 0.2 }, { x: -0.1, z: -11, r: 0.2 }];
+    const plan = planThrow('hard', PIN_SPOTS.map((p) => ({ x: p[0], z: p[2] })), () => 0.5, discs);
+    const at = (z: number) => plan.x + Math.tan(plan.aim) * (-0.25 - z);
+    // Within its own small error of a clear line.
+    for (const d of discs) expect(Math.abs(at(d.z) - d.x)).toBeGreaterThan(d.r - 0.02);
+    expect(Math.abs(at(-18.29) - 0.07)).toBeLessThan(0.12);
   });
 
   it('a harder computer knocks more pins down with its first ball', () => {

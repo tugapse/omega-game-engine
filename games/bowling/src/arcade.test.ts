@@ -5,9 +5,10 @@ import { Match } from './match';
 describe('ArcadeGame', () => {
   it('levels go by pins knocked down and stop at the top', () => {
     expect(levelFor(0)).toBe(1);
-    expect(levelFor(14)).toBe(1);
-    expect(levelFor(15)).toBe(2);
-    expect(levelFor(30)).toBe(3);
+    expect(levelFor(11)).toBe(1);
+    expect(levelFor(12)).toBe(2);
+    expect(levelFor(24)).toBe(3);
+    expect(levelFor(100)).toBe(MAX_LEVEL); // a perfect game reaches the top
     expect(levelFor(9999)).toBe(MAX_LEVEL);
   });
 
@@ -20,11 +21,11 @@ describe('ArcadeGame', () => {
 
   it('raises the level only between rounds, and never lowers it', () => {
     const g = new ArcadeGame();
-    g.roll(9); g.roll(0); // 9 pins
+    g.roll(8); g.roll(0); // 8 pins
     expect(g.level).toBe(1);
-    g.roll(5);
+    g.roll(3);
     expect(g.level).toBe(1); // mid-round: the round keeps its level
-    g.roll(1); // 15 pins
+    g.roll(1); // 12 pins
     expect(g.level).toBe(2);
     g.roll(0); g.roll(0);
     expect(g.level).toBe(2);
@@ -39,10 +40,10 @@ describe('ArcadeGame', () => {
     expect(g.frames()[9].total).toBe(g.score);
   });
 
-  it('gives each player their own level in a match (the example: 30 pins against 12)', () => {
+  it('gives each player their own level in a match (30 pins against a beginner's 10)', () => {
     const m = new Match(['Ana', 'Rui'], () => new ArcadeGame());
     const p1 = [[8, 1], [7, 2], [3, 1], [5, 3]]; // 30 pins
-    const p2 = [[2, 1], [4, 0], [1, 1], [2, 1]]; // 12 pins
+    const p2 = [[2, 1], [3, 0], [1, 1], [1, 1]]; // 10 pins
     for (let r = 0; r < 4; r++) {
       for (const pins of p1[r]) m.roll(pins);
       for (const pins of p2[r]) m.roll(pins);

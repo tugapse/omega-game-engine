@@ -7,7 +7,7 @@ import { FrameView, NextRoll } from './scoring';
 export const ARCADE = {
   rounds: 10,
   /** Pins knocked down (in completed rounds) needed for levels 1, 2, 3… */
-  levelAt: [0, 15, 30, 50, 75, 105, 140, 180],
+  levelAt: [0, 12, 24, 36, 48, 60, 72, 84],
   /** Points multiplier per level (level 1 first). */
   multipliers: [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5],
   strikeBonus: 10,

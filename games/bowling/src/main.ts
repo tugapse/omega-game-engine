@@ -10,8 +10,8 @@ import { GyroThrow } from './gyro';
 import { Match, MAX_PLAYERS } from './match';
 import { ArcadeGame, multiplierFor } from './arcade';
 import { LEAVES, SparesGame } from './spares';
-import { CPU_NAMES, CpuPlan, CpuSkill, planThrow } from './cpu';
-import { levelLayout, ObstacleField, ObstacleSpec, straightPath } from './obstacles';
+import { CPU_NAMES, CpuPlan, CpuSkill, cpuWait, planThrow } from './cpu';
+import { fixedDiscs, levelLayout, ObstacleField, ObstacleSpec, sweepDiscs } from './obstacles';
 import { BowlerRig, buildBowler, RELEASE_TIME } from './bowler';
 import {
   allStill, BALL, buildLane, isPinDown, LANE, LaneEntities, rackPins, removePin, resetBall, standingPins,
@@ -227,15 +227,16 @@ function describeThrow(t: ThrowParams, angle: number): string {
   return `${(t.speed * 3.6).toFixed(0)} km/h · ${dir} · ${hook}`;
 }
 
-/** The computer's throw for the pins standing (and the corridor past fixed obstacles); it waits a moment to time moving ones. */
+/** The computer's throw for the pins standing (a line past the fixed obstacles); it waits a moment to time moving ones. */
 function planCpuTurn(skill: CpuSkill): { plan: CpuPlan; at: number; placed: boolean } {
   const standing = standingPins(lane).map((i) => {
     const p = lane.pins[i].transform.worldPosition;
     return { x: p[0], z: p[2] };
   });
-  const corridor = field.current.length ? straightPath([...field.current]) : null;
-  const moving = field.current.some((o) => o.kind === 'slider' || o.kind === 'spinner');
-  return { plan: planThrow(skill, standing, Math.random, corridor), at: 1.6 + (moving ? Math.random() * 2 : Math.random() * 0.4), placed: false };
+  const plan = planThrow(skill, standing, Math.random, fixedDiscs(field.current), sweepDiscs(field.current));
+  // It bowls 1.6 s into the aim at the earliest; the ball leaves the hand RELEASE_TIME after that.
+  const wait = cpuWait(skill, field.current, field.clock, 1.6 + RELEASE_TIME, plan, Math.random);
+  return { plan, at: 1.6 + wait, placed: false };
 }
 
 /** The computer takes its spot and aim, then bowls. */
