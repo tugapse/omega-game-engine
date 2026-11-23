@@ -28,6 +28,13 @@ describe('Match', () => {
     expect(m.ranking().map((p) => p.name)).toEqual(['Jogador 1', 'Jogador 2']);
   });
 
+  it('adds the computer last, in the fourth place at most', () => {
+    const m = Match.withPlayers(1, undefined, 'hard');
+    expect(m.players.map((p) => p.name)).toEqual(['Jogador 1', 'Computador']);
+    expect(m.players[1].cpu).toBe('hard');
+    expect(Match.withPlayers(4, undefined, 'easy').players.length).toBe(4);
+  });
+
   it('clamps the number of players to 1..4', () => {
     expect(Match.withPlayers(0).players.length).toBe(1);
     expect(Match.withPlayers(9).players.length).toBe(4);
