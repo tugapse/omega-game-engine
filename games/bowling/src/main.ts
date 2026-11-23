@@ -8,12 +8,14 @@ import {
 import { bindSwipe } from './controls';
 import { GyroThrow } from './gyro';
 import { Match, MAX_PLAYERS } from './match';
+import { ArcadeGame, multiplierFor } from './arcade';
+import { levelLayout, ObstacleField, ObstacleSpec } from './obstacles';
 import { BowlerRig, buildBowler, RELEASE_TIME } from './bowler';
 import {
   allStill, BALL, buildLane, isPinDown, LANE, LaneEntities, rackPins, removePin, resetBall, standingPins,
   ThrowParams, throwBall,
 } from './lane';
-import { BowlerLook, dressBowler, dressLane, makeAimGuide, makeSweepBar, SHIRTS } from './look';
+import { BowlerLook, dressBowler, dressLane, dressObstacles, makeAimGuide, makeSweepBar, SHIRTS } from './look';
 import { ReplayRecorder } from './replay';
 import { BackgroundMusic } from './music';
 import { BowlingSound, forceToGain } from './sound';
@@ -34,11 +36,24 @@ const trailCanvas = document.getElementById('trail') as HTMLCanvasElement;
 const setupPanel = document.getElementById('setup')!;
 const othersList = document.getElementById('others')!;
 const turnBanner = document.getElementById('turn')!;
+const modeInfo = document.getElementById('mode-info')!;
 const trail2d = trailCanvas.getContext('2d')!;
 
 type State = 'loading' | 'setup' | 'aim' | 'approach' | 'rolling' | 'settling' | 'result' | 'replay' | 'sweep' | 'over';
 let state: State = 'loading';
 let match = Match.withPlayers(1);
+/** Classic ten frames, or the obstacle mode (each player's lane gets harder as they knock pins down). */
+type Mode = 'classic' | 'obstacles';
+let mode: Mode = 'classic';
+let field: ObstacleField;
+/** Player `i`'s game in the obstacle mode. */
+const arcade = (i = match.current) => match.players[i].game as ArcadeGame;
+/** The lane the current player plays on. */
+const layoutNow = (): ObstacleSpec[] => (mode === 'obstacles' ? levelLayout(arcade().level) : []);
+/** A player went up a level with the last roll: who and to what, for the banner. */
+let levelUp: { player: number; level: number } | null = null;
+/** The new lane's obstacles rise while the camera flies back to the bowler. */
+let rising = false;
 /** The current player's game. */
 const game = () => match.player.game;
 /** The roll just scored passed the turn to the next player. */
@@ -57,7 +72,11 @@ let pendingThrow: ThrowParams | null = null;
 let standingBefore: number[] = [];
 let wentInGutter = false;
 /** The sweep in progress: whether it ends with a fresh rack, and the standing pins it lifts. */
-let sweep = { fresh: true, lifted: [] as { index: number; x: number; z: number }[], cleared: false, racked: false };
+let sweep = {
+  fresh: true, lifted: [] as { index: number; x: number; z: number }[], cleared: false, racked: false,
+  /** The next lane, when it changes (the obstacles sink, swap and rise during the sweep). */
+  relayout: null as ObstacleSpec[] | null, swapped: false,
+};
 let sweepBar: import('../../../src').SceneEntity;
 let aimGuide: import('../../../src').SceneEntity;
 /** Aim, radians from straight down the lane (positive = right); a swipe's own angle adds to it. */
@@ -134,7 +153,9 @@ function setState(next: State): void {
   if (next === 'aim') {
     const n = game().next!;
     const who = match.players.length > 1 ? `${match.player.name} · ` : '';
-    frameInfo.textContent = `${who}Frame ${n.frame + 1} · ${n.roll + 1}.º lançamento`;
+    frameInfo.textContent = mode === 'obstacles'
+      ? `${who}Nível ${arcade().level} (×${multiplierFor(arcade().level)}) · Ronda ${n.frame + 1} · ${n.roll + 1}.º lançamento`
+      : `${who}Frame ${n.frame + 1} · ${n.roll + 1}.º lançamento`;
     readyBowler();
   }
   placeAimGuide();
@@ -281,12 +302,16 @@ function advance(): void {
       return;
     }
     if (turnPassed) nextPlayer();
+    else if (levelUp) announce(`Nível ${levelUp.level} · pontos ×${multiplierFor(levelUp.level)}`, match.current);
+    levelUp = null;
     const fresh = game().next!.freshRack;
     const lifted = fresh ? [] : standingPins(lane).map((index) => {
       const p = lane.pins[index].transform.worldPosition;
       return { index, x: p[0], z: p[2] };
     });
-    sweep = { fresh, lifted, cleared: false, racked: false };
+    const layout = layoutNow();
+    const relayout = JSON.stringify(layout) === JSON.stringify(field.current) ? null : layout;
+    sweep = { fresh, lifted, cleared: false, racked: false, relayout, swapped: false };
     resetBall(lane, ballX);
     sound.pinsetter(1.4);
     setState('sweep');
@@ -304,8 +329,13 @@ function nextPlayer(): void {
   aimAngle = spot.aim;
   bowlerLook.setShirt(match.current);
   renderScore();
-  turnBanner.textContent = `Vez de ${match.player.name}`;
-  turnBanner.style.setProperty('--shirt', cssColor(SHIRTS[match.current]));
+  announce(mode === 'obstacles' ? `Vez de ${match.player.name} · Nível ${arcade().level}` : `Vez de ${match.player.name}`, match.current);
+}
+
+/** The banner in the middle of the screen, underlined in a player's colour. */
+function announce(text: string, player: number): void {
+  turnBanner.textContent = text;
+  turnBanner.style.setProperty('--shirt', cssColor(SHIRTS[player]));
   turnBanner.classList.remove('show');
   void turnBanner.offsetWidth; // restart the animation
   turnBanner.classList.add('show');
@@ -318,7 +348,9 @@ function choosePlayers(count: number): void {
   if (state !== 'setup') return;
   unlockAudio();
   try { localStorage.setItem('bowling.players', String(count)); } catch { /* no storage */ }
-  match = Match.withPlayers(count);
+  match = Match.withPlayers(count, mode === 'obstacles' ? () => new ArcadeGame() : undefined);
+  levelUp = null;
+  rising = false;
   spots = match.players.map(() => ({ x: 0, aim: 0 }));
   turnPassed = false;
   shown = 0;
@@ -329,19 +361,44 @@ function choosePlayers(count: number): void {
   renderScore();
   rackPins(lane);
   resetBall(lane, ballX);
+  field.setLayout(layoutNow());
+  field.setRaised(1);
   showPins();
   setState('aim');
+}
+
+/** Picks the mode on the start screen (remembered). */
+function chooseMode(next: Mode): void {
+  mode = next;
+  try { localStorage.setItem('bowling.mode', mode); } catch { /* no storage */ }
+  setupPanel.querySelectorAll<HTMLButtonElement>('button[data-mode]').forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
+  modeInfo.textContent = mode === 'obstacles'
+    ? '10 rondas. Quanto mais pinos derrubas, mais obstáculos aparecem na tua pista, e mais vale cada pino.'
+    : '10 frames, com as regras do bowling.';
 }
 
 /** The end of the match: the score, or the ranking for several players. */
 function showFinal(): void {
   if (match.players.length === 1) {
-    result.innerHTML = `Fim do jogo<br><b>${match.player.game.score}</b>`;
+    const score = match.player.game.score;
+    let record = '';
+    if (mode === 'obstacles') {
+      // The best obstacle-mode score on this device.
+      let best = 0;
+      try { best = Number(localStorage.getItem('bowling.best.obstacles')) || 0; } catch { /* no storage */ }
+      if (score > best) {
+        try { localStorage.setItem('bowling.best.obstacles', String(score)); } catch { /* no storage */ }
+        record = best > 0 ? '<small>Novo recorde!</small>' : '';
+      } else record = `<small>Recorde: ${best}</small>`;
+      record += `<small>Nível ${arcade(0).level}</small>`;
+    }
+    result.innerHTML = `Fim do jogo<br><b>${score}</b>${record}`;
     return;
   }
   const rows = match.ranking().map((p, i) => {
     const colour = cssColor(SHIRTS[match.players.indexOf(p)]);
-    return `<li><i style="background:${colour}"></i>${i === 0 ? '🏆 ' : ''}${p.name}<b>${p.game.score}</b></li>`;
+    const level = mode === 'obstacles' ? `<em>Nv ${(p.game as ArcadeGame).level}</em>` : '';
+    return `<li><i style="background:${colour}"></i>${i === 0 ? '🏆 ' : ''}${p.name}${level}<b>${p.game.score}</b></li>`;
   }).join('');
   result.innerHTML = `Fim do jogo<ol class="ranking">${rows}</ol>`;
 }
@@ -368,6 +425,15 @@ function updateSweep(): void {
     sweep.cleared = true;
     const keep = new Set(sweep.lifted.map((p) => p.index));
     lane.pins.forEach((_, i) => { if (!keep.has(i)) removePin(lane, i); });
+  }
+  // A new lane: the obstacles sink and change while the camera is on the pins; they rise once it flies back.
+  if (sweep.relayout) {
+    if (!sweep.swapped && t > 0.55) {
+      sweep.swapped = true;
+      field.setLayout(sweep.relayout);
+      rising = true;
+    }
+    field.setRaised(sweep.swapped ? 0 : 1 - smooth(t / 0.5));
   }
   if (sweep.fresh && !sweep.racked && t > 1.2) {
     sweep.racked = true;
@@ -404,7 +470,7 @@ function renderScore(): void {
   const next = player.game.next;
   scoreboard.style.setProperty('--shirt', cssColor(SHIRTS[shown]));
   othersList.innerHTML = match.players.length > 1 ? match.players.map((p, i) => (
-    `<span class="${i === shown ? 'me' : ''}"><i style="background:${cssColor(SHIRTS[i])}"></i>${p.name} <b>${p.game.score}</b></span>`
+    `<span class="${i === shown ? 'me' : ''}"><i style="background:${cssColor(SHIRTS[i])}"></i>${p.name}${mode === 'obstacles' ? ` · Nv ${(p.game as ArcadeGame).level}` : ''} <b>${p.game.score}</b></span>`
   )).join('') : '';
   player.game.frames().forEach((view, f) => {
     const el = scoreboard.children[f] as HTMLElement;
@@ -485,6 +551,8 @@ function update(dt: number): void {
     if ((stateTime > 1.5 && allStill(lane)) || stateTime > 5) {
       showPins();
       const before = game().next!;
+      const roller = match.current;
+      const levelBefore = mode === 'obstacles' ? arcade().level : 0;
       const pins = standingBefore.filter((i) => isPinDown(lane, i)).length;
       turnPassed = match.roll(pins);
       renderScore();
@@ -493,6 +561,16 @@ function update(dt: number): void {
       result.textContent = strike ? 'Strike!' : spare ? 'Spare!'
         : pins === 0 ? (wentInGutter ? 'Calha' : 'Nenhum pino')
           : `${pins} ${pins === 1 ? 'pino' : 'pinos'}`;
+      if (mode === 'obstacles') {
+        // The round's points once it is over, and a level reached.
+        const g = arcade(roller);
+        const roundOver = g.isOver || g.next?.roll === 0;
+        if (roundOver) result.insertAdjacentHTML('beforeend', `<small>+${g.roundScores().at(-1)} pontos</small>`);
+        if (g.level > levelBefore) {
+          levelUp = { player: roller, level: g.level };
+          result.insertAdjacentHTML('beforeend', `<small>Subiste ao nível ${g.level}!</small>`);
+        }
+      }
       result.classList.toggle('big', strike || spare);
       if (strike || spare) sound.chime(strike);
       replayNext = strike && recorder.impactTime !== null;
@@ -508,6 +586,12 @@ function update(dt: number): void {
     updateReplay(dt);
   } else if (state === 'sweep') {
     updateSweep();
+  }
+  if (rising && state !== 'sweep') {
+    // Up in 0.9 s once the camera starts back; done by the time a ball thrown at once gets there.
+    const f = state === 'aim' ? smooth((stateTime - 0.25) / 0.9) : 1;
+    field.setRaised(f);
+    if (f >= 1) rising = false;
   }
   if (state === 'rolling' || state === 'settling') showPins();
 
@@ -587,7 +671,9 @@ async function start(): Promise<void> {
   sweepBar = await makeSweepBar(gl, scene);
   sweepBar.transform.setLocalPosition(BAR_REST[0], BAR_REST[1], BAR_REST[2]);
   aimGuide = await makeAimGuide(gl, scene);
-  recorder = new ReplayRecorder([lane.ball, ...lane.pins]);
+  field = new ObstacleField(world, lane);
+  await dressObstacles(gl, scene, field);
+  recorder = new ReplayRecorder([lane.ball, ...lane.pins, ...field.entities]);
   world.onContactForce((e) => onContactForce(e.a.parent, e.b.parent, e.force));
   // A dark hall: the far end fades into it.
   scene.sceneFog.enabled = true;
@@ -644,6 +730,12 @@ async function start(): Promise<void> {
   // The gyroscope is a nice-to-have, tuned at the end: hidden unless the page has ?gyro.
   if (GyroThrow.available && new URLSearchParams(location.search).has('gyro')) gyroButton.hidden = false;
   gyroButton.addEventListener('click', () => { void toggleGyro(); });
+  setupPanel.querySelectorAll<HTMLButtonElement>('button[data-mode]').forEach((b) => {
+    b.addEventListener('click', () => chooseMode(b.dataset.mode as Mode));
+  });
+  let savedMode: Mode = 'classic';
+  try { savedMode = localStorage.getItem('bowling.mode') === 'obstacles' ? 'obstacles' : 'classic'; } catch { /* no storage */ }
+  chooseMode(savedMode);
   setupPanel.querySelectorAll<HTMLButtonElement>('button[data-players]').forEach((b) => {
     b.addEventListener('click', () => choosePlayers(Number(b.dataset.players)));
   });
@@ -655,6 +747,7 @@ async function start(): Promise<void> {
     if (state === 'setup') {
       const n = Number(e.key);
       if (n >= 1 && n <= MAX_PLAYERS) choosePlayers(n);
+      else if (e.key === 'm' || e.key === 'M' || e.key === 'Tab') { e.preventDefault(); chooseMode(mode === 'classic' ? 'obstacles' : 'classic'); }
       else if (e.key === 'Enter' || e.key === ' ') choosePlayers(Math.min(MAX_PLAYERS, lastCount));
       return;
     }
@@ -671,7 +764,7 @@ async function start(): Promise<void> {
     }
   });
   (window as any).bowling = {
-    lane, world, scene, bowl, advance, aimAt, sound, music, recorder, startReplay, bowler, choosePlayers,
+    lane, world, scene, bowl, advance, aimAt, sound, music, recorder, startReplay, bowler, choosePlayers, chooseMode, levelLayout, get field() { return field; }, get mode() { return mode; },
     get aimAngle() { return aimAngle; }, get match() { return match; }, get game() { return game(); }, get state() { return state; },
   };
   document.getElementById('loading')!.classList.add('done');
