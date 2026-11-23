@@ -93,7 +93,7 @@ export type WorldEvent =
   | { type: 'power'; x: number; y: number; kind: ItemKind; points: number }
   | { type: 'break'; x: number; y: number; points: number }
   | { type: 'clear'; x: number; y: number; height: number; points: number }
-  | { type: 'jump' | 'land' | 'checkpoint' | 'oneUp' | 'die' | 'wall' | 'shrink' | 'grow' | 'shoot' | 'fizzle'; x: number; y: number };
+  | { type: 'jump' | 'land' | 'crumble' | 'checkpoint' | 'oneUp' | 'die' | 'wall' | 'shrink' | 'grow' | 'shoot' | 'fizzle'; x: number; y: number };
 
 export interface World {
   spec: LevelSpec;
@@ -352,6 +352,7 @@ export function stepWorld(w: World, input: HeroInput, viewRight: number, dt = ST
   w.runHeld = input.run;
   if (hero.jumped) w.events.push({ type: 'jump', x: hb.x, y: hb.y });
   if (hero.contacts.landed || onPlatform) w.events.push({ type: 'land', x: hb.x, y: hb.y });
+  if (onPlatform && w.platforms[hero.riding]?.spec.kind === 'fall') w.events.push({ type: 'crumble', x: hb.x, y: hb.y });
   if (hb.onGround) w.chain = 0;
 
   // A block hit from below: a bonus block gives a coin and is used up; anything on top is knocked off.

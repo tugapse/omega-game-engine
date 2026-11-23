@@ -53,6 +53,9 @@
     #title .bottom button { font-size: 20px; padding: 12px 34px; animation: glow 1.6s ease-in-out infinite alternate; }
     @keyframes glow { to { box-shadow: 0 0 22px rgba(38, 217, 191, .8); } }
     #title .keys { font-size: 12px; color: var(--fg); text-shadow: 0 1px 3px #000; opacity: .85; }
+    .actions.toggles { margin-top: 8px; }
+    .actions.toggles button, .actions.toggles button:first-child { font-family: system-ui, sans-serif; font-size: 12px; padding: 5px 10px; background: rgba(12, 9, 24, .6); color: var(--fg); border-color: var(--line); }
+    #title .bottom .actions.toggles button { animation: none; font-size: 12px; padding: 5px 10px; }
     #end-stats { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 4px; }
     #end-stats b { font-family: var(--display); font-weight: 400; color: var(--cyan); }
     .node.locked { opacity: .45; cursor: not-allowed; }
@@ -153,12 +156,14 @@
     <div><h1>Omega Run</h1><p class="tag">Leva o Bit até à bandeira em três mundos.</p></div>
     <div class="bottom">
       <div class="actions"><button data-act="start">Jogar</button></div>
-      <p class="keys">Setas para andar · Espaço para saltar · Shift para correr · Esc para pausa</p>
+      <div class="actions toggles"><button data-act="sound">Som: sim</button><button data-act="music">Música: sim</button></div>
+      <p class="keys">Setas para andar · Espaço para saltar · Shift para correr · Esc para pausa · também com comando</p>
     </div>
   </div>
   <div id="pause" class="screen" hidden>
     <div class="panel"><h2>Pausa</h2>
       <div class="actions"><button data-act="resume">Continuar</button><button data-act="retry">Recomeçar</button><button data-act="map">Mapa</button></div>
+      <div class="actions toggles"><button data-act="sound">Som: sim</button><button data-act="music">Música: sim</button></div>
     </div>
   </div>
   <div id="end" class="screen" hidden>
