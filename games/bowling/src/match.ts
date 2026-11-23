@@ -1,26 +1,36 @@
 // One to four players taking turns on the same lane: each bowls a whole frame,
 // then the next player. Pure, no engine.
-import { BowlingGame } from './scoring';
+import { BowlingGame, FrameView, NextRoll } from './scoring';
 
 export const MAX_PLAYERS = 4;
 
+/** What a match needs of a game: the classic ten frames or the obstacle mode's rounds. */
+export interface ScoredGame {
+  readonly next: NextRoll | null;
+  readonly isOver: boolean;
+  readonly score: number;
+  readonly rolls: readonly number[];
+  roll(pins: number): void;
+  frames(): FrameView[];
+}
+
 export interface Player {
   name: string;
-  game: BowlingGame;
+  game: ScoredGame;
 }
 
 export class Match {
   readonly players: Player[];
   private _current = 0;
 
-  constructor(names: string[]) {
+  constructor(names: string[], newGame: () => ScoredGame = () => new BowlingGame()) {
     const n = Math.max(1, Math.min(MAX_PLAYERS, names.length));
-    this.players = names.slice(0, n).map((name) => ({ name, game: new BowlingGame() }));
+    this.players = names.slice(0, n).map((name) => ({ name, game: newGame() }));
   }
 
   /** Default names: "Jogador 1", "Jogador 2"… */
-  static withPlayers(count: number): Match {
-    return new Match(Array.from({ length: Math.max(1, Math.min(MAX_PLAYERS, count)) }, (_, i) => `Jogador ${i + 1}`));
+  static withPlayers(count: number, newGame?: () => ScoredGame): Match {
+    return new Match(Array.from({ length: Math.max(1, Math.min(MAX_PLAYERS, count)) }, (_, i) => `Jogador ${i + 1}`), newGame);
   }
 
   /** Index of the player whose turn it is. */

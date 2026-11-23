@@ -6,6 +6,7 @@ import {
 } from '../../../src';
 import { BALL, LANE, LaneEntities, PIN, PIN_SPOTS } from './lane';
 import { BowlerRig, rigEntities } from './bowler';
+import { OBSTACLE, ObstacleField } from './obstacles';
 
 type Gl = WebGL2RenderingContext;
 
@@ -332,4 +333,75 @@ export async function makeAimGuide(gl: Gl, scene: Scene): Promise<SceneEntity> {
   render(gl, guide, new MeshData(v, n, uv, idx), m);
   scene.addEntity(guide);
   return guide;
+}
+
+/** Gives the obstacle pool its meshes: bollards, rubber bumpers, striped sliders, a paddle and wind arrows. */
+export async function dressObstacles(gl: Gl, scene: Scene, field: ObstacleField): Promise<void> {
+  // Each texture twice: lit, and dimmer as a glow, so the obstacles read from the far end of a dark lane.
+  const banded = (glow: number) => canvasTexture(gl, 16, 64, (c) => {
+    c.fillStyle = shade('#f26a1b', glow);
+    c.fillRect(0, 0, 16, 64);
+    c.fillStyle = shade('#f4f1ea', glow);
+    c.fillRect(0, 14, 16, 9);
+    c.fillRect(0, 32, 16, 9);
+  });
+  const hazard = (glow: number) => canvasTexture(gl, 64, 64, (c) => {
+    c.fillStyle = shade('#f2c21b', glow);
+    c.fillRect(0, 0, 64, 64);
+    c.fillStyle = '#1a1a1a';
+    for (let k = -64; k < 128; k += 22) {
+      c.beginPath();
+      c.moveTo(k, 0); c.lineTo(k + 11, 0); c.lineTo(k + 11 - 64, 64); c.lineTo(k - 64, 64);
+      c.fill();
+    }
+  });
+  const flat = (hex: string, glow: number) => canvasTexture(gl, 4, 4, (c) => { c.fillStyle = shade(hex, glow); c.fillRect(0, 0, 4, 4); });
+  const glowing = async (m: LitMaterial, tex: Texture) => { m.emissiveTex = tex; return m; };
+  const postMat = await glowing(await material(gl, [1, 1, 1], { tex: await banded(1), specular: 0.4, roughness: 0.4 }), await banded(0.45));
+  const rubber = await glowing(await material(gl, [0.75, 0.08, 0.1], { specular: 0.5, roughness: 0.3 }), await flat('#c0141c', 0.5));
+  const hazardMat = await glowing(await material(gl, [1, 1, 1], { tex: await hazard(1), specular: 0.5, roughness: 0.35 }), await hazard(0.45));
+  const metal = await glowing(await material(gl, [0.8, 0.42, 0.12], { specular: 0.9, roughness: 0.25 }), await flat('#d06a1c', 0.4));
+  const steel = await material(gl, [0.5, 0.52, 0.56], { specular: 0.9, roughness: 0.2 });
+  const arrows = await material(gl, [0, 0, 0], { specular: 0 });
+  arrows.emissiveTex = await canvasTexture(gl, 4, 4, (c) => { c.fillStyle = '#3ad0ff'; c.fillRect(0, 0, 4, 4); });
+
+  const { post, bumper, slider, spinner } = OBSTACLE;
+  const postMesh = new LathePrimitive([[0, post.height], [post.radius * 0.7, post.height - 0.005], [post.radius, post.height - 0.03], [post.radius, 0.02], [post.radius * 1.15, 0], [0, 0]], 16);
+  const bumperMesh = new LathePrimitive([[0, bumper.height], [bumper.radius * 0.8, bumper.height], [bumper.radius, bumper.height - 0.02], [bumper.radius, 0.01], [0, 0]], 16);
+  // Wind: rows of arrowheads pointing +X across the lane, for a zone 2 m long (scaled to the zone's length).
+  const v: vec3[] = [], n: vec3[] = [], uv: vec2[] = [], idx: number[] = [];
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 3; col++) {
+      const z = -0.75 + row * 0.5 + (col % 2) * 0.25, x = -0.3 + col * 0.3;
+      const base = v.length;
+      // Counter-clockwise seen from above.
+      v.push([x + 0.09, 0, z], [x - 0.06, 0, z - 0.07], [x - 0.06, 0, z + 0.07]);
+      n.push([0, 1, 0], [0, 1, 0], [0, 1, 0]);
+      uv.push([0.5, 0.5], [0.5, 0.5], [0.5, 0.5]);
+      idx.push(base, base + 1, base + 2);
+    }
+  }
+  const windMesh = new MeshData(v, n, uv, idx);
+
+  for (const slot of field.slots) {
+    const e = slot.entity;
+    scene.addEntity(e);
+    switch (slot.kind) {
+      case 'post': part(gl, scene, e, postMesh, postMat); break;
+      case 'bumper': part(gl, scene, e, bumperMesh, rubber); break;
+      case 'slider': part(gl, scene, e, new CubePrimitive(2), hazardMat, [0, slider.half[1], 0], slider.half); break;
+      case 'spinner':
+        part(gl, scene, e, new CubePrimitive(2), metal, [0, spinner.half[1], 0], spinner.half);
+        part(gl, scene, e, new LathePrimitive([[0, 0.24], [0.05, 0.24], [0.05, 0], [0, 0]], 12), steel);
+        break;
+      case 'wind': part(gl, scene, e, windMesh, arrows); break;
+    }
+  }
+}
+
+/** A #rrggbb colour scaled by `k` (0..1). */
+function shade(hex: string, k: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(v * k));
+  return `rgb(${c.join(', ')})`;
 }
