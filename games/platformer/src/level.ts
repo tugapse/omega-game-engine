@@ -5,7 +5,8 @@
 
 /** What a tile is. */
 /** power: a bonus block with a battery inside (a thruster once Bit is big); star: one with a star. */
-export type Tile = 'empty' | 'ground' | 'block' | 'brick' | 'bonus' | 'power' | 'star' | 'used' | 'spikes';
+/** gate: the bars that close a boss arena (they open when the boss is beaten, see boss.ts). */
+export type Tile = 'empty' | 'ground' | 'block' | 'brick' | 'bonus' | 'power' | 'star' | 'used' | 'spikes' | 'gate';
 
 /** The characters of a level's text. */
 export const LEGEND: Record<string, Tile> = {
@@ -18,14 +19,16 @@ export const LEGEND: Record<string, Tile> = {
   '!': 'power',
   '*': 'star',
   '^': 'spikes',
+  'G': 'gate',
 };
 
 /** Markers: where things start; they leave an empty tile behind. */
 export const MARKERS = { start: 'S', goal: 'F' } as const;
 
 /** Things placed in the level: coins, big coins, enemies and the checkpoint (each leaves an empty tile). */
-export type ThingKind = 'coin' | 'big' | 'walker' | 'shell' | 'flyer' | 'checkpoint';
-export const THINGS: Record<string, ThingKind> = { o: 'coin', $: 'big', g: 'walker', k: 'shell', v: 'flyer', C: 'checkpoint' };
+/** boss: the world's boss (its kind follows the theme); backGate: an empty tile that closes into a gate when the fight starts. */
+export type ThingKind = 'coin' | 'big' | 'walker' | 'shell' | 'flyer' | 'checkpoint' | 'boss' | 'backGate';
+export const THINGS: Record<string, ThingKind> = { o: 'coin', $: 'big', g: 'walker', k: 'shell', v: 'flyer', C: 'checkpoint', M: 'boss', H: 'backGate' };
 export interface Thing { kind: ThingKind; x: number; y: number }
 
 /**
@@ -73,7 +76,7 @@ export interface Level {
   theme: Theme;
 }
 
-const SOLID: Record<Tile, boolean> = { empty: false, ground: true, block: true, brick: true, bonus: true, power: true, star: true, used: true, spikes: false };
+const SOLID: Record<Tile, boolean> = { empty: false, ground: true, block: true, brick: true, bonus: true, power: true, star: true, used: true, spikes: false, gate: true };
 
 export function isSolid(t: Tile): boolean {
   return SOLID[t];

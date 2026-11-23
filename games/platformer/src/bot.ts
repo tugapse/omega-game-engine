@@ -8,6 +8,7 @@ import { LevelSpec, solidAt, tileAt } from './level';
 import { STEP } from './physics';
 import { cloneStage, Stage, stepHeroOnStage } from './platforms';
 import { makeWorld, nextTry, stepWorld, World } from './world';
+import { BOSS, bossContact, cloneBoss, stepBoss } from './boss';
 
 export interface Bot {
   /** Seconds the jump button has been held (-1: not held). */
@@ -16,10 +17,59 @@ export interface Bot {
   run: boolean;
   /** How long (s) to hold the button for this jump. */
   hold: number;
+  /** In a boss fight: the way it moves, and steps until it thinks again. */
+  dir: number;
+  think: number;
 }
 
 export function makeBot(): Bot {
-  return { held: -1, run: true, hold: 0.5 };
+  return { held: -1, run: true, hold: 0.5, dir: 1, think: 0 };
+}
+
+/** Moves tried in a boss fight: left, still or right, each without a jump, a short one or a full one. */
+const FIGHT = [-1, 0, 1].flatMap((dir) => [-1, 0.2, 0.5].map((hold) => ({ dir, hold })));
+
+/**
+ * Plays a move ahead against the boss for a second: a stomp scores high (the
+ * sooner the better), getting hurt or falling scores low; otherwise it keeps
+ * a few metres from the boss, out of reach.
+ */
+function fightScore(w: World, dir: number, hold: number): number {
+  const stage = cloneStage(w), h = copyHero(w.hero), b = cloneBoss(w.boss!);
+  const T = 1.1;
+  for (let i = 0; i * STEP < T; i++) {
+    const t = i * STEP;
+    const feet = h.body.y;
+    stepHeroOnStage(stage, h, { left: dir < 0, right: dir > 0, run: true, jump: hold >= 0 && t < hold, jumpPressed: hold >= 0 && i === 0 }, STEP);
+    stepBoss(b, h.body, stage.level, STEP);
+    const c = bossContact(b, h.body, feet, w.star > 0);
+    if (c === 'stomp' || c === 'down') return 1000 - t * 100;
+    if (c === 'bounce') { h.body.vy = BOSS.bounce; h.body.y = Math.max(h.body.y, b.body.y + b.body.h); }
+    if (c === 'hurt') return -1000 + t * 100;
+    if (h.body.y < -1) return -2000;
+  }
+  const gap = Math.abs(h.body.x - b.body.x) - (b.body.w + h.body.w) / 2;
+  const nearShot = b.shots.reduce((m, s) => Math.min(m, Math.hypot(s.body.x - h.body.x, s.body.y - h.body.y)), 9);
+  return -Math.abs(gap - 2.5) - (nearShot < 2 ? 2 - nearShot : 0) - (hold >= 0 ? 0.2 : 0);
+}
+
+/** What the bot presses in a boss fight. */
+function fightInput(bot: Bot, w: World, dt: number): HeroInput {
+  const b = w.hero.body;
+  let pressed = false;
+  if (b.onGround && bot.held < 0 && --bot.think <= 0) {
+    let best = FIGHT[0], bestScore = -Infinity;
+    for (const m of FIGHT) {
+      const score = fightScore(w, m.dir, m.hold);
+      if (score > bestScore) { bestScore = score; best = m; }
+    }
+    bot.dir = best.dir;
+    bot.think = 6;
+    if (best.hold >= 0) { pressed = true; bot.held = 0; bot.hold = best.hold; }
+  } else if (bot.held >= 0) bot.held += dt;
+  const holding = bot.held >= 0 && bot.held < bot.hold;
+  if (bot.held > 0.5 || (bot.held > 0.05 && b.vy <= 0 && b.onGround)) { bot.held = -1; bot.think = 0; }
+  return { left: bot.dir < 0, right: bot.dir > 0, run: true, jump: holding, jumpPressed: pressed };
 }
 
 /** The jumps the bot tries, best first: running or walking, held fully or briefly. */
@@ -98,6 +148,8 @@ function safeRunUp(w: World): boolean {
 
 /** What the bot presses this step. */
 export function botInput(bot: Bot, w: World, dt: number): HeroInput {
+  const boss = w.boss;
+  if (boss && boss.state !== 'idle' && boss.state !== 'down' && boss.state !== 'gone') return fightInput(bot, w, dt);
   const b = w.hero.body;
   const front = b.x + b.w / 2;
   const row = Math.floor(b.y + 0.01);

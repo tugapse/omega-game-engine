@@ -36,6 +36,27 @@ const FINISH = `
   ##########################
   ##########################`;
 
+/**
+ * The end of a world: the boss's arena, closed by a gate behind Bit ('H',
+ * when the fight starts) and one ahead ('G', open once the boss is beaten),
+ * then a staircase to the flag. `ground` is the ground's character; `roof`
+ * puts a cave ceiling over it.
+ */
+const arena = (ground: '#' | 'X', roof = false) => {
+  const rows = [
+    'H.....................GG...................',
+    'H.....................GG...................',
+    'H.....................GG.........XX........',
+    'H.....................GG........XXX........',
+    'H.....................GG.......XXXX........',
+    'H............M........GG......XXXXX.....F..',
+    '###########################################',
+    '###########################################',
+  ];
+  const top = roof ? [...Array(3).fill('X'.repeat(rows[0].length)), ...Array(3).fill('.'.repeat(rows[0].length))] : [];
+  return [...top, ...rows].map((r) => r.replace(/#/g, ground)).join('\n');
+};
+
 // World 1: Prado Verde (meadow).
 
 const W1_1 = level('Prado 1 · Primeiros passos', 'meadow', `
@@ -237,7 +258,7 @@ const W1_3 = level('Prado 3 · Rio das Pedras', 'meadow', `
   ...................
   .............g.....
   ###################
-  ###################`, FINISH);
+  ###################`, arena('#'));
 
 // World 2: Cavernas de Cristal (caves): a low ceiling, crystals and falling ledges.
 
@@ -512,7 +533,7 @@ const W2_3 = level('Cavernas 3 · Coração de Cristal', 'caves', `
   ........................
   ..........g.......g.....
   ########################
-  ########################`, FINISH);
+  ########################`, arena('#', true));
 
 // World 3: Fábrica nas Nuvens (a factory in the clouds): girders over the sky, many platforms.
 
@@ -689,7 +710,7 @@ const W3_3 = level('Nuvens 3 · Torre do Vento', 'clouds', `
   .........................
   .........g.....g.........
   XXXXXXXXXXXXXXXXXXXXXXXXX
-  XXXXXXXXXXXXXXXXXXXXXXXXX`, FINISH.replace(/#/g, 'X'));
+  XXXXXXXXXXXXXXXXXXXXXXXXX`, arena('X'));
 
 /** The worlds, three levels each, in order. */
 export const WORLDS: { name: string; theme: Theme; levels: LevelSpec[] }[] = [
