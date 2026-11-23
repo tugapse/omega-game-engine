@@ -167,3 +167,14 @@ export function readGhost(text: string | null): Ghost | null {
     return null;
   }
 }
+
+/** The racers in race order (their indices): those finished by time, then the rest by how far round they are. */
+export function standings(races: Race[]): number[] {
+  return races.map((_, i) => i).sort((i, j) => {
+    const a = races[i], b = races[j];
+    const da = a.phase === 'done', db = b.phase === 'done';
+    if (da && db) return a.total - b.total;
+    if (da !== db) return da ? -1 : 1;
+    return b.best - a.best;
+  });
+}

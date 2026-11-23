@@ -22,8 +22,10 @@ const SMOKE = { pool: 36, life: 1.1, rate: 16 };
 const REAR = { back: 1.15, side: 0.85 };
 
 export interface Effects {
-  /** Leaves marks and smoke behind the car, by how hard its rear tyres slide (0 to 1). */
-  update(car: Car, slide: number, dt: number): void;
+  /** Leaves marks and smoke behind a car (`id` tells the cars apart), by how hard its rear tyres slide (0 to 1); `smoke` false for marks only. */
+  update(car: Car, slide: number, dt: number, id?: number, smoke?: boolean): void;
+  /** Moves the smoke on (once a frame, after the cars). */
+  age(dt: number): void;
   /** Wipes the marks and the smoke (a new race). */
   clear(): void;
 }
@@ -53,7 +55,8 @@ export async function dressEffects(gl: Gl, scene: Scene, track: Track, smokeColo
   const marks = render(gl, markEntity, mesh, await material(gl, [0.06, 0.06, 0.07], { tex: markTex, alpha: 0.55, specular: 0 }));
   marks.receiveShadows = false;
   let next = 0;
-  const last: ({ x: number; y: number } | null)[] = [null, null];
+  /** Each car's rear wheels' last marked places. */
+  const lasts = new Map<number, ({ x: number; y: number } | null)[]>();
   const piece = new Float32Array(12);
 
   /** One quad from a to b (on the plane), written over the oldest. */
@@ -84,7 +87,9 @@ export async function dressEffects(gl: Gl, scene: Scene, track: Track, smokeColo
   let puffNext = 0, owed = 0;
 
   return {
-    update(car, slide, dt) {
+    update(car, slide, dt, id = 0, smoke = true) {
+      let last = lasts.get(id);
+      if (!last) { last = [null, null]; lasts.set(id, last); }
       const cos = Math.cos(car.heading), sin = Math.sin(car.heading);
       const wheels = [1, -1].map((side) => ({
         x: car.x - cos * REAR.back - sin * REAR.side * side,
@@ -101,7 +106,7 @@ export async function dressEffects(gl: Gl, scene: Scene, track: Track, smokeColo
         }
       });
       // Smoke while sliding hard.
-      owed += slide > 0.55 ? SMOKE.rate * slide * dt : 0;
+      owed += smoke && slide > 0.55 ? SMOKE.rate * slide * dt : 0;
       while (owed >= 1) {
         owed -= 1;
         const w = wheels[puffNext % 2];
@@ -112,6 +117,8 @@ export async function dressEffects(gl: Gl, scene: Scene, track: Track, smokeColo
         p.t = 0; p.size = 0.3 + Math.random() * 0.2;
         p.e.show = true;
       }
+    },
+    age(dt) {
       for (const p of puffs) {
         if (p.t === Infinity) continue;
         p.t += dt;
@@ -132,7 +139,7 @@ export async function dressEffects(gl: Gl, scene: Scene, track: Track, smokeColo
         gl.bindBuffer(gl.ARRAY_BUFFER, buf);
         gl.bufferSubData(gl.ARRAY_BUFFER, 12 * 4, flat);
       }
-      next = 1; last[0] = last[1] = null;
+      next = 1; lasts.clear();
       for (const p of puffs) { p.t = Infinity; p.e.show = false; }
     },
   };

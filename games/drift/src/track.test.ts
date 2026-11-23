@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { makeCar, STEP, stepCar } from './car';
 import { drive, makeDriver } from './driver';
 import { keepOnTrack, makeTrack, placeOn, surfaceAt } from './track';
-import { TRACKS } from './tracks';
+import { ALL_TRACKS as TRACKS } from './tracks';
 
 describe('track', () => {
   // A circle of radius 50 round the origin, driven counter-clockwise from (50, 0).
   const points: [number, number][] = [];
   for (let i = 0; i < 16; i++) points.push([50 * Math.cos((i / 16) * Math.PI * 2), 50 * Math.sin((i / 16) * Math.PI * 2)]);
-  const circle = makeTrack({ id: 'circle', name: 'circle', width: 10, kerb: 1, runoff: 4, points });
+  const circle = makeTrack({ id: 'circle', name: 'circle', theme: 'city', width: 10, kerb: 1, runoff: 4, points });
 
   it('samples a closed line about a metre apart, with left normals', () => {
     const t = circle;
@@ -29,7 +29,7 @@ describe('track', () => {
     expect(near.side).toBeLessThan(3.5);
     expect(surfaceAt(circle, near.side)).toBe('road');
     expect(surfaceAt(circle, 5.5)).toBe('kerb');
-    expect(surfaceAt(circle, -8)).toBe('grass');
+    expect(surfaceAt(circle, -8)).toBe('off');
     expect(near.along).toBeCloseTo(25, 0);
     const later = placeOn(circle, 47 * Math.cos(0.52), 47 * Math.sin(0.52), near.index);
     expect(later.along - near.along).toBeCloseTo(1, 0);

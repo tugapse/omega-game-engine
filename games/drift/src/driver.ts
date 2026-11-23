@@ -59,3 +59,56 @@ export function guideCurve(car: Car, track: Track, place: Place, offset = 0): nu
   const ang = Math.atan2(dy, dx) - dir;
   return (2 * Math.sin(Math.atan2(Math.sin(ang), Math.cos(ang)))) / dist;
 }
+
+/** A rival: how hard it pushes (0 to 1), its own line across the road (m, positive left), and whether it drifts the bends. */
+export interface Rival {
+  pace: number;
+  offset: number;
+  drifts: boolean;
+  /** The line it is on now (moves to pass a car ahead). */
+  lane: number;
+}
+
+export const makeRival = (pace: number, offset: number, drifts = true): Rival => ({ pace, offset, drifts, lane: offset });
+
+/** Another car on the track, as a rival sees it. */
+export interface Other { car: Car; place: Place }
+
+/**
+ * A rival's input: it keeps to its line (moving across to pass a car close
+ * ahead), drifts the bends with the guide like a player holding the
+ * handbrake, and its pace caps its speed and its throttle in a slide.
+ */
+export function rivalDrive(r: Rival, car: Car, track: Track, place: Place, others: Other[]): CarInput {
+  const u = forwardSpeed(car);
+  // Pass a car close ahead on its other side.
+  let want = r.offset;
+  for (const o of others) {
+    let ahead = o.place.along - place.along;
+    if (ahead < -track.length / 2) ahead += track.length;
+    if (ahead > track.length / 2) ahead -= track.length;
+    if (ahead > 0 && ahead < 14 && Math.abs(o.place.side - r.lane) < 2.8) {
+      want = o.place.side > 0 ? o.place.side - 3.6 : o.place.side + 3.6;
+    }
+  }
+  const room = track.half - 1.8;
+  want = Math.max(-room, Math.min(room, want));
+  r.lane += Math.max(-2.5 / 60, Math.min(2.5 / 60, want - r.lane));
+  const look = 6 + Math.max(0, u) * 0.45;
+  const p = sampleAhead(track, place.index, look);
+  const tx = p.x + p.nx * r.lane, ty = p.y + p.ny * r.lane;
+  const ang = Math.atan2(ty - car.y, tx - car.x) - car.heading;
+  const steer = Math.max(-1, Math.min(1, -Math.atan2(Math.sin(ang), Math.cos(ang)) * 2.4));
+  const cap = car.spec.top * (0.86 + 0.14 * r.pace);
+  if (r.drifts) {
+    let bend = 0;
+    for (let k = 5; k <= 30; k += 5) bend = Math.max(bend, Math.abs(sampleAhead(track, place.index, k).bend));
+    const hand = bend > 1 / 45 && u > 9;
+    const guide = guideCurve(car, track, place, r.lane * 0.5);
+    if (hand || car.drift) return { throttle: 0.7 + 0.3 * r.pace, brake: 0, steer: 0, handbrake: hand, guide };
+    const throttle = u < cap ? 1 : 0.2;
+    return { throttle: car.rearLoad > 0.95 ? Math.min(throttle, 0.5) : throttle, brake: 0, steer, handbrake: false, guide };
+  }
+  const grip = drive({ nerve: 0.7 + 0.2 * r.pace }, car, track, place);
+  return { ...grip, steer, throttle: u < cap ? grip.throttle : 0 };
+}

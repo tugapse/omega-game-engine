@@ -1,13 +1,16 @@
 // A track: a closed centre line through control points (a Catmull-Rom curve,
 // sampled every metre or so) with a width. Across it, from the middle out:
-// the road, a kerb, a strip of grass, then a wall. It answers where the car
+// the road, a kerb, a strip of grass (or sand, or snow), then a wall. It answers where the car
 // is along and across it, what is under it, and pushes it off the walls.
 import { Car, endDrift } from './car';
+import { ThemeName, THEMES } from './themes';
 
 export interface TrackSpec {
   /** A short key (for what is kept in the browser), and the name shown. */
   id: string;
   name: string;
+  /** Where it is (the scenery, and what is off the road). */
+  theme: ThemeName;
   /** Control points [x, y] (m), in driving order; the line closes back to the first. */
   points: [number, number][];
   /** Road width (m), the kerbs' width, and the grass from the kerb to the wall. */
@@ -33,6 +36,7 @@ export interface Sample {
 export interface Track {
   id: string;
   name: string;
+  theme: ThemeName;
   samples: Sample[];
   length: number;
   /** Half the road's width, where the kerb ends, and where the wall stands, from the middle (m). */
@@ -41,14 +45,17 @@ export interface Track {
   wall: number;
 }
 
-export type Surface = 'road' | 'kerb' | 'grass';
+export type Surface = 'road' | 'kerb' | 'off';
 
-/** Grip and extra drag (N per m/s) on each surface. */
-export const SURFACE: Record<Surface, { grip: number; drag: number }> = {
+/** Grip and extra drag (N per m/s) on the road and the kerbs; off them it is the theme's (grass, sand or snow). */
+export const SURFACE: Record<Exclude<Surface, 'off'>, { grip: number; drag: number }> = {
   road: { grip: 1, drag: 0 },
   kerb: { grip: 0.95, drag: 30 },
-  grass: { grip: 0.6, drag: 260 },
 };
+
+export function surfaceGrip(track: Track, s: Surface): { grip: number; drag: number } {
+  return s === 'off' ? THEMES[track.theme].off : SURFACE[s];
+}
 
 /** A wall bounce keeps this share of the speed into the wall, and of the speed along it. */
 export const WALL = { bounce: 0.25, scrape: 0.92 };
@@ -99,7 +106,7 @@ export function makeTrack(spec: TrackSpec, spacing = 1): Track {
   });
   const half = spec.width / 2;
   const kerbEdge = half + (spec.kerb ?? 1);
-  return { id: spec.id, name: spec.name, samples, length, half, kerbEdge, wall: kerbEdge + (spec.runoff ?? 5) };
+  return { id: spec.id, name: spec.name, theme: spec.theme, samples, length, half, kerbEdge, wall: kerbEdge + (spec.runoff ?? 5) };
 }
 
 export interface Place {
@@ -135,7 +142,7 @@ export function placeOn(track: Track, x: number, y: number, hint = -1): Place {
 
 export function surfaceAt(track: Track, side: number): Surface {
   const d = Math.abs(side);
-  return d <= track.half ? 'road' : d <= track.kerbEdge ? 'kerb' : 'grass';
+  return d <= track.half ? 'road' : d <= track.kerbEdge ? 'kerb' : 'off';
 }
 
 /** The sample `ahead` metres along from `index`. */
@@ -151,7 +158,7 @@ export function sampleAhead(track: Track, index: number, ahead: number): Sample 
  */
 export function keepOnTrack(track: Track, car: Car, hint = -1): Place & { hit: number } {
   let place = placeOn(track, car.x, car.y, hint);
-  const surface = SURFACE[surfaceAt(track, place.side)];
+  const surface = surfaceGrip(track, surfaceAt(track, place.side));
   car.surfaceGrip = surface.grip;
   car.surfaceDrag = surface.drag;
   let hit = 0;
