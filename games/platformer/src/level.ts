@@ -4,7 +4,8 @@
 // Text rows run top to bottom; the grid's row 0 is the bottom one, so y goes up.
 
 /** What a tile is. */
-export type Tile = 'empty' | 'ground' | 'block' | 'brick' | 'bonus' | 'used' | 'spikes';
+/** power: a bonus block with a battery inside (a thruster once Bit is big); star: one with a star. */
+export type Tile = 'empty' | 'ground' | 'block' | 'brick' | 'bonus' | 'power' | 'star' | 'used' | 'spikes';
 
 /** The characters of a level's text. */
 export const LEGEND: Record<string, Tile> = {
@@ -14,6 +15,8 @@ export const LEGEND: Record<string, Tile> = {
   'X': 'block',
   'B': 'brick',
   '?': 'bonus',
+  '!': 'power',
+  '*': 'star',
   '^': 'spikes',
 };
 
@@ -45,7 +48,7 @@ export interface Level {
   things: Thing[];
 }
 
-const SOLID: Record<Tile, boolean> = { empty: false, ground: true, block: true, brick: true, bonus: true, used: true, spikes: false };
+const SOLID: Record<Tile, boolean> = { empty: false, ground: true, block: true, brick: true, bonus: true, power: true, star: true, used: true, spikes: false };
 
 export function isSolid(t: Tile): boolean {
   return SOLID[t];

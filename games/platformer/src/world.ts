@@ -2,8 +2,8 @@
 // enemies, spikes, the checkpoint, the clock, lives and score. One fixed step
 // at a time, reporting what happened as events (for sounds and effects).
 // No engine, so it is tested in Node.
-import { fellOut, Hero, HeroInput, makeHero, stepHero } from './hero';
-import { Level, LevelSpec, parseLevel, Tile, tileAt } from './level';
+import { fellOut, Hero, HERO, HeroInput, makeHero, stepHero } from './hero';
+import { Level, LevelSpec, parseLevel, solidAt, Tile, tileAt } from './level';
 import { Body, moveBody, STEP } from './physics';
 
 export const RULES = {
@@ -19,6 +19,33 @@ export const RULES = {
   /** How far (m) past the camera's right edge enemies wake up. */
   wakeAhead: 2,
 };
+
+/** Bit's power-ups: big (a battery), sparks (a thruster, while big) and the star. */
+export const POWER = {
+  /** Big Bit's size (m); small is the hero's own size. */
+  big: { w: 0.95, h: 1.5 },
+  /** After a hit that costs the power, no harm for this long (s). */
+  hurtTime: 2,
+  starTime: 8,
+  /** Time (s) an item takes to rise out of its block. */
+  rise: 0.6,
+  battery: { speed: 3 },
+  star: { speed: 4, bounce: 13 },
+  item: { w: 0.7, h: 0.7, gravity: 40 },
+  spark: { w: 0.3, h: 0.3, speed: 12, bounce: 7, gravity: 50, max: 2, life: 2.5 },
+  points: { item: 1000, brick: 50, spark: 200 },
+  /** Points for touching the flag pole at least this high (m) above its foot, highest first. */
+  flag: [[7.5, 5000], [6, 2000], [4, 800], [2, 400], [0, 100]] as [number, number][],
+};
+
+export type Power = 'small' | 'big' | 'spark';
+export type ItemKind = 'battery' | 'thruster' | 'star';
+
+/** A power-up out of its block: rising out of it, then moving (the thruster stays put). */
+export interface Item { id: number; kind: ItemKind; body: Body; dir: number; state: 'rise' | 'move' | 'gone'; time: number; fromY: number }
+
+/** A spark Bit shoots with the thruster: it bounces along the ground. */
+export interface Spark { body: Body; dir: number; time: number; gone: boolean }
 
 export const ENEMY = {
   walker: { w: 0.8, h: 0.75, speed: 2 },
@@ -53,7 +80,11 @@ export type WorldEvent =
   | { type: 'coin'; x: number; y: number; fromBlock: boolean }
   | { type: 'bump'; x: number; y: number; tile: Tile }
   | { type: 'stomp' | 'kick' | 'knock'; x: number; y: number; points: number; enemy: number }
-  | { type: 'jump' | 'land' | 'checkpoint' | 'oneUp' | 'die' | 'clear' | 'wall'; x: number; y: number };
+  | { type: 'item'; x: number; y: number; kind: ItemKind; id: number }
+  | { type: 'power'; x: number; y: number; kind: ItemKind; points: number }
+  | { type: 'break'; x: number; y: number; points: number }
+  | { type: 'clear'; x: number; y: number; height: number; points: number }
+  | { type: 'jump' | 'land' | 'checkpoint' | 'oneUp' | 'die' | 'wall' | 'shrink' | 'grow' | 'shoot' | 'fizzle'; x: number; y: number };
 
 export interface World {
   spec: LevelSpec;
@@ -71,6 +102,18 @@ export interface World {
   time: number;
   /** Stomps in a row without landing (each scores double). */
   chain: number;
+  power: Power;
+  /** Grown into big Bit as soon as there is room above (a battery taken under a low ceiling). */
+  growing: boolean;
+  /** Seconds left without harm after a hit, and of the star. */
+  hurt: number;
+  star: number;
+  items: Item[];
+  sparks: Spark[];
+  /** The run button was down on the last step (a fresh press shoots a spark). */
+  runHeld: boolean;
+  /** How high (m) above its foot the hero touched the flag pole, and its points (once cleared). */
+  flag: { height: number; points: number } | null;
   dead: boolean;
   cleared: boolean;
   /** What happened on the last step. */
@@ -102,7 +145,8 @@ export function makeWorld(spec: LevelSpec, carry?: Carry): World {
     spec, level, hero: makeHero(start.x, start.y), enemies, coins, checkpoints,
     checkpoint: carry?.checkpoint ?? null,
     lives: carry?.lives ?? RULES.lives, coinCount: carry?.coinCount ?? 0, score: carry?.score ?? 0,
-    time: RULES.time, chain: 0, dead: false, cleared: false, events: [],
+    time: RULES.time, chain: 0, power: 'small', growing: false, hurt: 0, star: 0, items: [], sparks: [], runHeld: false,
+    flag: null, dead: false, cleared: false, events: [],
   };
 }
 
@@ -178,6 +222,94 @@ function stepEnemy(w: World, e: Enemy, dt: number): void {
   if (b.y < -3) e.state = 'gone';
 }
 
+/** Whether a box (middle x, feet y) overlaps any solid tile. */
+function blocked(level: Level, x: number, y: number, w: number, h: number): boolean {
+  for (let tx = Math.floor(x - w / 2); tx <= Math.floor(x + w / 2 - 1e-6); tx++) {
+    for (let ty = Math.floor(y); ty <= Math.floor(y + h - 1e-6); ty++) if (solidAt(level, tx, ty)) return true;
+  }
+  return false;
+}
+
+/** Sets the hero's size for its power (growing waits for room above). */
+function fitHero(w: World): void {
+  const b = w.hero.body;
+  const big = w.power !== 'small';
+  if (big && b.h < POWER.big.h) {
+    if (blocked(w.level, b.x, b.y, POWER.big.w, POWER.big.h)) { w.growing = true; return; }
+    b.w = POWER.big.w; b.h = POWER.big.h; w.growing = false;
+    w.events.push({ type: 'grow', x: b.x, y: b.y });
+  } else if (!big) {
+    b.w = HERO.width; b.h = HERO.height; w.growing = false;
+  }
+}
+
+/** Something hurt the hero: the star shrugs it off, a power-up is lost (a moment without harm), or the hero dies. */
+function hurtHero(w: World): void {
+  if (w.star > 0 || w.hurt > 0 || w.dead) return;
+  if (w.power === 'small') { die(w); return; }
+  w.power = 'small';
+  w.hurt = POWER.hurtTime;
+  fitHero(w);
+  w.events.push({ type: 'shrink', x: w.hero.body.x, y: w.hero.body.y });
+}
+
+function takeItem(w: World, it: Item): void {
+  it.state = 'gone';
+  if (it.kind === 'battery') { if (w.power === 'small') w.power = 'big'; }
+  else if (it.kind === 'thruster') w.power = 'spark';
+  else w.star = POWER.starTime;
+  fitHero(w);
+  w.score += POWER.points.item;
+  w.events.push({ type: 'power', x: it.body.x, y: it.body.y, kind: it.kind, points: POWER.points.item });
+}
+
+function stepItem(w: World, it: Item, dt: number): void {
+  it.time += dt;
+  const b = it.body;
+  if (it.state === 'rise') {
+    b.y = it.fromY + Math.min(1, it.time / POWER.rise);
+    if (it.time >= POWER.rise) { it.state = 'move'; it.time = 0; }
+    return;
+  }
+  if (it.kind === 'thruster') return;
+  b.vx = it.dir * (it.kind === 'star' ? POWER.star.speed : POWER.battery.speed);
+  b.vy = Math.max(-ENEMY.maxFall, b.vy - POWER.item.gravity * dt);
+  const c = moveBody(w.level, b, dt);
+  if (c.wallLeft || c.wallRight) it.dir = -it.dir;
+  if (it.kind === 'star' && c.landed) b.vy = POWER.star.bounce;
+  if (b.y < -3) it.state = 'gone';
+}
+
+function shoot(w: World): void {
+  const hb = w.hero.body;
+  if (w.sparks.filter((s) => !s.gone).length >= POWER.spark.max) return;
+  const sp = POWER.spark;
+  const dir = w.hero.facing;
+  w.sparks.push({
+    dir, time: 0, gone: false,
+    body: { x: hb.x + dir * (hb.w / 2), y: hb.y + hb.h * 0.45, w: sp.w, h: sp.h, vx: dir * sp.speed, vy: -2, onGround: false },
+  });
+  w.events.push({ type: 'shoot', x: hb.x, y: hb.y + hb.h * 0.45 });
+}
+
+function stepSpark(w: World, s: Spark, viewRight: number, dt: number): void {
+  const sp = POWER.spark, b = s.body;
+  s.time += dt;
+  b.vx = s.dir * sp.speed;
+  b.vy = Math.max(-ENEMY.maxFall, b.vy - sp.gravity * dt);
+  const c = moveBody(w.level, b, dt);
+  if (c.landed) b.vy = sp.bounce;
+  if (c.wallLeft || c.wallRight || s.time > sp.life || b.y < -2 || b.x > viewRight + 1) {
+    s.gone = true;
+    if (c.wallLeft || c.wallRight) w.events.push({ type: 'fizzle', x: b.x, y: b.y });
+    return;
+  }
+  for (const e of w.enemies) {
+    if (e.state !== 'walk' && e.state !== 'shell' && e.state !== 'slide') continue;
+    if (overlap(b, e.body)) { e.dir = s.dir; knock(w, e, POWER.points.spark); s.gone = true; return; }
+  }
+}
+
 /** Whether a body stands on top of the tile at (tx, ty). */
 const standsOn = (b: Body, tx: number, ty: number) =>
   Math.abs(b.y - (ty + 1)) < 0.05 && b.x + b.w / 2 > tx && b.x - b.w / 2 < tx + 1;
@@ -195,7 +327,12 @@ export function stepWorld(w: World, input: HeroInput, viewRight: number, dt = ST
   w.time -= dt;
   if (w.time <= 0) { w.time = 0; die(w); return; }
 
+  w.hurt = Math.max(0, w.hurt - dt);
+  w.star = Math.max(0, w.star - dt);
   stepHero(hero, input, w.level, dt);
+  if (w.growing) fitHero(w);
+  if (w.power === 'spark' && input.run && !w.runHeld) shoot(w);
+  w.runHeld = input.run;
   if (hero.jumped) w.events.push({ type: 'jump', x: hb.x, y: hb.y });
   if (hero.contacts.landed) w.events.push({ type: 'land', x: hb.x, y: hb.y });
   if (hb.onGround) w.chain = 0;
@@ -209,8 +346,22 @@ export function stepWorld(w: World, input: HeroInput, viewRight: number, dt = ST
       w.level.tiles[bump.x][bump.y] = 'used';
       addCoins(w, 1);
       w.events.push({ type: 'coin', x: bump.x + 0.5, y: bump.y + 1, fromBlock: true });
+    } else if (tile === 'power' || tile === 'star') {
+      w.level.tiles[bump.x][bump.y] = 'used';
+      const kind: ItemKind = tile === 'star' ? 'star' : w.power === 'small' ? 'battery' : 'thruster';
+      const id = w.items.length;
+      const it = POWER.item;
+      w.items.push({
+        id, kind, dir: 1, state: 'rise', time: 0, fromY: bump.y,
+        body: { x: bump.x + 0.5, y: bump.y, w: it.w, h: it.h, vx: 0, vy: 0, onGround: false },
+      });
+      w.events.push({ type: 'item', x: bump.x + 0.5, y: bump.y + 1, kind, id });
+    } else if (tile === 'brick' && w.power !== 'small') {
+      w.level.tiles[bump.x][bump.y] = 'empty';
+      w.score += POWER.points.brick;
+      w.events.push({ type: 'break', x: bump.x, y: bump.y, points: POWER.points.brick });
     }
-    if (tile === 'bonus' || tile === 'brick' || tile === 'used') {
+    if (tile === 'bonus' || tile === 'brick' || tile === 'used' || tile === 'power' || tile === 'star') {
       for (const e of w.enemies) {
         if ((e.state === 'walk' || e.state === 'shell') && standsOn(e.body, bump.x, bump.y)) knock(w, e, RULES.points.stomp);
       }
@@ -232,10 +383,20 @@ export function stepWorld(w: World, input: HeroInput, viewRight: number, dt = ST
     }
   }
 
+  // Power-ups and sparks.
+  for (const it of w.items) {
+    if (it.state === 'gone') continue;
+    stepItem(w, it, dt);
+    const state = it.state as Item['state'];
+    if (state !== 'gone' && (state === 'move' || it.time > POWER.rise * 0.5) && overlap(hb, it.body)) takeItem(w, it);
+  }
+  for (const s of w.sparks) if (!s.gone) stepSpark(w, s, viewRight, dt);
+  w.sparks = w.sparks.filter((s) => !s.gone);
+
   // Spikes: the lower part of their tile hurts.
   for (let tx = Math.floor(hb.x - hb.w / 2); tx <= Math.floor(hb.x + hb.w / 2 - 1e-6); tx++) {
     for (let ty = Math.floor(hb.y); ty <= Math.floor(hb.y + hb.h - 1e-6); ty++) {
-      if (tileAt(w.level, tx, ty) === 'spikes' && hb.y < ty + 0.55) { die(w); return; }
+      if (tileAt(w.level, tx, ty) === 'spikes' && hb.y < ty + 0.55) { hurtHero(w); if (w.dead) return; }
     }
   }
 
@@ -258,6 +419,8 @@ export function stepWorld(w: World, input: HeroInput, viewRight: number, dt = ST
   for (const e of w.enemies) {
     if (e.state !== 'walk' && e.state !== 'shell' && e.state !== 'slide') continue;
     if (!overlap(hb, e.body)) continue;
+    // With the star, anything touched is knocked out.
+    if (w.star > 0) { e.dir = hb.x < e.body.x ? 1 : -1; knock(w, e, chainPoints(w)); continue; }
     // From above, coming down: a stomp.
     const fromAbove = hb.vy <= 0 && feetBefore >= e.body.y + e.body.h * 0.45;
     if (fromAbove) {
@@ -283,8 +446,8 @@ export function stepWorld(w: World, input: HeroInput, viewRight: number, dt = ST
       continue;
     }
     if (e.grace > 0) continue;
-    die(w);
-    return;
+    hurtHero(w);
+    if (w.dead) return;
   }
 
   // Checkpoints and the goal.
@@ -297,7 +460,10 @@ export function stepWorld(w: World, input: HeroInput, viewRight: number, dt = ST
   if (fellOut(hero)) { die(w); return; }
   if (hb.x + hb.w / 2 >= w.level.goal.x - 0.5) {
     w.cleared = true;
-    w.score += Math.ceil(w.time) * RULES.points.timeLeft;
-    w.events.push({ type: 'clear', x: hb.x, y: hb.y });
+    const height = Math.max(0, hb.y - w.level.goal.y);
+    const points = POWER.flag.find(([h]) => height >= h)![1];
+    w.flag = { height, points };
+    w.score += points + Math.ceil(w.time) * RULES.points.timeLeft;
+    w.events.push({ type: 'clear', x: hb.x, y: hb.y, height, points });
   }
 }

@@ -1,12 +1,14 @@
 // The visuals: the level's tiles as merged meshes (cut into chunks that hide
 // off screen), the sky and hills behind, the goal flag, and the hero (Bit, a
-// small round robot; plain shapes for now).
+// small round robot on a skeleton, see bit.ts).
 import { vec2, vec3 } from 'gl-matrix';
 import {
   Color, CubePrimitive, DirectionalLight, Light, LitMaterial, LitShader, Mesh, MeshData, MeshRendererBehaviour,
   Resources, Scene, SceneEntity, SpherePrimitive, Texture,
 } from '../../../src';
+import { BitClip, buildBit, LOOPING } from './bit';
 import { Level, Tile, tileAt } from './level';
+import { Power } from './world';
 
 type Gl = WebGL2RenderingContext;
 
@@ -263,8 +265,16 @@ export async function dressWorld(gl: Gl, scene: Scene, width: number): Promise<v
   scene.addEntity(sun);
 }
 
+export interface GoalLook {
+  /** Lowers the flag: 1 at the top of the pole, 0 at the bottom. */
+  setFlag(k: number): void;
+}
+
+/** The flag's height (m above the goal tile) at the top and the bottom of the pole. */
+export const FLAG_TOP = 7.3, FLAG_BOTTOM = 1.2;
+
 /** The goal: a tall pole with a flag and a ball on top, standing on the goal tile. */
-export async function dressGoal(gl: Gl, scene: Scene, x: number, y: number): Promise<SceneEntity> {
+export async function dressGoal(gl: Gl, scene: Scene, x: number, y: number): Promise<GoalLook> {
   const goal = makeEntity(scene, 'Goal');
   goal.transform.setLocalPosition(x, y, 0);
   const pole = makeEntity(scene, 'Pole', goal);
@@ -276,60 +286,91 @@ export async function dressGoal(gl: Gl, scene: Scene, x: number, y: number): Pro
   top.transform.setLocalScale(0.25, 0.25, 0.25);
   render(gl, top, new SpherePrimitive(1, 16, 10), await material(gl, [1, 0.8, 0.2], { specular: 0.6, roughness: 0.3 }));
   const flag = makeEntity(scene, 'Flag', goal);
-  flag.transform.setLocalPosition(-0.7, 7.3, 0);
+  flag.transform.setLocalPosition(-0.7, FLAG_TOP, 0);
   flag.transform.setLocalScale(1.3, 0.9, 0.05);
   render(gl, flag, new CubePrimitive(1), await material(gl, [0.15, 0.85, 0.75]));
   const base = makeEntity(scene, 'Pole base', goal);
   base.transform.setLocalPosition(0, 0.5, 0);
   render(gl, base, new CubePrimitive(1), await material(gl, [0.56, 0.6, 0.68]));
-  return goal;
+  return { setFlag(k) { flag.transform.setLocalPosition(-0.7, FLAG_BOTTOM + (FLAG_TOP - FLAG_BOTTOM) * k, 0); } };
 }
 
 export interface HeroLook {
-  /** Places the hero: feet at (x, y), turned to `yaw` degrees, squashed by `squash` (1 = none). */
-  place(x: number, y: number, yaw: number, squash: number): void;
+  /** Places the hero: feet at (x, y), turned to `yaw` degrees, squashed by `squash` (1 = none), grown by `scale`. */
+  place(x: number, y: number, yaw: number, squash: number, scale: number): void;
+  /** Plays a clip (cross-fading from the last one) at a speed. */
+  animate(clip: BitClip, speed: number): void;
+  /** Colours for the power: sparks turn the band orange; the star cycles the shell through colours. */
+  tint(power: Power, star: number, time: number): void;
   setVisible(on: boolean): void;
 }
 
-/** Bit, for now: a round body, a dark visor, two eyes, an antenna and two feet. */
+/** Bit: a round shell with a visor, two eyes and an antenna, little arms and feet, on a skeleton (see bit.ts). */
 export async function dressHero(gl: Gl, scene: Scene): Promise<HeroLook> {
-  const root = makeEntity(scene, 'Hero');
-  const body = makeEntity(scene, 'Hero body', root);
+  const holder = makeEntity(scene, 'Hero');
+  const rig = buildBit('Bit');
+  rig.root.transform.setParent(holder.transform);
+  scene.addEntity(rig.root);
+  for (const b of rig.bones.values()) scene.addEntity(b);
+  const bone = (n: string) => rig.bones.get(n)!;
   const ball = new SpherePrimitive(1, 24, 14);
-  const parts: SceneEntity[] = [body];
-  const part = (name: string, parent: SceneEntity, at: number[], scale: number[]) => {
+  const parts: SceneEntity[] = [];
+  const part = (name: string, parent: SceneEntity, at: number[], scale: number[], mesh: MeshData, m: LitMaterial) => {
     const e = makeEntity(scene, name, parent);
     e.transform.setLocalPosition(at[0], at[1], at[2]);
     e.transform.setLocalScale(scale[0], scale[1], scale[2]);
+    render(gl, e, mesh, m);
     parts.push(e);
     return e;
   };
-  const shell = part('Shell', body, [0, 0.47, 0], [0.4, 0.4, 0.4]);
-  render(gl, shell, ball, await material(gl, [0.95, 0.96, 1], { specular: 0.6, roughness: 0.25 }));
-  const band = part('Band', body, [0, 0.4, 0], [0.42, 0.06, 0.42]);
-  render(gl, band, ball, await material(gl, [0.15, 0.85, 0.75], { specular: 0.3 }));
-  const visor = part('Visor', body, [0, 0.55, 0.22], [0.27, 0.16, 0.2]);
-  render(gl, visor, ball, await material(gl, [0.06, 0.08, 0.14], { specular: 0.9, roughness: 0.1 }));
+  const shellMat = await material(gl, [0.95, 0.96, 1], { specular: 0.6, roughness: 0.25 });
+  const bandMat = await material(gl, [0.15, 0.85, 0.75], { specular: 0.3 });
+  const visorMat = await material(gl, [0.06, 0.08, 0.14], { specular: 0.9, roughness: 0.1 });
   const eyeGlow = await canvasTexture(gl, 4, (c, s) => { c.fillStyle = '#5ff'; c.fillRect(0, 0, s, s); });
   const eyeMat = await material(gl, [0.4, 1, 1], { glow: eyeGlow, specular: 0 });
-  for (const sx of [-1, 1]) {
-    const eye = part('Eye', body, [sx * 0.09, 0.57, 0.39], [0.04, 0.06, 0.03]);
-    render(gl, eye, ball, eyeMat);
+  const greyMat = await material(gl, [0.6, 0.62, 0.7], { specular: 0.4 });
+  const tipMat = await material(gl, [1, 0.3, 0.45], { glow: eyeGlow, specular: 0 });
+  const darkMat = await material(gl, [0.25, 0.27, 0.35], { specular: 0.3 });
+  const body = bone('Body');
+  part('Shell', body, [0, 0.27, 0], [0.4, 0.4, 0.4], ball, shellMat);
+  part('Band', body, [0, 0.2, 0], [0.42, 0.06, 0.42], ball, bandMat);
+  part('Visor', body, [0, 0.35, 0.22], [0.27, 0.16, 0.2], ball, visorMat);
+  for (const sx of [-1, 1]) part('Eye', body, [sx * 0.09, 0.37, 0.39], [0.04, 0.06, 0.03], ball, eyeMat);
+  part('Antenna stalk', bone('Antenna'), [0, 0.12, 0], [0.025, 0.12, 0.025], new CubePrimitive(2), greyMat);
+  part('Antenna tip', bone('Antenna'), [0, 0.26, 0], [0.06, 0.06, 0.06], ball, tipMat);
+  for (const side of ['R', 'L']) {
+    part('Arm', bone(`Arm${side}`), [0, -0.09, 0], [0.05, 0.12, 0.05], ball, greyMat);
+    part('Hand', bone(`Hand${side}`), [0, -0.03, 0], [0.095, 0.095, 0.095], ball, shellMat);
+    part('Leg', bone(`Leg${side}`), [0, -0.07, 0], [0.04, 0.08, 0.04], ball, greyMat);
+    part('Foot', bone(`Foot${side}`), [0, 0, 0.04], [0.12, 0.065, 0.16], ball, darkMat);
   }
-  const stalk = part('Antenna', body, [0, 0.93, 0], [0.025, 0.12, 0.025]);
-  render(gl, stalk, new CubePrimitive(2), await material(gl, [0.6, 0.62, 0.7]));
-  const tip = part('Antenna tip', body, [0, 1.07, 0], [0.06, 0.06, 0.06]);
-  render(gl, tip, ball, await material(gl, [1, 0.3, 0.45], { glow: eyeGlow, specular: 0 }));
-  const footMat = await material(gl, [0.25, 0.27, 0.35], { specular: 0.3 });
-  for (const sx of [-1, 1]) {
-    const foot = part('Foot', body, [sx * 0.16, 0.06, 0.04], [0.12, 0.07, 0.16]);
-    render(gl, foot, ball, footMat);
-  }
+  let current = '';
+  const teal = [0.15, 0.85, 0.75], orange = [1, 0.5, 0.12];
   return {
-    place(x, y, yaw, squash) {
-      root.transform.setLocalPosition(x, y, 0);
-      root.transform.setLocalRotation(0, yaw, 0);
-      body.transform.setLocalScale(1 / Math.sqrt(squash), squash, 1 / Math.sqrt(squash));
+    place(x, y, yaw, squash, scale) {
+      holder.transform.setLocalPosition(x, y, 0);
+      holder.transform.setLocalRotation(0, yaw, 0);
+      const side = scale / Math.sqrt(squash);
+      holder.transform.setLocalScale(side, scale * squash, side);
+    },
+    animate(clip, speed) {
+      rig.animator.speed = speed;
+      if (clip === current) return;
+      if (current) rig.animator.crossFade(clip, 0.12, { loop: LOOPING[clip] });
+      else rig.animator.play(clip, { loop: LOOPING[clip] });
+      current = clip;
+    },
+    tint(power, star, time) {
+      const band = power === 'spark' ? orange : teal;
+      bandMat.color.r = band[0]; bandMat.color.g = band[1]; bandMat.color.b = band[2];
+      if (star > 0) {
+        // Cycling hues, slowing to a flicker in the last two seconds.
+        const h = (time * (star < 2 ? 2 : 5)) % 1;
+        const c = (k: number) => 0.55 + 0.45 * Math.cos(2 * Math.PI * (h + k));
+        shellMat.color.r = c(0); shellMat.color.g = c(1 / 3); shellMat.color.b = c(2 / 3);
+      } else {
+        shellMat.color.r = 0.95; shellMat.color.g = 0.96; shellMat.color.b = 1;
+      }
     },
     setVisible(on) { for (const p of parts) p.show = on; },
   };
