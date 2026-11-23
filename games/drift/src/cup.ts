@@ -22,9 +22,9 @@ const ids = (theme: ThemeName) => {
 };
 
 export const CUPS: Cup[] = [
-  { theme: 'city', name: 'Taça da Cidade', races: ids('city'), pace: [0.15, 0.55], cars: ['bolinha', 'bolinha', 'faisca', 'bolinha', 'faisca'] },
-  { theme: 'desert', name: 'Taça do Deserto', races: ids('desert'), pace: [0.4, 0.8], cars: ['faisca', 'bolinha', 'trovao', 'faisca', 'faisca'] },
-  { theme: 'snow', name: 'Taça da Montanha', races: ids('snow'), pace: [0.65, 1], cars: ['trovao', 'faisca', 'cometa', 'trovao', 'cometa'] },
+  { theme: 'city', name: 'Taça da Cidade', races: ids('city'), pace: [0, 0.3], cars: ['bolinha', 'bolinha', 'bolinha', 'bolinha', 'bolinha'] },
+  { theme: 'desert', name: 'Taça do Deserto', races: ids('desert'), pace: [0.2, 0.6], cars: ['bolinha', 'faisca', 'bolinha', 'faisca', 'trovao'] },
+  { theme: 'snow', name: 'Taça da Montanha', races: ids('snow'), pace: [0.45, 0.85], cars: ['faisca', 'trovao', 'faisca', 'trovao', 'cometa'] },
 ];
 
 export const CUP_ORDER: ThemeName[] = CUPS.map((c) => c.theme);

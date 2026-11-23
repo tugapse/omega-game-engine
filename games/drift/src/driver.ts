@@ -99,13 +99,13 @@ export function rivalDrive(r: Rival, car: Car, track: Track, place: Place, other
   const tx = p.x + p.nx * r.lane, ty = p.y + p.ny * r.lane;
   const ang = Math.atan2(ty - car.y, tx - car.x) - car.heading;
   const steer = Math.max(-1, Math.min(1, -Math.atan2(Math.sin(ang), Math.cos(ang)) * 2.4));
-  const cap = car.spec.top * (0.86 + 0.14 * r.pace);
+  const cap = car.spec.top * (0.78 + 0.22 * r.pace);
   if (r.drifts) {
     let bend = 0;
     for (let k = 5; k <= 30; k += 5) bend = Math.max(bend, Math.abs(sampleAhead(track, place.index, k).bend));
     const hand = bend > 1 / 45 && u > 9;
     const guide = guideCurve(car, track, place, r.lane * 0.5);
-    if (hand || car.drift) return { throttle: 0.7 + 0.3 * r.pace, brake: 0, steer: 0, handbrake: hand, guide };
+    if (hand || car.drift) return { throttle: 0.45 + 0.55 * r.pace, brake: 0, steer: 0, handbrake: hand, guide };
     const throttle = u < cap ? 1 : 0.2;
     return { throttle: car.rearLoad > 0.95 ? Math.min(throttle, 0.5) : throttle, brake: 0, steer, handbrake: false, guide };
   }
