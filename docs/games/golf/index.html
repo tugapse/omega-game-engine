@@ -59,6 +59,15 @@
     @keyframes pop { from { transform: scale(.4); opacity: 0; } }
     #result small { display: table; margin: 8px auto 0; padding: 3px 12px; font-family: system-ui, sans-serif; font-size: 16px; font-weight: 700; color: var(--fg); text-shadow: none; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
 
+    /* Map view toggle. */
+    #map { position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: max(22px, env(safe-area-inset-bottom)); padding: 8px 14px; border-radius: 18px; background: var(--panel); border: 1px solid var(--cyan); color: var(--cyan); font-family: var(--display); font-size: 13px; }
+    #map.on { background: var(--cyan); color: #07050d; }
+    #map[hidden] { display: none; }
+    /* The hole's name as it flies in. */
+    #intro { top: 22%; left: 0; right: 0; text-align: center; font-family: var(--display); font-size: 40px; color: var(--fg); opacity: 0; transition: opacity .4s; text-shadow: 0 0 12px rgba(45, 226, 255, .8), 0 2px 12px #000; }
+    #intro.show { opacity: 1; }
+    #intro small { display: block; font-size: 15px; color: var(--gold); letter-spacing: .1em; }
+
     /* Loading. */
     #loading { position: fixed; inset: 0; display: grid; place-items: center; background: #07050d; transition: opacity .4s; z-index: 5; }
     #loading.done { opacity: 0; pointer-events: none; }
@@ -99,6 +108,8 @@
   </div>
 
   <div id="result" class="hud"></div>
+  <div id="intro" class="hud"></div>
+  <button id="map" hidden>Mapa</button>
   <div id="stats" class="hud" hidden></div>
 
   <div id="loading">

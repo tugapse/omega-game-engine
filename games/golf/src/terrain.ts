@@ -104,3 +104,14 @@ export class HeightField implements Ground {
     return SURFACES[this.surfaces[j * this.snx + i]];
   }
 }
+
+/**
+ * Which way and how steeply the ground falls at (x, z): the downhill direction
+ * (x, z, unit) and the slope (rise per metre).
+ */
+export function downhill(ground: Ground, x: number, z: number): { x: number; z: number; slope: number } {
+  const n = ground.normal(x, z, [0, 1, 0]);
+  const h = Math.hypot(n[0], n[2]);
+  if (h < 1e-9) return { x: 0, z: 0, slope: 0 };
+  return { x: n[0] / h, z: n[2] / h, slope: h / Math.max(1e-6, n[1]) };
+}

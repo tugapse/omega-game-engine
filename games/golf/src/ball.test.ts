@@ -89,6 +89,16 @@ describe('golf ball', () => {
     expect(-hard.end[2]).toBeGreaterThan(10);
   });
 
+  it('a fast putt over the edge of the cup catches the lip and turns away', () => {
+    const g = flat('green');
+    const cup = { x: 0.03, z: -5 };
+    const straight = simulate({ ground: g, cup: far }, { x: 0, z: 0 }, shotFor(club('putter'), 0.6, 0));
+    const lip = simulate({ ground: g, cup }, { x: 0, z: 0 }, shotFor(club('putter'), 0.6, 0));
+    expect(lip.phase).toBe('rest');
+    expect(lip.end[0]).toBeLessThan(-0.1); // passed left of centre, turned further left
+    expect(-lip.end[2]).toBeLessThan(-straight.end[2] - 1);
+  });
+
   it('off the ground is out of bounds', () => {
     const g = flat((x) => (x > 10 ? 'out' : 'fairway'));
     expect(play(g, 'driver', 1, 1).phase).toBe('out');
