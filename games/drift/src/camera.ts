@@ -52,5 +52,7 @@ export function followCar(c: ChaseState, car: Car, dt: number): void {
   c.x += (tx - c.x) * k;
   c.y += (ty - c.y) * k;
   const v = Math.min(1, speedOf(car) / car.spec.top);
-  c.fov += (CHASE.fov + (CHASE.fovFast - CHASE.fov) * v * v - c.fov) * Math.min(1, 2 * dt);
+  // Wider still with the turbo on.
+  const fov = CHASE.fov + (CHASE.fovFast - CHASE.fov) * v * v + (car.boost > 0 ? 8 : 0);
+  c.fov += (fov - c.fov) * Math.min(1, 2 * dt);
 }
