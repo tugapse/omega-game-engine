@@ -3,6 +3,7 @@
 import { TrackSpec } from './track';
 
 export const TEST_TRACK: TrackSpec = {
+  id: 'test',
   name: 'Pista de testes',
   width: 14,
   kerb: 1.2,

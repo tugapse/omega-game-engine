@@ -8,7 +8,7 @@ describe('track', () => {
   // A circle of radius 50 round the origin, driven counter-clockwise from (50, 0).
   const points: [number, number][] = [];
   for (let i = 0; i < 16; i++) points.push([50 * Math.cos((i / 16) * Math.PI * 2), 50 * Math.sin((i / 16) * Math.PI * 2)]);
-  const circle = makeTrack({ name: 'circle', width: 10, kerb: 1, runoff: 4, points });
+  const circle = makeTrack({ id: 'circle', name: 'circle', width: 10, kerb: 1, runoff: 4, points });
 
   it('samples a closed line about a metre apart, with left normals', () => {
     const t = circle;

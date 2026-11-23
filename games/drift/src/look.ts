@@ -4,7 +4,7 @@
 // and roll). The plane's (x, y) is the world's (x, -z); y is up.
 import { vec2, vec3 } from 'gl-matrix';
 import {
-  Color, CubePrimitive, DirectionalLight, LathePrimitive, Light, LitMaterial, LitShader, Mesh, MeshData,
+  Color, CubePrimitive, RenderLayer, DirectionalLight, LathePrimitive, Light, LitMaterial, LitShader, Mesh, MeshData,
   MeshRendererBehaviour, Resources, Scene, SceneEntity, SpherePrimitive, Texture,
 } from '../../../src';
 import { Car } from './car';
@@ -20,9 +20,9 @@ export async function canvasTexture(gl: Gl, size: number, draw: (c: CanvasRender
   return Resources.for(gl).getTexture(canvas.toDataURL('image/png'));
 }
 
-export async function material(gl: Gl, color: number[], opts: { tex?: Texture; glow?: Texture; specular?: number; roughness?: number } = {}): Promise<LitMaterial> {
+export async function material(gl: Gl, color: number[], opts: { tex?: Texture; glow?: Texture; specular?: number; roughness?: number; alpha?: number } = {}): Promise<LitMaterial> {
   const m = new LitMaterial();
-  m.color = new Color(color[0], color[1], color[2], 1);
+  m.color = new Color(color[0], color[1], color[2], opts.alpha ?? 1);
   m.mainTex = opts.tex ?? await Resources.for(gl).getTexture('builtin://white');
   if (opts.glow) m.emissiveTex = opts.glow;
   m.specularStrength = opts.specular ?? 0.08;
@@ -37,13 +37,20 @@ export function makeEntity(scene: Scene, name: string, parent?: SceneEntity): Sc
   return e;
 }
 
-export function render(gl: Gl, entity: SceneEntity, meshData: MeshData, m: LitMaterial): void {
+/** Draws `meshData` on `entity`; see-through when the material's colour has alpha under 1. */
+export function render(gl: Gl, entity: SceneEntity, meshData: MeshData, m: LitMaterial): MeshRendererBehaviour {
   const mesh = new Mesh();
   mesh.meshData = meshData;
   const renderer = new MeshRendererBehaviour(gl);
   renderer.mesh = mesh;
   renderer.shader = new LitShader(gl, m);
+  if (m.color.a < 1) {
+    renderer.renderLayer = RenderLayer.TRANSPARENT;
+    renderer.castShadows = false;
+    renderer.writeToDephBuffer = false;
+  }
   entity.addBehaviour(renderer);
+  return renderer;
 }
 
 /** Copies of `part`, each moved and scaled, as one mesh (the engine has no instancing). */
@@ -261,6 +268,7 @@ export async function dressWorld(gl: Gl, scene: Scene, track: Track): Promise<vo
 
 export interface CarLook {
   root: SceneEntity;
+  show(on: boolean): void;
   update(car: Car, dt: number): void;
 }
 
@@ -270,31 +278,34 @@ function wheelMesh(r: number, w: number): MeshData {
 }
 
 /** The car, for now a body of blocks (its own model comes in phase 3), in `color`. */
-export async function dressCar(gl: Gl, scene: Scene, color: number[]): Promise<CarLook> {
-  const root = makeEntity(scene, 'Car');
-  const body = makeEntity(scene, 'Body', root);
-  const paint = await material(gl, color, { specular: 0.7, roughness: 0.25 });
-  const glass = await material(gl, [0.12, 0.16, 0.24], { specular: 0.9, roughness: 0.1 });
-  const dark = await material(gl, [0.08, 0.08, 0.1], { specular: 0.2 });
-  const lamp = await material(gl, [1, 1, 0.9], { glow: await canvasTexture(gl, 4, (c, s) => { c.fillStyle = '#fff6c8'; c.fillRect(0, 0, s, s); }) });
-  const tail = await material(gl, [1, 0.1, 0.15], { glow: await canvasTexture(gl, 4, (c, s) => { c.fillStyle = '#a0101a'; c.fillRect(0, 0, s, s); }) });
+export async function dressCar(gl: Gl, scene: Scene, color: number[], opts: { alpha?: number; name?: string } = {}): Promise<CarLook> {
+  const alpha = opts.alpha;
+  const all: SceneEntity[] = [];
+  const ent = (name: string, parent?: SceneEntity) => { const e = makeEntity(scene, name, parent); all.push(e); return e; };
+  const root = ent(opts.name ?? 'Car');
+  const body = ent('Body', root);
+  const paint = await material(gl, color, { alpha, specular: 0.7, roughness: 0.25 });
+  const glass = await material(gl, [0.12, 0.16, 0.24], { alpha, specular: 0.9, roughness: 0.1 });
+  const dark = await material(gl, [0.08, 0.08, 0.1], { alpha, specular: 0.2 });
+  const lamp = await material(gl, [1, 1, 0.9], { alpha, glow: await canvasTexture(gl, 4, (c, s) => { c.fillStyle = '#fff6c8'; c.fillRect(0, 0, s, s); }) });
+  const tail = await material(gl, [1, 0.1, 0.15], { alpha, glow: await canvasTexture(gl, 4, (c, s) => { c.fillStyle = '#a0101a'; c.fillRect(0, 0, s, s); }) });
   const cube = new CubePrimitive(1);
   // Along +x (the nose), across z, y up; the car is 3.7 m long and 1.8 m wide.
   render(gl, body, merge(cube, [{ at: [0, 0.55, 0], scale: [3.7, 0.5, 1.8] }, { at: [1.45, 0.42, 0], scale: [0.8, 0.3, 1.82] }]), paint);
-  render(gl, makeEntity(scene, 'Cabin', body), merge(cube, [{ at: [-0.25, 1.05, 0], scale: [1.9, 0.52, 1.5] }]), glass);
-  render(gl, makeEntity(scene, 'Roof', body), merge(cube, [{ at: [-0.3, 1.33, 0], scale: [1.6, 0.06, 1.42] }]), paint);
-  render(gl, makeEntity(scene, 'Bumpers', body), merge(cube, [{ at: [1.88, 0.35, 0], scale: [0.12, 0.25, 1.75] }, { at: [-1.88, 0.35, 0], scale: [0.12, 0.25, 1.75] }]), dark);
-  render(gl, makeEntity(scene, 'Lamps', body), merge(cube, [{ at: [1.86, 0.62, 0.6], scale: [0.06, 0.16, 0.38] }, { at: [1.86, 0.62, -0.6], scale: [0.06, 0.16, 0.38] }]), lamp);
-  render(gl, makeEntity(scene, 'Tail lamps', body), merge(cube, [{ at: [-1.86, 0.65, 0.62], scale: [0.06, 0.14, 0.4] }, { at: [-1.86, 0.65, -0.62], scale: [0.06, 0.14, 0.4] }]), tail);
+  render(gl, ent('Cabin', body), merge(cube, [{ at: [-0.25, 1.05, 0], scale: [1.9, 0.52, 1.5] }]), glass);
+  render(gl, ent('Roof', body), merge(cube, [{ at: [-0.3, 1.33, 0], scale: [1.6, 0.06, 1.42] }]), paint);
+  render(gl, ent('Bumpers', body), merge(cube, [{ at: [1.88, 0.35, 0], scale: [0.12, 0.25, 1.75] }, { at: [-1.88, 0.35, 0], scale: [0.12, 0.25, 1.75] }]), dark);
+  render(gl, ent('Lamps', body), merge(cube, [{ at: [1.86, 0.62, 0.6], scale: [0.06, 0.16, 0.38] }, { at: [1.86, 0.62, -0.6], scale: [0.06, 0.16, 0.38] }]), lamp);
+  render(gl, ent('Tail lamps', body), merge(cube, [{ at: [-1.86, 0.65, 0.62], scale: [0.06, 0.14, 0.4] }, { at: [-1.86, 0.65, -0.62], scale: [0.06, 0.14, 0.4] }]), tail);
   const tyre = wheelMesh(0.36, 0.3);
-  const rubber = await material(gl, [0.1, 0.1, 0.12], { specular: 0.1 });
+  const rubber = await material(gl, [0.1, 0.1, 0.12], { alpha, specular: 0.1 });
   const wheels: { pivot: SceneEntity; spinner: SceneEntity; front: boolean }[] = [];
   for (const [x, z] of [[1.15, 0.85], [1.15, -0.85], [-1.15, 0.85], [-1.15, -0.85]]) {
-    const pivot = makeEntity(scene, 'Wheel pivot', root);
+    const pivot = ent('Wheel pivot', root);
     pivot.transform.setLocalPosition(x, 0.36, z);
-    const spinner = makeEntity(scene, 'Wheel roll', pivot);
+    const spinner = ent('Wheel roll', pivot);
     // The lathe's axis is y: laid across the car (along z) under the roller.
-    const t = makeEntity(scene, 'Wheel', spinner);
+    const t = ent('Wheel', spinner);
     t.transform.setLocalRotation(90, 0, 0);
     render(gl, t, tyre, rubber);
     wheels.push({ pivot, spinner, front: x > 0 });
@@ -302,6 +313,7 @@ export async function dressCar(gl: Gl, scene: Scene, color: number[]): Promise<C
   let roll = 0;
   return {
     root,
+    show(on) { for (const e of all) e.show = on; },
     update(car, dt) {
       root.transform.setLocalPosition(car.x, 0, -car.y);
       root.transform.setLocalRotation(0, (car.heading * 180) / Math.PI, 0);

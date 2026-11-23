@@ -5,6 +5,8 @@
 import { Car, endDrift } from './car';
 
 export interface TrackSpec {
+  /** A short key (for what is kept in the browser), and the name shown. */
+  id: string;
   name: string;
   /** Control points [x, y] (m), in driving order; the line closes back to the first. */
   points: [number, number][];
@@ -29,6 +31,7 @@ export interface Sample {
 }
 
 export interface Track {
+  id: string;
   name: string;
   samples: Sample[];
   length: number;
@@ -96,7 +99,7 @@ export function makeTrack(spec: TrackSpec, spacing = 1): Track {
   });
   const half = spec.width / 2;
   const kerbEdge = half + (spec.kerb ?? 1);
-  return { name: spec.name, samples, length, half, kerbEdge, wall: kerbEdge + (spec.runoff ?? 5) };
+  return { id: spec.id, name: spec.name, samples, length, half, kerbEdge, wall: kerbEdge + (spec.runoff ?? 5) };
 }
 
 export interface Place {
