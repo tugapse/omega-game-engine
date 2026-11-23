@@ -2,9 +2,10 @@
 // enemies, spikes, the checkpoint, the clock, lives and score. One fixed step
 // at a time, reporting what happened as events (for sounds and effects).
 // No engine, so it is tested in Node.
-import { fellOut, Hero, HERO, HeroInput, makeHero, stepHero } from './hero';
+import { fellOut, Hero, HERO, HeroInput, makeHero } from './hero';
 import { Level, LevelSpec, parseLevel, solidAt, Tile, tileAt } from './level';
-import { Body, moveBody, STEP } from './physics';
+import { Body, boxBlocked, moveBody, STEP } from './physics';
+import { makePlatforms, Platform, stepHeroOnStage } from './platforms';
 
 export const RULES = {
   lives: 3,
@@ -12,7 +13,7 @@ export const RULES = {
   time: 300,
   /** Coins for an extra life. */
   coinsForLife: 100,
-  points: { coin: 200, stomp: 100, kick: 400, timeLeft: 10 },
+  points: { coin: 200, stomp: 100, kick: 400, timeLeft: 10, big: 2000 },
   /** Bounce off an enemy (m/s), higher with the jump button held. */
   bounce: 10,
   bounceHeld: 15,
@@ -76,8 +77,12 @@ export interface Enemy {
 
 export interface Coin { x: number; y: number; taken: boolean }
 
+/** Big coins per level (hidden ones, to find). */
+export const BIG_COINS = 3;
+
 export type WorldEvent =
   | { type: 'coin'; x: number; y: number; fromBlock: boolean }
+  | { type: 'big'; x: number; y: number; index: number; points: number }
   | { type: 'bump'; x: number; y: number; tile: Tile }
   | { type: 'stomp' | 'kick' | 'knock'; x: number; y: number; points: number; enemy: number }
   | { type: 'item'; x: number; y: number; kind: ItemKind; id: number }
@@ -92,6 +97,11 @@ export interface World {
   hero: Hero;
   enemies: Enemy[];
   coins: Coin[];
+  /** The level's big coins, in order across it (taken ones stay taken on the next try). */
+  bigCoins: Coin[];
+  platforms: Platform[];
+  /** Seconds since this try began (the platforms move with it). */
+  elapsed: number;
   checkpoints: { x: number; y: number }[];
   /** The checkpoint reached (respawns start here). */
   checkpoint: { x: number; y: number } | null;
@@ -121,7 +131,7 @@ export interface World {
 }
 
 /** What carries over from one try to the next. */
-export interface Carry { lives: number; coinCount: number; score: number; checkpoint: { x: number; y: number } | null }
+export interface Carry { lives: number; coinCount: number; score: number; checkpoint: { x: number; y: number } | null; bigTaken?: boolean[] }
 
 /** A fresh try at a level: everything back in place, with lives and score carried over. */
 export function makeWorld(spec: LevelSpec, carry?: Carry): World {
@@ -129,9 +139,11 @@ export function makeWorld(spec: LevelSpec, carry?: Carry): World {
   const start = carry?.checkpoint ?? level.start;
   const enemies: Enemy[] = [];
   const coins: Coin[] = [];
+  const bigCoins: Coin[] = [];
   const checkpoints: { x: number; y: number }[] = [];
   for (const t of level.things) {
     if (t.kind === 'coin') coins.push({ x: t.x, y: t.y + 0.5, taken: false });
+    else if (t.kind === 'big') bigCoins.push({ x: t.x, y: t.y + 0.5, taken: false });
     else if (t.kind === 'checkpoint') checkpoints.push({ x: t.x, y: t.y });
     else {
       const size = ENEMY[t.kind];
@@ -141,8 +153,10 @@ export function makeWorld(spec: LevelSpec, carry?: Carry): World {
       });
     }
   }
+  bigCoins.sort((a, b) => a.x - b.x);
+  bigCoins.forEach((c, i) => { c.taken = !!carry?.bigTaken?.[i]; });
   return {
-    spec, level, hero: makeHero(start.x, start.y), enemies, coins, checkpoints,
+    spec, level, hero: makeHero(start.x, start.y), enemies, coins, bigCoins, platforms: makePlatforms(level.platforms), elapsed: 0, checkpoints,
     checkpoint: carry?.checkpoint ?? null,
     lives: carry?.lives ?? RULES.lives, coinCount: carry?.coinCount ?? 0, score: carry?.score ?? 0,
     time: RULES.time, chain: 0, power: 'small', growing: false, hurt: 0, star: 0, items: [], sparks: [], runHeld: false,
@@ -153,7 +167,7 @@ export function makeWorld(spec: LevelSpec, carry?: Carry): World {
 /** After dying: the next try (from the checkpoint), or null when there are no lives left. */
 export function nextTry(w: World): World | null {
   if (w.lives <= 0) return null;
-  return makeWorld(w.spec, { lives: w.lives, coinCount: w.coinCount, score: w.score, checkpoint: w.checkpoint });
+  return makeWorld(w.spec, { lives: w.lives, coinCount: w.coinCount, score: w.score, checkpoint: w.checkpoint, bigTaken: w.bigCoins.map((c) => c.taken) });
 }
 
 const overlap = (a: Body, b: Body) =>
@@ -222,20 +236,12 @@ function stepEnemy(w: World, e: Enemy, dt: number): void {
   if (b.y < -3) e.state = 'gone';
 }
 
-/** Whether a box (middle x, feet y) overlaps any solid tile. */
-function blocked(level: Level, x: number, y: number, w: number, h: number): boolean {
-  for (let tx = Math.floor(x - w / 2); tx <= Math.floor(x + w / 2 - 1e-6); tx++) {
-    for (let ty = Math.floor(y); ty <= Math.floor(y + h - 1e-6); ty++) if (solidAt(level, tx, ty)) return true;
-  }
-  return false;
-}
-
 /** Sets the hero's size for its power (growing waits for room above). */
 function fitHero(w: World): void {
   const b = w.hero.body;
   const big = w.power !== 'small';
   if (big && b.h < POWER.big.h) {
-    if (blocked(w.level, b.x, b.y, POWER.big.w, POWER.big.h)) { w.growing = true; return; }
+    if (boxBlocked(w.level, b.x, b.y, POWER.big.w, POWER.big.h)) { w.growing = true; return; }
     b.w = POWER.big.w; b.h = POWER.big.h; w.growing = false;
     w.events.push({ type: 'grow', x: b.x, y: b.y });
   } else if (!big) {
@@ -329,12 +335,12 @@ export function stepWorld(w: World, input: HeroInput, viewRight: number, dt = ST
 
   w.hurt = Math.max(0, w.hurt - dt);
   w.star = Math.max(0, w.star - dt);
-  stepHero(hero, input, w.level, dt);
+  const onPlatform = stepHeroOnStage(w, hero, input, dt);
   if (w.growing) fitHero(w);
   if (w.power === 'spark' && input.run && !w.runHeld) shoot(w);
   w.runHeld = input.run;
   if (hero.jumped) w.events.push({ type: 'jump', x: hb.x, y: hb.y });
-  if (hero.contacts.landed) w.events.push({ type: 'land', x: hb.x, y: hb.y });
+  if (hero.contacts.landed || onPlatform) w.events.push({ type: 'land', x: hb.x, y: hb.y });
   if (hb.onGround) w.chain = 0;
 
   // A block hit from below: a bonus block gives a coin and is used up; anything on top is knocked off.
@@ -382,6 +388,15 @@ export function stepWorld(w: World, input: HeroInput, viewRight: number, dt = ST
       w.events.push({ type: 'coin', x: c.x, y: c.y, fromBlock: false });
     }
   }
+
+  w.bigCoins.forEach((c, index) => {
+    if (c.taken) return;
+    if (Math.abs(c.x - hb.x) < hb.w / 2 + 0.5 && c.y > hb.y - 0.5 && c.y < hb.y + hb.h + 0.5) {
+      c.taken = true;
+      w.score += RULES.points.big;
+      w.events.push({ type: 'big', x: c.x, y: c.y, index, points: RULES.points.big });
+    }
+  });
 
   // Power-ups and sparks.
   for (const it of w.items) {

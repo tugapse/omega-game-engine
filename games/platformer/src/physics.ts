@@ -40,6 +40,11 @@ function overlapsSolid(level: Level, x0: number, y0: number, x1: number, y1: num
   return false;
 }
 
+/** Whether a box (middle x, feet y) overlaps any solid tile. */
+export function boxBlocked(level: Level, x: number, y: number, w: number, h: number): boolean {
+  return overlapsSolid(level, x - w / 2, y, x + w / 2, y + h);
+}
+
 /** Moves a body by its velocity for one step, stopping it at solid tiles. */
 export function moveBody(level: Level, b: Body, dt = STEP): Contacts {
   const c: Contacts = { wallLeft: false, wallRight: false, landed: false, bumped: null };

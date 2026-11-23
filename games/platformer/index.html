@@ -31,6 +31,39 @@
     #time-chip b { color: var(--gold); }
     #time-chip.hurry { border-color: var(--pink); }
     #time-chip.hurry b { color: var(--pink); }
+    #top[hidden], #map[hidden] { display: none; }
+    #load-title { font-size: clamp(24px, 6vw, 40px) !important; padding: 0 16px; }
+    #big-chip b { color: var(--gold); letter-spacing: .12em; }
+    #map-button { pointer-events: auto; cursor: pointer; font: inherit; color: var(--fg); }
+
+    .actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+    .actions button, .node { font: inherit; color: var(--fg); cursor: pointer; }
+    .actions button { font-family: var(--display); font-size: 15px; padding: 9px 16px; border-radius: 12px; border: 1px solid var(--teal); background: rgba(38, 217, 191, .15); }
+    .actions button:first-child { background: var(--teal); color: #0c0918; }
+    #banner .big i { font-style: normal; color: var(--gold); letter-spacing: .15em; }
+
+    /* The world map: a card per world, its three levels down a dotted path. */
+    #map { position: fixed; inset: 0; overflow: auto; padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 18px max(16px, env(safe-area-inset-left)); background: radial-gradient(900px 500px at 50% -10%, #2a1d52 0%, #0c0918 65%); }
+    #map h1 { margin: 0 0 12px; text-align: center; font-family: var(--display); font-weight: 400; font-size: 28px; color: var(--teal); text-shadow: 0 0 14px rgba(38, 217, 191, .5); }
+    #worlds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-width: 980px; margin: 0 auto; }
+    @media (max-width: 640px) and (orientation: portrait) { #worlds { grid-template-columns: 1fr; } }
+    .world { border-radius: 16px; padding: 10px 10px 12px; border: 1px solid var(--line); background: var(--panel); }
+    .world h2 { margin: 0 0 8px; font-family: var(--display); font-weight: 400; font-size: 14px; letter-spacing: .02em; }
+    .world.meadow { --w: #74d24c; background: linear-gradient(180deg, rgba(95, 191, 60, .25), rgba(12, 9, 24, .8)); }
+    .world.caves { --w: #b48cff; background: linear-gradient(180deg, rgba(120, 80, 210, .3), rgba(12, 9, 24, .85)); }
+    .world.clouds { --w: #ffb88a; background: linear-gradient(180deg, rgba(255, 140, 110, .28), rgba(12, 9, 24, .8)); }
+    .world h2 { color: var(--w); }
+    .world ol { list-style: none; margin: 0; padding: 0 0 0 10px; display: grid; gap: 8px; border-left: 2px dotted var(--w); }
+    .node { width: 100%; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2px 8px; text-align: left; padding: 7px 10px; border-radius: 12px; border: 1px solid var(--line); background: rgba(12, 9, 24, .6); position: relative; }
+    .node::before { content: ''; position: absolute; left: -17px; top: 50%; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: var(--line); }
+    .node.done::before { background: var(--w); box-shadow: 0 0 8px var(--w); }
+    .node .num { font-family: var(--display); color: var(--w); }
+    .node .name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .node .big { color: var(--gold); letter-spacing: .1em; font-size: 13px; }
+    .node .best { grid-column: 2 / 4; font-size: 11px; color: var(--muted); }
+    .node.picked { border-color: var(--w); box-shadow: 0 0 0 2px var(--w), 0 0 18px -2px var(--w); }
+    .node:hover { border-color: var(--w); }
+    #map .hint { text-align: center; color: var(--muted); font-size: 12px; margin: 12px 0 0; }
 
     #banner { position: fixed; top: 28%; left: 16px; right: 16px; margin: 0 auto; max-width: 420px; text-align: center; padding: 18px 16px; background: var(--panel); border: 1px solid var(--teal); border-radius: 18px; box-shadow: 0 0 24px rgba(38, 217, 191, .35); animation: pop .4s cubic-bezier(.2, 1.6, .4, 1); }
     #banner b { display: block; font-family: var(--display); font-weight: 400; font-size: 34px; color: var(--gold); text-shadow: 0 0 12px rgba(255, 210, 63, .6); }
@@ -69,9 +102,11 @@
   <canvas id="view"></canvas>
   <div id="top" class="hud">
     <div class="group">
+      <button class="chip" id="map-button" title="Voltar ao mapa (Esc)">☰</button>
       <span class="chip"><b id="level-name">Prado 1</b></span>
       <span class="chip" id="lives-chip" title="Vidas"><i>♥</i><b id="lives">3</b></span>
       <span class="chip" id="coins-chip" title="Moedas"><i>●</i><b id="coins">0</b></span>
+      <span class="chip" id="big-chip" title="Moedas grandes"><b id="big">◇◇◇</b></span>
     </div>
     <div class="group">
       <span class="chip" id="score-chip"><b id="score">000000</b></span>
@@ -79,6 +114,11 @@
     </div>
   </div>
   <div id="banner" hidden></div>
+  <div id="map" hidden>
+    <h1>Omega Run</h1>
+    <div id="worlds"></div>
+    <p class="hint">Escolhe um nível: setas e Enter, ou toca.</p>
+  </div>
   <div id="touch" hidden>
     <div id="pad"><i class="l">◀</i><i class="r">▶</i></div>
     <div id="btn-b" class="btn">B</div>
@@ -87,7 +127,7 @@
   <div id="turn-phone">↻ Vira o telemóvel para veres mais do nível</div>
   <div id="stats" class="hud" hidden></div>
   <div id="loading">
-    <h1>Omega Run</h1>
+    <h1 id="load-title">Omega Run</h1>
     <div id="load-track"><div id="load-bar"></div></div>
     <div id="load-text">A carregar…</div>
   </div>

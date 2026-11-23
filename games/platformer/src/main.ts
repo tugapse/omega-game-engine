@@ -8,12 +8,14 @@ import { vec3 } from 'gl-matrix';
 import { Bot, botInput, makeBot } from './bot';
 import { CameraState, followHero, makeCamera, VIEW } from './camera';
 import { Controls } from './input';
-import { LEVELS } from './levels';
+import { LEVELS, WORLDS } from './levels';
+import { LevelSpec } from './level';
+import { THEMES } from './themes';
 import { clipFor } from './bit';
 import { dressGoal, dressHero, dressLevel, dressWorld, FLAG_BOTTOM, FLAG_TOP, GoalLook, HeroLook, LevelLook } from './look';
 import { STEP } from './physics';
 import { dressThings, ThingsLook } from './things';
-import { makeWorld, nextTry, POWER, stepWorld, World } from './world';
+import { BIG_COINS, makeWorld, nextTry, stepWorld, World } from './world';
 
 const $ = (id: string) => document.getElementById(id)!;
 const canvas = $('view') as HTMLCanvasElement;
@@ -21,8 +23,8 @@ const banner = $('banner');
 const params = new URLSearchParams(location.search);
 const debug = params.has('debug');
 
-/** play; dead: the hero pops up and falls, then the next try; over: no lives left; clear: the flag. */
-type State = 'loading' | 'play' | 'dead' | 'over' | 'clear';
+/** map: choosing a level; play; dead: the hero pops up and falls, then the next try; over: no lives left; clear: the flag. */
+type State = 'loading' | 'map' | 'play' | 'dead' | 'over' | 'clear';
 let state: State = 'loading';
 let stateTime = 0;
 
@@ -98,18 +100,39 @@ let autoplay: Bot | null = params.has('auto') ? makeBot() : null;
 /** For measuring: when the last jump was pressed and when the hero left the ground (ms). */
 const timing = { pressed: 0, jumped: 0 };
 
+/** What has been done on each level this session (saving it comes with phase 5). */
+const progress = LEVELS.map(() => ({ done: false, big: Array<boolean>(BIG_COINS).fill(false), best: 0 }));
+/** The level being played (index into LEVELS), and the one picked on the map. */
+let current = -1;
+let picked = 0;
+
 function setState(s: State): void {
   state = s;
   stateTime = 0;
-  banner.hidden = s === 'play' || s === 'dead';
-  if (s === 'clear') banner.hidden = true;
-  if (s === 'over') banner.innerHTML = `<b>Fim do jogo</b><span>${world.score} pontos</span><small>Toca ou carrega Enter para recomeçar</small>`;
+  banner.hidden = s !== 'over';
+  $('map').hidden = s !== 'map';
+  $('top').hidden = s === 'map' || s === 'loading';
+  $('touch').hidden = !touchOn || s === 'map' || s === 'loading';
+  if (s === 'over') {
+    banner.innerHTML = `<b>Fim do jogo</b><span>${world.score} pontos</span>
+      <div class="actions"><button data-act="retry">Tentar outra vez</button><button data-act="map">Mapa</button></div>`;
+  }
 }
+
+/** The big coins as diamonds: found ones filled. */
+const diamonds = (taken: boolean[]) => taken.map((t) => (t ? '◆' : '◇')).join('');
 
 function showClearBanner(): void {
   banner.hidden = false;
   const flag = world.flag ? `<small>Bandeira: +${world.flag.points}</small>` : '';
-  banner.innerHTML = `<b>Nível completo!</b><span>${world.score} pontos</span>${flag}<small>Toca ou carrega Enter para repetir</small>`;
+  const big = world.bigCoins.map((c) => c.taken);
+  banner.innerHTML = `<b>Nível completo!</b><span>${world.score} pontos</span>${flag}
+    <small class="big">Moedas grandes: <i>${diamonds(big)}</i></small>
+    <div class="actions"><button data-act="next">Continuar</button><button data-act="retry">Repetir</button></div>`;
+  const p = progress[current];
+  p.done = true;
+  p.best = Math.max(p.best, world.score);
+  big.forEach((t, i) => { if (t) p.big[i] = true; });
 }
 
 function formatTime(t: number): string {
@@ -118,6 +141,7 @@ function formatTime(t: number): string {
 }
 
 function showHud(): void {
+  $('big').textContent = diamonds(world.bigCoins.map((c) => c.taken));
   $('lives').textContent = String(world.lives);
   $('coins').textContent = String(world.coinCount);
   $('score').textContent = String(world.score).padStart(6, '0');
@@ -140,9 +164,71 @@ function begin(w: World): void {
   showHud();
 }
 
-/** From the very start: three lives, no checkpoint. */
+/** The level from its start: three lives, no checkpoint. */
 function restart(): void {
-  begin(makeWorld(LEVELS[0]));
+  begin(makeWorld(LEVELS[current]));
+}
+
+/** Builds the scene for a level (the old one is destroyed) and starts it. */
+async function loadLevel(index: number): Promise<void> {
+  setState('loading');
+  const spec: LevelSpec = LEVELS[index];
+  $('loading').classList.remove('done');
+  $('load-title').textContent = spec.name;
+  await loaded(0.1, 'A montar o nível…');
+  const w = makeWorld(spec);
+  const theme = THEMES[w.level.theme];
+  scene?.destroy();
+  scene = new Scene();
+  scene.name = spec.name;
+  levelLook = await dressLevel(gl, scene, w.level);
+  thingsLook = await dressThings(gl, scene, w);
+  await loaded(0.5, 'A pintar o céu…');
+  await dressWorld(gl, scene, w.level.width, w.level.theme);
+  goalLook = await dressGoal(gl, scene, w.level.goal.x, w.level.goal.y);
+  await loaded(0.75, 'A acordar o Bit…');
+  heroLook = await dressHero(gl, scene);
+  scene.setGlRenderingContext(gl);
+  engine.loadScene(scene);
+  const settings = scene.renderPipeline.settings;
+  settings.toneMapping = ToneMapping.ACES;
+  settings.applyQuality(quality);
+  scene.isRunning = true;
+  gl.clearColor(theme.clear[0], theme.clear[1], theme.clear[2], 1);
+  document.body.style.background = theme.page;
+  current = index;
+  $('level-name').textContent = spec.name;
+  begin(w);
+  await loaded(1, 'Pronto');
+  $('loading').classList.add('done');
+}
+
+/** The world map: three worlds of three levels; the picked one glows. */
+function showMap(): void {
+  const box = $('worlds');
+  box.innerHTML = WORLDS.map((wd, wi) => `
+    <section class="world ${wd.theme}">
+      <h2>${wi + 1} · ${wd.name}</h2>
+      <ol>${wd.levels.map((spec, li) => {
+        const i = wi * 3 + li, p = progress[i];
+        const name = spec.name.split(' · ')[1] ?? spec.name;
+        return `<li><button class="node${p.done ? ' done' : ''}${i === picked ? ' picked' : ''}" data-level="${i}">
+          <span class="num">${wi + 1}-${li + 1}</span><span class="name">${name}</span>
+          <span class="big">${diamonds(p.big)}</span>${p.best ? `<span class="best">${p.best}</span>` : ''}</button></li>`;
+      }).join('')}</ol>
+    </section>`).join('');
+  box.querySelector('.picked')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  setState('map');
+}
+
+function pick(i: number): void {
+  picked = Math.max(0, Math.min(LEVELS.length - 1, i));
+  showMap();
+}
+
+function play(i: number): void {
+  picked = i;
+  loadLevel(i).catch((err) => { $('load-text').textContent = `Erro: ${err?.message ?? err}`; console.error(err); });
 }
 
 function step(): void {
@@ -168,7 +254,8 @@ function step(): void {
   // The camera never goes back, so neither can the hero.
   const left = cam.x - halfWidth + b.w / 2;
   if (b.x < left) { b.x = left; if (b.vx < 0) b.vx = 0; }
-  followHero(cam, b, halfWidth, world.level.width, STEP, world.level.start.y + VIEW.above, topRoom, b.h);
+  const ridden = hero.riding >= 0 ? world.platforms[hero.riding] : null;
+  followHero(cam, b, halfWidth, world.level.width, STEP, world.level.start.y + VIEW.above, topRoom, b.h, !!ridden && ridden.dx < 0);
   if (world.cleared) {
     // Hold on to the pole (or, touching it below the top of its base, stand beside the base).
     const base = world.level.goal.y + 1;
@@ -180,6 +267,7 @@ function step(): void {
 
 function update(dt: number): void {
   stateTime += dt;
+  if (!world || state === 'map' || state === 'loading') return;
   if (state === 'play') {
     accumulator += dt;
     let n = 0;
@@ -259,48 +347,59 @@ function loaded(fraction: number, text: string): Promise<void> {
   return new Promise((r) => requestAnimationFrame(() => r()));
 }
 
+let quality = 1;
+/** Touch buttons are on (a touch screen, or ?touch). */
+let touchOn = false;
+
 async function start(): Promise<void> {
-  await loaded(0.1, 'A montar o nível…');
-  world = makeWorld(LEVELS[0]);
-  const level = world.level;
+  await loaded(0.3, 'A preparar…');
   scene = new Scene();
-  scene.name = 'Omega Run';
-  levelLook = await dressLevel(gl, scene, level);
-  thingsLook = await dressThings(gl, scene, world);
-  await loaded(0.5, 'A pintar o céu…');
-  await dressWorld(gl, scene, level.width);
-  goalLook = await dressGoal(gl, scene, level.goal.x, level.goal.y);
-  await loaded(0.75, 'A acordar o Bit…');
-  heroLook = await dressHero(gl, scene);
   scene.setGlRenderingContext(gl);
   engine = new Engine();
   engine.initialize(canvas);
   engine.loadScene(scene);
-  const settings = scene.renderPipeline.settings;
-  settings.toneMapping = ToneMapping.ACES;
   const q = params.get('quality');
   const named: Record<string, number> = { low: 0, medium: 1, high: 2 };
-  settings.applyQuality(q && q in named ? named[q] : RenderPipelineSettings.suggestedQuality(gl));
-  scene.isRunning = true;
+  quality = q && q in named ? named[q] : RenderPipelineSettings.suggestedQuality(gl);
 
-  const touch = $('touch');
-  if (params.has('touch') || matchMedia('(pointer: coarse)').matches) { touch.hidden = false; touchShift = 1.4; measureTop(); }
+  touchOn = params.has('touch') || matchMedia('(pointer: coarse)').matches;
+  if (touchOn) { touchShift = 1.4; measureTop(); }
   controls.bindTouch($('pad'), $('btn-a'), $('btn-b'));
-  const again = () => { if (state === 'clear' || state === 'over') restart(); };
-  banner.addEventListener('pointerdown', again);
-  window.addEventListener('keydown', (e) => { if (e.code === 'Enter' || (e.code === 'Space' && (state === 'clear' || state === 'over'))) again(); });
-  $('level-name').textContent = level.name;
+  // The banners' buttons, and taps on the map.
+  const act = (what: string) => {
+    if (what === 'next') pick(Math.min(LEVELS.length - 1, current + 1));
+    else if (what === 'retry') { banner.hidden = true; restart(); }
+    else if (what === 'map') pick(current);
+  };
+  banner.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest('button');
+    if (b?.dataset.act) act(b.dataset.act);
+  });
+  $('worlds').addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest('button');
+    if (b?.dataset.level) play(Number(b.dataset.level));
+  });
+  $('map-button').addEventListener('click', () => { if (state !== 'loading') pick(current); });
+  window.addEventListener('keydown', (e) => {
+    if (state === 'map') {
+      const moves: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -3, ArrowDown: 3, KeyA: -1, KeyD: 1 };
+      if (e.code in moves) { e.preventDefault(); pick(picked + moves[e.code]); }
+      else if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); play(picked); }
+    } else if (state === 'clear' && !banner.hidden && e.code === 'Enter') act('next');
+    else if (state === 'over' && e.code === 'Enter') act('retry');
+    else if (e.code === 'Escape' && (state === 'play' || state === 'clear' || state === 'over')) act('map');
+  });
   $('stats').hidden = !debug;
 
   (window as any).platformer = {
     get state() { return state; }, get world() { return world; }, get hero() { return world.hero; }, get level() { return world.level; }, get cam() { return cam; },
-    get halfWidth() { return halfWidth; }, controls, restart, timing,
+    get halfWidth() { return halfWidth; }, controls, restart, timing, play, pick, progress,
     get autoplay() { return !!autoplay; }, set autoplay(on: boolean) { autoplay = on ? makeBot() : null; },
   };
-  restart();
-  await loaded(1, 'Pronto');
-  $('loading').classList.add('done');
   requestAnimationFrame(frame);
+  const start = params.get('level');
+  if (start !== null) await loadLevel(Math.max(0, Math.min(LEVELS.length - 1, Number(start) || 0)));
+  else { $('loading').classList.add('done'); showMap(); }
 }
 
 start().catch((err) => {
