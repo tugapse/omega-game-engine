@@ -62,7 +62,9 @@
     /* Map view toggle. */
     #map { position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: max(22px, env(safe-area-inset-bottom)); padding: 8px 14px; border-radius: 18px; background: var(--panel); border: 1px solid var(--cyan); color: var(--cyan); font-family: var(--display); font-size: 13px; }
     #map.on { background: var(--cyan); color: #07050d; }
-    #map[hidden] { display: none; }
+    #map[hidden], #gyro[hidden] { display: none; }
+    #gyro { position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: max(70px, calc(env(safe-area-inset-bottom) + 54px)); padding: 6px 12px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+    #gyro.on { color: #07050d; background: var(--gold); border-color: var(--gold); }
     /* The hole's name as it flies in. */
     #intro { top: 22%; left: 0; right: 0; text-align: center; font-family: var(--display); font-size: 40px; color: var(--fg); opacity: 0; transition: opacity .4s; text-shadow: 0 0 12px rgba(45, 226, 255, .8), 0 2px 12px #000; }
     #intro.show { opacity: 1; }
@@ -110,6 +112,7 @@
   <div id="result" class="hud"></div>
   <div id="intro" class="hud"></div>
   <button id="map" hidden>Mapa</button>
+  <button id="gyro" hidden>Giroscópio</button>
   <div id="stats" class="hud" hidden></div>
 
   <div id="loading">
