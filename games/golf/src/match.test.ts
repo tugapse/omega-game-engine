@@ -21,6 +21,16 @@ describe('golf match', () => {
     m.finish(15);
     expect(m.players[0].strokes[0]).toBe(MAX_STROKES);
   });
+  it('ranks the range by most points and nearest-the-pin by fewest metres, with no pick-up cap', () => {
+    const range = new GolfMatch(['Ana', 'Rui'], [0], undefined, 'points');
+    range.finish(25); range.finish(50);
+    expect(range.ranking()[0].name).toBe('Rui');
+    const near = new GolfMatch(['Ana', 'Rui'], [0], undefined, 'metres');
+    near.finish(12.5); near.finish(3.2);
+    expect(near.ranking()[0].name).toBe('Rui');
+    expect(near.players[0].strokes[0]).toBe(12.5);
+  });
+
   it('writes scores against par', () => {
     expect(formatToPar(0)).toBe('par');
     expect(formatToPar(3)).toBe('+3');
