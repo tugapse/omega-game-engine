@@ -18,7 +18,7 @@
     "test:watch": "vitest",
     "build:types": "dts-bundle-generator -o dist/omega-game-engine.d.ts src/index.ts --no-check --export-referenced-types false",
     "build:games": "node scripts/build-games.mjs",
-    "check:games": "tsc -p games/bowling --noEmit && tsc -p games/golf --noEmit && tsc -p games/platformer --noEmit"
+    "check:games": "tsc -p games/bowling --noEmit && tsc -p games/golf --noEmit && tsc -p games/platformer --noEmit && tsc -p games/drift --noEmit"
   },
   "keywords": [],
   "author": "",
