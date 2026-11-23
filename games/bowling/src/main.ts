@@ -10,7 +10,8 @@ import { GyroThrow } from './gyro';
 import { Match, MAX_PLAYERS } from './match';
 import { ArcadeGame, multiplierFor } from './arcade';
 import { LEAVES, SparesGame } from './spares';
-import { levelLayout, ObstacleField, ObstacleSpec } from './obstacles';
+import { CPU_NAMES, CpuPlan, CpuSkill, planThrow } from './cpu';
+import { levelLayout, ObstacleField, ObstacleSpec, straightPath } from './obstacles';
 import { BowlerRig, buildBowler, RELEASE_TIME } from './bowler';
 import {
   allStill, BALL, buildLane, isPinDown, LANE, LaneEntities, rackPins, removePin, resetBall, standingPins,
@@ -56,6 +57,12 @@ const spares = (i = match.current) => match.players[i].game as SparesGame;
 const layoutNow = (): ObstacleSpec[] => (mode === 'obstacles' ? levelLayout(arcade().level) : []);
 /** A player went up a level with the last roll: who and to what, for the banner. */
 let levelUp: { player: number; level: number } | null = null;
+/** The computer opponent's skill, or null for none (start screen). */
+let cpuSkill: CpuSkill | null = null;
+/** The computer's turn: its plan, and when it bowls (seconds into the aim state). */
+let cpuTurn: { plan: CpuPlan; at: number; placed: boolean } | null = null;
+/** The current player is the computer: people's input is ignored. */
+const computerPlays = () => !!match.player.cpu && state !== 'setup' && state !== 'over';
 /** The new lane's obstacles rise while the camera flies back to the bowler. */
 let rising = false;
 /** The current player's game. */
@@ -151,7 +158,7 @@ resize();
 function setState(next: State): void {
   state = next;
   stateTime = 0;
-  hint.classList.toggle('hidden', next !== 'aim');
+  hint.classList.toggle('hidden', next !== 'aim' || !!match.player.cpu);
   result.classList.toggle('show', next === 'result' || next === 'over');
   result.classList.toggle('over', next === 'over');
   replayTag.classList.toggle('show', next === 'replay');
@@ -165,6 +172,7 @@ function setState(next: State): void {
       : mode === 'spares' ? `${who}Desafio ${n.frame + 1}/10 · ${leave.name} · ${'★'.repeat(leave.stars)}`
         : `${who}Frame ${n.frame + 1} · ${n.roll + 1}.º lançamento`;
     readyBowler();
+    cpuTurn = match.player.cpu ? planCpuTurn(match.player.cpu) : null;
   }
   placeAimGuide();
 }
@@ -219,9 +227,38 @@ function describeThrow(t: ThrowParams, angle: number): string {
   return `${(t.speed * 3.6).toFixed(0)} km/h · ${dir} · ${hook}`;
 }
 
-/** A throw from the swipe (or keys, or the gyroscope): the bowler walks up and releases it. */
-function bowl(t: ThrowParams): void {
-  if (state !== 'aim') return;
+/** The computer's throw for the pins standing (and the corridor past fixed obstacles); it waits a moment to time moving ones. */
+function planCpuTurn(skill: CpuSkill): { plan: CpuPlan; at: number; placed: boolean } {
+  const standing = standingPins(lane).map((i) => {
+    const p = lane.pins[i].transform.worldPosition;
+    return { x: p[0], z: p[2] };
+  });
+  const corridor = field.current.length ? straightPath([...field.current]) : null;
+  const moving = field.current.some((o) => o.kind === 'slider' || o.kind === 'spinner');
+  return { plan: planThrow(skill, standing, Math.random, corridor), at: 1.6 + (moving ? Math.random() * 2 : Math.random() * 0.4), placed: false };
+}
+
+/** The computer takes its spot and aim, then bowls. */
+function updateCpu(): void {
+  if (!cpuTurn) return;
+  if (!cpuTurn.placed && stateTime > 0.6) {
+    cpuTurn.placed = true;
+    ballX = cpuTurn.plan.x;
+    aimAngle = cpuTurn.plan.aim;
+    resetBall(lane, ballX);
+    bowler.root.transform.setLocalPosition(ballX - releaseOffset[0], 0, BALL.start[2] - releaseOffset[2]);
+    placeAimGuide();
+  }
+  if (stateTime > cpuTurn.at) {
+    const t = cpuTurn.plan.throw;
+    cpuTurn = null;
+    bowl(t, true);
+  }
+}
+
+/** A throw from the swipe (or keys, or the gyroscope, or the computer): the bowler walks up and releases it. */
+function bowl(t: ThrowParams, byComputer = false): void {
+  if (state !== 'aim' || (computerPlays() && !byComputer)) return;
   standingBefore = standingPins(lane);
   wentInGutter = false;
   const angle = Math.max(-0.1, Math.min(0.1, aimAngle + t.angle));
@@ -233,7 +270,7 @@ function bowl(t: ThrowParams): void {
 }
 
 function moveBall(dx: number): void {
-  if (state !== 'aim') return;
+  if (state !== 'aim' || computerPlays()) return;
   const limit = LANE.halfWidth - BALL.radius;
   ballX = Math.max(-limit, Math.min(limit, ballX + dx));
   resetBall(lane, ballX);
@@ -242,7 +279,7 @@ function moveBall(dx: number): void {
 }
 
 function turnAim(da: number): void {
-  if (state !== 'aim') return;
+  if (state !== 'aim' || computerPlays()) return;
   aimAngle = Math.max(-MAX_AIM, Math.min(MAX_AIM, aimAngle + da));
   placeAimGuide();
 }
@@ -252,6 +289,7 @@ function tap(x: number, y: number): void {
   if (state === 'setup' || state === 'approach') return;
   if (state === 'replay') { endReplay(); return; }
   if (state !== 'aim') { advance(); return; }
+  if (computerPlays()) return;
   const motion = gyro.enabled ? gyro.release() : null;
   if (motion) bowl(motion);
   else aimAt(x, y);
@@ -338,7 +376,8 @@ function nextPlayer(): void {
   aimAngle = spot.aim;
   bowlerLook.setShirt(match.current);
   renderScore();
-  announce(mode === 'obstacles' ? `Vez de ${match.player.name} · Nível ${arcade().level}` : `Vez de ${match.player.name}`, match.current);
+  const who = match.player.cpu ? 'Vez do computador' : `Vez de ${match.player.name}`;
+  announce(mode === 'obstacles' ? `${who} · Nível ${arcade().level}` : who, match.current);
 }
 
 /** The banner in the middle of the screen, underlined in a player's colour. */
@@ -357,7 +396,8 @@ function choosePlayers(count: number): void {
   if (state !== 'setup') return;
   unlockAudio();
   try { localStorage.setItem('bowling.players', String(count)); } catch { /* no storage */ }
-  match = Match.withPlayers(count, mode === 'obstacles' ? () => new ArcadeGame() : mode === 'spares' ? () => new SparesGame() : undefined);
+  match = Match.withPlayers(count, mode === 'obstacles' ? () => new ArcadeGame() : mode === 'spares' ? () => new SparesGame() : undefined, cpuSkill ?? undefined);
+  cpuTurn = null;
   levelUp = null;
   rising = false;
   spots = match.players.map(() => ({ x: 0, aim: 0 }));
@@ -374,6 +414,15 @@ function choosePlayers(count: number): void {
   field.setRaised(1);
   showPins();
   setState('aim');
+}
+
+/** Picks the computer opponent on the start screen (remembered): a skill, or null for none. */
+function chooseCpu(skill: CpuSkill | null): void {
+  cpuSkill = skill;
+  try { localStorage.setItem('bowling.cpu', skill ?? ''); } catch { /* no storage */ }
+  setupPanel.querySelectorAll<HTMLButtonElement>('button[data-cpu]').forEach((b) => b.classList.toggle('on', (b.dataset.cpu || null) === skill));
+  // With the computer, four people do not fit.
+  setupPanel.querySelector<HTMLButtonElement>('button[data-players="4"]')!.disabled = !!skill;
 }
 
 /** Sets the pins: all ten, or only `pins` (0-based) for a spare leave. */
@@ -607,6 +656,8 @@ function update(dt: number): void {
     if (stateTime > (replayNext ? 1.3 : 1.8)) {
       if (replayNext) { replayNext = false; startReplay(); } else advance();
     }
+  } else if (state === 'aim') {
+    updateCpu();
   } else if (state === 'approach') {
     if (bowler.animator.time >= RELEASE_TIME) release();
   } else if (state === 'replay') {
@@ -763,6 +814,12 @@ async function start(): Promise<void> {
   let savedMode: Mode = 'classic';
   try { savedMode = (MODES as string[]).includes(localStorage.getItem('bowling.mode') ?? '') ? localStorage.getItem('bowling.mode') as Mode : 'classic'; } catch { /* no storage */ }
   chooseMode(savedMode);
+  setupPanel.querySelectorAll<HTMLButtonElement>('button[data-cpu]').forEach((b) => {
+    b.addEventListener('click', () => chooseCpu((b.dataset.cpu || null) as CpuSkill | null));
+  });
+  let savedCpu: CpuSkill | null = null;
+  try { const c = localStorage.getItem('bowling.cpu'); savedCpu = c && c in CPU_NAMES ? c as CpuSkill : null; } catch { /* no storage */ }
+  chooseCpu(savedCpu);
   setupPanel.querySelectorAll<HTMLButtonElement>('button[data-players]').forEach((b) => {
     b.addEventListener('click', () => choosePlayers(Number(b.dataset.players)));
   });

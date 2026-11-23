@@ -37,6 +37,11 @@
     #result small { display: table; margin: 6px auto 0; padding: 2px 10px; font-size: 16px; font-weight: 600; color: var(--fg); text-shadow: none; background: rgba(10, 10, 14, .78); border-radius: 12px; }
     .ranking em { font-style: normal; font-size: 12px; color: var(--muted); margin-left: 8px; }
     #setup button:active { transform: scale(.94); }
+    #setup button:disabled { opacity: .3; }
+    #setup .cpu-label { margin: 0 0 6px !important; font-size: 13px; }
+    #setup .players-label { margin: 18px 0 12px !important; }
+    #setup .modes.cpu { margin-top: 0; }
+    #setup .modes.cpu button { font-size: 13px; padding: 6px 12px; }
     .frame { border-right: 1px solid #3a3530; min-width: 0; }
     .frame:last-child { border-right: 0; }
     .frame.current { background: rgba(255, 207, 90, .14); }
@@ -102,7 +107,9 @@
     <h1>Omega Bowling</h1>
     <div class="modes"><button data-mode="classic">Clássico</button><button data-mode="obstacles">Obstáculos</button><button data-mode="spares">Spares</button></div>
     <p id="mode-info"></p>
-    <p>Quantos jogadores?</p>
+    <p class="cpu-label">Contra o computador</p>
+    <div class="modes cpu"><button data-cpu="">Não</button><button data-cpu="easy">Fácil</button><button data-cpu="medium">Médio</button><button data-cpu="hard">Difícil</button></div>
+    <p class="players-label">Quantos jogadores?</p>
     <div class="choices">
       <button data-players="1">1</button><button data-players="2">2</button><button data-players="3">3</button><button data-players="4">4</button>
     </div>
