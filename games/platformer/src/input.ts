@@ -12,8 +12,32 @@ const KEYS: Record<string, Action> = {
   ShiftLeft: 'run', ShiftRight: 'run', KeyJ: 'run',
 };
 
+/** What a gamepad gives this frame: the moves, and presses (edges) for menus. */
+export interface PadState {
+  left: boolean; right: boolean; up: boolean; down: boolean; jump: boolean; run: boolean; start: boolean;
+}
+const NO_PAD: PadState = { left: false, right: false, up: false, down: false, jump: false, run: false, start: false };
+
+/**
+ * The first connected gamepad, in the standard layout: the left stick or the
+ * cross to move, A (bottom) to jump, B or X to run, Start to pause.
+ */
+export function readPad(pads: (Gamepad | null)[] | null | undefined): PadState {
+  const p = pads ? [...pads].find((g) => g && g.connected) : null;
+  if (!p) return NO_PAD;
+  const b = (i: number) => !!p.buttons[i]?.pressed;
+  const x = p.axes[0] ?? 0, y = p.axes[1] ?? 0;
+  return {
+    left: x < -0.45 || b(14), right: x > 0.45 || b(15), up: y < -0.6 || b(12), down: y > 0.6 || b(13),
+    jump: b(0), run: b(1) || b(2), start: b(9),
+  };
+}
+
 export class Controls {
   private keys = new Set<string>();
+  /** The gamepad now and on the last poll (for presses). */
+  pad: PadState = NO_PAD;
+  private padBefore: PadState = NO_PAD;
   /** Held by touch, per pointer. */
   private touch = new Map<number, Action[]>();
   private pressed = false;
@@ -109,7 +133,19 @@ export class Controls {
     run.classList.toggle('down', this.held('run'));
   }
 
+  /** Reads the gamepad (once a frame); returns which of its buttons went down since the last poll. */
+  pollPad(): Partial<Record<keyof PadState, boolean>> {
+    this.padBefore = this.pad;
+    this.pad = readPad(typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : null);
+    const pressed: Partial<Record<keyof PadState, boolean>> = {};
+    for (const k of Object.keys(this.pad) as (keyof PadState)[]) if (this.pad[k] && !this.padBefore[k]) pressed[k] = true;
+    if (pressed.jump) this.pressed = true;
+    if (Object.keys(pressed).length) this.onAnyInput();
+    return pressed;
+  }
+
   private held(what: Action): boolean {
+    if (this.pad[what]) return true;
     for (const k of this.keys) if (KEYS[k] === what) return true;
     for (const t of this.touch.values()) if (t.includes(what)) return true;
     return false;

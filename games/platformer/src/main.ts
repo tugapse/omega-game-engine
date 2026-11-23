@@ -11,6 +11,9 @@ import { Controls } from './input';
 import { LEVELS, WORLDS } from './levels';
 import { LevelSpec } from './level';
 import { THEMES } from './themes';
+import { Sound, Sfx } from './sound';
+import { Music, TuneName } from './music';
+import { dressEffects, Effects } from './effects';
 import { clipFor } from './bit';
 import { dressGoal, dressHero, dressLevel, dressWorld, FLAG_BOTTOM, FLAG_TOP, GoalLook, HeroLook, LevelLook } from './look';
 import { STEP } from './physics';
@@ -60,8 +63,13 @@ function measureTop(): void {
   const hudM = (hud / Math.max(1, canvas.clientHeight)) * 2 * halfHeight;
   topRoom = halfHeight - touchShift - hudM - 0.3;
 }
+/**
+ * The share of the screen's pixel density drawn at: it steps down when the
+ * frame rate stays low (slower phones) and never goes back up in a session.
+ */
+let renderScale = 1;
 function resize(): void {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2) * renderScale);
   const w = Math.max(1, Math.round(canvas.clientWidth * dpr)), h = Math.max(1, Math.round(canvas.clientHeight * dpr));
   if (canvas.width === w && canvas.height === h) return;
   canvas.width = w; canvas.height = h;
@@ -83,6 +91,9 @@ let levelLook: LevelLook;
 let thingsLook: ThingsLook;
 let heroLook: HeroLook;
 let goalLook: GoalLook;
+let effects: Effects;
+/** Camera shake (m), easing away. */
+let shake = 0;
 /** Bit's drawn size (1 small, BIG_SCALE big); while growing or shrinking it flickers between the two. */
 const BIG_SCALE = 1.6;
 let sizeFrom = 1, sizeTo = 1, sizeTime = 1;
@@ -109,6 +120,38 @@ const allOpen = params.has('unlock');
 const isOpen = (i: number) => allOpen || unlocked(progress, i);
 /** The title screen: the bot plays the first level behind it. */
 let demo = false;
+
+/** Sound and music, and whether each is on (kept in the browser). */
+const SETTINGS_KEY = 'omega-run-settings';
+const settings = (() => {
+  try { return { sound: true, music: true, ...JSON.parse(store?.getItem(SETTINGS_KEY) ?? '{}') }; } catch { return { sound: true, music: true }; }
+})();
+const sound = new Sound();
+const music = new Music(() => sound.context());
+sound.setMuted(!settings.sound);
+music.muted = !settings.music;
+const sfx = (s: Sfx) => { if (!demo) sound.play(s); };
+/** A short buzz on phones that have it (hurt, a boss hit). */
+const buzz = (ms: number) => { if (touchOn && !demo) try { navigator.vibrate?.(ms); } catch { /* not allowed */ } };
+
+/** The tune for where the player is: the boss's in a fight, the world's otherwise; on the map, the picked world's. */
+function tuneNow(): TuneName {
+  if (state === 'map' || state === 'end') return LEVELS[picked].theme ?? 'meadow';
+  const b = world?.boss;
+  if (b && b.state !== 'idle' && b.state !== 'down' && b.state !== 'gone' && !demo) return 'boss';
+  return world?.level.theme ?? 'meadow';
+}
+function updateMusic(): void {
+  if (!sound.context()) return;
+  if (state === 'over' || (state === 'clear' && !demo)) { music.stop(); return; }
+  music.play(tuneNow());
+  music.duck(state === 'pause');
+}
+function saveSettings(): void {
+  try { store?.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* keep playing */ }
+  document.querySelectorAll<HTMLButtonElement>('[data-act="sound"]').forEach((b) => { b.textContent = `Som: ${settings.sound ? 'sim' : 'não'}`; });
+  document.querySelectorAll<HTMLButtonElement>('[data-act="music"]').forEach((b) => { b.textContent = `Música: ${settings.music ? 'sim' : 'não'}`; });
+}
 /** The boss arena (columns): from the gate that closes behind Bit to past the gate ahead. */
 let arena: { left: number; right: number } | null = null;
 /** The level being played (index into LEVELS), and the one picked on the map. */
@@ -126,6 +169,8 @@ function setState(s: State): void {
   const playing = s === 'play' || s === 'dead' || s === 'clear' || s === 'over';
   $('top').hidden = demo || !(playing || s === 'pause');
   $('touch').hidden = !touchOn || demo || !playing;
+  updateMusic();
+  if (s === 'over' && !demo) sfx('gameOver');
   if (s === 'over' && !demo) {
     banner.innerHTML = `<b>Fim do jogo</b><span>${world.score} pontos</span>
       <div class="actions"><button data-act="retry">Tentar outra vez</button><button data-act="map">Mapa</button></div>`;
@@ -197,6 +242,8 @@ function begin(w: World): void {
   deathFall = { y: 0, vy: 0 };
   goalLook.setFlag(1);
   thingsLook.hide();
+  effects.hide();
+  shake = 0;
   const gates: number[] = [];
   for (let x = 0; x < w.level.width; x++) for (let y = 0; y < w.level.height; y++) if (w.level.tiles[x][y] === 'gate') gates.push(x);
   arena = w.backGates.length && gates.length ? { left: w.backGates[0].x, right: Math.max(...gates) + 1 } : null;
@@ -229,6 +276,8 @@ async function loadLevel(index: number): Promise<void> {
   goalLook = await dressGoal(gl, scene, w.level.goal.x, w.level.goal.y);
   await loaded(0.75, 'A acordar o Bit…');
   heroLook = await dressHero(gl, scene);
+  const earth = theme.earth[1];
+  effects = await dressEffects(gl, scene, [1, 3, 5].map((i) => 0.35 + 0.65 * parseInt(earth.slice(i, i + 2), 16) / 255));
   scene.setGlRenderingContext(gl);
   engine.loadScene(scene);
   const settings = scene.renderPipeline.settings;
@@ -266,6 +315,7 @@ function showMap(): void {
 function pick(i: number): void {
   picked = Math.max(0, Math.min(LEVELS.length - 1, i));
   showMap();
+  updateMusic();
 }
 
 function play(i: number): void {
@@ -280,16 +330,53 @@ function step(): void {
   if (input.jumpPressed) timing.pressed = performance.now();
   stepWorld(world, input, cam.x + halfWidth);
   const hero = world.hero, b = hero.body;
+  const fallSpeed = -b.vy;
   for (const e of world.events) {
-    if (e.type === 'jump') { timing.jumped = performance.now(); squash = 1.25; }
-    else if (e.type === 'land') squash = 0.75;
-    else if (e.type === 'stomp' || e.type === 'kick') squash = 1.2;
-    else if (e.type === 'bump') thingsLook.bump(e.x, e.y, e.tile === 'bonus');
-    else if (e.type === 'break') thingsLook.breakAt(e.x, e.y);
-    else if (e.type === 'grow' || e.type === 'shrink') {
+    if (e.type === 'jump') {
+      timing.jumped = performance.now(); squash = 1.25; sfx('jump');
+      effects.burst('dust', b.x, b.y, { n: 4, speed: 2.5, up: 0.2, life: 0.35, size: 0.12, gravity: 4 });
+    } else if (e.type === 'land') {
+      squash = 0.75; sfx('land');
+      effects.burst('dust', b.x, b.y, { n: 5, speed: 3, up: 0.1, life: 0.4, size: 0.14, gravity: 3 });
+    } else if (e.type === 'stomp' || e.type === 'kick') {
+      squash = 1.2; sfx(e.type);
+      effects.burst('star', e.x, e.y, { n: 6, speed: 5, up: 0.6, life: 0.45, size: 0.12 });
+    } else if (e.type === 'knock') sfx('kick');
+    else if (e.type === 'bump') { thingsLook.bump(e.x, e.y, e.tile === 'bonus'); if (e.tile !== 'bonus') sfx('bump'); }
+    else if (e.type === 'break') { thingsLook.breakAt(e.x, e.y); sfx('break'); shake = Math.max(shake, 0.12); }
+    else if (e.type === 'coin') { sfx('coin'); effects.burst('gold', e.x, e.y, { n: 4, speed: 3, up: 0.8, life: 0.4, size: 0.1, gravity: 6 }); }
+    else if (e.type === 'big') { sfx('big'); effects.burst('gold', e.x, e.y, { n: 16, speed: 6, up: 0.5, life: 0.8, size: 0.14, gravity: 8 }); }
+    else if (e.type === 'item') sfx('item');
+    else if (e.type === 'power') { sfx('power'); effects.burst('gold', e.x, e.y + 0.4, { n: 10, speed: 5, up: 0.7, life: 0.6, size: 0.12 }); }
+    else if (e.type === 'shoot') sfx('shoot');
+    else if (e.type === 'fizzle') { sfx('fizzle'); effects.burst('gold', e.x, e.y, { n: 4, speed: 3, life: 0.25, size: 0.08 }); }
+    else if (e.type === 'oneUp') sfx('oneUp');
+    else if (e.type === 'checkpoint') { sfx('checkpoint'); effects.burst('teal', e.x, e.y + 2, { n: 12, speed: 5, up: 0.8, life: 0.9, size: 0.12, gravity: 8 }); }
+    else if (e.type === 'crumble') sfx('shake');
+    else if (e.type === 'die') { sfx('die'); shake = Math.max(shake, 0.25); buzz(80); }
+    else if (e.type === 'clear') { sfx('clear'); effects.burst('teal', e.x, e.y + 1, { n: 16, speed: 7, up: 0.9, life: 1.2, size: 0.13, gravity: 9 }); }
+    else if (e.type === 'bossWake') { sfx('gate'); shake = Math.max(shake, 0.2); }
+    else if (e.type === 'bossHit') {
+      sfx('bossHit'); shake = Math.max(shake, 0.3); buzz(50);
+      effects.burst('pink', e.x, e.y, { n: 12, speed: 7, up: 0.7, life: 0.6, size: 0.15 });
+      effects.burst('star', e.x, e.y, { n: 6, speed: 5, up: 0.8, life: 0.5, size: 0.12 });
+    } else if (e.type === 'bossDown') {
+      sfx('bossDown'); shake = Math.max(shake, 0.6); buzz(150);
+      effects.burst('pink', e.x, e.y - 0.8, { n: 20, speed: 10, up: 0.5, life: 1, size: 0.2 });
+      effects.burst('gold', e.x, e.y - 0.8, { n: 16, speed: 8, up: 0.7, life: 1.2, size: 0.14 });
+    } else if (e.type === 'boss') {
+      if (e.what === 'thud') {
+        sfx('thud'); shake = Math.max(shake, 0.3);
+        effects.burst('dust', e.x, e.y, { n: 10, speed: 5, up: 0.15, life: 0.6, size: 0.22, gravity: 3 });
+      } else if (e.what === 'shoot') sfx('bossShot');
+      else if (e.what === 'drop') sfx('drop');
+    } else if (e.type === 'grow' || e.type === 'shrink') {
       sizeFrom = e.type === 'grow' ? 1 : BIG_SCALE; sizeTo = e.type === 'grow' ? BIG_SCALE : 1; sizeTime = 0;
+      if (e.type === 'shrink') { sfx('shrink'); buzz(40); }
     }
+    if (e.type === 'bossWake' || e.type === 'bossDown') updateMusic();
   }
+  if (world.events.some((e) => e.type === 'land') && fallSpeed > 18) shake = Math.max(shake, 0.08);
   if (world.dead) {
     deathFall = { y: 0, vy: b.y < -1 ? 0 : 13 };
     setState('dead');
@@ -371,13 +458,17 @@ function update(dt: number): void {
   heroLook.setVisible(state !== 'over' && hero.body.y + deathFall.y > -4 && !blink);
   levelLook.showAround(cam.x, halfWidth);
   thingsLook.sync(world, state === 'play' ? dt : 0, { left: cam.x - halfWidth, right: cam.x + halfWidth });
+  effects.update(state === 'pause' ? 0 : dt);
+  // Shake: a quick wobble that eases away.
+  shake *= Math.exp(-dt * 7);
+  const sx = shake * Math.sin(clock * 61), sy = shake * Math.sin(clock * 47 + 1.3) * 0.7;
   const lookY = cam.y - touchShift;
-  camera.transform.setLocalPosition(cam.x, lookY + VIEW_RISE, VIEW_DISTANCE);
-  camera.transform.lookAt(vec3.fromValues(cam.x, lookY, 0));
+  camera.transform.setLocalPosition(cam.x + sx, lookY + VIEW_RISE + sy, VIEW_DISTANCE);
+  camera.transform.lookAt(vec3.fromValues(cam.x + sx, lookY + sy, 0));
 }
 
 let scene: Scene, engine: Engine;
-let last = 0, fpsTime = 0, fpsFrames = 0;
+let last = 0, fpsTime = 0, fpsFrames = 0, slow = 0;
 function frame(now: number): void {
   const dt = last ? Math.min((now - last) / 1000, 0.1) : 0;
   last = now;
@@ -387,9 +478,14 @@ function frame(now: number): void {
   engine.render();
   fpsFrames++; fpsTime += dt;
   if (fpsTime >= 0.5) {
-    if (debug) $('stats').textContent = `${Math.round(fpsFrames / fpsTime)} fps`;
+    const fps = fpsFrames / fpsTime;
+    if (debug) $('stats').textContent = `${Math.round(fps)} fps · ${renderScale.toFixed(2)}×`;
+    // Two seconds in a row under 45 fps while playing: draw fewer pixels.
+    slow = state === 'play' && fps < 45 ? slow + 1 : 0;
+    if (slow >= 4 && renderScale > 0.55) { renderScale = Math.max(0.5, renderScale - 0.15); slow = 0; resize(); }
     fpsFrames = 0; fpsTime = 0;
   }
+  pollPad();
   requestAnimationFrame(frame);
 }
 
@@ -397,6 +493,34 @@ function loaded(fraction: number, text: string): Promise<void> {
   $('load-bar').style.width = `${Math.round(fraction * 100)}%`;
   $('load-text').textContent = text;
   return new Promise((r) => requestAnimationFrame(() => r()));
+}
+
+/** The buttons' actions (set up in start()). */
+let act: (what: string) => void = () => {};
+
+/** The gamepad: moves go through the controls; its presses also work the screens. */
+function pollPad(): void {
+  const p = controls.pollPad();
+  if (!Object.keys(p).length) return;
+  sound.unlock();
+  if (p.start) {
+    if (state === 'play' && !demo) pause();
+    else if (state === 'pause') resume();
+    else if (demo) act('start');
+    return;
+  }
+  if (state === 'map') {
+    if (p.left) pick(picked - 1);
+    else if (p.right) pick(picked + 1);
+    else if (p.up) pick(picked - 3);
+    else if (p.down) pick(picked + 3);
+    else if (p.jump) play(picked);
+    else if (p.run) act('title');
+  } else if (demo && p.jump && state !== 'loading') act('start');
+  else if (state === 'clear' && !banner.hidden && p.jump) act(current === LEVELS.length - 1 ? 'end' : 'next');
+  else if (state === 'over' && p.jump) act('retry');
+  else if (state === 'pause' && p.jump) resume();
+  else if (state === 'end' && p.jump) act('map');
 }
 
 /** The first level not yet finished (that can be played), for the map to open on. */
@@ -439,8 +563,11 @@ async function start(): Promise<void> {
   if (touchOn) { touchShift = 1.4; measureTop(); document.querySelector('#title .keys')!.textContent = '◀ ▶ para andar · A salta · B corre · ❚❚ para pausa'; }
   controls.bindTouch($('pad'), $('btn-a'), $('btn-b'));
   // The banners' buttons, and taps on the map.
-  const act = (what: string) => {
-    if (what === 'next') pick(Math.min(LEVELS.length - 1, current + 1));
+  act = (what: string) => {
+    sfx('click');
+    if (what === 'sound') { settings.sound = !settings.sound; sound.setMuted(!settings.sound); saveSettings(); sfx('click'); }
+    else if (what === 'music') { settings.music = !settings.music; music.setMuted(!settings.music); saveSettings(); updateMusic(); }
+    else if (what === 'next') pick(Math.min(LEVELS.length - 1, current + 1));
     else if (what === 'retry') { banner.hidden = true; restart(); }
     else if (what === 'map') pick(Math.max(0, current));
     else if (what === 'end') showEnd();
@@ -455,6 +582,11 @@ async function start(): Promise<void> {
     });
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+  // Browsers only start audio from a gesture: the first tap or key does it.
+  const wake = () => { const first = !sound.context(); sound.unlock(); if (first) updateMusic(); };
+  window.addEventListener('pointerdown', wake, true);
+  window.addEventListener('keydown', wake, true);
+  saveSettings();
   $('worlds').addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest('button');
     if (b?.dataset.level) play(Number(b.dataset.level));
@@ -476,7 +608,7 @@ async function start(): Promise<void> {
 
   (window as any).platformer = {
     get state() { return state; }, get world() { return world; }, get hero() { return world.hero; }, get level() { return world.level; }, get cam() { return cam; },
-    get halfWidth() { return halfWidth; }, controls, restart, timing, play, pick, progress, pause, resume, showEnd, get demo() { return demo; },
+    get halfWidth() { return halfWidth; }, controls, restart, timing, play, pick, progress, pause, resume, showEnd, get demo() { return demo; }, sound, music, get renderScale() { return renderScale; },
     get autoplay() { return !!autoplay; }, set autoplay(on: boolean) { autoplay = on ? makeBot() : null; },
   };
   requestAnimationFrame(frame);
