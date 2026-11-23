@@ -20,14 +20,21 @@ describe('swing gesture', () => {
     expect(gestureToSwing(gesture(H * SWING.fullBack * 0.5, 200), H)!.power).toBeCloseTo(0.5);
     expect(backswingPower(gesture(H, 0), H)).toBe(1);
   });
-  it('a straight flick goes straight; a slanted one curves that way', () => {
-    expect(gestureToSwing(gesture(200, 250, 5), H)!.curve).toBe(0);
-    expect(gestureToSwing(gesture(200, 250, 250), H)!.curve).toBeGreaterThan(0.8);
-    expect(gestureToSwing(gesture(200, 250, -100), H)!.curve).toBeLessThan(-0.2);
+  it('goes off as soon as the finger turns back up, before it lets go', () => {
+    const p = gesture(200, 250);
+    // Only the first steps of the way up.
+    expect(gestureToSwing(p.slice(0, 13), H)).not.toBeNull();
+    expect(gestureToSwing(p.slice(0, 11), H)).toBeNull(); // still at the bottom
   });
-  it('letting go without a quick flick back up cancels', () => {
+  it('a straight or slightly crooked flick goes straight; a slanted one curves that way', () => {
+    expect(gestureToSwing(gesture(200, 250, 5), H)!.curve).toBe(0);
+    expect(gestureToSwing(gesture(200, 250, 50), H)!.curve).toBe(0); // about 11 degrees
+    expect(gestureToSwing(gesture(200, 250, 250), H)!.curve).toBeGreaterThan(0.5);
+    expect(gestureToSwing(gesture(200, 250, -200), H)!.curve).toBeLessThan(-0.2);
+  });
+  it('no swing without a turn back up, or a slow drift up', () => {
     expect(gestureToSwing(gesture(200, 0), H)).toBeNull();
-    expect(gestureToSwing(gesture(200, 250, 0, 2000), H)).toBeNull();
+    expect(gestureToSwing(gesture(200, 250, 0, 3000), H)).toBeNull();
     expect(gestureToSwing(gesture(10, 10), H)).toBeNull();
   });
 });
