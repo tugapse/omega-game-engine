@@ -109,6 +109,11 @@ export interface Car {
   drift: AssistedDrift | null;
   /** Seconds left before a free slide can start another assisted drift (after one ends). */
   cool: number;
+  /**
+   * How long (s) the wheel has been at full lock, for the assist; -1 until it
+   * is let go after a drift (steering out at full lock never starts the next).
+   */
+  lock: number;
 }
 
 /**
@@ -122,8 +127,9 @@ export interface AssistedDrift {
 }
 
 /**
- * The drift assist. At speed, a tap of the handbrake with the
- * wheel turned, or a slide past `enterAngle`, starts an assisted drift: the
+ * The drift assist. At speed, the handbrake with the wheel turned (in either
+ * order), full lock held a moment, or a slide past `enterAngle`, starts an
+ * assisted drift (held as long as the handbrake is): the
  * game holds the car sideways and carries it round the bend. Steering into
  * the bend deepens the angle and tightens the line, letting go holds a middle
  * angle, steering out of it (or braking) ends the drift. The throttle keeps
@@ -131,10 +137,14 @@ export interface AssistedDrift {
  */
 export const ASSIST = {
   /** Fastest it starts from (m/s), and below what speed it ends. */
-  enterSpeed: 10,
+  enterSpeed: 7,
   exitSpeed: 7,
   /** How much the wheel must be turned to start one (0 to 1). */
-  enterSteer: 0.3,
+  enterSteer: 0.2,
+  /** Full lock (past `lockSteer`) held this long (s) above `lockSpeed` (m/s) starts one too. */
+  lockSteer: 0.85,
+  lockTime: 0.25,
+  lockSpeed: 13,
   /** A free slide past this angle (rad) is taken over too. */
   enterAngle: 0.21,
   /** The angle held (rad) steering out, letting go and steering in. */
@@ -143,9 +153,13 @@ export const ASSIST = {
   angleIn: 0.7,
   /** How quickly (1/s) the nose swings to the angle wanted. */
   swing: 7,
-  /** Sideways grip of the slide (share of g) letting go and steering in: how tight it goes round. */
-  holdMid: 0.7,
-  holdIn: 1.2,
+  /**
+   * How fast (rad/s) the slide carries the car round, letting go and steering
+   * in, whatever the speed (an arcade turn), but never past `holdMax` g.
+   */
+  rateMid: 0.5,
+  rateIn: 1.05,
+  holdMax: 2.4,
   /** The throttle's push in a slide (share of the drive), and the scrub off it (share of g at 90°). */
   push: 0.55,
   scrub: 0.55,
@@ -158,7 +172,7 @@ export const ASSIST = {
 };
 
 export function makeCar(x: number, y: number, heading: number, spec: CarSpec = CAR): Car {
-  return { spec, x, y, heading, vx: 0, vy: 0, spin: 0, wheel: 0, surfaceGrip: 1, surfaceDrag: 0, slip: 0, reversing: false, rearLoad: 0, assist: true, drift: null, cool: 0 };
+  return { spec, x, y, heading, vx: 0, vy: 0, spin: 0, wheel: 0, surfaceGrip: 1, surfaceDrag: 0, slip: 0, reversing: false, rearLoad: 0, assist: true, drift: null, cool: 0, lock: 0 };
 }
 
 export const cloneCar = (c: Car): Car => ({ ...c, drift: c.drift && { ...c.drift } });
@@ -193,9 +207,12 @@ function driftStart(c: Car, input: CarInput): number {
   if (u < ASSIST.enterSpeed || Math.abs(input.steer) < ASSIST.enterSteer) return 0;
   const turn = input.steer > 0 ? -1 : 1;
   if (input.handbrake) return turn;
+  if (c.cool > 0) return 0;
+  // Full lock held at speed.
+  if (c.lock >= ASSIST.lockTime && u > ASSIST.lockSpeed) return turn;
   // A free slide the same way the wheel turns.
   const angle = driftAngle(c);
-  if (c.cool <= 0 && Math.abs(angle) > ASSIST.enterAngle && -Math.sign(angle) === turn) return turn;
+  if (Math.abs(angle) > ASSIST.enterAngle && -Math.sign(angle) === turn) return turn;
   return 0;
 }
 
@@ -203,15 +220,16 @@ function driftStart(c: Car, input: CarInput): number {
 function stepDrift(c: Car, d: AssistedDrift, input: CarInput, dt: number): void {
   const s = c.spec, a = ASSIST;
   d.time += dt;
-  // How much the player steers into the bend (1), lets go (0) or steers out (-1).
-  const into = -input.steer * d.turn;
+  // How much the player steers into the bend (1), lets go (0) or steers out (-1);
+  // with the handbrake held the slide never ends by steering out.
+  const into = input.handbrake ? Math.max(-0.4, -input.steer * d.turn) : -input.steer * d.turn;
   d.out = into < -0.5 ? d.out + dt : 0;
   const speed = speedOf(c);
   let dir = Math.atan2(c.vy, c.vx);
   const angle = into >= 0 ? a.angleMid + (a.angleIn - a.angleMid) * into : a.angleMid + (a.angleMid - a.angleOut) * into;
-  const hold = (into >= 0 ? a.holdMid + (a.holdIn - a.holdMid) * into : a.holdMid * (1 + into * 0.7)) * c.surfaceGrip;
-  // Carried round: the velocity turns at the slide's sideways grip.
-  dir += d.turn * ((hold * G) / Math.max(speed, 1)) * dt;
+  const rate = into >= 0 ? a.rateMid + (a.rateIn - a.rateMid) * into : a.rateMid * (1 + into * 0.8);
+  // Carried round: the velocity turns at that rate.
+  dir += d.turn * Math.min(rate, (a.holdMax * G) / Math.max(speed, 1)) * c.surfaceGrip * dt;
   // The nose swings ahead of the motion, into the bend.
   const want = dir + d.turn * angle;
   const before = c.heading;
@@ -233,7 +251,7 @@ function stepDrift(c: Car, d: AssistedDrift, input: CarInput, dt: number): void 
   c.slip = -d.turn * slide;
   c.rearLoad = 1.2;
   const now = Math.abs(driftAngle(c));
-  if (now < a.endAngle && (d.time > a.settle || d.out > a.outTime)) {
+  if (!input.handbrake && now < a.endAngle && (d.time > a.settle || d.out > a.outTime)) {
     // Straightened out: lined up with the motion, no spin left to swing the tail the other way.
     c.heading = dir;
     c.spin = 0;
@@ -248,6 +266,9 @@ function stepDrift(c: Car, d: AssistedDrift, input: CarInput, dt: number): void 
 /** One fixed step. */
 export function stepCar(c: Car, input: CarInput, dt = STEP): void {
   c.cool = Math.max(0, c.cool - dt);
+  if (c.drift || c.cool > 0) c.lock = -1;
+  else if (Math.abs(input.steer) <= ASSIST.lockSteer) c.lock = 0;
+  else if (c.lock >= 0) c.lock += dt;
   const start = driftStart(c, input);
   if (start) c.drift = { turn: start, time: 0, out: 0 };
   if (c.drift) { stepDrift(c, c.drift, input, dt); return; }

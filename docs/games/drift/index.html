@@ -51,10 +51,13 @@
     #knob::after { content: ''; position: absolute; left: calc(var(--dx, 0px) - 26px); top: -26px; width: 52px; height: 52px; border-radius: 50%; background: rgba(45, 226, 255, .3); border: 2px solid var(--cyan); box-sizing: border-box; }
     #knob.brake::after { border-color: var(--pink); background: rgba(255, 62, 165, .3); }
     .btn { position: fixed; touch-action: none; background: var(--panel); border: 2px solid var(--line); border-radius: 50%; display: grid; place-items: center; font-family: var(--display); font-size: 13px; text-align: center; line-height: 1.1; }
-    #btn-gas { right: max(160px, calc(env(safe-area-inset-right) + 160px)); bottom: max(24px, env(safe-area-inset-bottom)); width: 92px; height: 92px; border-color: var(--teal); color: var(--teal); }
-    #btn-hand { right: max(170px, calc(env(safe-area-inset-right) + 170px)); bottom: max(130px, calc(env(safe-area-inset-bottom) + 126px)); width: 72px; height: 72px; border-color: var(--orange); color: var(--orange); font-size: 11px; }
+    #btn-hand { right: max(160px, calc(env(safe-area-inset-right) + 160px)); bottom: max(24px, env(safe-area-inset-bottom)); width: 104px; height: 104px; border-color: var(--orange); color: var(--orange); font-size: 18px; }
+    #btn-brake { right: max(176px, calc(env(safe-area-inset-right) + 176px)); bottom: max(142px, calc(env(safe-area-inset-bottom) + 138px)); width: 66px; height: 66px; border-color: var(--pink); color: var(--pink); font-size: 11px; }
+    #hint { left: 16px; right: 16px; top: 34%; margin: 0 auto; max-width: 420px; text-align: center; padding: 10px 14px; background: var(--panel); border: 1px solid var(--orange); border-radius: 14px; color: var(--fg); font-size: 14px; transition: opacity .6s; }
+    #hint.gone { opacity: 0; }
+    #hint[hidden] { display: none; }
     .btn.down { background: rgba(255, 255, 255, .22); transform: scale(.94); }
-    @media (orientation: portrait) { #dial { width: 108px; height: 108px; bottom: auto; top: max(54px, calc(env(safe-area-inset-top) + 48px)); } #dial::before { -webkit-mask: radial-gradient(circle, transparent 42px, #000 43px); mask: radial-gradient(circle, transparent 42px, #000 43px); } #needle { height: 40px; transform-origin: 50% 40px; } #speed { font-size: 28px; } #btn-gas { right: max(18px, env(safe-area-inset-right)); } #btn-hand { right: max(28px, calc(env(safe-area-inset-right) + 10px)); } }
+    @media (orientation: portrait) { #dial { width: 108px; height: 108px; bottom: auto; top: max(54px, calc(env(safe-area-inset-top) + 48px)); } #dial::before { -webkit-mask: radial-gradient(circle, transparent 42px, #000 43px); mask: radial-gradient(circle, transparent 42px, #000 43px); } #needle { height: 40px; transform-origin: 50% 40px; } #speed { font-size: 28px; } #btn-hand { right: max(18px, env(safe-area-inset-right)); } #btn-brake { right: max(36px, calc(env(safe-area-inset-right) + 18px)); } }
 
     /* Screens. */
     .screen { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px; padding: 16px; text-align: center; background: rgba(8, 6, 18, .55); }
@@ -87,6 +90,7 @@
     </div>
   </div>
 
+  <div id="hint" class="hud" hidden>Numa curva, <b>segura DRIFT</b> e vira. Larga e vira para o outro lado para sair.</div>
   <div id="drift" class="hud" hidden>Drift<b id="drift-angle">0°</b></div>
 
   <div id="dial" class="hud">
@@ -98,14 +102,14 @@
 
   <div id="touch" hidden>
     <div id="wheel-area"><div class="hint"><span>◀</span><span>▶</span></div><div id="knob"></div></div>
-    <div id="btn-hand" class="btn">TRAVÃO<br>MÃO</div>
-    <div id="btn-gas" class="btn">ACEL.</div>
+    <div id="btn-brake" class="btn">TRAVÃO</div>
+    <div id="btn-hand" class="btn">DRIFT</div>
   </div>
 
   <div id="pause" class="screen" hidden>
     <div class="panel">
       <h2>Pausa</h2>
-      <p id="keys">↑ acelera · ↓ trava e faz marcha-atrás · ← → vira · espaço é o travão de mão · R volta à pista · para derrapar: vira e toca no espaço; para sair, vira para o outro lado</p>
+      <p id="keys">↑ acelera · ↓ trava e faz marcha-atrás · ← → vira · espaço é o travão de mão · R volta à pista · para derrapar: segura o espaço e vira (ou vira a fundo numa curva); para sair, larga e vira para o outro lado</p>
       <div class="actions">
         <button data-act="resume">Continuar</button>
         <button data-act="restart">Recomeçar</button>

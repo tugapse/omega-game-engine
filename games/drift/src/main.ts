@@ -212,8 +212,14 @@ async function start(): Promise<void> {
 
   const touchOn = params.has('touch') || matchMedia('(pointer: coarse)').matches;
   $('touch').hidden = !touchOn;
-  if (touchOn) $('keys').textContent = 'Arrasta à esquerda para virar (para baixo trava) · acelerador e travão de mão à direita · para derrapar: vira e toca no travão de mão; para sair, vira para o outro lado';
-  controls.bindTouch($('wheel-area'), $('knob'), $('btn-gas'), $('btn-hand'));
+  if (touchOn) {
+    controls.autoGas = true;
+    $('keys').textContent = 'O carro acelera sozinho · arrasta à esquerda para virar · para derrapar, segura DRIFT e vira (ou vira a fundo numa curva); larga DRIFT e vira para o outro lado para sair · TRAVÃO trava e faz marcha-atrás';
+    // A hint for the first seconds.
+    $('hint').hidden = false;
+    setTimeout(() => $('hint').classList.add('gone'), 7000);
+  }
+  controls.bindTouch($('wheel-area'), $('knob'), $('btn-brake'), $('btn-hand'));
   $('stats').hidden = !debug;
   saveSettings();
   $('pause-button').addEventListener('click', () => pause());

@@ -2,9 +2,9 @@
 //   Keyboard: ↑/W accelerate, ↓/S brake (and reverse), ←→/A D steer, space the handbrake.
 //   Gamepad (standard layout): left stick or cross to steer, RT or A to
 //     accelerate, LT or X to brake, B or RB the handbrake.
-//   Touch: a steering area on the left (drag sideways from where the finger
-//     lands; drag down to brake) and, on the right, the accelerator and the
-//     handbrake.
+//   Touch: the car accelerates by itself; a steering area on the left (drag
+//     sideways from where the finger lands; drag down to brake) and, on the
+//     right, a big DRIFT button (the handbrake: hold it and turn) and the brake.
 import { CarInput } from './car';
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -46,8 +46,10 @@ export function touchSteer(dx: number, dy: number): { steer: number; brake: numb
 export class Controls {
   private keys = new Set<Key>();
   private wheel: { id: number; x: number; y: number; steer: number; brake: number } | null = null;
-  private gas = new Set<number>();
+  private brakes = new Set<number>();
   private hand = new Set<number>();
+  /** Touch play: the car accelerates unless braking (set when the touch controls are on). */
+  autoGas = false;
   /** Set from outside (the bot, tests) to override everything. */
   override: CarInput | null = null;
   private startBefore = false;
@@ -64,8 +66,8 @@ export class Controls {
     window.addEventListener('blur', () => this.clear());
   }
 
-  /** Binds the steering area, the accelerator and the handbrake; `knob` shows where the wheel is turned. */
-  bindTouch(area: HTMLElement, knob: HTMLElement, gas: HTMLElement, hand: HTMLElement): void {
+  /** Binds the steering area, the brake and the drift button (handbrake); `knob` shows where the wheel is turned. */
+  bindTouch(area: HTMLElement, knob: HTMLElement, brake: HTMLElement, hand: HTMLElement): void {
     area.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       if (this.wheel) return;
@@ -96,7 +98,7 @@ export class Controls {
     area.addEventListener('pointerup', up);
     area.addEventListener('pointercancel', up);
 
-    for (const [el, set] of [[gas, this.gas], [hand, this.hand]] as const) {
+    for (const [el, set] of [[brake, this.brakes], [hand, this.hand]] as const) {
       el.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         el.setPointerCapture(e.pointerId);
@@ -117,8 +119,8 @@ export class Controls {
     const pad = readPad(pads);
     const k = (what: Key) => this.keys.has(what);
     let steer = (k('right') ? 1 : 0) - (k('left') ? 1 : 0);
-    let throttle = k('gas') || this.gas.size ? 1 : 0;
-    let brake = k('brake') ? 1 : 0;
+    let throttle = k('gas') ? 1 : 0;
+    let brake = k('brake') || this.brakes.size ? 1 : 0;
     let handbrake = k('hand') || this.hand.size > 0;
     if (this.wheel) { steer = this.wheel.steer; brake = Math.max(brake, this.wheel.brake); }
     if (pad) {
@@ -127,6 +129,7 @@ export class Controls {
       brake = Math.max(brake, pad.brake);
       handbrake ||= pad.handbrake;
     }
+    if (this.autoGas && brake === 0) throttle = 1;
     return { throttle, brake, steer, handbrake };
   }
 
@@ -143,7 +146,7 @@ export class Controls {
 
   clear(): void {
     this.keys.clear();
-    this.gas.clear();
+    this.brakes.clear();
     this.hand.clear();
     this.wheel = null;
   }

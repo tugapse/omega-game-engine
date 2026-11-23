@@ -36,7 +36,7 @@ describe('car', () => {
   });
 
   it('holds a corner without sliding on part throttle', () => {
-    const car = makeCar(0, 0, 0); car.vx = 22;
+    const car = makeCar(0, 0, 0); car.vx = 22; car.assist = false;
     let most = 0;
     for (let t = 0; t < 3; t += STEP) { stepCar(car, { throttle: 0.5, brake: 0, steer: 1, handbrake: false }); most = Math.max(most, Math.abs(deg(driftAngle(car)))); }
     expect(most).toBeLessThan(12);
@@ -54,7 +54,7 @@ describe('car', () => {
   });
 
   it('power-slides with full throttle and full lock', () => {
-    const car = makeCar(0, 0, 0); car.vx = 22;
+    const car = makeCar(0, 0, 0); car.vx = 22; car.assist = false;
     let most = 0;
     for (let t = 0; t < 3; t += STEP) { stepCar(car, { throttle: 1, brake: 0, steer: 1, handbrake: false }); most = Math.max(most, Math.abs(deg(driftAngle(car)))); }
     expect(most).toBeGreaterThan(20);
@@ -119,6 +119,29 @@ describe('car', () => {
       const { car, angles } = drift({ throttle: 0.6, steer: -1 }, 2);
       expect(car.drift).toBeNull();
       for (const a of angles.slice(1)) expect(Math.abs(a)).toBeLessThan(12);
+    });
+
+    it('starts by holding the handbrake first and turning the wheel after', () => {
+      const car = makeCar(0, 0, 0); car.vx = 15;
+      run({ throttle: 1, handbrake: true }, 0.2, car);
+      expect(car.drift).toBeNull();
+      run({ throttle: 1, handbrake: true, steer: -0.3 }, 0.05, car);
+      expect(car.drift?.turn).toBe(1);
+    });
+
+    it('starts with full lock held a moment at speed, not with a quick flick', () => {
+      const flick = makeCar(0, 0, 0); flick.vx = 20;
+      run({ throttle: 1, steer: 1 }, 0.15, flick);
+      expect(flick.drift).toBeNull();
+      const held = makeCar(0, 0, 0); held.vx = 20;
+      run({ throttle: 1, steer: 1 }, 0.4, held);
+      expect(held.drift?.turn).toBe(-1);
+    });
+
+    it('keeps the slide while the handbrake is held, even steering out', () => {
+      const { car, angles } = drift({ throttle: 1, steer: -1, handbrake: true }, 2);
+      expect(car.drift).not.toBeNull();
+      for (const a of angles) expect(a).toBeGreaterThan(8);
     });
 
     it('ends with the brake', () => {
