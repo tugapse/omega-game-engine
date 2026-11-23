@@ -16,6 +16,8 @@ export interface NextRoll {
   freshRack: boolean;
   /** Pins standing for this roll. */
   pinsLeft: number;
+  /** A new rack of only these pins (0-based), set before this roll (the spare challenge's layouts). */
+  rack?: number[];
 }
 
 export class BowlingGame {
