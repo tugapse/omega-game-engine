@@ -1,6 +1,7 @@
-// Omega Drift: a small car on a track, sliding through the bends. Phase 1: the
-// car's own physics, a test track with walls, the chase camera, keyboard,
-// gamepad and touch, the speedometer.
+// Omega Drift: a small car on a track, sliding through the bends. The car's
+// own physics, tracks with walls, the chase camera, keyboard, gamepad and
+// touch, the speedometer; a time trial of three laps after the start lights,
+// against the ghost of the best lap.
 import {
   Camera, CanvasViewport, DefaultResourceLoader, DependencyManager, Engine, RenderPipelineSettings, Resources, Scene,
   ToneMapping,
@@ -11,6 +12,10 @@ import { CHASE, ChaseState, followCar, makeChase } from './camera';
 import { drive, Driver, makeDriver } from './driver';
 import { Controls } from './input';
 import { CarLook, dressCar, dressTrack, dressWorld, TrackLook } from './look';
+import {
+  bestLap, currentLap, formatDelta, formatTime, Ghost, ghostAt, held, lights, makeRace, Race, raceTime, readGhost, Recorder,
+  updateRace,
+} from './race';
 import { keepOnTrack, makeTrack, Place, Track } from './track';
 import { TRACKS } from './tracks';
 
@@ -19,7 +24,9 @@ const canvas = $('view') as HTMLCanvasElement;
 const params = new URLSearchParams(location.search);
 const debug = params.has('debug');
 
-type State = 'loading' | 'play' | 'pause';
+type State = 'loading' | 'play' | 'pause' | 'results';
+/** Laps in a time trial. */
+const LAPS = 3;
 let state: State = 'loading';
 
 const gl = canvas.getContext('webgl2', { antialias: true })!;
@@ -60,6 +67,13 @@ let place: Place & { hit: number };
 let chase: ChaseState;
 let trackLook: TrackLook;
 let carLook: CarLook;
+let ghostLook: CarLook;
+let race: Race;
+/** The best lap on this track (kept in the browser), and the lap being recorded. */
+let ghost: Ghost | null = null;
+const recorder = new Recorder();
+/** A message in the middle of the screen for a moment (a lap time, the record). */
+let flashTime = 0;
 let autoplay: Driver | null = params.has('auto') ? makeDriver() : null;
 let scene: Scene, engine: Engine;
 let quality = 1;
@@ -77,9 +91,40 @@ function saveSettings(): void {
 let clock = 0;
 let bump = 0;
 
+const ghostKey = () => `omega-drift-ghost-${track.id}`;
+function loadGhost(): void {
+  try { ghost = readGhost(localStorage.getItem(ghostKey())); } catch { ghost = null; }
+}
+function saveGhost(g: Ghost): void {
+  ghost = g;
+  try { localStorage.setItem(ghostKey(), JSON.stringify(g)); } catch { /* private mode */ }
+}
+
+function flash(html: string, seconds = 2.2): void {
+  const el = $('flash');
+  el.innerHTML = html;
+  el.hidden = false;
+  flashTime = seconds;
+}
+
+/** A new time trial: the car on the grid a little behind the line, the lights about to come on. */
+function newRace(): void {
+  reset(true);
+  race = makeRace(track.length, LAPS, place.along);
+  loadGhost();
+  clock = 0;
+  autoplay = params.has('auto') ? makeDriver() : null;
+  $('results').hidden = true;
+  $('pause').hidden = true;
+  $('flash').hidden = true;
+  state = 'play';
+  last = 0;
+}
+
 /** Puts the car back on the track: on the centre line at its place, facing the way round, stopped. */
 function reset(atStart = false): void {
-  const p = track.samples[atStart || !place ? 0 : place.index];
+  const n = track.samples.length;
+  const p = track.samples[atStart || !place ? n - 6 : place.index];
   car = makeCar(p.x, p.y, Math.atan2(p.ty, p.tx), car?.spec);
   car.assist = settings.assist;
   place = keepOnTrack(track, car);
@@ -87,14 +132,44 @@ function reset(atStart = false): void {
   controls.clear();
 }
 
+
 function step(input: CarInput): void {
-  stepCar(car, input);
+  stepCar(car, held(race) ? NO_INPUT : input);
   place = keepOnTrack(track, car, place.index);
   if (place.hit > 4) bump = Math.max(bump, place.hit);
+  const before = race.phase;
+  const event = updateRace(race, place.along, STEP, ghost?.time ?? Infinity);
+  const t = raceTime(race);
+  if (event === 'go') { recorder.begin(0); flash('<b>Vai!</b>', 1); }
+  if (before === 'racing') recorder.add(t, car.x, car.y, car.heading);
+  if (event === 'lap' || event === 'best' || event === 'finish') lapDone();
+}
+
+/** A lap finished: its time, against the record, and a new ghost if it is the best. */
+function lapDone(): void {
+  const lap = race.times[race.times.length - 1];
+  const record = ghost?.time ?? Infinity;
+  const delta = isFinite(record) ? ` <small>${formatDelta(lap - record)}</small>` : '';
+  if (lap < record) {
+    saveGhost(recorder.finish(lap));
+    flash(`${isFinite(record) ? 'Recorde!' : 'Volta'} <b>${formatTime(lap)}</b>${delta}`);
+  } else flash(`Volta <b>${formatTime(lap)}</b>${delta}`);
+  recorder.begin(raceTime(race));
+  if (race.phase === 'done') finish();
+}
+
+function finish(): void {
+  state = 'results';
+  $('flash').hidden = true;
+  autoplay = makeDriver(0.6);
+  $('results').hidden = false;
+  $('res-total').textContent = formatTime(race.total);
+  $('res-laps').innerHTML = race.times.map((t, i) => `<li${t === bestLap(race) ? ' class="best"' : ''}>Volta ${i + 1}<span>${formatTime(t)}</span></li>`).join('');
+  $('res-record').textContent = ghost ? `Recorde da pista: ${formatTime(ghost.time)}` : '';
 }
 
 function update(dt: number): void {
-  if (state !== 'play') return;
+  if (state !== 'play' && state !== 'results') return;
   pending += dt;
   while (pending >= STEP) {
     pending -= STEP;
@@ -103,6 +178,7 @@ function update(dt: number): void {
   }
   followCar(chase, car, dt);
   bump = Math.max(0, bump - dt * 30);
+  if (flashTime > 0) { flashTime -= dt; if (flashTime <= 0) $('flash').hidden = true; }
 }
 
 function hud(): void {
@@ -115,10 +191,27 @@ function hud(): void {
   meter.hidden = !drifting;
   if (drifting) $('drift-angle').textContent = `${Math.round(angle)}°`;
   $('needle').style.transform = `rotate(${-120 + 240 * Math.min(1, speedOf(car) / car.spec.top)}deg)`;
+  $('lap').textContent = `${currentLap(race)}/${race.laps}`;
+  $('time').textContent = formatTime(raceTime(race) - race.lapStart);
+  const best = Math.min(bestLap(race), ghost?.time ?? Infinity);
+  $('best').textContent = formatTime(best);
+  const l = lights(race);
+  const box = $('lights');
+  box.hidden = !(race.phase === 'lights' || l.green);
+  box.querySelectorAll('i').forEach((el, i) => { el.className = l.green ? 'green' : i < l.red ? 'red' : ''; });
+}
+
+/** The ghost of the best lap, where it was this far into its lap. */
+function drawGhost(): void {
+  const at = ghost && race.phase === 'racing' && state === 'play' ? ghostAt(ghost, raceTime(race) - race.lapStart) : null;
+  ghostLook.show(!!at);
+  if (!at) return;
+  ghostLook.update({ ...car, x: at.x, y: at.y, heading: at.heading, vx: 0, vy: 0, spin: 0, wheel: 0 }, 0);
 }
 
 function draw(dt: number): void {
   carLook.update(car, dt);
+  drawGhost();
   trackLook.update(car.x, car.y);
   const eyeH = CHASE.up;
   camera.fieldOfView = chase.fov;
@@ -185,18 +278,19 @@ async function loadTrack(index: number): Promise<void> {
   await dressWorld(gl, scene, track);
   await loaded(0.75, 'A trazer o carro…');
   carLook = await dressCar(gl, scene, [0.95, 0.25, 0.45]);
+  ghostLook = await dressCar(gl, scene, [0.6, 0.9, 1], { alpha: 0.35, name: 'Ghost' });
+  ghostLook.show(false);
   scene.setGlRenderingContext(gl);
   engine.loadScene(scene);
   const settings = scene.renderPipeline.settings;
   settings.toneMapping = ToneMapping.ACES;
   settings.applyQuality(quality);
   scene.isRunning = true;
-  reset(true);
-  clock = 0;
   $('track-name').textContent = spec.name;
+  loadGhost();
   await loaded(1, 'Pronto');
   $('loading').classList.add('done');
-  state = 'play';
+  newRace();
 }
 
 async function start(): Promise<void> {
@@ -224,22 +318,26 @@ async function start(): Promise<void> {
   saveSettings();
   $('pause-button').addEventListener('click', () => pause());
   $('reset-button').addEventListener('click', () => reset());
+  $('results').addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('button')?.dataset.act === 'again') newRace();
+  });
   $('pause').addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest('button');
     if (b?.dataset.act === 'resume') resume();
-    else if (b?.dataset.act === 'restart') { reset(true); clock = 0; resume(); }
+    else if (b?.dataset.act === 'restart') newRace();
     else if (b?.dataset.act === 'assist') { settings.assist = !settings.assist; saveSettings(); }
   });
   window.addEventListener('keydown', (e) => {
     if (state === 'play' && (e.code === 'Escape' || e.code === 'KeyP')) pause();
     else if (state === 'pause' && (e.code === 'Escape' || e.code === 'KeyP' || e.code === 'Enter')) resume();
     else if (state === 'play' && e.code === 'KeyR') reset();
+    else if (state === 'results' && e.code === 'Enter') newRace();
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
 
   (window as any).drift = {
     get state() { return state; }, get car() { return car; }, get track() { return track; }, get place() { return place; },
-    get clock() { return clock; }, controls, reset, pause, resume, get renderScale() { return renderScale; },
+    get clock() { return clock; }, get race() { return race; }, get looks() { return { carLook, ghostLook }; }, get ghost() { return ghost; }, controls, reset, newRace, pause, resume, get renderScale() { return renderScale; },
     get autoplay() { return !!autoplay; }, set autoplay(on: boolean) { autoplay = on ? makeDriver() : null; if (!on) controls.override = null; },
     hold(input: Partial<CarInput> | null) { controls.override = input ? { ...NO_INPUT, ...input } : null; },
   };
