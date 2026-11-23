@@ -15,7 +15,7 @@ export const CHUNK = 16;
 /** How deep (m) the ground runs back from the front, and the blocks. */
 const GROUND_DEPTH = { front: 1.2, back: 2.4 };
 
-async function canvasTexture(gl: Gl, size: number, draw: (c: CanvasRenderingContext2D, s: number) => void): Promise<Texture> {
+export async function canvasTexture(gl: Gl, size: number, draw: (c: CanvasRenderingContext2D, s: number) => void): Promise<Texture> {
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
@@ -23,7 +23,7 @@ async function canvasTexture(gl: Gl, size: number, draw: (c: CanvasRenderingCont
   return Resources.for(gl).getTexture(canvas.toDataURL('image/png'));
 }
 
-async function material(gl: Gl, color: number[], opts: { tex?: Texture; glow?: Texture; specular?: number; roughness?: number } = {}): Promise<LitMaterial> {
+export async function material(gl: Gl, color: number[], opts: { tex?: Texture; glow?: Texture; specular?: number; roughness?: number } = {}): Promise<LitMaterial> {
   const m = new LitMaterial();
   m.color = new Color(color[0], color[1], color[2], 1);
   m.mainTex = opts.tex ?? await Resources.for(gl).getTexture('builtin://white');
@@ -33,14 +33,14 @@ async function material(gl: Gl, color: number[], opts: { tex?: Texture; glow?: T
   return m;
 }
 
-function makeEntity(scene: Scene, name: string, parent?: SceneEntity): SceneEntity {
+export function makeEntity(scene: Scene, name: string, parent?: SceneEntity): SceneEntity {
   const e = new SceneEntity(name);
   if (parent) e.transform.setParent(parent.transform);
   scene.addEntity(e);
   return e;
 }
 
-function render(gl: Gl, entity: SceneEntity, meshData: MeshData, m: LitMaterial): void {
+export function render(gl: Gl, entity: SceneEntity, meshData: MeshData, m: LitMaterial): void {
   const mesh = new Mesh();
   mesh.meshData = meshData;
   const renderer = new MeshRendererBehaviour(gl);
@@ -81,13 +81,14 @@ function quad(x0: number, y0: number, x1: number, y1: number, z: number): MeshDa
 }
 
 /** The kinds of tile mesh: ground splits into its grassy top row and the earth under it. */
-type Part = 'grass' | 'earth' | 'deep' | 'block' | 'brick' | 'bonus';
+/** Static tile meshes (bricks and bonus blocks change, so they are drawn one by one in things.ts). */
+type Part = 'grass' | 'earth' | 'deep' | 'block' | 'spikes';
 
 function partOf(level: Level, x: number, y: number): Part | null {
   const t: Tile = tileAt(level, x, y);
-  if (t === 'empty') return null;
   if (t === 'ground') return tileAt(level, x, y + 1) === 'ground' ? 'earth' : 'grass';
-  return t;
+  if (t === 'block' || t === 'spikes') return t;
+  return null;
 }
 
 /** The tile textures, drawn on canvases. */
@@ -111,6 +112,17 @@ async function tileMaterials(gl: Gl): Promise<Record<Part, LitMaterial>> {
     c.fillStyle = '#656b7a'; c.fillRect(0, s - 6, s, 6); c.fillRect(s - 6, 0, 6, s);
     c.fillStyle = '#7d8496'; c.fillRect(20, 20, 24, 24);
   });
+  return {
+    grass: await material(gl, [1, 1, 1], { tex: grass }),
+    earth: await material(gl, [1, 1, 1], { tex: earth }),
+    deep: await material(gl, [0.36, 0.23, 0.14], { specular: 0 }),
+    block: await material(gl, [1, 1, 1], { tex: block, specular: 0.2 }),
+    spikes: await material(gl, [0.78, 0.8, 0.86], { specular: 0.7, roughness: 0.25 }),
+  };
+}
+
+/** The materials of the blocks that change: brick, bonus block, and a used bonus block. */
+export async function blockMaterials(gl: Gl): Promise<{ brick: LitMaterial; bonus: LitMaterial; used: LitMaterial }> {
   const brick = await canvasTexture(gl, 64, (c, s) => {
     c.fillStyle = '#c4643c'; c.fillRect(0, 0, s, s);
     c.strokeStyle = '#8a3f22'; c.lineWidth = 4;
@@ -130,14 +142,35 @@ async function tileMaterials(gl: Gl): Promise<Record<Part, LitMaterial>> {
   };
   const bonus = await canvasTexture(gl, 64, (c, s) => bonusDraw(c, s, false));
   const bonusGlow = await canvasTexture(gl, 64, (c, s) => bonusDraw(c, s, true));
+  const used = await canvasTexture(gl, 64, (c, s) => {
+    c.fillStyle = '#8a6a3e'; c.fillRect(0, 0, s, s);
+    c.fillStyle = '#a3825a'; c.fillRect(0, 0, s, 5); c.fillRect(0, 0, 5, s);
+    c.fillStyle = '#65492a'; c.fillRect(0, s - 5, s, 5); c.fillRect(s - 5, 0, 5, s);
+    c.fillStyle = '#6f5432'; for (const [x, y] of [[12, 12], [46, 12], [12, 46], [46, 46]]) c.fillRect(x, y, 6, 6);
+  });
   return {
-    grass: await material(gl, [1, 1, 1], { tex: grass }),
-    earth: await material(gl, [1, 1, 1], { tex: earth }),
-    deep: await material(gl, [0.36, 0.23, 0.14], { specular: 0 }),
-    block: await material(gl, [1, 1, 1], { tex: block, specular: 0.2 }),
     brick: await material(gl, [1, 1, 1], { tex: brick }),
     bonus: await material(gl, [1, 1, 1], { tex: bonus, glow: bonusGlow, specular: 0.4, roughness: 0.4 }),
+    used: await material(gl, [1, 1, 1], { tex: used }),
   };
+}
+
+/** A four-sided spike: base 1 × 1 on y = 0, point at y = 1. */
+function pyramid(): MeshData {
+  const v: vec3[] = [], n: vec3[] = [], uv: vec2[] = [], idx: number[] = [];
+  const corners: [number, number][] = [[-0.5, 0.5], [0.5, 0.5], [0.5, -0.5], [-0.5, -0.5]];
+  for (let i = 0; i < 4; i++) {
+    const [ax, az] = corners[i], [bx, bz] = corners[(i + 1) % 4];
+    const mx = (ax + bx) / 2, mz = (az + bz) / 2, l = Math.hypot(mx, 0.5, mz);
+    const base = v.length;
+    v.push([ax, 0, az], [bx, 0, bz], [0, 1, 0]);
+    for (let k = 0; k < 3; k++) n.push([mx / l, 0.5 / l, mz / l]);
+    uv.push([0, 1], [1, 1], [0.5, 0]);
+    idx.push(base, base + 1, base + 2);
+  }
+  const m = new MeshData(v, n, uv, idx);
+  m.providedNormals = true;
+  return m;
 }
 
 export interface LevelLook {
@@ -151,9 +184,10 @@ export interface LevelLook {
 export async function dressLevel(gl: Gl, scene: Scene, level: Level): Promise<LevelLook> {
   const mats = await tileMaterials(gl);
   const cube = new CubePrimitive(1);
+  const spike = pyramid();
   const chunks: { x0: number; parts: SceneEntity[] }[] = [];
   for (let x0 = 0; x0 < level.width; x0 += CHUNK) {
-    const places: Record<Part, { at: number[]; scale: number[] }[]> = { grass: [], earth: [], deep: [], block: [], brick: [], bonus: [] };
+    const places: Record<Part, { at: number[]; scale: number[] }[]> = { grass: [], earth: [], deep: [], block: [], spikes: [] };
     for (let x = x0; x < Math.min(level.width, x0 + CHUNK); x++) {
       for (let y = 0; y < level.height; y++) {
         const p = partOf(level, x, y);
@@ -165,6 +199,9 @@ export async function dressLevel(gl: Gl, scene: Scene, level: Level): Promise<Le
           if (p === 'grass') places.grass.push({ at: [x + 0.5, y + 0.88, z], scale: [1, 0.26, depth + 0.06] });
           // The earth goes on down under the level, so the view never shows under it.
           if (y === 0) places.deep.push({ at: [x + 0.5, -5, z], scale: [1, 10, depth] });
+        } else if (p === 'spikes') {
+          // Three spikes across the tile, two rows deep.
+          for (const sx of [0.18, 0.5, 0.82]) for (const sz of [-0.25, 0.25]) places.spikes.push({ at: [x + sx, y, sz], scale: [0.3, 0.6, 0.3] });
         } else {
           places[p].push({ at: [x + 0.5, y + 0.5, 0], scale: [1, 1, 1] });
         }
@@ -174,7 +211,7 @@ export async function dressLevel(gl: Gl, scene: Scene, level: Level): Promise<Le
     for (const kind of Object.keys(places) as Part[]) {
       if (!places[kind].length) continue;
       const e = makeEntity(scene, `${level.name} ${kind} ${x0}`);
-      render(gl, e, merge(cube, places[kind]), mats[kind]);
+      render(gl, e, merge(kind === 'spikes' ? spike : cube, places[kind]), mats[kind]);
       parts.push(e);
     }
     chunks.push({ x0, parts });

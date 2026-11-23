@@ -14,6 +14,8 @@ export const VIEW = {
   /** How quickly it catches up (1/s) across and up and down. */
   followX: 6,
   followY: 3,
+  /** Standing above the floor, the look point sits this far (m) above the feet. */
+  climb: 0,
   /** Out of this band (m) above or below the look point it follows even in the air. */
   bandY: 3.5,
 };
@@ -36,11 +38,13 @@ export function makeCamera(x: number, y: number, halfWidth: number): CameraState
 
 /**
  * Moves the camera for a step: `halfWidth` is half the visible width (m), so it
- * stays inside the level from 0 to `levelWidth`.
+ * stays inside the level from 0 to `levelWidth`. `floorY` is the lowest it
+ * looks (the start's height plus `above`): it only climbs when the hero stands
+ * higher than that, so the ground stays in view on low platforms.
  */
 export function followHero(
   cam: CameraState, hero: { x: number; y: number; vx: number; onGround: boolean },
-  halfWidth: number, levelWidth: number, dt: number,
+  halfWidth: number, levelWidth: number, dt: number, floorY = -Infinity,
 ): void {
   const want = Math.max(-1, Math.min(1, hero.vx / VIEW.leadSpeed)) * VIEW.lead;
   cam.lead += (want - cam.lead) * (1 - Math.exp(-dt * 2));
@@ -54,7 +58,7 @@ export function followHero(
   cam.minX = Math.max(cam.minX, Math.min(cam.x, maxX));
   cam.x = Math.min(maxX, Math.max(cam.minX, halfWidth, cam.x));
   // Up and down: settle on where the hero stands; in the air only if it leaves the band.
-  const feet = hero.y + VIEW.above;
+  const feet = Math.max(floorY, hero.y + VIEW.climb);
   if (hero.onGround || Math.abs(feet - cam.goalY) > VIEW.bandY) cam.goalY = feet;
   cam.y += (cam.goalY - cam.y) * (1 - Math.exp(-dt * VIEW.followY));
 }

@@ -166,6 +166,13 @@ describe('camera', () => {
     for (let i = 0; i < 240; i++) { hero.x += hero.vx / 120; followHero(cam, hero, 8, 200, 1 / 120); }
     expect(cam.x).toBeGreaterThanOrEqual(far - 1e-9);
   });
+  it('keeps the ground in view on low platforms, and climbs only for high ones', () => {
+    const cam = makeCamera(2, 2, 8);
+    const settle = (y: number) => { for (let i = 0; i < 1200; i++) followHero(cam, { x: 10, y, vx: 0, onGround: true }, 8, 200, 1 / 120, 4.4); return cam.y; };
+    expect(settle(2)).toBeCloseTo(4.4, 3);
+    expect(settle(4)).toBeCloseTo(4.4, 3);
+    expect(settle(7)).toBeCloseTo(7, 3);
+  });
   it('stops at the level end', () => {
     const cam = makeCamera(2, 2, 8);
     for (let i = 0; i < 1200; i++) followHero(cam, { x: 49, y: 2, vx: 9.5, onGround: true }, 8, 50, 1 / 120);
@@ -174,11 +181,10 @@ describe('camera', () => {
 });
 
 describe('levels', () => {
-  it('every level can be finished by running and jumping', () => {
+  it('every level can be finished by running and jumping, without dying', () => {
     for (const spec of LEVELS) {
-      const level = parseLevel(spec);
-      const r = botRun(level, makeHero, (h, i) => stepHero(h, i, level), STEP);
-      expect(r, `${spec.name} stopped at x=${r.x.toFixed(1)}`).toMatchObject({ reached: true });
+      const r = botRun(spec);
+      expect({ reached: r.reached, deaths: r.deaths }, `${spec.name} stopped at x=${r.x.toFixed(1)}`).toEqual({ reached: true, deaths: 0 });
     }
   });
 });
