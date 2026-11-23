@@ -6,13 +6,13 @@ import {
 } from '../../../src';
 import { vec3 } from 'gl-matrix';
 import { Bot, botInput, makeBot } from './bot';
-import { CameraState, followHero, makeCamera } from './camera';
-import { fellOut, Hero, makeHero, stepHero } from './hero';
+import { CameraState, followHero, makeCamera, VIEW } from './camera';
 import { Controls } from './input';
-import { Level, parseLevel } from './level';
 import { LEVELS } from './levels';
 import { dressGoal, dressHero, dressLevel, dressWorld, HeroLook, LevelLook } from './look';
 import { STEP } from './physics';
+import { dressThings, ThingsLook } from './things';
+import { makeWorld, nextTry, stepWorld, World } from './world';
 
 const $ = (id: string) => document.getElementById(id)!;
 const canvas = $('view') as HTMLCanvasElement;
@@ -20,10 +20,10 @@ const banner = $('banner');
 const params = new URLSearchParams(location.search);
 const debug = params.has('debug');
 
-type State = 'loading' | 'play' | 'dead' | 'clear';
+/** play; dead: the hero pops up and falls, then the next try; over: no lives left; clear: the flag. */
+type State = 'loading' | 'play' | 'dead' | 'over' | 'clear';
 let state: State = 'loading';
 let stateTime = 0;
-let levelTime = 0;
 
 const gl = canvas.getContext('webgl2', { antialias: true })!;
 if (!gl) { $('load-text').textContent = 'Este browser não tem WebGL 2.'; throw new Error('No WebGL 2'); }
@@ -61,11 +61,13 @@ window.addEventListener('resize', resize);
 resize();
 
 const controls = new Controls();
-let level: Level;
-let hero: Hero;
+let world: World;
 let cam: CameraState;
 let levelLook: LevelLook;
+let thingsLook: ThingsLook;
 let heroLook: HeroLook;
+/** The hero's fall after dying: height and speed above where it died. */
+let deathFall = { y: 0, vy: 0 };
 /** The hero's look: turn (degrees) and squash (1 = none). */
 let yaw = 60, squash = 1;
 let accumulator = 0;
@@ -79,57 +81,86 @@ const timing = { pressed: 0, jumped: 0 };
 function setState(s: State): void {
   state = s;
   stateTime = 0;
-  banner.hidden = s === 'play';
-  if (s === 'clear') banner.innerHTML = `<b>Nível completo!</b><span>${formatTime(levelTime)}</span><small>Toca ou carrega Enter para repetir</small>`;
-  if (s === 'dead') banner.innerHTML = '<b>Ups!</b>';
+  banner.hidden = s === 'play' || s === 'dead';
+  if (s === 'clear') banner.innerHTML = `<b>Nível completo!</b><span>${world.score} pontos</span><small>Toca ou carrega Enter para repetir</small>`;
+  if (s === 'over') banner.innerHTML = `<b>Fim do jogo</b><span>${world.score} pontos</span><small>Toca ou carrega Enter para recomeçar</small>`;
 }
 
 function formatTime(t: number): string {
-  const s = Math.floor(t);
+  const s = Math.ceil(t);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
-function restart(): void {
-  hero = makeHero(level.start.x, level.start.y);
-  cam = makeCamera(hero.body.x, hero.body.y, halfWidth);
-  levelTime = 0;
+function showHud(): void {
+  $('lives').textContent = String(world.lives);
+  $('coins').textContent = String(world.coinCount);
+  $('score').textContent = String(world.score).padStart(6, '0');
+  $('time').textContent = formatTime(world.time);
+  $('time-chip').classList.toggle('hurry', world.time < 60);
+}
+
+/** Starts a try: a fresh world (or the next try after a death), the camera on the hero. */
+function begin(w: World): void {
+  world = w;
+  cam = makeCamera(w.hero.body.x, w.hero.body.y, halfWidth);
   accumulator = 0;
   controls.clear();
+  if (autoplay) autoplay = makeBot();
   setState('play');
+  showHud();
+}
+
+/** From the very start: three lives, no checkpoint. */
+function restart(): void {
+  begin(makeWorld(LEVELS[0]));
 }
 
 function step(): void {
-  const input = autoplay ? botInput(autoplay, hero, level, STEP) : controls.read();
+  const input = autoplay ? botInput(autoplay, world, STEP) : controls.read();
   if (input.jumpPressed) timing.pressed = performance.now();
-  stepHero(hero, input, level);
-  if (hero.jumped) { timing.jumped = performance.now(); squash = 1.25; }
-  if (hero.contacts.landed) squash = 0.75;
+  stepWorld(world, input, cam.x + halfWidth);
+  const hero = world.hero, b = hero.body;
+  for (const e of world.events) {
+    if (e.type === 'jump') { timing.jumped = performance.now(); squash = 1.25; }
+    else if (e.type === 'land') squash = 0.75;
+    else if (e.type === 'stomp' || e.type === 'kick') squash = 1.2;
+    else if (e.type === 'bump') thingsLook.bump(e.x, e.y, e.tile === 'bonus');
+  }
+  if (world.dead) {
+    deathFall = { y: 0, vy: b.y < -1 ? 0 : 13 };
+    setState('dead');
+    return;
+  }
   // The camera never goes back, so neither can the hero.
-  const b = hero.body;
   const left = cam.x - halfWidth + b.w / 2;
   if (b.x < left) { b.x = left; if (b.vx < 0) b.vx = 0; }
-  followHero(cam, b, halfWidth, level.width, STEP);
-  if (fellOut(hero)) setState('dead');
-  else if (b.x + b.w / 2 >= level.goal.x - 0.5) setState('clear');
+  followHero(cam, b, halfWidth, world.level.width, STEP, world.level.start.y + VIEW.above);
+  if (world.cleared) setState('clear');
 }
 
 function update(dt: number): void {
   stateTime += dt;
   if (state === 'play') {
-    levelTime += dt;
     accumulator += dt;
     let n = 0;
     while (accumulator >= STEP && n++ < 24 && state === 'play') { step(); accumulator -= STEP; }
-    $('time').textContent = formatTime(levelTime);
-  } else if (state === 'dead' && stateTime > 1.2) {
-    restart();
+  } else if (state === 'dead') {
+    // A hop up, then down out of the picture; then the next try, or the end.
+    if (stateTime > 0.35) { deathFall.vy -= 40 * dt; deathFall.y += deathFall.vy * dt; }
+    if (stateTime > 2) {
+      const next = nextTry(world);
+      if (next) begin(next); else setState('over');
+    }
   }
+  showHud();
+  const hero = world.hero;
   // The hero's look eases towards where it faces, and springs back from a squash.
-  yaw += (hero.facing * 60 - yaw) * (1 - Math.exp(-dt * 14));
+  yaw += ((state === 'dead' ? 0 : hero.facing * 60) - yaw) * (1 - Math.exp(-dt * 14));
   squash += (1 - squash) * (1 - Math.exp(-dt * 10));
-  heroLook.place(hero.body.x, hero.body.y, yaw, squash);
-  heroLook.setVisible(state !== 'dead');
+  heroLook.place(hero.body.x, hero.body.y + (state === 'dead' ? deathFall.y : 0), yaw, squash);
+  heroLook.setVisible(state !== 'over' && hero.body.y + deathFall.y > -4);
   levelLook.showAround(cam.x, halfWidth);
+  thingsLook.sync(world, state === 'play' ? dt : 0, { left: cam.x - halfWidth, right: cam.x + halfWidth });
   const lookY = cam.y - touchShift;
   camera.transform.setLocalPosition(cam.x, lookY + VIEW_RISE, VIEW_DISTANCE);
   camera.transform.lookAt(vec3.fromValues(cam.x, lookY, 0));
@@ -160,10 +191,12 @@ function loaded(fraction: number, text: string): Promise<void> {
 
 async function start(): Promise<void> {
   await loaded(0.1, 'A montar o nível…');
-  level = parseLevel(LEVELS[0]);
+  world = makeWorld(LEVELS[0]);
+  const level = world.level;
   scene = new Scene();
   scene.name = 'Omega Run';
   levelLook = await dressLevel(gl, scene, level);
+  thingsLook = await dressThings(gl, scene, world);
   await loaded(0.5, 'A pintar o céu…');
   await dressWorld(gl, scene, level.width);
   await dressGoal(gl, scene, level.goal.x, level.goal.y);
@@ -183,14 +216,14 @@ async function start(): Promise<void> {
   const touch = $('touch');
   if (params.has('touch') || matchMedia('(pointer: coarse)').matches) { touch.hidden = false; touchShift = 1.4; }
   controls.bindTouch($('pad'), $('btn-a'), $('btn-b'));
-  const again = () => { if (state === 'clear') restart(); };
+  const again = () => { if (state === 'clear' || state === 'over') restart(); };
   banner.addEventListener('pointerdown', again);
-  window.addEventListener('keydown', (e) => { if (e.code === 'Enter' || (e.code === 'Space' && state === 'clear')) again(); });
+  window.addEventListener('keydown', (e) => { if (e.code === 'Enter' || (e.code === 'Space' && (state === 'clear' || state === 'over'))) again(); });
   $('level-name').textContent = level.name;
   $('stats').hidden = !debug;
 
   (window as any).platformer = {
-    get state() { return state; }, get hero() { return hero; }, get level() { return level; }, get cam() { return cam; },
+    get state() { return state; }, get world() { return world; }, get hero() { return world.hero; }, get level() { return world.level; }, get cam() { return cam; },
     get halfWidth() { return halfWidth; }, controls, restart, timing,
     get autoplay() { return !!autoplay; }, set autoplay(on: boolean) { autoplay = on ? makeBot() : null; },
   };

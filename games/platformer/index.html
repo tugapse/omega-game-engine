@@ -23,7 +23,14 @@
     #top { top: max(10px, env(safe-area-inset-top)); left: max(16px, env(safe-area-inset-left)); right: max(16px, env(safe-area-inset-right)); display: flex; justify-content: space-between; gap: 8px; }
     .chip { padding: 5px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; font-size: 13px; }
     .chip b { font-family: var(--display); font-weight: 400; color: var(--cyan); }
+    #top .group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip i { font-style: normal; margin-right: 5px; }
+    #lives-chip i { color: var(--pink); }
+    #coins-chip i, #coins-chip b { color: var(--gold); }
+    #score-chip b { color: var(--fg); letter-spacing: .04em; }
     #time-chip b { color: var(--gold); }
+    #time-chip.hurry { border-color: var(--pink); }
+    #time-chip.hurry b { color: var(--pink); }
 
     #banner { position: fixed; top: 28%; left: 16px; right: 16px; margin: 0 auto; max-width: 420px; text-align: center; padding: 18px 16px; background: var(--panel); border: 1px solid var(--teal); border-radius: 18px; box-shadow: 0 0 24px rgba(38, 217, 191, .35); animation: pop .4s cubic-bezier(.2, 1.6, .4, 1); }
     #banner b { display: block; font-family: var(--display); font-weight: 400; font-size: 34px; color: var(--gold); text-shadow: 0 0 12px rgba(255, 210, 63, .6); }
@@ -60,8 +67,15 @@
 <body>
   <canvas id="view"></canvas>
   <div id="top" class="hud">
-    <span class="chip"><b id="level-name">Prado 1</b></span>
-    <span class="chip" id="time-chip"><b id="time">0:00</b></span>
+    <div class="group">
+      <span class="chip"><b id="level-name">Prado 1</b></span>
+      <span class="chip" id="lives-chip" title="Vidas"><i>♥</i><b id="lives">3</b></span>
+      <span class="chip" id="coins-chip" title="Moedas"><i>●</i><b id="coins">0</b></span>
+    </div>
+    <div class="group">
+      <span class="chip" id="score-chip"><b id="score">000000</b></span>
+      <span class="chip" id="time-chip" title="Tempo"><i>⏱</i><b id="time">5:00</b></span>
+    </div>
   </div>
   <div id="banner" hidden></div>
   <div id="touch" hidden>
