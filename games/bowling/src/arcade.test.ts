@@ -40,7 +40,7 @@ describe('ArcadeGame', () => {
     expect(g.frames()[9].total).toBe(g.score);
   });
 
-  it('gives each player their own level in a match (30 pins against a beginner's 10)', () => {
+  it('gives each player their own level in a match (30 pins against a beginner with 10)', () => {
     const m = new Match(['Ana', 'Rui'], () => new ArcadeGame());
     const p1 = [[8, 1], [7, 2], [3, 1], [5, 3]]; // 30 pins
     const p2 = [[2, 1], [3, 0], [1, 1], [1, 1]]; // 10 pins

@@ -5,10 +5,10 @@ import {
   Camera, CanvasViewport, Color, Pointer, DefaultResourceLoader, DependencyManager, Engine, PhysicsWorld, RapierBackend,
   RenderPipelineSettings, Resources, Scene, ToneMapping,
 } from '../../../src';
-import { bindSwipe } from './controls';
+import { bindSwipe, swipeTurn, THROW } from './controls';
 import { GyroThrow } from './gyro';
 import { Match, MAX_PLAYERS } from './match';
-import { ArcadeGame, multiplierFor } from './arcade';
+import { ARCADE, ArcadeGame, MAX_LEVEL, multiplierFor } from './arcade';
 import { LEAVES, SparesGame } from './spares';
 import { CPU_NAMES, CpuPlan, CpuSkill, cpuWait, planThrow } from './cpu';
 import { fixedDiscs, levelLayout, ObstacleField, ObstacleSpec, sweepDiscs } from './obstacles';
@@ -33,6 +33,16 @@ const throwInfo = document.getElementById('throw-info')!;
 const gyroButton = document.getElementById('gyro') as HTMLButtonElement;
 const soundButton = document.getElementById('sound') as HTMLButtonElement;
 const musicButton = document.getElementById('music') as HTMLButtonElement;
+const pauseButton = document.getElementById('pause') as HTMLButtonElement;
+const pauseMenu = document.getElementById('pause-menu')!;
+const finalScreen = document.getElementById('final')!;
+const finalList = document.getElementById('final-list')!;
+const finalNote = document.getElementById('final-note')!;
+const namesBox = document.getElementById('names')!;
+const levelBadge = document.getElementById('level')!;
+const loadBar = document.getElementById('load-bar')!;
+const loadText = document.getElementById('load-text')!;
+const debug = new URLSearchParams(location.search).has('debug');
 const replayTag = document.getElementById('replay-tag')!;
 const trailCanvas = document.getElementById('trail') as HTMLCanvasElement;
 const setupPanel = document.getElementById('setup')!;
@@ -59,6 +69,14 @@ const layoutNow = (): ObstacleSpec[] => (mode === 'obstacles' ? levelLayout(arca
 let levelUp: { player: number; level: number } | null = null;
 /** The computer opponent's skill, or null for none (start screen). */
 let cpuSkill: CpuSkill | null = null;
+/** How many players the start screen has selected, and the names typed for them (remembered). */
+let selectedCount = 1;
+let names: string[] = [];
+/** The game is paused (the pause menu is open): nothing moves, the scene still draws. */
+let paused = false;
+/** Throws so far on this device; the controls hint shows for the first few. */
+let throwsMade = 0;
+const HINT_THROWS = 4;
 /** The computer's turn: its plan, and when it bowls (seconds into the aim state). */
 let cpuTurn: { plan: CpuPlan; at: number; placed: boolean } | null = null;
 /** The current player is the computer: people's input is ignored. */
@@ -112,7 +130,7 @@ const REPLAY_SPEED = 0.35;
 const REPLAY_EYE = vec3.fromValues(0.42, 0.4, -15.7);
 const REPLAY_LOOK = vec3.fromValues(0, 0.15, -18.65);
 /** The swipe being drawn, in CSS pixels; `up` is when the finger lifted. */
-let trail: { x: number; y: number }[] = [];
+let trail: { x: number; y: number; t: number }[] = [];
 let trailUp = -1;
 let stateTime = 0;
 let ballX = 0;
@@ -123,7 +141,7 @@ let engine: Engine;
 
 const gl = canvas.getContext('webgl2', { antialias: false })!;
 if (!gl) {
-  hint.textContent = 'Este browser não tem WebGL 2.';
+  document.getElementById('load-text')!.textContent = 'Este browser não tem WebGL 2.';
   throw new Error('No WebGL 2');
 }
 new DependencyManager().registerDependencies();
@@ -158,9 +176,11 @@ resize();
 function setState(next: State): void {
   state = next;
   stateTime = 0;
-  hint.classList.toggle('hidden', next !== 'aim' || !!match.player.cpu);
-  result.classList.toggle('show', next === 'result' || next === 'over');
-  result.classList.toggle('over', next === 'over');
+  hint.classList.toggle('hidden', next !== 'aim' || !!match.player.cpu || throwsMade >= HINT_THROWS);
+  result.classList.toggle('show', next === 'result');
+  finalScreen.classList.toggle('show', next === 'over');
+  pauseButton.hidden = next === 'setup' || next === 'over' || next === 'loading';
+  throwInfo.classList.toggle('show', next === 'approach' || next === 'rolling' || next === 'settling' || next === 'result');
   replayTag.classList.toggle('show', next === 'replay');
   setupPanel.classList.toggle('show', next === 'setup');
   if (next === 'aim') {
@@ -263,7 +283,11 @@ function bowl(t: ThrowParams, byComputer = false): void {
   standingBefore = standingPins(lane);
   wentInGutter = false;
   const angle = Math.max(-0.1, Math.min(0.1, aimAngle + t.angle));
-  throwInfo.textContent = describeThrow(t, angle);
+  throwInfo.innerHTML = `<span>${describeThrow(t, angle)}</span>`;
+  if (!byComputer) {
+    throwsMade++;
+    try { localStorage.setItem('bowling.throws', String(throwsMade)); } catch { /* no storage */ }
+  }
   pendingThrow = { ...t, angle };
   spots[match.current] = { x: ballX, aim: aimAngle };
   bowler.animator.play('Throw', { loop: false });
@@ -287,7 +311,7 @@ function turnAim(da: number): void {
 
 /** Taps: aim (or a motion throw) while aiming, otherwise continue. */
 function tap(x: number, y: number): void {
-  if (state === 'setup' || state === 'approach') return;
+  if (paused || state === 'setup' || state === 'approach' || state === 'over') return;
   if (state === 'replay') { endReplay(); return; }
   if (state !== 'aim') { advance(); return; }
   if (computerPlays()) return;
@@ -299,15 +323,16 @@ function tap(x: number, y: number): void {
 async function toggleGyro(): Promise<void> {
   if (gyro.enabled) gyro.disable();
   else if (!(await gyro.enable().catch(() => false))) {
-    hint.textContent = 'Sem acesso ao giroscópio.';
+    hint.innerHTML = '<span>Sem acesso ao giroscópio.</span>';
     return;
   }
   gyroButton.classList.toggle('on', gyro.enabled);
-  hint.textContent = gyro.enabled ? GYRO_HINT : SWIPE_HINT;
+  hint.innerHTML = gyro.enabled ? GYRO_HINT : SWIPE_HINT;
+  throwsMade = 0; // show how it works
 }
 
-const SWIPE_HINT = hint.textContent ?? '';
-const GYRO_HINT = 'Mantém o dedo no ecrã, balança o telemóvel como o braço e larga para lançar · roda o pulso para dar efeito';
+const SWIPE_HINT = hint.innerHTML;
+const GYRO_HINT = '<span><b>✋</b>mantém o dedo no ecrã</span><span><b>↻</b>balança o telemóvel como o braço</span><span><b>↑</b>larga para lançar</span>';
 
 /** Slow-motion replay of the roll, from just before the ball reached the pins. */
 function startReplay(): void {
@@ -363,8 +388,6 @@ function advance(): void {
     resetBall(lane, ballX);
     sound.pinsetter(1.4);
     setState('sweep');
-  } else if (state === 'over') {
-    setState('setup');
   }
 }
 
@@ -392,12 +415,40 @@ function announce(text: string, player: number): void {
 
 const cssColor = (c: number[]) => `rgb(${c.map((x) => Math.round(x * 255)).join(', ')})`;
 
-/** A new match for `count` players, from the start screen. */
+/** Selects how many people play, on the start screen (remembered), and shows a name field for each. */
+function selectCount(count: number): void {
+  selectedCount = Math.max(1, Math.min(MAX_PLAYERS, count));
+  if (cpuSkill && selectedCount === MAX_PLAYERS) selectedCount = MAX_PLAYERS - 1;
+  try { localStorage.setItem('bowling.players', String(selectedCount)); } catch { /* no storage */ }
+  document.querySelectorAll<HTMLButtonElement>('#setup button[data-players]').forEach((b) => b.classList.toggle('on', Number(b.dataset.players) === selectedCount));
+  namesBox.replaceChildren(...Array.from({ length: selectedCount }, (_, i) => {
+    const input = document.createElement('input');
+    input.maxLength = 12;
+    input.placeholder = `Jogador ${i + 1}`;
+    input.value = names[i] ?? '';
+    input.setAttribute('aria-label', `Nome do jogador ${i + 1}`);
+    input.style.setProperty('--dot', cssColor(SHIRTS[i]));
+    input.addEventListener('input', () => {
+      names[i] = input.value;
+      try { localStorage.setItem('bowling.names', JSON.stringify(names)); } catch { /* no storage */ }
+    });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { input.blur(); startMatch(); } });
+    return input;
+  }));
+}
+
+/** For tests and keys: select `count` players and start. */
 function choosePlayers(count: number): void {
-  if (state !== 'setup') return;
+  selectCount(count);
+  startMatch();
+}
+
+/** A new match with what the start screen has selected (also "play again" and "restart"). */
+function startMatch(): void {
+  if (state !== 'setup' && state !== 'over') return;
   unlockAudio();
-  try { localStorage.setItem('bowling.players', String(count)); } catch { /* no storage */ }
-  match = Match.withPlayers(count, mode === 'obstacles' ? () => new ArcadeGame() : mode === 'spares' ? () => new SparesGame() : undefined, cpuSkill ?? undefined);
+  match = Match.withPlayers(selectedCount, mode === 'obstacles' ? () => new ArcadeGame() : mode === 'spares' ? () => new SparesGame() : undefined, cpuSkill ?? undefined);
+  match.players.forEach((p, i) => { if (!p.cpu) p.name = names[i]?.trim() || p.name; });
   cpuTurn = null;
   levelUp = null;
   rising = false;
@@ -424,6 +475,46 @@ function chooseCpu(skill: CpuSkill | null): void {
   setupPanel.querySelectorAll<HTMLButtonElement>('button[data-cpu]').forEach((b) => b.classList.toggle('on', (b.dataset.cpu || null) === skill));
   // With the computer, four people do not fit.
   setupPanel.querySelector<HTMLButtonElement>('button[data-players="4"]')!.disabled = !!skill;
+  if (skill && selectedCount === MAX_PLAYERS) selectCount(MAX_PLAYERS - 1);
+}
+
+/** Back to the start screen from a match (pause menu or end screen): everything stops and is put back. */
+function goToMenu(): void {
+  closePause();
+  world.paused = false;
+  replayNext = false;
+  pendingThrow = null;
+  cpuTurn = null;
+  rising = false;
+  levelUp = null;
+  trail = [];
+  field.setLayout([]);
+  rack(null);
+  ballX = 0;
+  aimAngle = 0;
+  resetBall(lane, ballX);
+  readyBowler();
+  showPins();
+  setState('setup');
+}
+
+/** The pause menu: nothing moves until "Continuar". */
+function openPause(): void {
+  if (paused || state === 'setup' || state === 'over' || state === 'loading') return;
+  paused = true;
+  pauseMenu.classList.add('show');
+  music.duck(true);
+}
+
+function closePause(): void {
+  paused = false;
+  pauseMenu.classList.remove('show');
+}
+
+/** Restarts the match from the pause menu, with the same mode, players and names. */
+function restartMatch(): void {
+  goToMenu();
+  startMatch();
 }
 
 /** Sets the pins: all ten, or only `pins` (0-based) for a spare leave. */
@@ -447,30 +538,30 @@ function chooseMode(next: Mode): void {
 function bestOf(key: string, score: number): string {
   let best = 0;
   try { best = Number(localStorage.getItem(`bowling.best.${key}`)) || 0; } catch { /* no storage */ }
-  if (score <= best) return `<small>Recorde: ${best}</small>`;
+  if (score <= best) return `Recorde: ${best}`;
   try { localStorage.setItem(`bowling.best.${key}`, String(score)); } catch { /* no storage */ }
-  return best > 0 ? '<small>Novo recorde!</small>' : '';
+  return best > 0 ? 'Novo recorde!' : '';
 }
 
-/** The end of the match: the score, or the ranking for several players. */
+/** The end screen: each player's score and frames, best first, and a record or the level reached. */
 function showFinal(): void {
-  if (match.players.length === 1) {
-    const score = match.player.game.score;
-    let record = '';
-    if (mode === 'obstacles') {
-      record = `${bestOf('obstacles', score)}<small>Nível ${arcade(0).level}</small>`;
-    }
-    if (mode === 'spares') record = `<small>Limpaste ${spares(0).cleared} de 10</small>${bestOf('spares', score)}`;
-    result.innerHTML = `Fim do jogo<br><b>${score}</b>${record}`;
-    return;
-  }
-  const rows = match.ranking().map((p, i) => {
-    const colour = cssColor(SHIRTS[match.players.indexOf(p)]);
-    const level = mode === 'obstacles' ? `<em>Nv ${(p.game as ArcadeGame).level}</em>`
-      : mode === 'spares' ? `<em>${(p.game as SparesGame).cleared}/10</em>` : '';
-    return `<li><i style="background:${colour}"></i>${i === 0 ? '🏆 ' : ''}${p.name}${level}<b>${p.game.score}</b></li>`;
-  }).join('');
-  result.innerHTML = `Fim do jogo<ol class="ranking">${rows}</ol>`;
+  const extra = (g: unknown) => mode === 'obstacles' ? `Nv ${(g as ArcadeGame).level}`
+    : mode === 'spares' ? `${(g as SparesGame).cleared}/10` : '';
+  finalList.replaceChildren(...match.ranking().map((p, i) => {
+    const li = document.createElement('li');
+    li.className = i === 0 && match.players.length > 1 ? 'rank first' : 'rank';
+    const marks = p.game.frames().map((f) => f.marks.filter(Boolean).join('') || '·').join(' ');
+    li.innerHTML = `<div class="head"><i></i><span></span><em></em><b></b></div><div class="marks"></div>`;
+    (li.querySelector('i') as HTMLElement).style.background = cssColor(SHIRTS[match.players.indexOf(p)]);
+    li.querySelector('span')!.textContent = `${i === 0 && match.players.length > 1 ? '🏆 ' : ''}${p.name}`;
+    li.querySelector('em')!.textContent = extra(p.game);
+    li.querySelector('b')!.textContent = String(p.game.score);
+    li.querySelector('.marks')!.textContent = marks;
+    return li;
+  }));
+  // A record only means something for one person on their own.
+  const solo = match.players.length === 1;
+  finalNote.textContent = solo ? bestOf(mode, match.player.game.score) : '';
 }
 
 const smooth = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
@@ -542,6 +633,16 @@ function renderScore(): void {
   othersList.innerHTML = match.players.length > 1 ? match.players.map((p, i) => (
     `<span class="${i === shown ? 'me' : ''}"><i style="background:${cssColor(SHIRTS[i])}"></i>${p.name}${mode === 'obstacles' ? ` · Nv ${(p.game as ArcadeGame).level}` : ''} <b>${p.game.score}</b></span>`
   )).join('') : '';
+  levelBadge.hidden = mode !== 'obstacles';
+  if (mode === 'obstacles') {
+    // The level of the player shown, and how far they are to the next one.
+    const g = player.game as ArcadeGame;
+    const level = g.level;
+    const from = ARCADE.levelAt[level - 1], to = ARCADE.levelAt[level];
+    document.getElementById('level-name')!.textContent = `Nível ${level}`;
+    document.getElementById('level-mult')!.textContent = `×${multiplierFor(level)}`;
+    (document.getElementById('level-bar') as HTMLElement).style.width = level >= MAX_LEVEL ? '100%' : `${Math.min(100, ((g.pinsDown - from) / (to - from)) * 100)}%`;
+  }
   player.game.frames().forEach((view, f) => {
     const el = scoreboard.children[f] as HTMLElement;
     el.querySelectorAll('span').forEach((box, k) => { box.textContent = view.marks[k] ?? ''; });
@@ -596,12 +697,48 @@ function drawTrail(now: number): void {
   const fade = trailUp < 0 ? 1 : 1 - (now - trailUp) / 500;
   if (trail.length < 2 || fade <= 0) return;
   trail2d.lineCap = 'round';
-  trail2d.lineJoin = 'round';
-  trail2d.lineWidth = 6 * dpr;
-  trail2d.strokeStyle = `rgba(255, 207, 90, ${0.55 * fade})`;
-  trail2d.beginPath();
-  trail.forEach((p, i) => (i ? trail2d.lineTo(p.x * dpr, p.y * dpr) : trail2d.moveTo(p.x * dpr, p.y * dpr)));
-  trail2d.stroke();
+  // Each piece coloured by how fast the finger went there, on the throw's own scale: cyan slow, orange, pink fast.
+  const power = (i: number) => {
+    let k = i;
+    while (k > 0 && trail[i].t - trail[k - 1].t < 80) k--;
+    const dt = (trail[i].t - trail[k].t) / 1000;
+    if (dt <= 0) return 0;
+    const screensPerSecond = Math.max(0, trail[k].y - trail[i].y) / dt / Math.max(1, trailCanvas.clientHeight);
+    const speed = Math.min(THROW.maxSpeed, Math.max(THROW.minSpeed, 3 + 1.6 * screensPerSecond));
+    return (speed - THROW.minSpeed) / (THROW.maxSpeed - THROW.minSpeed);
+  };
+  const colour = (f: number) => {
+    const stops = [[45, 226, 255], [255, 138, 31], [255, 62, 165]];
+    const x = Math.min(1.999, f * 2), a = stops[Math.floor(x)], b = stops[Math.floor(x) + 1], m = x - Math.floor(x);
+    return a.map((c, n) => Math.round(c + (b[n] - c) * m)).join(', ');
+  };
+  let f = 0;
+  for (let i = 1; i < trail.length; i++) {
+    f = power(i);
+    trail2d.strokeStyle = `rgba(${colour(f)}, ${0.75 * fade})`;
+    trail2d.lineWidth = (5 + 6 * f) * dpr;
+    trail2d.shadowColor = `rgba(${colour(f)}, ${0.8 * fade})`;
+    trail2d.shadowBlur = 12 * dpr;
+    trail2d.beginPath();
+    trail2d.moveTo(trail[i - 1].x * dpr, trail[i - 1].y * dpr);
+    trail2d.lineTo(trail[i].x * dpr, trail[i].y * dpr);
+    trail2d.stroke();
+  }
+  trail2d.shadowBlur = 0;
+  // While the finger is down: the speed it would throw at, and the spin its curve gives.
+  const lastPoint = trail[trail.length - 1];
+  if (trailUp < 0 && lastPoint.y < trail[0].y - 30) {
+    const kmh = Math.round((THROW.minSpeed + f * (THROW.maxSpeed - THROW.minSpeed)) * 3.6);
+    const turn = swipeTurn(trail);
+    const spin = Math.abs(turn) < THROW.spinDeadZoneDeg ? '' : turn < 0 ? '  ↶ efeito' : '  ↷ efeito';
+    trail2d.font = `700 ${14 * dpr}px system-ui, sans-serif`;
+    trail2d.textAlign = 'center';
+    trail2d.fillStyle = `rgb(${colour(f)})`;
+    trail2d.shadowColor = '#000';
+    trail2d.shadowBlur = 6 * dpr;
+    trail2d.fillText(`${kmh} km/h${spin}`, lastPoint.x * dpr, (lastPoint.y - 34) * dpr);
+    trail2d.shadowBlur = 0;
+  }
 }
 
 function update(dt: number): void {
@@ -717,28 +854,40 @@ function frame(now: number): void {
   const dt = last ? Math.min((now - last) / 1000, 0.1) : 0;
   last = now;
   resize();
-  update(dt);
-  engine.update(dt);
+  if (!paused) {
+    update(dt);
+    engine.update(dt);
+  }
   engine.render();
   drawTrail(now);
   fpsFrames++;
   fpsTime += dt;
   if (fpsTime >= 0.5) {
-    stats.textContent = `${Math.round(fpsFrames / fpsTime)} fps`;
+    if (debug) stats.textContent = `${Math.round(fpsFrames / fpsTime)} fps`;
     fpsFrames = 0;
     fpsTime = 0;
   }
   requestAnimationFrame(frame);
 }
 
+/** The loading screen's bar and line. */
+function loaded(fraction: number, text: string): Promise<void> {
+  (loadBar as HTMLElement).style.width = `${Math.round(fraction * 100)}%`;
+  loadText.textContent = text;
+  return new Promise((r) => requestAnimationFrame(() => r())); // let it draw
+}
+
 async function start(): Promise<void> {
+  await loaded(0.05, 'A preparar a física…');
   world = new PhysicsWorld(await RapierBackend.load(RAPIER), { fixedTimeStep: 1 / 120, maxSubSteps: 8 });
+  await loaded(0.35, 'A montar a pista…');
   scene = new Scene();
   scene.name = 'Bowling';
   scene.addBehaviour(world);
   lane = buildLane(world);
   for (const e of [...lane.blocks.map((b) => b.entity), lane.ball, ...lane.pins]) scene.addEntity(e);
   const ballLook = await dressLane(gl, scene, lane);
+  await loaded(0.6, 'A chamar o jogador…');
   bowler = buildBowler();
   bowlerLook = await dressBowler(gl, scene, bowler, ballLook);
   // Where the held ball is at the release, so the bowler can stand where that lands on the ball's spot.
@@ -750,8 +899,10 @@ async function start(): Promise<void> {
   sweepBar = await makeSweepBar(gl, scene);
   sweepBar.transform.setLocalPosition(BAR_REST[0], BAR_REST[1], BAR_REST[2]);
   aimGuide = await makeAimGuide(gl, scene);
+  await loaded(0.75, 'A espalhar obstáculos…');
   field = new ObstacleField(world, lane);
   await dressObstacles(gl, scene, field);
+  await loaded(0.9, 'A acender as luzes…');
   recorder = new ReplayRecorder([lane.ball, ...lane.pins, ...field.entities]);
   world.onContactForce((e) => onContactForce(e.a.parent, e.b.parent, e.force));
   // A dark hall: the far end fades into it.
@@ -776,17 +927,17 @@ async function start(): Promise<void> {
     unlockAudio(); // browsers allow audio only after a gesture
     if (gyro.enabled && state === 'aim') gyro.hold();
     const r = canvas.getBoundingClientRect();
-    trail = state === 'aim' ? [{ x: p.x - r.left, y: p.y - r.top }] : [];
+    trail = state === 'aim' && !paused && !computerPlays() ? [{ x: p.x - r.left, y: p.y - r.top, t: performance.now() }] : [];
     trailUp = -1;
   });
   Pointer.onMove((p) => {
     if (!trail.length || trailUp >= 0) return;
     const r = canvas.getBoundingClientRect();
-    trail.push({ x: p.x - r.left, y: p.y - r.top });
+    trail.push({ x: p.x - r.left, y: p.y - r.top, t: performance.now() });
   });
   Pointer.onUp(() => { trailUp = performance.now(); });
   try { musicOn = localStorage.getItem('bowling.music') !== '0'; } catch { /* no storage */ }
-  const showMusic = () => { musicButton.textContent = musicOn ? 'Música: sim' : 'Música: não'; musicButton.classList.toggle('on', musicOn); };
+  const showMusic = () => { musicButton.textContent = musicOn ? '♪ Música' : '♪ Sem música'; musicButton.classList.toggle('on', musicOn); };
   showMusic();
   musicButton.addEventListener('click', () => {
     musicOn = !musicOn;
@@ -796,7 +947,7 @@ async function start(): Promise<void> {
   });
   let muted = false;
   try { muted = localStorage.getItem('bowling.muted') === '1'; } catch { /* no storage */ }
-  const showSound = () => { soundButton.textContent = muted ? 'Som: não' : 'Som: sim'; soundButton.classList.toggle('on', !muted); };
+  const showSound = () => { soundButton.textContent = muted ? '🔇 Sem som' : '🔊 Som'; soundButton.classList.toggle('on', !muted); };
   sound.setMuted(muted);
   showSound();
   soundButton.addEventListener('click', () => {
@@ -821,21 +972,44 @@ async function start(): Promise<void> {
   let savedCpu: CpuSkill | null = null;
   try { const c = localStorage.getItem('bowling.cpu'); savedCpu = c && c in CPU_NAMES ? c as CpuSkill : null; } catch { /* no storage */ }
   chooseCpu(savedCpu);
+  try { names = JSON.parse(localStorage.getItem('bowling.names') ?? '[]'); } catch { names = []; }
+  if (!Array.isArray(names)) names = [];
+  try { throwsMade = Number(localStorage.getItem('bowling.throws')) || 0; } catch { /* no storage */ }
   setupPanel.querySelectorAll<HTMLButtonElement>('button[data-players]').forEach((b) => {
-    b.addEventListener('click', () => choosePlayers(Number(b.dataset.players)));
+    b.addEventListener('click', () => selectCount(Number(b.dataset.players)));
   });
   let lastCount = 1;
   try { lastCount = Number(localStorage.getItem('bowling.players')) || 1; } catch { /* no storage */ }
-  setupPanel.querySelector<HTMLButtonElement>(`button[data-players="${Math.min(MAX_PLAYERS, lastCount)}"]`)?.classList.add('last');
+  selectCount(lastCount);
+  document.getElementById('play')!.addEventListener('click', startMatch);
+  pauseButton.addEventListener('click', openPause);
+  document.getElementById('resume')!.addEventListener('click', () => { closePause(); music.duck(false); });
+  document.getElementById('restart')!.addEventListener('click', restartMatch);
+  document.getElementById('to-menu')!.addEventListener('click', goToMenu);
+  document.getElementById('again')!.addEventListener('click', startMatch);
+  document.getElementById('final-menu')!.addEventListener('click', goToMenu);
+  // Leaving the page (another app, the lock screen) pauses the game.
+  document.addEventListener('visibilitychange', () => { if (document.hidden) openPause(); });
   window.addEventListener('keydown', (e) => {
     unlockAudio();
+    if ((e.target as HTMLElement)?.tagName === 'INPUT') return; // typing a name
     if (state === 'setup') {
       const n = Number(e.key);
-      if (n >= 1 && n <= MAX_PLAYERS) choosePlayers(n);
+      if (n >= 1 && n <= MAX_PLAYERS) selectCount(n);
       else if (e.key === 'm' || e.key === 'M' || e.key === 'Tab') { e.preventDefault(); chooseMode(MODES[(MODES.indexOf(mode) + 1) % MODES.length]); }
-      else if (e.key === 'Enter' || e.key === ' ') choosePlayers(Math.min(MAX_PLAYERS, lastCount));
+      else if (e.key === 'Enter' || e.key === ' ') startMatch();
       return;
     }
+    if (state === 'over') {
+      if (e.key === 'Enter' || e.key === ' ') startMatch();
+      else if (e.key === 'Escape') goToMenu();
+      return;
+    }
+    if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+      if (paused) { closePause(); music.duck(false); } else openPause();
+      return;
+    }
+    if (paused) return;
     if (e.key === 'ArrowLeft') moveBall(-0.03);
     else if (e.key === 'ArrowRight') moveBall(0.03);
     else if (e.key === 'a' || e.key === 'A') turnAim(-0.005);
@@ -849,15 +1023,17 @@ async function start(): Promise<void> {
     }
   });
   (window as any).bowling = {
-    lane, world, scene, bowl, advance, aimAt, sound, music, recorder, startReplay, bowler, choosePlayers, chooseMode, levelLayout, get field() { return field; }, get mode() { return mode; },
+    lane, world, scene, bowl, advance, aimAt, sound, music, recorder, startReplay, bowler, choosePlayers, chooseMode, startMatch, goToMenu, openPause, get paused() { return paused; }, levelLayout, get field() { return field; }, get mode() { return mode; },
     get aimAngle() { return aimAngle; }, get match() { return match; }, get game() { return game(); }, get state() { return state; },
   };
+  stats.hidden = !debug;
+  await loaded(1, 'Pronto');
   document.getElementById('loading')!.classList.add('done');
   setState('setup');
   requestAnimationFrame(frame);
 }
 
 start().catch((err) => {
-  hint.textContent = `Erro: ${err?.message ?? err}`;
+  loadText.textContent = `Erro: ${err?.message ?? err}`;
   console.error(err);
 });

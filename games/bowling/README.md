@@ -18,8 +18,8 @@ The source lives here; `npm run build:games` bundles it into
 - `src/cpu.ts`: the computer opponent (easy, medium, hard): a hook into the pocket on a full rack, a straight ball at a leave's front pin, a line clear of fixed obstacles (and of the paddles' sweep when it can), a wait timed for the moving ones (hard always, medium half the time); errors by skill (first ball, on average: 7.1, 8.7 and 9.1 pins).
 - `src/obstacles.ts`: what stands on the lane at each level (seeded: a level is always the same lane, with a straight corridor at least 8 cm wide), and the pool of kinematic bodies that plays it, moved on the physics' fixed step (posts, bumpers, sliders, a spinner, a wind zone).
 - `src/bowler.ts`: the bowler, a hierarchy of joints with an idle loop and a throw (four steps, slide, release, follow-through) keyed in code and played by the engine's Animator; the hips rise wherever the easing would push a foot through the floor. look.ts gives it its meshes and shirt colours.
-- `src/main.ts`: start-up, the players screen, game states, aiming, the approach and release, pinsetter, camera, HUD. Keys: M switches the mode and 1–4 pick the players on the start screen; arrows move, A/D aim, space throws straight, Q/E throw with a left/right hook.
-- `index.html`: the page and HUD.
+- `src/main.ts`: start-up, the players screen, game states, aiming, the approach and release, pinsetter, camera, HUD. Keys: M switches the mode, 1–4 pick the players and Enter plays on the start screen; Esc or P pauses; arrows move, A/D aim, space throws straight, Q/E throw with a left/right hook.
+- `index.html`: the page, HUD and screens (start, pause, end, loading), in a neon bowling-alley style (the Bungee font from Google Fonts for the big words).
 
 From the engine root:
 
@@ -31,3 +31,5 @@ cd docs/games/bowling && python3 -m http.server 8777   # http://localhost:8777/?
 ```
 
 The plan and the decisions are in the "Omega Bowling: plano" doc.
+
+`?debug` shows the frame rate; `?gyro` the motion-control button; `?quality=low|medium|high` forces a quality.

@@ -4,79 +4,121 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Omega Bowling</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
   <style>
-    :root { color-scheme: dark; --fg: #f3eee6; --muted: #b9b0a4; --accent: #ffcf5a; }
-    html, body { margin: 0; height: 100%; background: #050507; color: var(--fg); font: 15px/1.4 system-ui, sans-serif; overflow: hidden; }
+    /* A neon bowling-alley look: dark glass panels, glowing edges, a display face for the big words. */
+    :root {
+      color-scheme: dark;
+      --fg: #f6f1ff; --muted: #a9a3bd; --line: #3b3352;
+      --orange: #ff8a1f; --cyan: #2de2ff; --pink: #ff3ea5; --gold: #ffd23f;
+      --panel: rgba(12, 9, 24, .78);
+      --display: 'Bungee', system-ui, sans-serif;
+    }
+    html, body { margin: 0; height: 100%; background: #07050d; color: var(--fg); font: 15px/1.4 system-ui, sans-serif; overflow: hidden; -webkit-tap-highlight-color: transparent; }
     canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+    #trail { pointer-events: none; }
+    button { font: inherit; color: inherit; cursor: pointer; }
     .hud { position: fixed; left: 0; right: 0; pointer-events: none; text-align: center; padding: 0 16px; }
+
+    /* Top: scoreboard, players, pins, frame and level. */
     #top { top: max(10px, env(safe-area-inset-top)); }
-    #score { display: grid; grid-template-columns: repeat(9, 1fr) 1.45fr; max-width: 520px; margin: 0 auto 4px; background: rgba(10, 10, 14, .72); border: 1px solid #3a3530; border-left: 4px solid var(--shirt, #3a3530); border-radius: 6px; overflow: hidden; }
-    #others { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 12px; max-width: 520px; margin: 0 auto 6px; font-size: 12px; color: var(--muted); text-shadow: 0 1px 4px #000; }
-    #others:empty { display: none; }
-    #others span.me { color: var(--fg); font-weight: 600; }
-    #others i, .ranking i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
-    #turn { top: 30%; font-size: 30px; font-weight: 700; color: var(--fg); opacity: 0; text-shadow: 0 2px 12px #000; }
-    #turn.show { animation: turn 1.8s ease-out forwards; }
-    #turn::after { content: ''; display: block; width: 120px; height: 4px; margin: 8px auto 0; border-radius: 2px; background: var(--shirt, var(--accent)); }
-    @keyframes turn { 0% { opacity: 0; transform: translateY(12px); } 15%, 75% { opacity: 1; transform: none; } 100% { opacity: 0; } }
-    .ranking { list-style: none; padding: 6px 14px; margin: 12px auto 0; font-size: 17px; font-weight: 600; color: var(--fg); min-width: 220px; max-width: 280px; text-align: left; text-shadow: none; background: rgba(10, 10, 14, .82); border: 1px solid #3a3530; border-radius: 8px; }
-    .ranking li { display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid #3a3530; }
-    .ranking li:last-child { border-bottom: 0; }
-    #result .ranking b { margin-left: auto; font-size: 20px; color: var(--accent); }
-    #setup { position: fixed; inset: 0; display: none; place-content: center; text-align: center; background: rgba(5, 5, 7, .55); padding: 16px; }
-    #setup.show { display: grid; }
-    #setup h1 { margin: 0 0 4px; font-size: 34px; letter-spacing: .04em; color: var(--accent); text-shadow: 0 2px 14px #000; }
-    #setup p { margin: 0 0 18px; color: var(--muted); }
-    #setup .choices { display: flex; gap: 10px; justify-content: center; }
-    #setup button { font: inherit; font-size: 22px; font-weight: 700; width: 58px; height: 58px; border-radius: 50%; color: var(--fg); background: rgba(10, 10, 14, .8); border: 2px solid #4a4540; cursor: pointer; }
-    #setup button.last { border-color: var(--accent); }
-    #setup .modes { display: inline-flex; margin: 10px auto 8px; border: 1px solid #4a4540; border-radius: 20px; overflow: hidden; justify-self: center; }
-    #setup .modes button { width: auto; height: auto; border: 0; border-radius: 0; font-size: 15px; font-weight: 600; padding: 8px 16px; color: var(--muted); background: rgba(10, 10, 14, .8); }
-    #setup .modes button.on { color: #050507; background: var(--accent); }
-    #mode-info { max-width: 300px; margin: 0 auto 18px !important; font-size: 13px; min-height: 2.8em; }
-    #result small { display: table; margin: 6px auto 0; padding: 2px 10px; font-size: 16px; font-weight: 600; color: var(--fg); text-shadow: none; background: rgba(10, 10, 14, .78); border-radius: 12px; }
-    .ranking em { font-style: normal; font-size: 12px; color: var(--muted); margin-left: 8px; }
-    #setup button:active { transform: scale(.94); }
-    #setup button:disabled { opacity: .3; }
-    #setup .cpu-label { margin: 0 0 6px !important; font-size: 13px; }
-    #setup .players-label { margin: 18px 0 12px !important; }
-    #setup .modes.cpu { margin-top: 0; }
-    #setup .modes.cpu button { font-size: 13px; padding: 6px 12px; }
-    .frame { border-right: 1px solid #3a3530; min-width: 0; }
+    #score { display: grid; grid-template-columns: repeat(9, 1fr) 1.45fr; max-width: 560px; margin: 0 auto 6px; background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--shirt, var(--cyan)); border-radius: 8px; overflow: hidden; box-shadow: 0 0 14px rgba(45, 226, 255, .12); }
+    .frame { border-right: 1px solid var(--line); min-width: 0; }
     .frame:last-child { border-right: 0; }
-    .frame.current { background: rgba(255, 207, 90, .14); }
-    .boxes { display: flex; justify-content: flex-end; height: 17px; }
-    .boxes span { width: 50%; max-width: 17px; font-size: 12px; line-height: 17px; text-align: center; border-left: 1px solid #3a3530; border-bottom: 1px solid #3a3530; }
+    .frame.current { background: rgba(45, 226, 255, .14); box-shadow: inset 0 -2px 0 var(--cyan); }
+    .boxes { display: flex; justify-content: flex-end; height: 19px; }
+    .boxes span { width: 50%; max-width: 19px; font-size: 13px; font-weight: 600; line-height: 19px; text-align: center; border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); }
     .tenth .boxes span { width: 33.3%; }
     .tenth .boxes span:first-child { border-left: 0; }
     .boxes span:empty::before { content: '\00a0'; }
-    .total { font-size: 13px; font-weight: 600; line-height: 19px; text-align: center; min-height: 19px; }
-    #row { display: flex; justify-content: space-between; align-items: flex-start; max-width: 520px; margin: 0 auto; }
-    #side { text-align: right; font-size: 13px; color: var(--muted); }
-    #stats { font-size: 11px; }
-    #throw-info { font-size: 12px; color: var(--fg); min-height: 1.4em; }
-    #trail { pointer-events: none; }
-    .pill { position: fixed; right: 12px; font: inherit; font-size: 13px; color: var(--muted); background: rgba(10, 10, 14, .72); border: 1px solid #3a3530; border-radius: 16px; padding: 6px 12px; }
-    #gyro { bottom: max(170px, calc(env(safe-area-inset-bottom) + 146px)); }
-    #gyro.on { color: #050507; background: var(--accent); border-color: var(--accent); }
-    #sound, #music { bottom: max(132px, calc(env(safe-area-inset-bottom) + 108px)); padding: 4px 10px; font-size: 12px; }
-    #music { bottom: max(100px, calc(env(safe-area-inset-bottom) + 76px)); }
-    #replay-tag { top: max(190px, calc(env(safe-area-inset-top) + 180px)); font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); opacity: 0; transition: opacity .3s; }
+    .total { font-size: 15px; font-weight: 700; line-height: 22px; text-align: center; min-height: 22px; }
+    #others { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 14px; max-width: 560px; margin: 0 auto 6px; font-size: 12px; color: var(--muted); text-shadow: 0 1px 4px #000; }
+    #others:empty { display: none; }
+    #others span.me { color: var(--fg); font-weight: 600; }
+    #others i, .rank i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+    #row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; max-width: 560px; margin: 0 auto; }
+    #pins { display: grid; grid-template-columns: repeat(7, 12px); gap: 4px 0; padding: 6px 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+    #pins i { width: 12px; height: 12px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 6px rgba(255, 255, 255, .6); transition: background .2s, box-shadow .2s; }
+    #pins i.down { background: #3a3448; box-shadow: none; }
+    #side { text-align: right; font-size: 13px; color: var(--fg); text-shadow: 0 1px 4px #000; }
+    #frame-info { font-weight: 600; }
+    #level { display: inline-flex; align-items: center; gap: 8px; margin-top: 6px; padding: 4px 10px; background: var(--panel); border: 1px solid var(--orange); border-radius: 14px; box-shadow: 0 0 10px rgba(255, 138, 31, .35); }
+    #level[hidden] { display: none; }
+    #level-name { font-family: var(--display); font-size: 12px; color: var(--orange); }
+    #level-mult { font-size: 13px; color: var(--gold); }
+    #level .bar { width: 64px; height: 6px; border-radius: 3px; background: #2a2338; overflow: hidden; }
+    #level-bar { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--orange), var(--gold)); transition: width .4s; }
+    #stats { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* Bottom: the throw just made, the controls hint, the pause button. */
+    #throw-info { bottom: max(72px, calc(env(safe-area-inset-bottom) + 56px)); font-size: 14px; font-weight: 600; opacity: 0; transition: opacity .3s; }
+    #throw-info.show { opacity: 1; }
+    #throw-info span { padding: 4px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+    #hint { bottom: max(22px, env(safe-area-inset-bottom)); display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; transition: opacity .3s; }
+    #hint.hidden { opacity: 0; }
+    #hint span { font-size: 12px; padding: 4px 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; color: var(--muted); }
+    #hint b { color: var(--cyan); font-weight: 700; margin-right: 4px; }
+    #pause { position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: max(128px, calc(env(safe-area-inset-bottom) + 112px)); width: 44px; height: 44px; border-radius: 50%; background: var(--panel); border: 1px solid var(--cyan); box-shadow: 0 0 10px rgba(45, 226, 255, .35); font-size: 15px; font-weight: 800; letter-spacing: 1px; color: var(--cyan); }
+    #pause[hidden], #gyro[hidden] { display: none; }
+    .pill { position: fixed; right: 14px; font-size: 13px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 6px 12px; }
+    #gyro { bottom: max(184px, calc(env(safe-area-inset-bottom) + 168px)); }
+    #gyro.on { color: #07050d; background: var(--gold); border-color: var(--gold); }
+
+    /* Big words in the middle: results, turns, replays. */
+    #result { top: 36%; font-family: var(--display); font-size: 40px; color: var(--gold); opacity: 0; transform: scale(.9); transition: opacity .25s, transform .25s; text-shadow: 0 0 10px rgba(255, 210, 63, .7), 0 2px 12px #000; }
+    #result.show { opacity: 1; transform: scale(1); }
+    #result.big.show { animation: pop .5s cubic-bezier(.2, 1.6, .4, 1); font-size: 56px; color: var(--pink); text-shadow: 0 0 12px rgba(255, 62, 165, .9), 0 0 32px rgba(255, 62, 165, .5), 0 2px 12px #000; }
+    @keyframes pop { from { transform: scale(.4); opacity: 0; } }
+    #result small { display: table; margin: 8px auto 0; padding: 3px 12px; font-family: system-ui, sans-serif; font-size: 16px; font-weight: 700; color: var(--fg); text-shadow: none; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+    #turn { top: 28%; font-family: var(--display); font-size: 26px; color: var(--fg); opacity: 0; text-shadow: 0 0 10px var(--shirt, var(--cyan)), 0 2px 12px #000; }
+    #turn.show { animation: turn 1.8s ease-out forwards; }
+    #turn::after { content: ''; display: block; width: 140px; height: 4px; margin: 10px auto 0; border-radius: 2px; background: var(--shirt, var(--cyan)); box-shadow: 0 0 12px var(--shirt, var(--cyan)); }
+    @keyframes turn { 0% { opacity: 0; transform: translateY(12px); } 15%, 75% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+    #replay-tag { top: max(200px, calc(env(safe-area-inset-top) + 190px)); font-family: var(--display); font-size: 14px; letter-spacing: .25em; color: var(--pink); text-shadow: 0 0 8px var(--pink); opacity: 0; transition: opacity .3s; }
     #replay-tag.show { opacity: 1; animation: blink 1.2s ease-in-out infinite; }
     @keyframes blink { 50% { opacity: .35; } }
-    #result.big.show { animation: pop .5s cubic-bezier(.2, 1.6, .4, 1); font-size: 58px; text-shadow: 0 0 18px rgba(255, 180, 40, .7), 0 2px 12px #000; }
-    @keyframes pop { from { transform: scale(.4); opacity: 0; } }
-    #pins { display: grid; grid-template-columns: repeat(7, 10px); gap: 3px 0; }
-    #pins i { width: 10px; height: 10px; border-radius: 50%; background: var(--fg); transition: background .2s; }
-    #pins i.down { background: #4a4540; }
-    #hint { bottom: max(24px, env(safe-area-inset-bottom)); color: var(--muted); transition: opacity .3s; max-width: 520px; margin: 0 auto; }
-    #hint.hidden { opacity: 0; }
-    #result { top: 38%; font-size: 44px; font-weight: 700; color: var(--accent); opacity: 0; transform: scale(.9); transition: opacity .25s, transform .25s; text-shadow: 0 2px 12px #000; }
-    #result.show { opacity: 1; transform: scale(1); }
-    #result b { font-size: 64px; }
-    #result.over::after { content: 'Toca para jogar outra vez'; display: block; margin-top: 10px; font-size: 14px; font-weight: 400; color: var(--fg); text-shadow: 0 1px 6px #000; }
-    #loading { position: fixed; inset: 0; display: grid; place-items: center; background: #050507; transition: opacity .4s; }
+
+    /* Full screens: start, pause, end, loading. */
+    .screen { position: fixed; inset: 0; display: none; place-items: center; padding: 16px; box-sizing: border-box; background: rgba(7, 5, 13, .6); overflow-y: auto; }
+    .screen.show { display: grid; }
+    .card { width: min(100%, 380px); box-sizing: border-box; padding: 20px 18px; text-align: center; background: var(--panel); border: 1px solid rgba(45, 226, 255, .5); border-radius: 16px; box-shadow: 0 0 24px rgba(45, 226, 255, .18), inset 0 0 30px rgba(255, 62, 165, .05); backdrop-filter: blur(4px); }
+    .logo { margin: 0 0 14px; font-family: var(--display); font-weight: 400; font-size: 34px; line-height: 1; color: var(--pink); text-shadow: 0 0 10px rgba(255, 62, 165, .9), 0 0 26px rgba(255, 62, 165, .45); }
+    .logo span { display: block; font-size: 22px; letter-spacing: .12em; color: var(--cyan); text-shadow: 0 0 10px rgba(45, 226, 255, .9), 0 0 24px rgba(45, 226, 255, .4); }
+    .card h2 { margin: 0 0 14px; font-family: var(--display); font-weight: 400; font-size: 26px; color: var(--gold); text-shadow: 0 0 10px rgba(255, 210, 63, .6); }
+    .label { display: block; margin: 14px 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+    .seg { display: flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .seg button { flex: 1; padding: 9px 4px; font-size: 14px; font-weight: 600; color: var(--muted); background: transparent; border: 0; border-left: 1px solid var(--line); }
+    .seg button:first-child { border-left: 0; }
+    .seg button.on { color: #07050d; background: var(--cyan); box-shadow: 0 0 12px rgba(45, 226, 255, .6); }
+    .seg button:disabled { opacity: .3; }
+    #mode-info { margin: 8px 0 0; min-height: 2.8em; font-size: 13px; color: var(--muted); }
+    #names { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+    #names input { width: 100%; box-sizing: border-box; padding: 7px 9px 7px 26px; font: inherit; font-size: 14px; color: var(--fg); border: 1px solid var(--line); border-radius: 10px; background: rgba(255, 255, 255, .04) radial-gradient(circle at 13px 50%, var(--dot) 4px, transparent 5px); }
+    #names input:focus { outline: none; border-color: var(--cyan); }
+    .big { display: block; width: 100%; margin-top: 18px; padding: 13px; font-family: var(--display); font-size: 20px; color: #07050d; background: linear-gradient(90deg, var(--orange), var(--pink)); border: 0; border-radius: 14px; box-shadow: 0 0 18px rgba(255, 62, 165, .55); }
+    .big:active, .ghost:active { transform: scale(.97); }
+    .ghost { display: block; width: 100%; margin-top: 10px; padding: 11px; font-size: 15px; font-weight: 700; color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 14px; }
+    .toggles { display: flex; gap: 8px; margin-top: 16px; }
+    .toggle { flex: 1; padding: 9px; font-size: 14px; font-weight: 600; color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 12px; }
+    .toggle.on { color: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 10px rgba(45, 226, 255, .3); }
+    .ranking { list-style: none; padding: 0; margin: 0; text-align: left; }
+    .rank { padding: 8px 0; border-bottom: 1px solid var(--line); }
+    .rank:last-child { border-bottom: 0; }
+    .rank .head { display: flex; align-items: center; font-size: 17px; font-weight: 700; }
+    .rank .head em { font-style: normal; font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 8px; }
+    .rank .head b { margin-left: auto; font-family: var(--display); font-weight: 400; font-size: 22px; color: var(--gold); text-shadow: 0 0 8px rgba(255, 210, 63, .5); }
+    .rank .marks { margin-top: 4px; font: 12px/1.3 ui-monospace, monospace; color: var(--muted); letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank.first .head { color: var(--gold); }
+    #final-note { margin: 10px 0 0; font-size: 14px; font-weight: 600; color: var(--cyan); }
+    #final-note:empty { display: none; }
+    #loading { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 18px; background: #07050d; transition: opacity .4s; }
     #loading.done { opacity: 0; pointer-events: none; }
+    #loading .logo { margin: 0; }
+    #loading .bar { width: 200px; height: 6px; border-radius: 3px; background: #1c1628; overflow: hidden; }
+    #load-bar { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--cyan), var(--pink)); box-shadow: 0 0 10px var(--pink); transition: width .3s; }
+    #load-text { margin: 0; font-size: 13px; color: var(--muted); }
   </style>
 </head>
 <body>
@@ -86,35 +128,73 @@
     <div id="score" aria-label="Pontuação"></div>
     <div id="others" aria-label="Jogadores"></div>
     <div id="row">
-    <!-- Pins 7 8 9 10 / 4 5 6 / 2 3 / 1, as seen from the foul line. -->
-    <div id="pins" aria-label="Pinos de pé">
-      <i style="grid-area:4/4"></i>
-      <i style="grid-area:3/3"></i><i style="grid-area:3/5"></i>
-      <i style="grid-area:2/2"></i><i style="grid-area:2/4"></i><i style="grid-area:2/6"></i>
-      <i style="grid-area:1/1"></i><i style="grid-area:1/3"></i><i style="grid-area:1/5"></i><i style="grid-area:1/7"></i>
-    </div>
-    <div id="side"><div id="frame-info"></div><div id="throw-info"></div><div id="stats"></div></div>
+      <!-- Pins 7 8 9 10 / 4 5 6 / 2 3 / 1, as seen from the foul line. -->
+      <div id="pins" aria-label="Pinos de pé">
+        <i style="grid-area:4/4"></i>
+        <i style="grid-area:3/3"></i><i style="grid-area:3/5"></i>
+        <i style="grid-area:2/2"></i><i style="grid-area:2/4"></i><i style="grid-area:2/6"></i>
+        <i style="grid-area:1/1"></i><i style="grid-area:1/3"></i><i style="grid-area:1/5"></i><i style="grid-area:1/7"></i>
+      </div>
+      <div id="side">
+        <div id="frame-info"></div>
+        <div id="level" hidden><span id="level-name">Nível 1</span><b id="level-mult">×1</b><span class="bar"><i id="level-bar"></i></span></div>
+        <div id="stats" hidden></div>
+      </div>
     </div>
   </div>
-  <div class="hud" id="hint">Arrasta para os lados para te posicionares · toca na pista para apontar · desliza para cima para lançar, em curva para dar efeito</div>
+  <div class="hud" id="throw-info"></div>
+  <div class="hud" id="hint">
+    <span><b>↔</b>arrasta para te posicionares</span>
+    <span><b>•</b>toca na pista para apontar</span>
+    <span><b>↑</b>desliza para lançar</span>
+    <span><b>↶</b>em curva dá efeito</span>
+  </div>
+  <button id="pause" aria-label="Pausa" hidden>II</button>
   <button id="gyro" class="pill" hidden>Giroscópio</button>
-  <button id="sound" class="pill">Som: sim</button>
-  <button id="music" class="pill">Música: sim</button>
   <div class="hud" id="replay-tag">Repetição</div>
   <div class="hud" id="result"></div>
   <div class="hud" id="turn"></div>
-  <div id="setup">
-    <h1>Omega Bowling</h1>
-    <div class="modes"><button data-mode="classic">Clássico</button><button data-mode="obstacles">Obstáculos</button><button data-mode="spares">Spares</button></div>
-    <p id="mode-info"></p>
-    <p class="cpu-label">Contra o computador</p>
-    <div class="modes cpu"><button data-cpu="">Não</button><button data-cpu="easy">Fácil</button><button data-cpu="medium">Médio</button><button data-cpu="hard">Difícil</button></div>
-    <p class="players-label">Quantos jogadores?</p>
-    <div class="choices">
-      <button data-players="1">1</button><button data-players="2">2</button><button data-players="3">3</button><button data-players="4">4</button>
+
+  <div id="setup" class="screen">
+    <div class="card">
+      <h1 class="logo">Omega<span>Bowling</span></h1>
+      <span class="label">Modo</span>
+      <div class="seg"><button data-mode="classic">Clássico</button><button data-mode="obstacles">Obstáculos</button><button data-mode="spares">Spares</button></div>
+      <p id="mode-info"></p>
+      <span class="label">Jogadores</span>
+      <div class="seg"><button data-players="1">1</button><button data-players="2">2</button><button data-players="3">3</button><button data-players="4">4</button></div>
+      <div id="names"></div>
+      <span class="label">Contra o computador</span>
+      <div class="seg"><button data-cpu="">Não</button><button data-cpu="easy">Fácil</button><button data-cpu="medium">Médio</button><button data-cpu="hard">Difícil</button></div>
+      <button id="play" class="big">Jogar</button>
     </div>
   </div>
-  <div id="loading">A carregar…</div>
+
+  <div id="pause-menu" class="screen">
+    <div class="card">
+      <h2>Pausa</h2>
+      <button id="resume" class="big">Continuar</button>
+      <button id="restart" class="ghost">Recomeçar</button>
+      <button id="to-menu" class="ghost">Menu</button>
+      <div class="toggles"><button id="sound" class="toggle">Som</button><button id="music" class="toggle">Música</button></div>
+    </div>
+  </div>
+
+  <div id="final" class="screen">
+    <div class="card">
+      <h2>Fim do jogo</h2>
+      <ol id="final-list" class="ranking"></ol>
+      <p id="final-note"></p>
+      <button id="again" class="big">Jogar outra vez</button>
+      <button id="final-menu" class="ghost">Menu</button>
+    </div>
+  </div>
+
+  <div id="loading">
+    <div class="logo">Omega<span>Bowling</span></div>
+    <div class="bar"><i id="load-bar"></i></div>
+    <p id="load-text">A carregar…</p>
+  </div>
   <script type="module" src="game.js"></script>
 </body>
 </html>
