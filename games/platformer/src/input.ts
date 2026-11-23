@@ -3,7 +3,9 @@
 // still counts.
 import { HeroInput } from './hero';
 
-const KEYS: Record<string, 'left' | 'right' | 'jump' | 'run'> = {
+type Action = 'left' | 'right' | 'jump' | 'run';
+
+const KEYS: Record<string, Action> = {
   ArrowLeft: 'left', KeyA: 'left',
   ArrowRight: 'right', KeyD: 'right',
   Space: 'jump', ArrowUp: 'jump', KeyW: 'jump', KeyK: 'jump',
@@ -13,7 +15,7 @@ const KEYS: Record<string, 'left' | 'right' | 'jump' | 'run'> = {
 export class Controls {
   private keys = new Set<string>();
   /** Held by touch, per pointer. */
-  private touch = new Map<number, 'left' | 'right' | 'jump' | 'run' | null>();
+  private touch = new Map<number, Action[]>();
   private pressed = false;
   /** Set from outside (tests, the title screen) to override everything. */
   override: HeroInput | null = null;
@@ -34,43 +36,82 @@ export class Controls {
   /**
    * Binds the touch pad (left and right halves) and the A (jump) and B (run)
    * buttons. The pad follows the finger, so sliding across changes direction.
+   * A and B work as one area: a thumb that rolls from B onto A jumps at once
+   * without being lifted, and keeps running until it is lifted.
    */
   bindTouch(pad: HTMLElement, jump: HTMLElement, run: HTMLElement): void {
-    const padSide = (e: PointerEvent) => {
+    const padSide = (e: PointerEvent): Action => {
       const r = pad.getBoundingClientRect();
       return e.clientX < r.left + r.width / 2 ? 'left' : 'right';
     };
-    const press = (el: HTMLElement, what: (e: PointerEvent) => 'left' | 'right' | 'jump' | 'run') => {
+    pad.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      pad.setPointerCapture(e.pointerId);
+      this.onAnyInput();
+      const s = padSide(e);
+      pad.dataset.side = s;
+      this.touch.set(e.pointerId, [s]);
+    });
+    pad.addEventListener('pointermove', (e) => {
+      if (!this.touch.has(e.pointerId)) return;
+      const s = padSide(e);
+      pad.dataset.side = s;
+      this.touch.set(e.pointerId, [s]);
+    });
+    const padUp = (e: PointerEvent) => { this.touch.delete(e.pointerId); delete pad.dataset.side; };
+    pad.addEventListener('pointerup', padUp);
+    pad.addEventListener('pointercancel', padUp);
+
+    // The buttons: which one is under the finger (a little slack around each, so a roll finds the next).
+    const SLACK = 10;
+    const over = (e: PointerEvent): Action | null => {
+      for (const [el, what] of [[jump, 'jump'], [run, 'run']] as const) {
+        const r = el.getBoundingClientRect();
+        if (e.clientX >= r.left - SLACK && e.clientX <= r.right + SLACK && e.clientY >= r.top - SLACK && e.clientY <= r.bottom + SLACK) return what;
+      }
+      return null;
+    };
+    const fromB = new Map<number, boolean>();
+    const update = (e: PointerEvent) => {
+      const at = over(e);
+      const before = this.touch.get(e.pointerId) ?? [];
+      const now: Action[] = [];
+      if (at === 'run' || fromB.get(e.pointerId)) now.push('run');
+      if (at === 'jump') {
+        if (!before.includes('jump') && !this.held('jump')) this.pressed = true;
+        now.push('jump');
+      }
+      this.touch.set(e.pointerId, now);
+      this.showButtons(jump, run);
+    };
+    for (const el of [jump, run]) {
       el.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         el.setPointerCapture(e.pointerId);
         this.onAnyInput();
-        const w = what(e);
-        if (w === 'jump' && !this.held('jump')) this.pressed = true;
-        this.touch.set(e.pointerId, w);
-        el.classList.add('down');
+        fromB.set(e.pointerId, el === run);
+        update(e);
       });
-      el.addEventListener('pointermove', (e) => {
-        if (!this.touch.has(e.pointerId)) return;
-        this.touch.set(e.pointerId, what(e));
-        if (el === pad) pad.dataset.side = what(e);
-      });
+      el.addEventListener('pointermove', (e) => { if (this.touch.has(e.pointerId)) update(e); });
       const up = (e: PointerEvent) => {
         this.touch.delete(e.pointerId);
-        el.classList.remove('down');
-        if (el === pad) delete pad.dataset.side;
+        fromB.delete(e.pointerId);
+        this.showButtons(jump, run);
       };
       el.addEventListener('pointerup', up);
       el.addEventListener('pointercancel', up);
-    };
-    press(pad, (e) => { const s = padSide(e); pad.dataset.side = s; return s; });
-    press(jump, () => 'jump');
-    press(run, () => 'run');
+    }
   }
 
-  private held(what: 'left' | 'right' | 'jump' | 'run'): boolean {
+  /** Lights the buttons some finger is on. */
+  private showButtons(jump: HTMLElement, run: HTMLElement): void {
+    jump.classList.toggle('down', this.held('jump'));
+    run.classList.toggle('down', this.held('run'));
+  }
+
+  private held(what: Action): boolean {
     for (const k of this.keys) if (KEYS[k] === what) return true;
-    for (const t of this.touch.values()) if (t === what) return true;
+    for (const t of this.touch.values()) if (t.includes(what)) return true;
     return false;
   }
 
