@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Omega Games</title>
+  <meta name="description" content="Jogos feitos com o Omega Engine: bowling, golfe e plataformas, no browser e no telemóvel.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0c0918; --fg: #f6f1ff; --muted: #b9b3cd; --line: #3b3352;
+      --cyan: #2de2ff; --pink: #ff3ea5; --gold: #ffd23f; --teal: #26d9bf;
+      --panel: #16112a;
+      --display: 'Bungee', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+    body { min-height: 100vh; padding: max(28px, env(safe-area-inset-top)) 16px 40px; background: radial-gradient(1200px 600px at 50% -10%, #241a45 0%, var(--bg) 60%); }
+    main { max-width: 1040px; margin: 0 auto; }
+    header { text-align: center; margin: 12px 0 32px; }
+    h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(34px, 7vw, 56px); color: var(--cyan); text-shadow: 0 0 18px rgba(45, 226, 255, .5); letter-spacing: .02em; }
+    header p { margin: 8px auto 0; max-width: 560px; color: var(--muted); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 20px; }
+    .game { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; color: inherit; text-decoration: none; transition: transform .2s, border-color .2s, box-shadow .2s; }
+    .game:hover, .game:focus-visible { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 10px 30px -10px var(--accent); outline: none; }
+    .game img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #000; }
+    .body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 22px; color: var(--accent); }
+    .body p { margin: 0; color: var(--muted); font-size: 15px; flex: 1; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tags span { font-size: 12px; padding: 2px 9px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); }
+    .play { align-self: flex-start; margin-top: 4px; font-family: var(--display); font-size: 14px; padding: 7px 16px; border-radius: 12px; background: var(--accent); color: var(--bg); }
+    .new { font-family: system-ui, sans-serif; font-size: 11px; font-weight: 700; vertical-align: middle; margin-left: 8px; padding: 2px 7px; border-radius: 8px; background: var(--gold); color: var(--bg); }
+    footer { margin-top: 36px; text-align: center; color: var(--muted); font-size: 13px; }
+    footer a { color: var(--cyan); }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Omega Games</h1>
+      <p>Jogos feitos com o Omega Engine. Jogam-se no browser, com rato e teclado ou com toque no telemóvel.</p>
+    </header>
+    <div class="grid">
+      <a class="game" href="platformer/" style="--accent: var(--teal)">
+        <img src="shots/platformer.jpg" alt="O Bit, um pequeno robô, ao pé de uma escada de blocos num prado" loading="lazy">
+        <div class="body">
+          <h2>Omega Run<span class="new">Novo</span></h2>
+          <p>Leva o Bit, um pequeno robô, até à bandeira: corre, salta por cima de buracos e sobe escadas de blocos.</p>
+          <div class="tags"><span>Plataformas</span><span>1 jogador</span><span>Em construção</span></div>
+          <span class="play">Jogar</span>
+        </div>
+      </a>
+      <a class="game" href="golf/" style="--accent: var(--gold)">
+        <img src="shots/golf.jpg" alt="Um jogador de golfe na saída do buraco, com o fairway e as árvores ao fundo" loading="lazy">
+        <div class="body">
+          <h2>Omega Golf</h2>
+          <p>Nove buracos em Vale Omega, com vento, lagos e areia. Arrasta para baixo e sacode para cima para dar a tacada.</p>
+          <div class="tags"><span>Desporto</span><span>1 a 4 jogadores</span><span>Contra o computador</span></div>
+          <span class="play">Jogar</span>
+        </div>
+      </a>
+      <a class="game" href="bowling/" style="--accent: var(--pink)">
+        <img src="shots/bowling.jpg" alt="Um jogador de bowling na pista, de bola na mão, com os pinos ao fundo" loading="lazy">
+        <div class="body">
+          <h2>Omega Bowling</h2>
+          <p>Dez frames numa pista com luzes de néon. Desliza o dedo para lançar e curva o gesto para dar efeito à bola.</p>
+          <div class="tags"><span>Desporto</span><span>1 a 4 jogadores</span><span>Obstáculos</span></div>
+          <span class="play">Jogar</span>
+        </div>
+      </a>
+    </div>
+    <footer>Feito com o <a href="../">Omega Engine</a>.</footer>
+  </main>
+</body>
+</html>
