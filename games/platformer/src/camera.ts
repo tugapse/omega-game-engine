@@ -18,7 +18,21 @@ export const VIEW = {
   climb: 0,
   /** Out of this band (m) above or below the look point it follows even in the air. */
   bandY: 3.5,
+  /**
+   * The hero always sees at least this much (m) ahead, or this share of the
+   * half-width on narrow screens (a phone held upright), so it never reaches
+   * the right edge. Wide screens keep the dead zone and lead as they are.
+   */
+  ahead: 3.25,
+  aheadShare: 1.3,
+  /** On narrow screens the dead zone shrinks to this share of the half-width. */
+  deadZoneShare: 0.3,
 };
+
+/** How much (m) the hero must see ahead with this half-width. */
+export function aheadFor(halfWidth: number): number {
+  return Math.min(VIEW.ahead, halfWidth * VIEW.aheadShare);
+}
 
 export interface CameraState {
   x: number;
@@ -40,19 +54,25 @@ export function makeCamera(x: number, y: number, halfWidth: number): CameraState
  * Moves the camera for a step: `halfWidth` is half the visible width (m), so it
  * stays inside the level from 0 to `levelWidth`. `floorY` is the lowest it
  * looks (the start's height plus `above`): it only climbs when the hero stands
- * higher than that, so the ground stays in view on low platforms.
+ * higher than that, so the ground stays in view on low platforms. `topRoom`
+ * is how high (m) above the look point the hero's head may go and still be in
+ * view below the HUD: past it the camera climbs at once (tall, narrow screens).
  */
 export function followHero(
   cam: CameraState, hero: { x: number; y: number; vx: number; onGround: boolean },
-  halfWidth: number, levelWidth: number, dt: number, floorY = -Infinity,
+  halfWidth: number, levelWidth: number, dt: number, floorY = -Infinity, topRoom = Infinity,
+  heroHeight = 0.9,
 ): void {
   const want = Math.max(-1, Math.min(1, hero.vx / VIEW.leadSpeed)) * VIEW.lead;
   cam.lead += (want - cam.lead) * (1 - Math.exp(-dt * 2));
   const focus = hero.x + cam.lead;
+  const dead = Math.min(VIEW.deadZone, halfWidth * VIEW.deadZoneShare);
   let goalX = cam.x;
-  if (focus > cam.x + VIEW.deadZone) goalX = focus - VIEW.deadZone;
-  else if (focus < cam.x - VIEW.deadZone) goalX = focus + VIEW.deadZone;
+  if (focus > cam.x + dead) goalX = focus - dead;
+  else if (focus < cam.x - dead) goalX = focus + dead;
   cam.x += (goalX - cam.x) * (1 - Math.exp(-dt * VIEW.followX));
+  // A hard limit on the right: the hero keeps some view ahead.
+  cam.x = Math.max(cam.x, hero.x + aheadFor(halfWidth) - halfWidth);
   // Never back, never past the ends.
   const maxX = Math.max(halfWidth, levelWidth - halfWidth);
   cam.minX = Math.max(cam.minX, Math.min(cam.x, maxX));
@@ -61,4 +81,7 @@ export function followHero(
   const feet = Math.max(floorY, hero.y + VIEW.climb);
   if (hero.onGround || Math.abs(feet - cam.goalY) > VIEW.bandY) cam.goalY = feet;
   cam.y += (cam.goalY - cam.y) * (1 - Math.exp(-dt * VIEW.followY));
+  // A hard limit on top: the head stays in view.
+  const over = hero.y + heroHeight - (cam.y + topRoom);
+  if (over > 0) { cam.y += over; cam.goalY = Math.max(cam.goalY, cam.y); }
 }

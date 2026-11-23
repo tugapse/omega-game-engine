@@ -43,8 +43,18 @@ camera.farPlane = 200;
 camera.initialize();
 Camera.setMainCamera(camera);
 
-/** Half the width (m) the camera sees on the play plane. */
+/** With touch buttons on screen, the view sits lower so they never cover the hero (m). */
+let touchShift = 0;
+/** Half the width and height (m) the camera sees on the play plane. */
 let halfWidth = 8;
+const halfHeight = Math.tan((camera.fieldOfView * Math.PI) / 360) * VIEW_DISTANCE;
+/** How high (m) above the look point the hero's head may go, below the HUD. */
+let topRoom = Infinity;
+function measureTop(): void {
+  const hud = document.getElementById('top')!.getBoundingClientRect().bottom;
+  const hudM = (hud / Math.max(1, canvas.clientHeight)) * 2 * halfHeight;
+  topRoom = halfHeight - touchShift - hudM - 0.3;
+}
 function resize(): void {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const w = Math.max(1, Math.round(canvas.clientWidth * dpr)), h = Math.max(1, Math.round(canvas.clientHeight * dpr));
@@ -55,7 +65,8 @@ function resize(): void {
   CanvasViewport.rendererHeight = h;
   camera.aspectRatio = w / h;
   camera.updateProjectionMatrix();
-  halfWidth = Math.tan((camera.fieldOfView * Math.PI) / 360) * VIEW_DISTANCE * camera.aspectRatio;
+  halfWidth = halfHeight * camera.aspectRatio;
+  measureTop();
 }
 window.addEventListener('resize', resize);
 resize();
@@ -73,8 +84,6 @@ let yaw = 60, squash = 1;
 let accumulator = 0;
 /** The bot plays instead of the controls (tests, and the title screen later). */
 let autoplay: Bot | null = params.has('auto') ? makeBot() : null;
-/** With touch buttons on screen, the view sits lower so they never cover the hero (m). */
-let touchShift = 0;
 /** For measuring: when the last jump was pressed and when the hero left the ground (ms). */
 const timing = { pressed: 0, jumped: 0 };
 
@@ -134,7 +143,7 @@ function step(): void {
   // The camera never goes back, so neither can the hero.
   const left = cam.x - halfWidth + b.w / 2;
   if (b.x < left) { b.x = left; if (b.vx < 0) b.vx = 0; }
-  followHero(cam, b, halfWidth, world.level.width, STEP, world.level.start.y + VIEW.above);
+  followHero(cam, b, halfWidth, world.level.width, STEP, world.level.start.y + VIEW.above, topRoom, b.h);
   if (world.cleared) setState('clear');
 }
 
@@ -214,7 +223,7 @@ async function start(): Promise<void> {
   scene.isRunning = true;
 
   const touch = $('touch');
-  if (params.has('touch') || matchMedia('(pointer: coarse)').matches) { touch.hidden = false; touchShift = 1.4; }
+  if (params.has('touch') || matchMedia('(pointer: coarse)').matches) { touch.hidden = false; touchShift = 1.4; measureTop(); }
   controls.bindTouch($('pad'), $('btn-a'), $('btn-b'));
   const again = () => { if (state === 'clear' || state === 'over') restart(); };
   banner.addEventListener('pointerdown', again);
