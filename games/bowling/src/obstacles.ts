@@ -50,6 +50,16 @@ function blockedHalfWidth(o: ObstacleSpec): number {
   return 0;
 }
 
+/** The fixed obstacles as discs a rolling ball's centre must keep out of (radius includes the ball). */
+export function fixedDiscs(layout: readonly ObstacleSpec[]): { x: number; z: number; r: number }[] {
+  return layout.flatMap((o) => (o.kind === 'post' || o.kind === 'bumper' || o.kind === 'spinner') ? [{ x: o.x, z: o.z, r: blockedHalfWidth(o) }] : []);
+}
+
+/** The whole sweep of each paddle, as discs (radius includes the ball): a line outside them never meets it. */
+export function sweepDiscs(layout: readonly ObstacleSpec[]): { x: number; z: number; r: number }[] {
+  return layout.flatMap((o) => (o.kind === 'spinner' ? [{ x: o.x, z: o.z, r: OBSTACLE.spinner.half[0] + OBSTACLE.spinner.half[2] + BALL.radius }] : []));
+}
+
 /**
  * The middle of the widest corridor a straight roll (x = const) can take past
  * every fixed obstacle, kept away from the gutters (|x| ≤ 0.32), or null when
@@ -76,6 +86,15 @@ export function straightPath(layout: ObstacleSpec[]): number | null {
 export const hasStraightPath = (layout: ObstacleSpec[]) => straightPath(layout) !== null;
 
 /**
+ * The phase for a bar at `z` that is where a bar at `z0` (phase `p`) was when
+ * a ball at about 7.8 m/s passed it: one gap in time then lets the ball past
+ * both. Higher levels add an offset, so the gap is narrower.
+ */
+function synced(p: number, z0: number, z: number, period: number): number {
+  return p - (2 * Math.PI * ((z0 - z) / 7.8)) / period;
+}
+
+/**
  * What stands on the lane at `level` (1 is a clean lane). The kinds and how
  * fast they move come from the level; where they stand comes from a seed per
  * level, so the same level is the same lane for every player.
@@ -97,29 +116,30 @@ export function levelLayout(level: number): ObstacleSpec[] {
       case 3: post(-4.5, -6); post(-10.5, -12); slider(-8.2, 3.2); break;
       case 4: bumpers(3, -4.5, -7); post(-12, -13); slider(-9.8, 2.6); break;
       case 5:
-        out.push({ kind: 'spinner', x: 0, z: -8, speed: 1.6 * side() });
+        out.push({ kind: 'spinner', x: 0.22 * side(), z: -8, speed: 1.6 * side() });
         post(-4.5, -5.8); post(-10.2, -11);
         out.push({ kind: 'wind', z0: -11.5, z1: -14.5, accel: 0.5 * side() });
         break;
       case 6: {
         const p = rnd() * Math.PI * 2;
-        slider(-5.8, 2.4, p); slider(-11.2, 2.4, p + Math.PI);
-        out.push({ kind: 'spinner', x: 0, z: -8.5, speed: 2 * side() });
+        // The second bar lags the first by the ball's time between them, so one gap lets it past both.
+        slider(-5.8, 2.6, p); slider(-11.2, 2.6, synced(p, -5.8, -11.2, 2.6));
+        out.push({ kind: 'spinner', x: 0.22 * side(), z: -8.5, speed: 2 * side() });
         bumpers(2, -12.8, -14);
         break;
       }
       case 7: {
         const p = rnd() * Math.PI * 2;
-        out.push({ kind: 'spinner', x: 0, z: -7.5, speed: 2.6 * side() });
-        slider(-5.2, 2, p); slider(-10, 2, p + Math.PI);
+        out.push({ kind: 'spinner', x: 0.22 * side(), z: -7.5, speed: 2.6 * side() });
+        slider(-5.2, 2, p); slider(-10, 2, synced(p, -5.2, -10, 2) + 0.6);
         out.push({ kind: 'wind', z0: -11.5, z1: -14.5, accel: 0.7 * side() });
         post(-12.5, -13.5); post(-3.6, -4.2);
         break;
       }
       default: {
         const p = rnd() * Math.PI * 2;
-        out.push({ kind: 'spinner', x: 0, z: -8, speed: 3 * side() });
-        slider(-4.8, 1.8, p); slider(-6.4, 1.8, p + Math.PI); slider(-10.4, 1.6, p + Math.PI / 2);
+        out.push({ kind: 'spinner', x: 0.2 * side(), z: -8, speed: 3 * side() });
+        slider(-4.8, 1.8, p); slider(-6.4, 1.8, synced(p, -4.8, -6.4, 1.8) + 0.8); slider(-10.4, 1.8, synced(p, -4.8, -10.4, 1.8) + 0.5);
         out.push({ kind: 'wind', z0: -11.5, z1: -15, accel: 0.9 * side() });
         bumpers(3, -12, -14.5);
         break;
@@ -128,6 +148,39 @@ export function levelLayout(level: number): ObstacleSpec[] {
     if (hasStraightPath(out)) return out;
   }
   return [];
+}
+
+/**
+ * True when a straight roll from `x` at `aim` (radians), at `speed` m/s, finds
+ * every moving obstacle out of its way, the obstacle clock reading `t0` as the
+ * ball leaves the foul line. Fixed obstacles are fixedDiscs' business.
+ */
+export function movingClear(layout: readonly ObstacleSpec[], t0: number, x: number, aim: number, speed: number, margin = 0.015): boolean {
+  const start = BALL.start[2];
+  const clear = BALL.radius + margin;
+  return layout.every((o) => {
+    if (o.kind !== 'slider' && o.kind !== 'spinner') return true;
+    // Every few centimetres of the ball's way through the obstacle's reach.
+    for (let dz = -0.4; dz <= 0.4001; dz += 0.04) {
+      const z = o.z + dz;
+      const t = t0 + (start - z) / speed;
+      const bx = x + Math.tan(aim) * (start - z);
+      if (o.kind === 'slider') {
+        const sx = o.range * Math.sin((2 * Math.PI * t) / o.period + o.phase);
+        const [hx, , hz] = OBSTACLE.slider.half;
+        const gx = Math.max(0, Math.abs(bx - sx) - hx), gz = Math.max(0, Math.abs(dz) - hz);
+        if (Math.hypot(gx, gz) < clear) return false;
+      } else {
+        // The paddle: a segment through its centre, turned by speed · t about Y (local x → (cos, -sin) in x, z).
+        const a = o.speed * t, half = OBSTACLE.spinner.half[0];
+        const ux = Math.cos(a), uz = -Math.sin(a);
+        const px = bx - o.x, pz = dz;
+        const along = Math.max(-half, Math.min(half, px * ux + pz * uz));
+        if (Math.hypot(px - along * ux, pz - along * uz) < OBSTACLE.spinner.half[2] + clear) return false;
+      }
+    }
+    return true;
+  });
 }
 
 interface Slot {
@@ -176,6 +229,11 @@ export class ObstacleField {
 
   get current(): readonly ObstacleSpec[] {
     return this.layout;
+  }
+
+  /** The obstacle clock: seconds since the layout was set (what moving obstacles go by). */
+  get clock(): number {
+    return this.time;
   }
 
   /** Puts these obstacles on the lane (the rest of the pool goes under the floor). */
