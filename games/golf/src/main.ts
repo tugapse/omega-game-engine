@@ -6,8 +6,9 @@ import {
   Resources, Scene, ToneMapping,
 } from '../../../src';
 import { BALL, BallState, Course, hit, restingBall, simulate, stepBall } from './ball';
-import { club, ClubId, CLUBS, MAX_PUTT, shotFor, suggestClub } from './clubs';
-import { buildHole, Hole, TEST_HOLE } from './course';
+import { club, ClubId, CLUBS, lieFactor, MAX_PUTT, shotFor, suggestClub } from './clubs';
+import { buildHole, dropPoint, Hole } from './course';
+import { COURSE_NAME, HOLES } from './holes';
 import { BALL_LOOK, CourseLook, dressCourse } from './look';
 import { scoreName } from './score';
 import { bindSwing, Swing } from './swing';
@@ -46,7 +47,13 @@ let trail: number[][] = [];
 let trailFade = 1;
 let accumulator = 0;
 /** What the result banner leads to. */
-let afterResult: 'next-shot' | 'restart' = 'next-shot';
+let afterResult: 'next-shot' | 'next-hole' = 'next-shot';
+/** The hole being played (0-based), holes built so far, strokes on finished holes and their par. */
+let holeIndex = 0;
+const built = new Map<number, Hole>();
+let roundStrokes = 0, roundPar = 0;
+/** This hole's wind, m/s, and where it blows to (radians, like the aim). */
+let wind = { speed: 0, dir: 0 };
 let shotsMade = 0;
 const HINT_SHOTS = 3;
 /** Keyboard swing: held space, its power and curve. */
@@ -108,7 +115,13 @@ function readyShot(): void {
 }
 
 function showHud(): void {
+  $('hole-num').textContent = String(holeIndex + 1);
   $('hole-name').textContent = hole.spec.name;
+  const toPar = roundStrokes - roundPar;
+  $('total').innerHTML = `<b>Total</b>${roundPar ? (toPar === 0 ? 'par' : toPar > 0 ? `+${toPar}` : toPar) : '–'}`;
+  $('wind-speed').textContent = `${wind.speed.toFixed(1)} m/s`;
+  // The arrow points where the wind blows, seen from behind the ball.
+  ($('wind-arrow') as HTMLElement).style.transform = `rotate(${((wind.dir - aim) * 180) / Math.PI}deg)`;
   $('par').innerHTML = `<b>Par</b>${hole.spec.par}`;
   $('strokes').innerHTML = `<b>Pancadas</b>${strokes}`;
   $('dist').innerHTML = `<b>Bandeira</b>${pinDistance() < 10 ? pinDistance().toFixed(1) : Math.round(pinDistance())} m`;
@@ -126,7 +139,7 @@ function placeMarker(p = 1): void {
     const d = p * MAX_PUTT;
     x = ball.pos[0] + Math.sin(aim) * d; z = ball.pos[2] - Math.cos(aim) * d;
   } else {
-    const r = simulate({ ...course, cup: { x: 1e6, z: 1e6 } }, { x: ball.pos[0], z: ball.pos[2] }, shotFor(c, p, aim), 15, 1000);
+    const r = simulate({ ground: course.ground, cup: { x: 1e6, z: 1e6 } }, { x: ball.pos[0], z: ball.pos[2] }, shotFor(c, p, aim), 15, 1000);
     const at = r.carry ?? r.end;
     x = at[0]; z = at[2];
   }
@@ -148,10 +161,8 @@ function swing(s: Swing): void {
   if (state !== 'aim') return;
   const c = club(clubId);
   // Off the fairway the ball comes out slower.
-  const s0 = lie();
-  const penalty = c.id === 'putter' ? 1 : s0 === 'rough' ? 0.75 : s0 === 'sand' ? 0.5 : 1;
   const shot = shotFor(c, s.power, aim, s.curve);
-  shot.speed *= penalty;
+  shot.speed *= lieFactor(lie(), c.id);
   shotFrom = { x: ball.pos[0], z: ball.pos[2] };
   hit(ball, shot);
   strokes++;
@@ -173,16 +184,27 @@ function showResult(text: string, sub: string, big = false): void {
 function shotOver(): void {
   const travelled = Math.round(Math.hypot(ball.pos[0] - shotFrom.x, ball.pos[2] - shotFrom.z));
   if (ball.phase === 'holed') {
-    afterResult = 'restart';
+    afterResult = 'next-hole';
+    roundStrokes += strokes;
+    roundPar += hole.spec.par;
     const name = scoreName(strokes, hole.spec.par);
-    showResult(name, `${strokes} pancada${strokes === 1 ? '' : 's'} · toca para jogar de novo`, strokes < hole.spec.par || strokes === 1);
+    showHud();
+    showResult(name, `${strokes} pancada${strokes === 1 ? '' : 's'} · toca para o buraco ${(holeIndex + 1) % HOLES.length + 1}`, strokes < hole.spec.par || strokes === 1);
     return;
   }
   afterResult = 'next-shot';
-  if (ball.phase === 'water' || ball.phase === 'out') {
+  if (ball.phase === 'water') {
+    // A penalty stroke, and a drop on dry ground back along the line it came in on.
+    strokes++;
+    const d = dropPoint(hole.ground, shotFrom, { x: ball.pos[0], z: ball.pos[2] });
+    showResult('Água!', '+1 pancada · a bola é largada na margem');
+    ball = restingBall(hole.ground, d.x, d.z);
+    return;
+  }
+  if (ball.phase === 'out') {
     // Stroke and distance: one more stroke, played again from where it was.
     strokes++;
-    showResult(ball.phase === 'water' ? 'Água!' : 'Fora!', '+1 pancada · joga de novo do mesmo sítio');
+    showResult('Fora!', '+1 pancada · joga de novo do mesmo sítio');
     ball = restingBall(hole.ground, shotFrom.x, shotFrom.z);
     return;
   }
@@ -191,11 +213,19 @@ function shotOver(): void {
 
 function advance(): void {
   if (state !== 'result' || stateTime < 0.4) return;
-  if (afterResult === 'restart') startHole();
+  if (afterResult === 'next-hole') void startHole((holeIndex + 1) % HOLES.length);
   else setState('aim');
 }
 
-function startHole(): void {
+/** Builds (the first time) and shows hole `i`, draws its wind, and sets the ball on the tee. */
+async function startHole(i: number): Promise<void> {
+  if (i === 0) { roundStrokes = 0; roundPar = 0; }
+  holeIndex = i;
+  if (!built.has(i)) built.set(i, buildHole(HOLES[i]));
+  hole = built.get(i)!;
+  wind = { speed: Math.round(Math.random() * hole.spec.windMax * 10) / 10, dir: Math.random() * Math.PI * 2 };
+  course = { ground: hole.ground, cup: hole.spec.pin, trees: hole.trees, wind: { x: Math.sin(wind.dir) * wind.speed, z: -Math.cos(wind.dir) * wind.speed } };
+  await look.showHole(hole);
   strokes = 0;
   ball = restingBall(hole.ground, hole.spec.tee.x, hole.spec.tee.z);
   trail = [];
@@ -361,11 +391,9 @@ async function start(): Promise<void> {
   await loaded(0.1, 'A medir os tacos…');
   measureClubs();
   await loaded(0.3, 'A desenhar o campo…');
-  hole = buildHole(TEST_HOLE);
-  course = { ground: hole.ground, cup: hole.spec.pin };
   scene = new Scene();
   scene.name = 'Golf';
-  look = await dressCourse(gl, scene, hole);
+  look = await dressCourse(gl, scene);
   await loaded(0.8, 'A acender o sol…');
   scene.sceneFog.enabled = true;
   scene.sceneFog.fogType = 1;
@@ -414,11 +442,11 @@ async function start(): Promise<void> {
   });
   (window as any).golf = {
     get state() { return state; }, get ball() { return ball; }, get strokes() { return strokes; }, get aim() { return aim; },
-    get club() { return clubId; }, reach, hole, swing, advance, turnAim, changeClub,
+    get club() { return clubId; }, reach, get hole() { return hole; }, get holeIndex() { return holeIndex; }, startHole, get wind() { return wind; }, swing, advance, turnAim, changeClub,
     setClub(id: ClubId) { clubId = id; showHud(); placeMarker(); },
   };
   $('stats').hidden = !debug;
-  startHole();
+  await startHole(0);
   await loaded(1, 'Pronto');
   $('loading').classList.add('done');
   requestAnimationFrame(frame);

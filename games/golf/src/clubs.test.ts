@@ -15,3 +15,13 @@ describe('club choice', () => {
     expect(suggestClub(5, reach, true, false)).toBe('putter');
   });
 });
+
+describe('lies', () => {
+  it('rough and sand slow the club; the wedge copes best with sand; putts are untouched', async () => {
+    const { lieFactor } = await import('./clubs');
+    expect(lieFactor('fairway', 'iron')).toBe(1);
+    expect(lieFactor('rough', 'driver')).toBeLessThan(1);
+    expect(lieFactor('sand', 'wedge')).toBeGreaterThan(lieFactor('sand', 'iron'));
+    expect(lieFactor('sand', 'putter')).toBe(1);
+  });
+});

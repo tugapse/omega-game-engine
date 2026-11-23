@@ -51,6 +51,21 @@ export interface BallState {
   time: number;
   /** Where it first touched the ground (the carry), once it has. */
   landed: number[] | null;
+  /** Times it hit a trunk, and steps spent in leaves (for sounds). */
+  trunkHits: number;
+  inLeaves: number;
+}
+
+/** A tree: a trunk (a cylinder from the ground) and a canopy (a ball of leaves). */
+export interface Tree {
+  x: number; z: number;
+  /** Ground height at the trunk. */
+  y: number;
+  trunkRadius: number;
+  trunkHeight: number;
+  /** The canopy's centre height and radius. */
+  canopyY: number;
+  canopyRadius: number;
 }
 
 export interface Course {
@@ -59,11 +74,12 @@ export interface Course {
   cup: { x: number; z: number };
   /** Wind, m/s (x, z). */
   wind?: { x: number; z: number };
+  trees?: Tree[];
 }
 
 /** A ball resting at `pos` (its centre is set on the ground). */
 export function restingBall(ground: Ground, x: number, z: number): BallState {
-  return { pos: [x, ground.height(x, z) + BALL.radius, z], vel: [0, 0, 0], spin: [0, 0, 0], phase: 'rest', time: 0, landed: null };
+  return { pos: [x, ground.height(x, z) + BALL.radius, z], vel: [0, 0, 0], spin: [0, 0, 0], phase: 'rest', time: 0, landed: null, trunkHits: 0, inLeaves: 0 };
 }
 
 /** Starts a shot from a resting ball. */
@@ -76,6 +92,8 @@ export function hit(ball: BallState, shot: Shot): void {
   ball.phase = shot.launch < 0.02 ? 'rolling' : 'flying';
   ball.time = 0;
   ball.landed = null;
+  ball.trunkHits = 0;
+  ball.inLeaves = 0;
 }
 
 const n = [0, 1, 0];
@@ -121,7 +139,38 @@ export function stepBall(ball: BallState, course: Course, dt = BALL.step): void 
   } else {
     roll(ball, course, dt);
   }
+  if (course.trees) hitTrees(ball, course.trees, dt);
   settle(ball, course);
+}
+
+/** Trunks bounce the ball back; leaves slow it right down. */
+function hitTrees(ball: BallState, trees: Tree[], dt: number): void {
+  if (ball.phase !== 'flying' && ball.phase !== 'rolling') return;
+  const p = ball.pos, v = ball.vel;
+  for (const t of trees) {
+    const dx = p[0] - t.x, dz = p[2] - t.z;
+    if (Math.abs(dx) > t.canopyRadius + 1 || Math.abs(dz) > t.canopyRadius + 1) continue;
+    const dh = Math.hypot(dx, dz);
+    if (dh < t.trunkRadius + BALL.radius && p[1] < t.y + t.trunkHeight) {
+      const nx = dh > 1e-6 ? dx / dh : 1, nz = dh > 1e-6 ? dz / dh : 0;
+      p[0] = t.x + nx * (t.trunkRadius + BALL.radius);
+      p[2] = t.z + nz * (t.trunkRadius + BALL.radius);
+      const vn = v[0] * nx + v[2] * nz;
+      if (vn < 0) {
+        v[0] -= 1.45 * vn * nx;
+        v[2] -= 1.45 * vn * nz;
+        for (let k = 0; k < 3; k++) v[k] *= 0.7;
+        ball.trunkHits++;
+      }
+      continue;
+    }
+    const dy = p[1] - t.canopyY;
+    if (ball.phase === 'flying' && dh * dh + dy * dy < t.canopyRadius * t.canopyRadius) {
+      const keep = Math.exp(-5 * dt);
+      for (let k = 0; k < 3; k++) { v[k] *= keep; ball.spin[k] *= keep; }
+      ball.inLeaves++;
+    }
+  }
 }
 
 /** The ball meets the ground in flight: bounce, or start rolling. */
