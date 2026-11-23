@@ -38,6 +38,14 @@
     /* The drift meter, while sliding. */
     #drift { top: 22%; left: 0; right: 0; text-align: center; font-family: var(--display); font-size: 22px; color: var(--orange); letter-spacing: .06em; text-shadow: 0 0 14px rgba(255, 138, 61, .7), 0 2px 0 #0c0918; }
     #drift b { display: block; font-weight: 400; font-size: 40px; color: var(--fg); }
+    #drift-mult { color: var(--gold); }
+    #drift small { display: block; font-size: 16px; color: var(--muted); font-family: system-ui, sans-serif; }
+    #turbo { display: flex; align-items: center; gap: 8px; }
+    #turbo .bar { width: 90px; height: 8px; border-radius: 4px; background: #2a2438; overflow: hidden; }
+    #turbo-fill { height: 100%; width: 0; background: var(--cyan); transition: width .15s; }
+    #turbo.full #turbo-fill { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+    #turbo.on { border-color: var(--cyan); box-shadow: 0 0 12px var(--cyan); }
+    #turbo.on #turbo-fill { background: var(--pink); }
     /* Lap, lap time and best, under the top bar. */
     #times { top: max(50px, calc(env(safe-area-inset-top) + 44px)); left: max(16px, env(safe-area-inset-left)); display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
     #times .big b { font-size: 20px; color: var(--fg); }
@@ -108,12 +116,14 @@
     <div class="chip">Volta <b id="lap">1/3</b></div>
     <div class="chip big"><b id="time">0:00.00</b></div>
     <div class="chip">Melhor <b id="best">–:––.––</b></div>
+    <div class="chip">Pontos <b id="points">0</b></div>
+    <div id="turbo" class="chip"><span>Turbo</span><div class="bar"><div id="turbo-fill"></div></div></div>
   </div>
   <div id="lights" class="hud" hidden><i></i><i></i><i></i></div>
   <div id="flash" class="hud" hidden></div>
 
-  <div id="hint" class="hud" hidden>Numa curva, <b>segura DRIFT</b> e vira. Larga e vira para o outro lado para sair.</div>
-  <div id="drift" class="hud" hidden>Drift<b id="drift-angle">0°</b></div>
+  <div id="hint" class="hud" hidden>Numa curva, <b>segura DRIFT</b>: o carro derrapa e segue a estrada sozinho. Larga para endireitar.</div>
+  <div id="drift" class="hud" hidden>Drift <span id="drift-mult"></span><b id="drift-points">0</b><small id="drift-angle"></small></div>
 
   <div id="dial" class="hud">
     <div id="needle"></div>
@@ -131,7 +141,7 @@
   <div id="pause" class="screen" hidden>
     <div class="panel">
       <h2>Pausa</h2>
-      <p id="keys">↑ acelera · ↓ trava e faz marcha-atrás · ← → vira · espaço é o travão de mão · R volta à pista · para derrapar: segura o espaço e vira (ou vira a fundo numa curva); para sair, larga e vira para o outro lado</p>
+      <p id="keys">↑ acelera · ↓ trava e faz marcha-atrás · ← → vira · espaço é o travão de mão · R volta à pista · para derrapar: numa curva, segura o espaço (com a direção solta o carro segue a estrada; vira para dentro para apertar); larga para endireitar · cada drift dá pontos, seguidos multiplicam até ×5, e enchem o turbo</p>
       <div class="actions">
         <button data-act="resume">Continuar</button>
         <button data-act="restart">Recomeçar</button>
@@ -146,6 +156,7 @@
       <p>Tempo total</p>
       <div id="res-total" class="total">0:00.00</div>
       <ol id="res-laps"></ol>
+      <p id="res-points"></p>
       <p id="res-record"></p>
       <div class="actions">
         <button data-act="again">Outra vez</button>

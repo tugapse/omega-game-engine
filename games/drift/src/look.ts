@@ -274,40 +274,84 @@ export interface CarLook {
 
 /** A wheel: a short cylinder on its side (axle across the car), with a hub. */
 function wheelMesh(r: number, w: number): MeshData {
-  return new LathePrimitive([[0, w / 2], [r * 0.6, w / 2], [r, w / 2 - 0.02], [r, -w / 2 + 0.02], [r * 0.6, -w / 2], [0, -w / 2]], 18);
+  return new LathePrimitive([[0, w / 2], [r * 0.6, w / 2], [r, w / 2 - 0.04], [r, -w / 2 + 0.04], [r * 0.6, -w / 2], [0, -w / 2]], 18);
 }
 
-/** The car, for now a body of blocks (its own model comes in phase 3), in `color`. */
-export async function dressCar(gl: Gl, scene: Scene, color: number[], opts: { alpha?: number; name?: string } = {}): Promise<CarLook> {
+/** How a car looks: its paint, its stripe, and its shape (a spoiler, how wide and long). */
+export interface CarStyle {
+  paint: number[];
+  stripe: number[];
+  spoiler: boolean;
+  /** Times the normal width and length. */
+  wide: number;
+  long: number;
+}
+
+export const DEFAULT_STYLE: CarStyle = { paint: [0.95, 0.25, 0.45], stripe: [1, 0.95, 0.85], spoiler: true, wide: 1, long: 1 };
+
+/**
+ * A small, round toy car of our own: a chunky body with rounded ends, round
+ * wheel arches, a bubble cabin, a stripe and a spoiler. Its wheels steer and
+ * roll, and the body leans in a turn. `alpha` under 1 draws it see-through (the ghost).
+ */
+export async function dressCar(gl: Gl, scene: Scene, style: CarStyle, opts: { alpha?: number; name?: string } = {}): Promise<CarLook> {
   const alpha = opts.alpha;
   const all: SceneEntity[] = [];
   const ent = (name: string, parent?: SceneEntity) => { const e = makeEntity(scene, name, parent); all.push(e); return e; };
   const root = ent(opts.name ?? 'Car');
   const body = ent('Body', root);
-  const paint = await material(gl, color, { alpha, specular: 0.7, roughness: 0.25 });
-  const glass = await material(gl, [0.12, 0.16, 0.24], { alpha, specular: 0.9, roughness: 0.1 });
+  const paint = await material(gl, style.paint, { alpha, specular: 0.7, roughness: 0.25 });
+  const stripe = await material(gl, style.stripe, { alpha, specular: 0.6, roughness: 0.3 });
+  const glass = await material(gl, [0.1, 0.13, 0.2], { alpha, specular: 0.9, roughness: 0.1 });
   const dark = await material(gl, [0.08, 0.08, 0.1], { alpha, specular: 0.2 });
   const lamp = await material(gl, [1, 1, 0.9], { alpha, glow: await canvasTexture(gl, 4, (c, s) => { c.fillStyle = '#fff6c8'; c.fillRect(0, 0, s, s); }) });
   const tail = await material(gl, [1, 0.1, 0.15], { alpha, glow: await canvasTexture(gl, 4, (c, s) => { c.fillStyle = '#a0101a'; c.fillRect(0, 0, s, s); }) });
   const cube = new CubePrimitive(1);
-  // Along +x (the nose), across z, y up; the car is 3.7 m long and 1.8 m wide.
-  render(gl, body, merge(cube, [{ at: [0, 0.55, 0], scale: [3.7, 0.5, 1.8] }, { at: [1.45, 0.42, 0], scale: [0.8, 0.3, 1.82] }]), paint);
-  render(gl, ent('Cabin', body), merge(cube, [{ at: [-0.25, 1.05, 0], scale: [1.9, 0.52, 1.5] }]), glass);
-  render(gl, ent('Roof', body), merge(cube, [{ at: [-0.3, 1.33, 0], scale: [1.6, 0.06, 1.42] }]), paint);
-  render(gl, ent('Bumpers', body), merge(cube, [{ at: [1.88, 0.35, 0], scale: [0.12, 0.25, 1.75] }, { at: [-1.88, 0.35, 0], scale: [0.12, 0.25, 1.75] }]), dark);
-  render(gl, ent('Lamps', body), merge(cube, [{ at: [1.86, 0.62, 0.6], scale: [0.06, 0.16, 0.38] }, { at: [1.86, 0.62, -0.6], scale: [0.06, 0.16, 0.38] }]), lamp);
-  render(gl, ent('Tail lamps', body), merge(cube, [{ at: [-1.86, 0.65, 0.62], scale: [0.06, 0.14, 0.4] }, { at: [-1.86, 0.65, -0.62], scale: [0.06, 0.14, 0.4] }]), tail);
-  const tyre = wheelMesh(0.36, 0.3);
+  const ball = new SpherePrimitive(1, 18, 12);
+  const W = style.wide, L = style.long;
+  // Along +x (the nose), across z, y up: about 3.7 m long and 1.8 m wide.
+  render(gl, body, merge(cube, [{ at: [0, 0.55, 0], scale: [2.6 * L, 0.5, 1.7 * W] }]), paint);
+  render(gl, ent('Ends', body), merge(ball, [
+    { at: [1.25 * L, 0.55, 0], scale: [0.6, 0.27, 0.85 * W] },
+    { at: [-1.25 * L, 0.57, 0], scale: [0.6, 0.29, 0.85 * W] },
+    // Round arches over the wheels.
+    ...[[1.15, 1], [1.15, -1], [-1.15, 1], [-1.15, -1]].map(([x, z]) => ({ at: [x * L, 0.62, z * 0.72 * W], scale: [0.58, 0.32, 0.22] })),
+  ]), paint);
+  render(gl, ent('Cabin', body), merge(ball, [{ at: [-0.2 * L, 0.88, 0], scale: [1.2 * L, 0.52, 0.76 * W] }]), glass);
+  render(gl, ent('Roof', body), merge(ball, [{ at: [-0.28 * L, 0.97, 0], scale: [0.86 * L, 0.46, 0.79 * W] }]), paint);
+  render(gl, ent('Stripe', body), merge(cube, [
+    { at: [0.95 * L, 0.81, 0], scale: [1.0 * L, 0.02, 0.36] },
+    { at: [-0.28 * L, 1.42, 0], scale: [0.8 * L, 0.02, 0.32] },
+  ]), stripe);
+  const darkParts = [
+    { at: [1.78 * L, 0.36, 0], scale: [0.1, 0.18, 1.5 * W] },
+    { at: [-1.78 * L, 0.36, 0], scale: [0.1, 0.18, 1.5 * W] },
+  ];
+  if (style.spoiler) {
+    darkParts.push({ at: [-1.62 * L, 1.08, 0], scale: [0.36, 0.06, 1.62 * W] });
+    for (const z of [0.55, -0.55]) darkParts.push({ at: [-1.55 * L, 0.92, z * W], scale: [0.12, 0.3, 0.08] });
+  }
+  render(gl, ent('Bumpers', body), merge(cube, darkParts), dark);
+  render(gl, ent('Lamps', body), merge(ball, [{ at: [1.7 * L, 0.6, 0.52 * W], scale: [0.08, 0.12, 0.2] }, { at: [1.7 * L, 0.6, -0.52 * W], scale: [0.08, 0.12, 0.2] }]), lamp);
+  render(gl, ent('Tail lamps', body), merge(cube, [{ at: [-1.83 * L, 0.62, 0.55 * W], scale: [0.04, 0.12, 0.34] }, { at: [-1.83 * L, 0.62, -0.55 * W], scale: [0.04, 0.12, 0.34] }]), tail);
+  const tyre = wheelMesh(0.37, 0.34);
   const rubber = await material(gl, [0.1, 0.1, 0.12], { alpha, specular: 0.1 });
+  const rim = await material(gl, [0.85, 0.85, 0.9], { alpha, specular: 0.9, roughness: 0.2 });
+  const hub = new LathePrimitive([[0, 0.01], [0.2, 0.01], [0.2, -0.01], [0, -0.01]], 12);
   const wheels: { pivot: SceneEntity; spinner: SceneEntity; front: boolean }[] = [];
-  for (const [x, z] of [[1.15, 0.85], [1.15, -0.85], [-1.15, 0.85], [-1.15, -0.85]]) {
+  for (const [x, z] of [[1.15, 0.8], [1.15, -0.8], [-1.15, 0.8], [-1.15, -0.8]]) {
     const pivot = ent('Wheel pivot', root);
-    pivot.transform.setLocalPosition(x, 0.36, z);
+    pivot.transform.setLocalPosition(x * L, 0.37, z * W);
     const spinner = ent('Wheel roll', pivot);
     // The lathe's axis is y: laid across the car (along z) under the roller.
     const t = ent('Wheel', spinner);
     t.transform.setLocalRotation(90, 0, 0);
     render(gl, t, tyre, rubber);
+    // The rim on the outer face, off centre so the roll shows.
+    const r = ent('Rim', spinner);
+    r.transform.setLocalPosition(0.04, 0, Math.sign(z) * 0.175);
+    r.transform.setLocalRotation(90, 0, 0);
+    render(gl, r, hub, rim);
     wheels.push({ pivot, spinner, front: x > 0 });
   }
   let roll = 0;
@@ -318,9 +362,9 @@ export async function dressCar(gl: Gl, scene: Scene, color: number[], opts: { al
       root.transform.setLocalPosition(car.x, 0, -car.y);
       root.transform.setLocalRotation(0, (car.heading * 180) / Math.PI, 0);
       const u = car.vx * Math.cos(car.heading) + car.vy * Math.sin(car.heading);
-      roll += (u / 0.36) * dt;
-      // The body leans out of a turn and dips under braking (a touch, for life).
-      const lean = Math.max(-4, Math.min(4, car.spin * u * 0.18));
+      roll += (u / 0.37) * dt;
+      // The body leans out of a turn (a touch, for life).
+      const lean = Math.max(-5, Math.min(5, car.spin * u * 0.2));
       body.transform.setLocalRotation(lean, 0, 0);
       for (const w of wheels) {
         w.pivot.transform.setLocalRotation(0, w.front ? (car.wheel * 180) / Math.PI : 0, 0);

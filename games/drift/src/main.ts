@@ -9,9 +9,11 @@ import {
 import { vec3 } from 'gl-matrix';
 import { Car, CarInput, driftAngle, forwardSpeed, makeCar, NO_INPUT, speedOf, STEP, stepCar } from './car';
 import { CHASE, ChaseState, followCar, makeChase } from './camera';
-import { drive, Driver, makeDriver } from './driver';
+import { drive, Driver, guideCurve, makeDriver } from './driver';
+import { DriftScore, isDrifting, makeScore, pending as chainPoints, updateScore } from './drift';
+import { dressEffects, Effects } from './effects';
 import { Controls } from './input';
-import { CarLook, dressCar, dressTrack, dressWorld, TrackLook } from './look';
+import { CarLook, DEFAULT_STYLE, dressCar, dressTrack, dressWorld, TrackLook } from './look';
 import {
   bestLap, currentLap, formatDelta, formatTime, Ghost, ghostAt, held, lights, makeRace, Race, raceTime, readGhost, Recorder,
   updateRace,
@@ -29,7 +31,7 @@ type State = 'loading' | 'play' | 'pause' | 'results';
 const LAPS = 3;
 let state: State = 'loading';
 
-const gl = canvas.getContext('webgl2', { antialias: true })!;
+const gl = canvas.getContext('webgl2', { antialias: true, alpha: false })!;
 if (!gl) { $('load-text').textContent = 'Este browser não tem WebGL 2.'; throw new Error('No WebGL 2'); }
 new DependencyManager().registerDependencies();
 Resources.setLoader(new DefaultResourceLoader(async (uri) => uri));
@@ -68,6 +70,10 @@ let chase: ChaseState;
 let trackLook: TrackLook;
 let carLook: CarLook;
 let ghostLook: CarLook;
+let effects: Effects;
+let score: DriftScore = makeScore();
+/** How long (s) the last banked chain stays on screen, and what it was. */
+let pop = 0, popText = '';
 let race: Race;
 /** The best lap on this track (kept in the browser), and the lap being recorded. */
 let ghost: Ghost | null = null;
@@ -112,6 +118,10 @@ function newRace(): void {
   reset(true);
   race = makeRace(track.length, LAPS, place.along);
   loadGhost();
+  score = makeScore();
+  lastTotal = 0;
+  effects.clear();
+  pop = 0;
   clock = 0;
   autoplay = params.has('auto') ? makeDriver() : null;
   $('results').hidden = true;
@@ -133,10 +143,13 @@ function reset(atStart = false): void {
 }
 
 
-function step(input: CarInput): void {
+function step(input: CarInput, player: boolean): void {
+  // The assist's guide, so a held drift with the wheel let go follows the road.
+  if (player && car.assist) input = { ...input, guide: guideCurve(car, track, place) };
   stepCar(car, held(race) ? NO_INPUT : input);
   place = keepOnTrack(track, car, place.index);
   if (place.hit > 4) bump = Math.max(bump, place.hit);
+  if (race.phase === 'racing') scored(updateScore(score, car, place.hit, STEP));
   const before = race.phase;
   const event = updateRace(race, place.along, STEP, ghost?.time ?? Infinity);
   const t = raceTime(race);
@@ -144,6 +157,13 @@ function step(input: CarInput): void {
   if (before === 'racing') recorder.add(t, car.x, car.y, car.heading);
   if (event === 'lap' || event === 'best' || event === 'finish') lapDone();
 }
+
+function scored(event: ReturnType<typeof updateScore>): void {
+  if (event === 'banked') { pop = 1.4; popText = `+${score.total - lastTotal}`; lastTotal = score.total; }
+  else if (event === 'lost') { pop = 1.4; popText = 'Perdido!'; }
+  else if (event === 'turbo') flash('<b>Turbo!</b>', 1.2);
+}
+let lastTotal = 0;
 
 /** A lap finished: its time, against the record, and a new ghost if it is the best. */
 function lapDone(): void {
@@ -166,6 +186,7 @@ function finish(): void {
   $('res-total').textContent = formatTime(race.total);
   $('res-laps').innerHTML = race.times.map((t, i) => `<li${t === bestLap(race) ? ' class="best"' : ''}>Volta ${i + 1}<span>${formatTime(t)}</span></li>`).join('');
   $('res-record').textContent = ghost ? `Recorde da pista: ${formatTime(ghost.time)}` : '';
+  $('res-points').textContent = `${score.total + chainPoints(score)} pontos de drift · melhor sequência ${Math.max(score.best, chainPoints(score))}`;
 }
 
 function update(dt: number): void {
@@ -173,10 +194,14 @@ function update(dt: number): void {
   pending += dt;
   while (pending >= STEP) {
     pending -= STEP;
-    step(autoplay ? drive(autoplay, car, track, place) : controls.read());
+    step(autoplay ? drive(autoplay, car, track, place) : controls.read(), !autoplay);
     clock += STEP;
   }
   followCar(chase, car, dt);
+  // Marks and smoke by how hard the rear tyres slide.
+  const slide = isDrifting(car) ? Math.min(1, 0.4 + Math.abs(driftAngle(car)) * 1.5) : car.rearLoad > 1.02 && speedOf(car) > 4 ? 0.45 : 0;
+  effects.update(car, slide, dt);
+  pop = Math.max(0, pop - dt);
   bump = Math.max(0, bump - dt * 30);
   if (flashTime > 0) { flashTime -= dt; if (flashTime <= 0) $('flash').hidden = true; }
 }
@@ -186,10 +211,22 @@ function hud(): void {
   $('speed').textContent = String(kmh);
   $('gear').textContent = car.reversing ? 'R' : forwardSpeed(car) < 0.5 && kmh < 2 ? 'N' : 'D';
   const angle = Math.abs(driftAngle(car)) * 180 / Math.PI;
-  const drifting = !!car.drift || (angle > 12 && speedOf(car) > 10);
   const meter = $('drift');
-  meter.hidden = !drifting;
-  if (drifting) $('drift-angle').textContent = `${Math.round(angle)}°`;
+  const chain = score.chain > 0;
+  meter.hidden = !chain && pop <= 0;
+  if (chain) {
+    $('drift-mult').textContent = score.mult > 1 ? `×${score.mult}` : '';
+    $('drift-points').textContent = String(chainPoints(score));
+    $('drift-angle').textContent = score.sliding ? `${Math.round(angle)}°` : '';
+  } else if (pop > 0) {
+    $('drift-mult').textContent = '';
+    $('drift-points').textContent = popText;
+    $('drift-angle').textContent = '';
+  }
+  $('points').textContent = String(score.total);
+  ($('turbo-fill') as HTMLElement).style.width = `${Math.round((car.boost > 0 ? 1 : score.charge) * 100)}%`;
+  $('turbo').classList.toggle('on', car.boost > 0);
+  $('turbo').classList.toggle('full', score.charge >= 1);
   $('needle').style.transform = `rotate(${-120 + 240 * Math.min(1, speedOf(car) / car.spec.top)}deg)`;
   $('lap').textContent = `${currentLap(race)}/${race.laps}`;
   $('time').textContent = formatTime(raceTime(race) - race.lapStart);
@@ -277,8 +314,9 @@ async function loadTrack(index: number): Promise<void> {
   await loaded(0.5, 'A plantar as árvores…');
   await dressWorld(gl, scene, track);
   await loaded(0.75, 'A trazer o carro…');
-  carLook = await dressCar(gl, scene, [0.95, 0.25, 0.45]);
-  ghostLook = await dressCar(gl, scene, [0.6, 0.9, 1], { alpha: 0.35, name: 'Ghost' });
+  effects = await dressEffects(gl, scene, track);
+  carLook = await dressCar(gl, scene, DEFAULT_STYLE);
+  ghostLook = await dressCar(gl, scene, { ...DEFAULT_STYLE, paint: [0.6, 0.9, 1], stripe: [0.9, 1, 1] }, { alpha: 0.35, name: 'Ghost' });
   ghostLook.show(false);
   scene.setGlRenderingContext(gl);
   engine.loadScene(scene);
@@ -308,7 +346,7 @@ async function start(): Promise<void> {
   $('touch').hidden = !touchOn;
   if (touchOn) {
     controls.autoGas = true;
-    $('keys').textContent = 'O carro acelera sozinho · arrasta à esquerda para virar · para derrapar, segura DRIFT e vira (ou vira a fundo numa curva); larga DRIFT e vira para o outro lado para sair · TRAVÃO trava e faz marcha-atrás';
+    $('keys').textContent = 'O carro acelera sozinho · arrasta à esquerda para virar · numa curva, segura DRIFT: o carro derrapa e segue a estrada sozinho (vira para dentro para apertar); larga para endireitar · TRAVÃO trava e faz marcha-atrás · cada drift dá pontos e enche o turbo';
     // A hint for the first seconds.
     $('hint').hidden = false;
     setTimeout(() => $('hint').classList.add('gone'), 7000);

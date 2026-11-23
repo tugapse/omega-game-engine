@@ -40,3 +40,22 @@ export function drive(d: Driver, car: Car, track: Track, place: Place): CarInput
   const brake = u > want + 1.5 ? Math.min(1, (u - want) / 6) : 0;
   return { throttle, brake, steer, handbrake: false };
 }
+
+/**
+ * The drift assist's guide: the curvature (1/m, positive left) of the arc
+ * from where the car goes (its velocity) to the road's line a little ahead
+ * (pure pursuit), so a held drift follows the road on its own.
+ */
+export function guideCurve(car: Car, track: Track, place: Place, offset = 0): number {
+  const v = Math.hypot(car.vx, car.vy);
+  const look = 7 + v * 0.42;
+  const p = sampleAhead(track, place.index, look);
+  // Aim a little inside the bend, where a drift wants to be.
+  const inside = Math.max(-1, Math.min(1, p.bend * 60)) * track.half * 0.3 + offset;
+  const tx = p.x + p.nx * inside, ty = p.y + p.ny * inside;
+  const dx = tx - car.x, dy = ty - car.y;
+  const dist = Math.hypot(dx, dy) || 1;
+  const dir = v > 1 ? Math.atan2(car.vy, car.vx) : car.heading;
+  const ang = Math.atan2(dy, dx) - dir;
+  return (2 * Math.sin(Math.atan2(Math.sin(ang), Math.cos(ang)))) / dist;
+}

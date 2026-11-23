@@ -80,6 +80,12 @@ export interface CarInput {
   /** -1 (left) to 1 (right). */
   steer: number;
   handbrake: boolean;
+  /**
+   * With the assist: the curvature (1/m, positive left) that takes the car
+   * back to the road's line ahead. A held drift with the wheel let go follows
+   * it, so holding the handbrake in a bend carries the car round on its own.
+   */
+  guide?: number;
 }
 
 export const NO_INPUT: CarInput = { throttle: 0, brake: 0, steer: 0, handbrake: false };
@@ -114,7 +120,12 @@ export interface Car {
    * is let go after a drift (steering out at full lock never starts the next).
    */
   lock: number;
+  /** Turbo time left (s): more drive and a higher top speed while it lasts. */
+  boost: number;
 }
+
+/** The turbo: drive and top speed times this. */
+export const BOOST = 1.3;
 
 /**
  * A slide the assist holds: which way the bend goes (+1 left, -1 right), how
@@ -169,10 +180,14 @@ export const ASSIST = {
   settle: 0.35,
   /** After a drift ends, a free slide cannot start another for this long (s); the handbrake can. */
   cool: 0.8,
+  /** The handbrake alone starts a drift where the guide bends more than this (1/m: a 90 m radius). */
+  guideFrom: 1 / 90,
+  /** With the wheel under this (0 to 1), a drift follows the guide. */
+  guideSteer: 0.25,
 };
 
 export function makeCar(x: number, y: number, heading: number, spec: CarSpec = CAR): Car {
-  return { spec, x, y, heading, vx: 0, vy: 0, spin: 0, wheel: 0, surfaceGrip: 1, surfaceDrag: 0, slip: 0, reversing: false, rearLoad: 0, assist: true, drift: null, cool: 0, lock: 0 };
+  return { spec, x, y, heading, vx: 0, vy: 0, spin: 0, wheel: 0, surfaceGrip: 1, surfaceDrag: 0, slip: 0, reversing: false, rearLoad: 0, assist: true, drift: null, cool: 0, lock: 0, boost: 0 };
 }
 
 export const cloneCar = (c: Car): Car => ({ ...c, drift: c.drift && { ...c.drift } });
@@ -204,7 +219,10 @@ export function endDrift(c: Car): void {
 function driftStart(c: Car, input: CarInput): number {
   if (!c.assist || c.drift || c.reversing) return 0;
   const u = forwardSpeed(c);
-  if (u < ASSIST.enterSpeed || Math.abs(input.steer) < ASSIST.enterSteer) return 0;
+  if (u < ASSIST.enterSpeed) return 0;
+  // The handbrake alone in a bend, with the guide: the way the road goes.
+  if (input.handbrake && Math.abs(input.steer) < ASSIST.enterSteer && input.guide !== undefined && Math.abs(input.guide) > ASSIST.guideFrom) return Math.sign(input.guide);
+  if (Math.abs(input.steer) < ASSIST.enterSteer) return 0;
   const turn = input.steer > 0 ? -1 : 1;
   if (input.handbrake) return turn;
   if (c.cool > 0) return 0;
@@ -226,10 +244,25 @@ function stepDrift(c: Car, d: AssistedDrift, input: CarInput, dt: number): void 
   d.out = into < -0.5 ? d.out + dt : 0;
   const speed = speedOf(c);
   let dir = Math.atan2(c.vy, c.vx);
-  const angle = into >= 0 ? a.angleMid + (a.angleIn - a.angleMid) * into : a.angleMid + (a.angleMid - a.angleOut) * into;
-  const rate = into >= 0 ? a.rateMid + (a.rateIn - a.rateMid) * into : a.rateMid * (1 + into * 0.8);
+  let angle = into >= 0 ? a.angleMid + (a.angleIn - a.angleMid) * into : a.angleMid + (a.angleMid - a.angleOut) * into;
+  let rate = into >= 0 ? a.rateMid + (a.rateIn - a.rateMid) * into : a.rateMid * (1 + into * 0.8);
+  const cap = (a.holdMax * G) / Math.max(speed, 1);
+  // Following the guide (the wheel let go): the turn the road wants, slowing if it is too tight.
+  let tooFast = 0;
+  const guided = input.guide !== undefined && Math.abs(input.steer) < a.guideSteer;
+  if (guided) {
+    // The road turns the other way (an S): swing the car across into the next bend.
+    if (input.guide! * d.turn < -a.guideFrom * 1.5) { d.turn = -d.turn; d.time = 0; }
+    const want = Math.max(0, input.guide! * d.turn * speed);
+    rate = want;
+    const deep = clamp((want - a.rateMid) / (a.rateIn - a.rateMid), 0, 1);
+    // Straight ahead with the handbrake let go: straighten out and end.
+    angle = !input.handbrake && want < a.rateMid * 0.5 ? a.angleOut * 0.5 : a.angleMid + (a.angleIn - a.angleMid) * deep;
+    d.out = angle < a.angleOut ? d.out + dt : 0;
+    if (want > cap) tooFast = Math.min(14, (want - cap) * speed * 1.5);
+  }
   // Carried round: the velocity turns at that rate.
-  dir += d.turn * Math.min(rate, (a.holdMax * G) / Math.max(speed, 1)) * c.surfaceGrip * dt;
+  dir += d.turn * Math.min(rate, cap) * c.surfaceGrip * dt;
   // The nose swings ahead of the motion, into the bend.
   const want = dir + d.turn * angle;
   const before = c.heading;
@@ -238,8 +271,9 @@ function stepDrift(c: Car, d: AssistedDrift, input: CarInput, dt: number): void 
   c.spin = (c.heading - before) / dt;
   // Speed: the throttle pushes, the slide scrubs, the air drags; braking ends it.
   const slide = Math.abs(Math.sin(c.heading - dir));
-  const push = (Math.min(s.drive, s.power / Math.max(1, speed)) * a.push * input.throttle * Math.max(0, Math.min(1, (s.top - speed) / 2))) / s.mass;
-  const drag = a.scrub * G * slide * (1 - 0.6 * input.throttle) + (s.drag * speed * speed + c.surfaceDrag * speed) / s.mass;
+  const boost = c.boost > 0 ? BOOST : 1;
+  const push = (Math.min(s.drive, s.power / Math.max(1, speed)) * boost * a.push * input.throttle * Math.max(0, Math.min(1, (s.top * boost - speed) / 2))) / s.mass;
+  const drag = a.scrub * G * slide * (1 - 0.6 * input.throttle) + (s.drag * speed * speed + c.surfaceDrag * speed) / s.mass + tooFast;
   const v = Math.max(0, speed + (push - drag) * dt);
   c.vx = Math.cos(dir) * v;
   c.vy = Math.sin(dir) * v;
@@ -266,6 +300,7 @@ function stepDrift(c: Car, d: AssistedDrift, input: CarInput, dt: number): void 
 /** One fixed step. */
 export function stepCar(c: Car, input: CarInput, dt = STEP): void {
   c.cool = Math.max(0, c.cool - dt);
+  c.boost = Math.max(0, c.boost - dt);
   if (c.drift || c.cool > 0) c.lock = -1;
   else if (Math.abs(input.steer) <= ASSIST.lockSteer) c.lock = 0;
   else if (c.lock >= 0) c.lock += dt;
@@ -308,7 +343,8 @@ export function stepCar(c: Car, input: CarInput, dt = STEP): void {
   let push = 0, stopFront = 0;
   if (c.reversing) push = -s.drive * s.reverse * input.brake * clamp(1 - Math.abs(u) / (s.top * 0.3), 0, 1);
   else {
-    push = Math.min(s.drive, s.power / Math.max(1, u)) * clamp(input.throttle, 0, 1) * clamp((s.top - u) / 2, 0, 1);
+    const boost = c.boost > 0 ? BOOST : 1;
+    push = Math.min(s.drive, s.power / Math.max(1, u)) * boost * clamp(input.throttle, 0, 1) * clamp((s.top * boost - u) / 2, 0, 1);
     if (input.brake > 0 && Math.abs(u) > 0.05) {
       const f = Math.sign(u) * s.brake * input.brake * Math.min(1, Math.abs(u) / 0.5);
       push -= f * 0.4;
