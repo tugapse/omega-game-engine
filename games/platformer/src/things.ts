@@ -1,10 +1,12 @@
 // The visuals of what changes as a level is played: bricks and bonus blocks
 // (with a little hop when bumped), coins (spinning; one pops out of a bonus
 // block), the enemies (our own: Bolota, a round slime; Casco, a beetle that
-// hides in its shell; Zumbido, a buzzing drone) and the checkpoint posts.
+// hides in its shell; Zumbido, a buzzing drone), the checkpoint posts, the
+// power-ups (a battery, a thruster and a star), sparks and broken bricks.
 import { CubePrimitive, LitMaterial, MeshData, Scene, SceneEntity, SpherePrimitive } from '../../../src';
+import { vec2, vec3 } from 'gl-matrix';
 import { blockMaterials, canvasTexture, makeEntity, material, render } from './look';
-import { Enemy, World } from './world';
+import { Enemy, ItemKind, World } from './world';
 
 type Gl = WebGL2RenderingContext;
 
@@ -13,6 +15,8 @@ export interface ThingsLook {
   sync(w: World, dt: number, view: { left: number; right: number }): void;
   /** Starts the hop of a bumped block and, for a coin from a bonus block, its pop. */
   bump(x: number, y: number, coin: boolean): void;
+  /** Bits of a broken brick flying off. */
+  breakAt(x: number, y: number): void;
   hide(): void;
 }
 
@@ -38,6 +42,38 @@ function group(scene: Scene, name: string) {
 
 type Group = ReturnType<typeof group>;
 
+/** A five-pointed star, extruded `depth` m, about 1 m across, facing +z. */
+function starMesh(depth = 0.35): MeshData {
+  const v: vec3[] = [], n: vec3[] = [], uv: vec2[] = [], idx: number[] = [];
+  const pts: number[][] = [];
+  for (let i = 0; i < 10; i++) {
+    const a = Math.PI / 2 + (i * Math.PI) / 5, r = i % 2 ? 0.22 : 0.5;
+    pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+  }
+  for (const side of [1, -1]) {
+    // A fan from the middle, front and back.
+    const c = v.length;
+    v.push([0, 0, (side * depth) / 2]); n.push([0, 0, side]); uv.push([0.5, 0.5]);
+    for (const [x, y] of pts) { v.push([x, y, (side * depth) / 2]); n.push([0, 0, side]); uv.push([x + 0.5, 0.5 - y]); }
+    for (let i = 0; i < 10; i++) {
+      const a = c + 1 + i, b = c + 1 + ((i + 1) % 10);
+      if (side > 0) idx.push(c, a, b); else idx.push(c, b, a);
+    }
+  }
+  for (let i = 0; i < 10; i++) {
+    const [x0, y0] = pts[i], [x1, y1] = pts[(i + 1) % 10];
+    const nx = y1 - y0, ny = -(x1 - x0), l = Math.hypot(nx, ny);
+    const b = v.length;
+    for (const [x, y, z] of [[x0, y0, depth / 2], [x1, y1, depth / 2], [x1, y1, -depth / 2], [x0, y0, -depth / 2]]) {
+      v.push([x, y, z]); n.push([nx / l, ny / l, 0]); uv.push([0, 0]);
+    }
+    idx.push(b, b + 2, b + 1, b, b + 3, b + 2);
+  }
+  const m = new MeshData(v, n, uv, idx);
+  m.providedNormals = true;
+  return m;
+}
+
 export async function dressThings(gl: Gl, scene: Scene, w: World): Promise<ThingsLook> {
   const level = w.level;
   const cube = new CubePrimitive(1);
@@ -50,9 +86,9 @@ export async function dressThings(gl: Gl, scene: Scene, w: World): Promise<Thing
   for (let x = 0; x < level.width; x++) {
     for (let y = 0; y < level.height; y++) {
       const t = level.tiles[x][y];
-      if (t !== 'brick' && t !== 'bonus') continue;
+      if (t !== 'brick' && t !== 'bonus' && t !== 'power' && t !== 'star') continue;
       const looks: Record<string, SceneEntity> = {};
-      for (const kind of t === 'bonus' ? ['bonus', 'used'] as const : ['brick'] as const) {
+      for (const kind of t === 'brick' ? ['brick'] as const : ['bonus', 'used'] as const) {
         const e = makeEntity(scene, `${kind} ${x},${y}`);
         e.transform.setLocalPosition(x + 0.5, y + 0.5, 0);
         render(gl, e, cube, blocks[kind]);
@@ -146,6 +182,60 @@ export async function dressThings(gl: Gl, scene: Scene, w: World): Promise<Thing
     return { g, cp, off, on };
   });
 
+  // Power-ups: a few looks of each kind, reused.
+  const tealGlow = await glow('#0b5a50');
+  const batteryBody = await material(gl, [0.15, 0.85, 0.75], { glow: tealGlow, specular: 0.6, roughness: 0.3 });
+  const metal = await material(gl, [0.82, 0.85, 0.9], { specular: 0.8, roughness: 0.25 });
+  const boltMat = await material(gl, [1, 0.9, 0.3], { glow: await glow('#806000'), specular: 0.2 });
+  const rocketMat = await material(gl, [1, 0.45, 0.15], { specular: 0.7, roughness: 0.25 });
+  const flameMat = await material(gl, [1, 0.85, 0.3], { glow: await glow('#ff9a20'), specular: 0 });
+  const starMat = await material(gl, [1, 0.88, 0.25], { glow: await glow('#7a5a00'), specular: 0.9, roughness: 0.2 });
+  const star = starMesh();
+  type ItemLook = { g: Group; spin: SceneEntity; flame?: SceneEntity };
+  const itemLook = (kind: ItemKind, i: number): ItemLook => {
+    const g = group(scene, `${kind} ${i}`);
+    const spin = makeEntity(scene, `${kind} spin`, g.root);
+    let flame: SceneEntity | undefined;
+    if (kind === 'battery') {
+      g.add(gl, cube, batteryBody, [0, 0.33, 0], [0.38, 0.5, 0.38], spin);
+      g.add(gl, cube, metal, [0, 0.62, 0], [0.18, 0.08, 0.18], spin);
+      g.add(gl, cube, metal, [0, 0.09, 0], [0.4, 0.04, 0.4], spin);
+      g.add(gl, cube, boltMat, [0, 0.36, 0.2], [0.08, 0.28, 0.02], spin).transform.setLocalRotation(0, 0, 20);
+    } else if (kind === 'thruster') {
+      g.add(gl, ball, rocketMat, [0, 0.42, 0], [0.18, 0.3, 0.18], spin);
+      g.add(gl, ball, metal, [0, 0.62, 0.0], [0.1, 0.12, 0.1], spin);
+      for (const sx of [-1, 1]) g.add(gl, cube, metal, [sx * 0.17, 0.2, 0], [0.12, 0.2, 0.04], spin);
+      flame = g.add(gl, ball, flameMat, [0, 0.08, 0], [0.1, 0.16, 0.1], spin);
+    } else {
+      g.add(gl, star, starMat, [0, 0.38, 0], [0.75, 0.75, 0.75], spin);
+      for (const sx of [-1, 1]) g.add(gl, ball, black, [sx * 0.07, 0.42, 0.13], [0.03, 0.06, 0.02], spin);
+    }
+    g.show(false);
+    return { g, spin, flame };
+  };
+  const itemPool: Record<ItemKind, ItemLook[]> = {
+    battery: [0, 1, 2].map((i) => itemLook('battery', i)),
+    thruster: [0, 1, 2].map((i) => itemLook('thruster', i)),
+    star: [0, 1].map((i) => itemLook('star', i)),
+  };
+  const sparkMat = await material(gl, [1, 0.75, 0.25], { glow: await glow('#ffb040'), specular: 0 });
+  const sparkLooks = Array.from({ length: 2 }, (_, i) => {
+    const g = group(scene, `Spark ${i}`);
+    g.add(gl, ball, sparkMat, [0, 0, 0], [0.16, 0.16, 0.16]);
+    g.add(gl, ball, flameMat, [0, 0, 0], [0.26, 0.08, 0.08]);
+    g.show(false);
+    return g;
+  });
+  /** Bits of broken bricks: four each, flying up and out, then falling. */
+  const debrisLooks = Array.from({ length: 12 }, (_, i) => {
+    const e = makeEntity(scene, `Brick bit ${i}`);
+    render(gl, e, cube, blocks.brick);
+    e.transform.setLocalScale(0.4, 0.4, 0.4);
+    e.show = false;
+    return e;
+  });
+  const debris: { e: SceneEntity; x: number; y: number; vx: number; vy: number; t: number }[] = [];
+
   let time = 0;
   const near = (x: number, view: { left: number; right: number }) => x > view.left - 2 && x < view.right + 2;
   const placeEnemy = (look: EnemyLook, en: Enemy) => {
@@ -178,7 +268,7 @@ export async function dressThings(gl: Gl, scene: Scene, w: World): Promise<Thing
         const lift = Math.sin((t.hop / 0.18) * Math.PI) * 0.3 * (t.hop > 0 ? 1 : 0);
         const vis = near(t.x, view);
         for (const [kind, e] of Object.entries(t.looks)) {
-          e.show = vis && kind === tile;
+          e.show = vis && kind === (tile === 'power' || tile === 'star' ? 'bonus' : tile);
           e.transform.setLocalPosition(t.x + 0.5, t.y + 0.5 + lift, 0);
         }
       }
@@ -199,6 +289,33 @@ export async function dressThings(gl: Gl, scene: Scene, w: World): Promise<Thing
         p.e.transform.setLocalRotation(0, p.t * 1400, 0);
       }
       world.enemies.forEach((en, i) => placeEnemy(enemyLooks[i], en));
+      const used: Record<ItemKind, number> = { battery: 0, thruster: 0, star: 0 };
+      for (const it of world.items) {
+        if (it.state === 'gone') continue;
+        const look = itemPool[it.kind][used[it.kind]++];
+        if (!look) continue;
+        look.g.show(true);
+        look.g.root.transform.setLocalPosition(it.body.x, it.body.y, it.state === 'rise' ? -0.05 : 0);
+        look.spin.transform.setLocalRotation(0, it.kind === 'star' ? Math.sin(time * 4) * 25 : time * 120, 0);
+        if (look.flame) look.flame.transform.setLocalScale(0.1, 0.16 * (1 + 0.3 * Math.sin(time * 40)), 0.1);
+      }
+      for (const kind of Object.keys(itemPool) as ItemKind[]) {
+        for (let i = used[kind]; i < itemPool[kind].length; i++) itemPool[kind][i].g.show(false);
+      }
+      sparkLooks.forEach((g, i) => {
+        const sp = world.sparks[i];
+        g.show(!!sp);
+        if (!sp) return;
+        g.root.transform.setLocalPosition(sp.body.x, sp.body.y + sp.body.h / 2, 0.2);
+        g.root.transform.setLocalRotation(0, 0, time * 720 * -sp.dir);
+      });
+      for (let i = debris.length - 1; i >= 0; i--) {
+        const d = debris[i];
+        d.t += dt; d.vy -= 40 * dt; d.x += d.vx * dt; d.y += d.vy * dt;
+        if (d.y < -3 || d.t > 1.5) { d.e.show = false; debris.splice(i, 1); continue; }
+        d.e.transform.setLocalPosition(d.x, d.y, 0.3);
+        d.e.transform.setLocalRotation(d.t * 500, d.t * 300 * Math.sign(d.vx), 0);
+      }
       for (const c of checkpoints) {
         const reached = !!world.checkpoint && world.checkpoint.x >= c.cp.x;
         const vis = near(c.cp.x, view);
@@ -216,7 +333,18 @@ export async function dressThings(gl: Gl, scene: Scene, w: World): Promise<Thing
         pops.push({ e, x: x + 0.5, y: y + 1, t: 0 });
       }
     },
+    breakAt(x, y) {
+      for (const [vx, vy] of [[-3, 12], [3, 12], [-2.5, 8], [2.5, 8]]) {
+        const e = debrisLooks.find((p) => !debris.some((d) => d.e === p)) ?? debrisLooks[0];
+        e.show = true;
+        debris.push({ e, x: x + 0.5 + Math.sign(vx) * 0.2, y: y + 0.5 + (vy > 10 ? 0.2 : -0.2), vx, vy, t: 0 });
+      }
+    },
     hide() {
+      for (const l of Object.values(itemPool).flat()) l.g.show(false);
+      for (const g of sparkLooks) g.show(false);
+      for (const d of debris) d.e.show = false;
+      debris.length = 0;
       for (const t of tiles.values()) for (const e of Object.values(t.looks)) e.show = false;
       for (const e of [...coins, ...popPool]) e.show = false;
       for (const l of enemyLooks) l.g.show(false);

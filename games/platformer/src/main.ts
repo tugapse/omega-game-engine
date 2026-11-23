@@ -9,10 +9,11 @@ import { Bot, botInput, makeBot } from './bot';
 import { CameraState, followHero, makeCamera, VIEW } from './camera';
 import { Controls } from './input';
 import { LEVELS } from './levels';
-import { dressGoal, dressHero, dressLevel, dressWorld, HeroLook, LevelLook } from './look';
+import { clipFor } from './bit';
+import { dressGoal, dressHero, dressLevel, dressWorld, FLAG_BOTTOM, FLAG_TOP, GoalLook, HeroLook, LevelLook } from './look';
 import { STEP } from './physics';
 import { dressThings, ThingsLook } from './things';
-import { makeWorld, nextTry, stepWorld, World } from './world';
+import { makeWorld, nextTry, POWER, stepWorld, World } from './world';
 
 const $ = (id: string) => document.getElementById(id)!;
 const canvas = $('view') as HTMLCanvasElement;
@@ -77,6 +78,16 @@ let cam: CameraState;
 let levelLook: LevelLook;
 let thingsLook: ThingsLook;
 let heroLook: HeroLook;
+let goalLook: GoalLook;
+/** Bit's drawn size (1 small, BIG_SCALE big); while growing or shrinking it flickers between the two. */
+const BIG_SCALE = 1.6;
+let sizeFrom = 1, sizeTo = 1, sizeTime = 1;
+/** At the flag: how far down the pole Bit has slid (m), and the flag's fall. */
+const SLIDE_SPEED = 7;
+let slide = { from: 0, done: false, hop: -1, x0: 0, y0: 0 };
+/** The hop off the base after sliding down (s). */
+const HOP_TIME = 0.45;
+let clock = 0;
 /** The hero's fall after dying: height and speed above where it died. */
 let deathFall = { y: 0, vy: 0 };
 /** The hero's look: turn (degrees) and squash (1 = none). */
@@ -91,8 +102,14 @@ function setState(s: State): void {
   state = s;
   stateTime = 0;
   banner.hidden = s === 'play' || s === 'dead';
-  if (s === 'clear') banner.innerHTML = `<b>Nível completo!</b><span>${world.score} pontos</span><small>Toca ou carrega Enter para repetir</small>`;
+  if (s === 'clear') banner.hidden = true;
   if (s === 'over') banner.innerHTML = `<b>Fim do jogo</b><span>${world.score} pontos</span><small>Toca ou carrega Enter para recomeçar</small>`;
+}
+
+function showClearBanner(): void {
+  banner.hidden = false;
+  const flag = world.flag ? `<small>Bandeira: +${world.flag.points}</small>` : '';
+  banner.innerHTML = `<b>Nível completo!</b><span>${world.score} pontos</span>${flag}<small>Toca ou carrega Enter para repetir</small>`;
 }
 
 function formatTime(t: number): string {
@@ -115,6 +132,10 @@ function begin(w: World): void {
   accumulator = 0;
   controls.clear();
   if (autoplay) autoplay = makeBot();
+  sizeFrom = sizeTo = 1; sizeTime = 1;
+  deathFall = { y: 0, vy: 0 };
+  goalLook.setFlag(1);
+  thingsLook.hide();
   setState('play');
   showHud();
 }
@@ -134,6 +155,10 @@ function step(): void {
     else if (e.type === 'land') squash = 0.75;
     else if (e.type === 'stomp' || e.type === 'kick') squash = 1.2;
     else if (e.type === 'bump') thingsLook.bump(e.x, e.y, e.tile === 'bonus');
+    else if (e.type === 'break') thingsLook.breakAt(e.x, e.y);
+    else if (e.type === 'grow' || e.type === 'shrink') {
+      sizeFrom = e.type === 'grow' ? 1 : BIG_SCALE; sizeTo = e.type === 'grow' ? BIG_SCALE : 1; sizeTime = 0;
+    }
   }
   if (world.dead) {
     deathFall = { y: 0, vy: b.y < -1 ? 0 : 13 };
@@ -144,7 +169,13 @@ function step(): void {
   const left = cam.x - halfWidth + b.w / 2;
   if (b.x < left) { b.x = left; if (b.vx < 0) b.vx = 0; }
   followHero(cam, b, halfWidth, world.level.width, STEP, world.level.start.y + VIEW.above, topRoom, b.h);
-  if (world.cleared) setState('clear');
+  if (world.cleared) {
+    // Hold on to the pole (or, touching it below the top of its base, stand beside the base).
+    const base = world.level.goal.y + 1;
+    b.x = world.level.goal.x - (b.y >= base ? 0.06 : 0.52) - b.w / 2;
+    slide = { from: b.y, done: false, hop: -1, x0: 0, y0: 0 };
+    setState('clear');
+  }
 }
 
 function update(dt: number): void {
@@ -153,6 +184,22 @@ function update(dt: number): void {
     accumulator += dt;
     let n = 0;
     while (accumulator >= STEP && n++ < 24 && state === 'play') { step(); accumulator -= STEP; }
+  } else if (state === 'clear') {
+    // Slide down the pole with the flag to the top of its base, hop off to the far side, celebrate, then the banner.
+    const b = world.hero.body, foot = world.level.goal.y, base = foot + 1;
+    if (slide.hop < 0) {
+      b.y = Math.max(Math.min(base, slide.from), b.y - SLIDE_SPEED * dt);
+      // The flag comes down with Bit (it is a little below Bit's feet at the top).
+      goalLook.setFlag(Math.min(1, Math.max(0, (b.y - foot - FLAG_BOTTOM) / (FLAG_TOP - FLAG_BOTTOM))));
+      if (b.y <= Math.min(base, slide.from) + 1e-9) { slide.hop = 0; slide.x0 = b.x; slide.y0 = b.y; goalLook.setFlag(0); }
+    } else if (!slide.done) {
+      slide.hop += dt;
+      const k = Math.min(1, slide.hop / HOP_TIME);
+      b.x = slide.x0 + (world.level.goal.x + 0.6 + b.w / 2 - slide.x0) * k;
+      b.y = slide.y0 + (foot - slide.y0) * k + 1.6 * Math.sin(Math.PI * k);
+      if (k >= 1) { slide.done = true; stateTime = 0; b.onGround = true; b.vx = 0; squash = 0.75; }
+    } else if (stateTime > 1.2 && banner.hidden) showClearBanner();
+    followHero(cam, b, halfWidth, world.level.width, dt, world.level.start.y + VIEW.above, topRoom, b.h);
   } else if (state === 'dead') {
     // A hop up, then down out of the picture; then the next try, or the end.
     if (stateTime > 0.35) { deathFall.vy -= 40 * dt; deathFall.y += deathFall.vy * dt; }
@@ -163,11 +210,25 @@ function update(dt: number): void {
   }
   showHud();
   const hero = world.hero;
+  clock += dt;
   // The hero's look eases towards where it faces, and springs back from a squash.
-  yaw += ((state === 'dead' ? 0 : hero.facing * 60) - yaw) * (1 - Math.exp(-dt * 14));
+  const sliding = state === 'clear' && !slide.done;
+  const faceYaw = state === 'dead' ? 0 : sliding ? (slide.hop < 0 ? 90 : 60) : state === 'clear' ? 20 : hero.facing * 60;
+  yaw += (faceYaw - yaw) * (1 - Math.exp(-dt * 14));
   squash += (1 - squash) * (1 - Math.exp(-dt * 10));
-  heroLook.place(hero.body.x, hero.body.y + (state === 'dead' ? deathFall.y : 0), yaw, squash);
-  heroLook.setVisible(state !== 'over' && hero.body.y + deathFall.y > -4);
+  // Growing or shrinking: flicker between the sizes for 0.6 s.
+  sizeTime += state === 'play' ? dt : 0;
+  const size = sizeTime >= 0.6 ? sizeTo : Math.floor(sizeTime / 0.1) % 2 ? sizeTo : sizeFrom;
+  heroLook.place(hero.body.x, hero.body.y + (state === 'dead' ? deathFall.y : 0), yaw, squash, size);
+  const b = hero.body;
+  const pose = sliding
+    ? { clip: 'Jump' as const, speed: 1 }
+    : clipFor({ onGround: b.onGround, vx: b.vx, vy: b.vy, dead: state === 'dead', won: state === 'clear' });
+  heroLook.animate(pose.clip, pose.speed);
+  heroLook.tint(world.power, world.star, clock);
+  // Blinking while hurt.
+  const blink = state === 'play' && world.hurt > 0 && Math.floor(world.hurt / 0.07) % 2 === 0;
+  heroLook.setVisible(state !== 'over' && hero.body.y + deathFall.y > -4 && !blink);
   levelLook.showAround(cam.x, halfWidth);
   thingsLook.sync(world, state === 'play' ? dt : 0, { left: cam.x - halfWidth, right: cam.x + halfWidth });
   const lookY = cam.y - touchShift;
@@ -208,7 +269,7 @@ async function start(): Promise<void> {
   thingsLook = await dressThings(gl, scene, world);
   await loaded(0.5, 'A pintar o céu…');
   await dressWorld(gl, scene, level.width);
-  await dressGoal(gl, scene, level.goal.x, level.goal.y);
+  goalLook = await dressGoal(gl, scene, level.goal.x, level.goal.y);
   await loaded(0.75, 'A acordar o Bit…');
   heroLook = await dressHero(gl, scene);
   scene.setGlRenderingContext(gl);
