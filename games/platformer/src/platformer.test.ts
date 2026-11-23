@@ -3,7 +3,7 @@ import { botRun } from './bot';
 import { followHero, makeCamera } from './camera';
 import { Hero, HERO, HeroInput, makeHero, NO_INPUT, stepHero } from './hero';
 import { Level, parseLevel, solidAt, tileAt } from './level';
-import { LEVELS } from './levels';
+import { LEVELS, WORLDS } from './levels';
 import { Body, moveBody, STEP } from './physics';
 
 const flat = (extra: string[] = []): Level => parseLevel({
@@ -195,6 +195,15 @@ describe('camera', () => {
       expect(y + 0.9 - cam.y).toBeLessThanOrEqual(3 + 1e-9);
     }
   });
+  it('scrolls back only while the hero rides a platform sliding back', () => {
+    const cam = makeCamera(20, 2, 8);
+    const hero = { x: 20, y: 2, vx: 0, onGround: true };
+    for (let i = 0; i < 240; i++) { hero.x -= 2 / 120; followHero(cam, hero, 8, 200, 1 / 120); }
+    expect(cam.x).toBeCloseTo(20, 6);
+    for (let i = 0; i < 240; i++) { hero.x -= 2 / 120; followHero(cam, hero, 8, 200, 1 / 120, -Infinity, Infinity, 0.9, true); }
+    expect(cam.x).toBeLessThan(18);
+    expect(hero.x - (cam.x - 8)).toBeGreaterThan(4);
+  });
   it('stops at the level end', () => {
     const cam = makeCamera(2, 2, 8);
     for (let i = 0; i < 1200; i++) followHero(cam, { x: 49, y: 2, vx: 9.5, onGround: true }, 8, 50, 1 / 120);
@@ -203,10 +212,35 @@ describe('camera', () => {
 });
 
 describe('levels', () => {
+  it('three worlds of three levels, each with three big coins and a checkpoint', () => {
+    expect(WORLDS.map((w) => w.levels.length)).toEqual([3, 3, 3]);
+    for (const w of WORLDS) {
+      for (const spec of w.levels) {
+        const l = parseLevel(spec);
+        expect(l.theme, spec.name).toBe(w.theme);
+        expect(l.things.filter((t) => t.kind === 'big').length, spec.name).toBe(3);
+        expect(l.things.filter((t) => t.kind === 'checkpoint').length, spec.name).toBe(1);
+        expect(l.platforms.length, spec.name).toBeGreaterThan(0);
+      }
+    }
+  });
+  it('cave ceilings run level, all the way along', () => {
+    for (const spec of WORLDS[1].levels) {
+      const l = parseLevel(spec);
+      // Up to the finish, which is open to the sky.
+      const tops = new Set<number>();
+      for (let x = 0; x < l.width - 30; x++) {
+        let y = l.height - 1;
+        while (y > 0 && tileAt(l, x, y) !== 'block') y--;
+        tops.add(y);
+      }
+      expect([...tops], spec.name).toHaveLength(1);
+    }
+  });
   it('every level can be finished by running and jumping, without dying', () => {
     for (const spec of LEVELS) {
       const r = botRun(spec);
       expect({ reached: r.reached, deaths: r.deaths }, `${spec.name} stopped at x=${r.x.toFixed(1)}`).toEqual({ reached: true, deaths: 0 });
     }
-  });
+  }, 60000);
 });

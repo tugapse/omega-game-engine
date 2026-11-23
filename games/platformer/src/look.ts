@@ -7,7 +7,8 @@ import {
   Resources, Scene, SceneEntity, SpherePrimitive, Texture,
 } from '../../../src';
 import { BitClip, buildBit, LOOPING } from './bit';
-import { Level, Tile, tileAt } from './level';
+import { Level, Theme, Tile, tileAt } from './level';
+import { THEMES } from './themes';
 import { Power } from './world';
 
 type Gl = WebGL2RenderingContext;
@@ -93,32 +94,49 @@ function partOf(level: Level, x: number, y: number): Part | null {
   return null;
 }
 
-/** The tile textures, drawn on canvases. */
-async function tileMaterials(gl: Gl): Promise<Record<Part, LitMaterial>> {
+/** The tile textures, drawn on canvases in the world's colours. */
+async function tileMaterials(gl: Gl, theme: Theme): Promise<Record<Part, LitMaterial>> {
+  const t = THEMES[theme];
   const grass = await canvasTexture(gl, 64, (c, s) => {
-    c.fillStyle = '#5fbf3c'; c.fillRect(0, 0, s, s);
-    c.fillStyle = '#74d24c';
+    c.fillStyle = t.top[0]; c.fillRect(0, 0, s, s);
+    c.fillStyle = t.top[1];
     for (let i = 0; i < 10; i++) c.fillRect((i * 23) % 60, (i * 13) % 60, 6, 3);
-    c.fillStyle = '#4aa22e'; c.fillRect(0, s - 8, s, 8);
+    c.fillStyle = t.top[2]; c.fillRect(0, s - 8, s, 8);
   });
   const earth = await canvasTexture(gl, 64, (c, s) => {
-    c.fillStyle = '#7a5130'; c.fillRect(0, 0, s, s);
-    c.fillStyle = '#8c6038';
+    c.fillStyle = t.earth[0]; c.fillRect(0, 0, s, s);
+    c.fillStyle = t.earth[1];
     for (let i = 0; i < 9; i++) c.fillRect((i * 29) % 58, (i * 19) % 58, 7, 4);
-    c.fillStyle = '#69452a';
+    c.fillStyle = t.earth[2];
     for (let i = 0; i < 6; i++) c.fillRect((i * 37 + 11) % 58, (i * 23 + 7) % 58, 5, 3);
   });
   const block = await canvasTexture(gl, 64, (c, s) => {
-    c.fillStyle = '#8f96a8'; c.fillRect(0, 0, s, s);
-    c.fillStyle = '#b4bccd'; c.fillRect(0, 0, s, 6); c.fillRect(0, 0, 6, s);
-    c.fillStyle = '#656b7a'; c.fillRect(0, s - 6, s, 6); c.fillRect(s - 6, 0, 6, s);
-    c.fillStyle = '#7d8496'; c.fillRect(20, 20, 24, 24);
+    const [face, light, dark, panel] = t.block;
+    c.fillStyle = face; c.fillRect(0, 0, s, s);
+    c.fillStyle = light; c.fillRect(0, 0, s, 6); c.fillRect(0, 0, 6, s);
+    c.fillStyle = dark; c.fillRect(0, s - 6, s, 6); c.fillRect(s - 6, 0, 6, s);
+    c.fillStyle = panel; c.fillRect(20, 20, 24, 24);
+    if (t.blockMark && theme === 'caves') {
+      // A little crystal in the middle.
+      c.fillStyle = t.blockMark;
+      c.beginPath(); c.moveTo(32, 14); c.lineTo(42, 32); c.lineTo(32, 50); c.lineTo(22, 32); c.closePath(); c.fill();
+    } else if (t.blockMark) {
+      // Rivets in the corners.
+      c.fillStyle = t.blockMark;
+      for (const [x, y] of [[11, 11], [53, 11], [11, 53], [53, 53]]) { c.beginPath(); c.arc(x, y, 3, 0, Math.PI * 2); c.fill(); }
+    }
   });
+  const glow = theme === 'caves' ? await canvasTexture(gl, 64, (c, s) => {
+    c.fillStyle = '#000'; c.fillRect(0, 0, s, s);
+    c.fillStyle = '#3a2a66';
+    c.beginPath(); c.moveTo(32, 14); c.lineTo(42, 32); c.lineTo(32, 50); c.lineTo(22, 32); c.closePath(); c.fill();
+  }) : undefined;
+  const topGlow = theme === 'caves' ? await canvasTexture(gl, 4, (c, s) => { c.fillStyle = '#0d4a44'; c.fillRect(0, 0, s, s); }) : undefined;
   return {
-    grass: await material(gl, [1, 1, 1], { tex: grass }),
+    grass: await material(gl, [1, 1, 1], { tex: grass, glow: topGlow, specular: theme === 'caves' ? 0.6 : 0.08, roughness: theme === 'caves' ? 0.3 : 0.8 }),
     earth: await material(gl, [1, 1, 1], { tex: earth }),
-    deep: await material(gl, [0.36, 0.23, 0.14], { specular: 0 }),
-    block: await material(gl, [1, 1, 1], { tex: block, specular: 0.2 }),
+    deep: await material(gl, t.deep, { specular: 0 }),
+    block: await material(gl, [1, 1, 1], { tex: block, glow, specular: theme === 'clouds' ? 0.5 : 0.2, roughness: theme === 'clouds' ? 0.35 : 0.8 }),
     spikes: await material(gl, [0.78, 0.8, 0.86], { specular: 0.7, roughness: 0.25 }),
   };
 }
@@ -157,8 +175,21 @@ export async function blockMaterials(gl: Gl): Promise<{ brick: LitMaterial; bonu
   };
 }
 
-/** A four-sided spike: base 1 × 1 on y = 0, point at y = 1. */
-function pyramid(): MeshData {
+/** A four-sided spike: base 1 × 1 on y = 0, point at y = 1 (or y = -1, pointing down). */
+function pyramid(down = false): MeshData {
+  const up = pyramidUp();
+  if (!down) return up;
+  const m = new MeshData(
+    up.vertices.map((v) => [v[0], -v[1], v[2]] as vec3),
+    up.normals.map((n) => [n[0], -n[1], n[2]] as vec3),
+    up.uvs,
+    up.indices.map((_, i, a) => a[i - (i % 3) + (2 - (i % 3))]),
+  );
+  m.providedNormals = true;
+  return m;
+}
+
+function pyramidUp(): MeshData {
   const v: vec3[] = [], n: vec3[] = [], uv: vec2[] = [], idx: number[] = [];
   const corners: [number, number][] = [[-0.5, 0.5], [0.5, 0.5], [0.5, -0.5], [-0.5, -0.5]];
   for (let i = 0; i < 4; i++) {
@@ -184,7 +215,7 @@ export interface LevelLook {
 
 /** The level's tiles: one mesh per kind of tile per chunk of columns. */
 export async function dressLevel(gl: Gl, scene: Scene, level: Level): Promise<LevelLook> {
-  const mats = await tileMaterials(gl);
+  const mats = await tileMaterials(gl, level.theme);
   const cube = new CubePrimitive(1);
   const spike = pyramid();
   const chunks: { x0: number; parts: SceneEntity[] }[] = [];
@@ -218,6 +249,14 @@ export async function dressLevel(gl: Gl, scene: Scene, level: Level): Promise<Le
     }
     chunks.push({ x0, parts });
   }
+  // The rails moving platforms run on: a thin bar behind the play plane.
+  const rails: { at: number[]; scale: number[] }[] = [];
+  for (const p of level.platforms) {
+    if (!p.track) continue;
+    if (p.track.axis === 'x') rails.push({ at: [(p.track.from + p.track.to + p.w) / 2, p.y + 0.78, -0.75], scale: [p.track.to - p.track.from + p.w, 0.08, 0.08] });
+    else rails.push({ at: [p.x + p.w / 2, (p.track.from + p.track.to) / 2 + 0.78, -0.75], scale: [0.08, p.track.to - p.track.from + 0.4, 0.08] });
+  }
+  if (rails.length) render(gl, makeEntity(scene, 'Rails'), merge(cube, rails), await material(gl, [0.35, 0.36, 0.42], { specular: 0.6, roughness: 0.3 }));
   return {
     showAround(x, halfWidth) {
       for (const c of chunks) {
@@ -229,37 +268,101 @@ export async function dressLevel(gl: Gl, scene: Scene, level: Level): Promise<Le
   };
 }
 
-/** The sky (a glowing gradient far behind), hills at two depths, and the light. */
-export async function dressWorld(gl: Gl, scene: Scene, width: number): Promise<void> {
+/** A pseudo-random number in [0, 1) from an index and a seed (the same every time). */
+function hash(i: number, seed: number): number {
+  const n = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453;
+  return n - Math.floor(n);
+}
+
+/** The sky (a glowing gradient far behind), the world's scenery (hills, crystals, or clouds and towers), and the light. */
+export async function dressWorld(gl: Gl, scene: Scene, width: number, theme: Theme = 'meadow'): Promise<void> {
+  const t = THEMES[theme];
   const skyTex = await canvasTexture(gl, 128, (c, s) => {
     const g = c.createLinearGradient(0, 0, 0, s);
-    g.addColorStop(0, '#3d8ff0'); g.addColorStop(0.65, '#9fd2ff'); g.addColorStop(1, '#e4f4ff');
+    g.addColorStop(0, t.sky[0]); g.addColorStop(0.65, t.sky[1]); g.addColorStop(1, t.sky[2]);
     c.fillStyle = g; c.fillRect(0, 0, s, s);
   });
   const black = await canvasTexture(gl, 4, (c, s) => { c.fillStyle = '#000'; c.fillRect(0, 0, s, s); });
   const sky = await material(gl, [0, 0, 0], { tex: black, glow: skyTex, specular: 0 });
   render(gl, makeEntity(scene, 'Sky'), quad(-60, -30, width + 60, 60, -60), sky);
+  const glowOf = async (rgb: number[], k: number) => canvasTexture(gl, 4, (c, s) => {
+    c.fillStyle = `rgb(${rgb.map((v) => Math.round(v * 255 * k)).join(',')})`; c.fillRect(0, 0, s, s);
+  });
 
   const sphere = new SpherePrimitive(1, 24, 12);
-  const far = await material(gl, [0.48, 0.72, 0.62], { specular: 0 });
-  const near = await material(gl, [0.36, 0.7, 0.38], { specular: 0 });
-  const hills = (z: number, every: number, size: number, seed: number) => {
-    const places: { at: number[]; scale: number[] }[] = [];
-    for (let x = -20, i = 0; x < width + 40; x += every, i++) {
-      const noise = Math.sin(i * 12.9898 + seed) * 43758.5453;
-      const r = size * (0.7 + 0.6 * (noise - Math.floor(noise)));
-      places.push({ at: [x, -r * 0.35, z], scale: [r * 1.6, r, r] });
+  if (t.scenery === 'hills') {
+    const far = await material(gl, t.far, { specular: 0 });
+    const near = await material(gl, t.near, { specular: 0 });
+    const hills = (z: number, every: number, size: number, seed: number) => {
+      const places: { at: number[]; scale: number[] }[] = [];
+      for (let x = -20, i = 0; x < width + 40; x += every, i++) {
+        const r = size * (0.7 + 0.6 * hash(i, seed));
+        places.push({ at: [x, -r * 0.35, z], scale: [r * 1.6, r, r] });
+      }
+      return merge(sphere, places);
+    };
+    render(gl, makeEntity(scene, 'Far hills'), hills(-40, 26, 14, 1), far);
+    render(gl, makeEntity(scene, 'Near hills'), hills(-18, 15, 6, 7), near);
+  } else if (t.scenery === 'crystals') {
+    // Clusters of glowing crystals on the cave floor, and stalactites hanging from the dark above.
+    const spike = pyramid();
+    const far = await material(gl, t.far, { glow: await glowOf(t.far, 0.22), specular: 0.9, roughness: 0.15 });
+    const near = await material(gl, t.near, { glow: await glowOf(t.near, 0.2), specular: 0.9, roughness: 0.15 });
+    const rock = await material(gl, [0.2, 0.15, 0.3], { specular: 0.1 });
+    const cluster = (z: number, every: number, size: number, seed: number) => {
+      const places: { at: number[]; scale: number[] }[] = [];
+      for (let x = -20, i = 0; x < width + 40; x += every, i++) {
+        for (let k = 0; k < 3; k++) {
+          const h = size * (0.5 + hash(i * 3 + k, seed));
+          places.push({ at: [x + (k - 1) * size * 0.35, -0.5, z + k * 0.5], scale: [h * 0.28, h, h * 0.28] });
+        }
+      }
+      return merge(spike, places);
+    };
+    render(gl, makeEntity(scene, 'Far crystals'), cluster(-30, 17, 9, 2), far);
+    render(gl, makeEntity(scene, 'Near crystals'), cluster(-12, 11, 3.5, 5), near);
+    const drips: { at: number[]; scale: number[] }[] = [];
+    for (let x = -20, i = 0; x < width + 40; x += 4, i++) {
+      const h = 2 + 5 * hash(i, 9);
+      drips.push({ at: [x, 22, -24 - 6 * hash(i, 3)], scale: [h * 0.35, h, h * 0.35] });
     }
-    return merge(sphere, places);
-  };
-  render(gl, makeEntity(scene, 'Far hills'), hills(-40, 26, 14, 1), far);
-  render(gl, makeEntity(scene, 'Near hills'), hills(-18, 15, 6, 7), near);
+    render(gl, makeEntity(scene, 'Stalactites'), merge(pyramid(true), drips), rock);
+  } else {
+    // Puffy clouds far and near, a sea of cloud below the girders, and factory towers in the distance.
+    const far = await material(gl, t.far, { glow: await glowOf([1, 0.75, 0.7], 0.35), specular: 0 });
+    const near = await material(gl, t.near, { glow: await glowOf([1, 0.9, 0.85], 0.3), specular: 0 });
+    const puffs = (z: number, every: number, size: number, y0: number, spread: number, seed: number) => {
+      const places: { at: number[]; scale: number[] }[] = [];
+      for (let x = -30, i = 0; x < width + 50; x += every, i++) {
+        const y = y0 + spread * hash(i, seed);
+        for (let k = 0; k < 4; k++) {
+          const r = size * (0.55 + 0.45 * hash(i * 4 + k, seed + 1));
+          places.push({ at: [x + (k - 1.5) * size * 0.8, y + (k % 2) * size * 0.25, z], scale: [r * 1.3, r * 0.8, r] });
+        }
+      }
+      return merge(sphere, places);
+    };
+    render(gl, makeEntity(scene, 'Far clouds'), puffs(-45, 30, 7, 4, 16, 1), far);
+    render(gl, makeEntity(scene, 'Cloud sea'), puffs(-8, 6, 3, -4.5, 1.2, 4), near);
+    render(gl, makeEntity(scene, 'Near clouds'), puffs(-16, 22, 3.5, 9, 6, 7), near);
+    const towerMat = await material(gl, [0.62, 0.52, 0.6], { glow: await glowOf([0.9, 0.62, 0.6], 0.35), specular: 0.2 });
+    const lampMat = await material(gl, [1, 0.8, 0.4], { glow: await glowOf([1, 0.75, 0.3], 1), specular: 0 });
+    const towers: { at: number[]; scale: number[] }[] = [], lamps: { at: number[]; scale: number[] }[] = [];
+    for (let x = 0, i = 0; x < width + 40; x += 34, i++) {
+      const h = 10 + 10 * hash(i, 11), w = 3 + 2 * hash(i, 12);
+      towers.push({ at: [x, h / 2 - 8, -52], scale: [w, h, w] });
+      towers.push({ at: [x + w * 0.25, h - 8 + 3, -52], scale: [0.7, 6, 0.7] });
+      for (let k = 0; k < 3; k++) lamps.push({ at: [x - w * 0.3 + k * w * 0.3, h - 8 - 1.5 - k * 2.5, -52 + w / 2 + 0.05], scale: [0.5, 0.5, 0.1] });
+    }
+    render(gl, makeEntity(scene, 'Towers'), merge(new CubePrimitive(1), towers), towerMat);
+    render(gl, makeEntity(scene, 'Tower lamps'), merge(new CubePrimitive(1), lamps), lampMat);
+  }
 
   const ambient = new Light('Ambient light');
-  ambient.color = new Color(0.55, 0.58, 0.66, 1);
+  ambient.color = new Color(t.ambient[0], t.ambient[1], t.ambient[2], 1);
   scene.addEntity(ambient);
   const sun = new DirectionalLight('Sun');
-  sun.color = new Color(1, 0.96, 0.88, 1.0);
+  sun.color = new Color(t.sun[0], t.sun[1], t.sun[2], 1.0);
   sun.transform.rotate(50, 30, 0);
   sun.castShadows = true;
   scene.addEntity(sun);

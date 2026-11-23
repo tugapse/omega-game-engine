@@ -7,6 +7,8 @@ import { CubePrimitive, LitMaterial, MeshData, Scene, SceneEntity, SpherePrimiti
 import { vec2, vec3 } from 'gl-matrix';
 import { blockMaterials, canvasTexture, makeEntity, material, render } from './look';
 import { Enemy, ItemKind, World } from './world';
+import { PLATFORMS } from './platforms';
+import { THEMES } from './themes';
 
 type Gl = WebGL2RenderingContext;
 
@@ -112,6 +114,35 @@ export async function dressThings(gl: Gl, scene: Scene, w: World): Promise<Thing
   const pops: { e: SceneEntity; x: number; y: number; t: number }[] = [];
   const popPool = Array.from({ length: 4 }, (_, i) => coinLook(`Coin pop ${i}`));
   for (const e of popPool) e.show = false;
+
+  // Big coins: a large gold coin with a star on each face.
+  const bigMat = await material(gl, [1, 0.72, 0.12], { glow: await glow('#6a4400'), specular: 1, roughness: 0.15 });
+  const bigStarMat = await material(gl, [1, 0.95, 0.6], { glow: await glow('#a08020'), specular: 0.6, roughness: 0.2 });
+  const bigStar = starMesh(0.06);
+  const bigCoins = w.bigCoins.map((c, i) => {
+    const g = group(scene, `Big coin ${i}`);
+    const spin = makeEntity(scene, 'Big coin spin', g.root);
+    g.add(gl, coinMesh, bigMat, [0, 0, 0], [0.46, 0.46, 0.1], spin);
+    for (const z of [0.08, -0.08]) g.add(gl, bigStar, bigStarMat, [0, 0, z], [0.5, 0.5, 1], spin);
+    return { g, spin };
+  });
+
+  // Platforms: a plank in the world's colour, with darker ends (falling ones have cracks).
+  const theme = THEMES[level.theme];
+  const moverMat = await material(gl, theme.mover, { specular: 0.6, roughness: 0.3 });
+  const fallerMat = await material(gl, theme.faller, { specular: 0.2 });
+  const capMat = await material(gl, [0.25, 0.26, 0.32], { specular: 0.5, roughness: 0.3 });
+  const crackMat = await material(gl, [0.2, 0.14, 0.12], { specular: 0 });
+  const platformLooks = w.platforms.map((p, i) => {
+    const g = group(scene, `Platform ${i}`);
+    const th = PLATFORMS.thick, fall = p.spec.kind === 'fall';
+    g.add(gl, cube, fall ? fallerMat : moverMat, [0, 0, 0], [p.w - 0.04, th, 1.3]);
+    for (const sx of [-1, 1]) g.add(gl, cube, capMat, [sx * (p.w / 2 - 0.08), 0, 0], [0.14, th + 0.04, 1.34]);
+    if (fall) {
+      for (let k = 1; k < p.w; k++) g.add(gl, cube, crackMat, [-p.w / 2 + k + 0.1 * (k % 2 ? 1 : -1), 0, 0.66], [0.05, th * 0.8, 0.02]);
+    }
+    return g;
+  });
 
   // The enemies.
   const purple = await material(gl, [0.62, 0.32, 0.9], { specular: 0.5, roughness: 0.35 });
@@ -289,6 +320,22 @@ export async function dressThings(gl: Gl, scene: Scene, w: World): Promise<Thing
         p.e.transform.setLocalRotation(0, p.t * 1400, 0);
       }
       world.enemies.forEach((en, i) => placeEnemy(enemyLooks[i], en));
+      world.bigCoins.forEach((c, i) => {
+        const { g, spin } = bigCoins[i];
+        const on = !c.taken && near(c.x, view);
+        g.show(on);
+        if (!on) return;
+        g.root.transform.setLocalPosition(c.x, c.y + Math.sin(time * 2.5 + c.x) * 0.08, 0);
+        spin.transform.setLocalRotation(0, time * 120, 0);
+      });
+      world.platforms.forEach((p, i) => {
+        const g = platformLooks[i];
+        const on = p.state !== 'gone' && p.x + p.w > view.left - 2 && p.x < view.right + 2;
+        g.show(on);
+        if (!on) return;
+        const shake = p.state === 'shake' ? Math.sin(p.time * 70) * 0.06 : 0;
+        g.root.transform.setLocalPosition(p.x + p.w / 2 + shake, p.y + 1 - PLATFORMS.thick / 2, 0);
+      });
       const used: Record<ItemKind, number> = { battery: 0, thruster: 0, star: 0 };
       for (const it of world.items) {
         if (it.state === 'gone') continue;
@@ -349,6 +396,8 @@ export async function dressThings(gl: Gl, scene: Scene, w: World): Promise<Thing
       for (const e of [...coins, ...popPool]) e.show = false;
       for (const l of enemyLooks) l.g.show(false);
       for (const c of checkpoints) c.g.show(false);
+      for (const b of bigCoins) b.g.show(false);
+      for (const g of platformLooks) g.show(false);
     },
   };
 }

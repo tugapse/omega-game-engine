@@ -57,6 +57,8 @@ export interface Hero {
   contacts: Contacts;
   /** Jumped on the last step (for the sound and the squash). */
   jumped: boolean;
+  /** The platform it stands on (-1: none; see platforms.ts). */
+  riding: number;
 }
 
 export function makeHero(x: number, y: number): Hero {
@@ -68,6 +70,7 @@ export function makeHero(x: number, y: number): Hero {
     jumping: false,
     contacts: { wallLeft: false, wallRight: false, landed: false, bumped: null },
     jumped: false,
+    riding: -1,
   };
 }
 

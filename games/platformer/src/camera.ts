@@ -57,11 +57,13 @@ export function makeCamera(x: number, y: number, halfWidth: number): CameraState
  * higher than that, so the ground stays in view on low platforms. `topRoom`
  * is how high (m) above the look point the hero's head may go and still be in
  * view below the HUD: past it the camera climbs at once (tall, narrow screens).
+ * `back` lets it scroll back for once: while the hero rides a platform that
+ * slides back along its track.
  */
 export function followHero(
   cam: CameraState, hero: { x: number; y: number; vx: number; onGround: boolean },
   halfWidth: number, levelWidth: number, dt: number, floorY = -Infinity, topRoom = Infinity,
-  heroHeight = 0.9,
+  heroHeight = 0.9, back = false,
 ): void {
   const want = Math.max(-1, Math.min(1, hero.vx / VIEW.leadSpeed)) * VIEW.lead;
   cam.lead += (want - cam.lead) * (1 - Math.exp(-dt * 2));
@@ -75,6 +77,7 @@ export function followHero(
   cam.x = Math.max(cam.x, hero.x + aheadFor(halfWidth) - halfWidth);
   // Never back, never past the ends.
   const maxX = Math.max(halfWidth, levelWidth - halfWidth);
+  if (back) cam.minX = Math.min(cam.minX, cam.x);
   cam.minX = Math.max(cam.minX, Math.min(cam.x, maxX));
   cam.x = Math.min(maxX, Math.max(cam.minX, halfWidth, cam.x));
   // Up and down: settle on where the hero stands; in the air only if it leaves the band.
