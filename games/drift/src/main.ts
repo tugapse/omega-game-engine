@@ -178,7 +178,7 @@ function rivalLineup(): { name: string; pace: number; model: CarModel }[] {
     return RIVALS.map((name, i) => ({ name, pace: paces[i], model: carById(cup.cars[i]) }));
   }
   // A single race: the rivals drive the player's car, from easy to quick.
-  return RIVALS.map((name, i) => ({ name, pace: 0.3 + i * 0.13, model: carById(session.car) }));
+  return RIVALS.map((name, i) => ({ name, pace: 0.1 + i * 0.12, model: carById(session.car) }));
 }
 
 /** Builds the track, its scenery and the cars, and puts them on the grid. */
