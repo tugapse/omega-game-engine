@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Omega Golf</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
+  <style>
+    /* The Omega neon look of the bowling, over a bright course. */
+    :root {
+      color-scheme: dark;
+      --fg: #f6f1ff; --muted: #b9b3cd; --line: #3b3352;
+      --orange: #ff8a1f; --cyan: #2de2ff; --pink: #ff3ea5; --gold: #ffd23f; --lime: #9dff3f;
+      --panel: rgba(12, 9, 24, .72);
+      --display: 'Bungee', system-ui, sans-serif;
+    }
+    html, body { margin: 0; height: 100%; background: #8fc9f0; color: var(--fg); font: 15px/1.4 system-ui, sans-serif; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+    #trail { pointer-events: none; }
+    button { font: inherit; color: inherit; cursor: pointer; }
+    .hud { position: fixed; pointer-events: none; text-shadow: 0 1px 4px #000; }
+
+    /* Top: hole, par, strokes, distance. */
+    #top { top: max(10px, env(safe-area-inset-top)); left: 0; right: 0; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 0 16px; }
+    .chip { padding: 5px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; font-size: 13px; }
+    .chip b { font-family: var(--display); font-weight: 400; color: var(--cyan); margin-right: 6px; }
+    #hole-chip { border-color: var(--cyan); box-shadow: 0 0 10px rgba(45, 226, 255, .3); }
+    #dist b { color: var(--gold); }
+    #lie b { color: var(--lime); }
+
+    /* Left: the club picker. */
+    #clubs { position: fixed; left: max(12px, env(safe-area-inset-left)); bottom: max(22px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 6px; }
+    #clubs button { width: 40px; height: 40px; border-radius: 50%; background: var(--panel); border: 1px solid var(--cyan); color: var(--cyan); font-size: 18px; }
+    #club { min-width: 92px; text-align: center; padding: 6px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+    #club-name { font-family: var(--display); font-size: 14px; color: var(--fg); display: block; }
+    #club-reach { font-size: 11px; color: var(--muted); }
+
+    /* Right: the power bar, filled by the backswing. */
+    #power { position: fixed; right: max(16px, env(safe-area-inset-right)); top: 50%; transform: translateY(-50%); width: 16px; height: 42vh; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; overflow: hidden; opacity: 0; transition: opacity .2s; }
+    #power.show { opacity: 1; }
+    #power i { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: linear-gradient(0deg, var(--cyan), var(--gold) 70%, var(--pink)); box-shadow: 0 0 10px var(--gold); }
+    #power-label { position: fixed; right: max(40px, calc(env(safe-area-inset-right) + 40px)); top: 50%; font-family: var(--display); font-size: 14px; color: var(--gold); opacity: 0; }
+    #power-label.show { opacity: 1; }
+
+    /* Bottom: the controls hint. */
+    #hint { top: max(52px, calc(env(safe-area-inset-top) + 44px)); left: 0; right: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 0 16px; transition: opacity .3s; }
+    #hint.hidden { opacity: 0; }
+    #hint span { font-size: 12px; padding: 4px 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; color: var(--muted); }
+    #hint b { color: var(--cyan); margin-right: 4px; }
+
+    /* Big words in the middle: shot results, the score on the hole. */
+    #result { top: 30%; left: 0; right: 0; text-align: center; font-family: var(--display); font-size: 38px; color: var(--gold); opacity: 0; transform: scale(.9); transition: opacity .25s, transform .25s; text-shadow: 0 0 10px rgba(255, 210, 63, .7), 0 2px 12px #000; }
+    #result.show { opacity: 1; transform: scale(1); }
+    #result.big.show { animation: pop .5s cubic-bezier(.2, 1.6, .4, 1); font-size: 52px; color: var(--pink); text-shadow: 0 0 12px rgba(255, 62, 165, .9), 0 0 32px rgba(255, 62, 165, .5), 0 2px 12px #000; }
+    @keyframes pop { from { transform: scale(.4); opacity: 0; } }
+    #result small { display: table; margin: 8px auto 0; padding: 3px 12px; font-family: system-ui, sans-serif; font-size: 16px; font-weight: 700; color: var(--fg); text-shadow: none; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+
+    /* Loading. */
+    #loading { position: fixed; inset: 0; display: grid; place-items: center; background: #07050d; transition: opacity .4s; z-index: 5; }
+    #loading.done { opacity: 0; pointer-events: none; }
+    #loading .logo { font-family: var(--display); font-size: 34px; color: var(--lime); text-shadow: 0 0 14px rgba(157, 255, 63, .6); text-align: center; }
+    #loading .bar { width: 220px; height: 6px; margin: 18px auto 8px; background: #2a2338; border-radius: 3px; overflow: hidden; }
+    #load-bar { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--cyan), var(--lime)); transition: width .3s; }
+    #load-text { text-align: center; color: var(--muted); font-size: 13px; }
+    #stats { position: fixed; left: 8px; top: 8px; font-size: 11px; color: #fff; }
+  </style>
+</head>
+<body>
+  <canvas id="view"></canvas>
+  <canvas id="trail"></canvas>
+
+  <div id="top" class="hud">
+    <span class="chip" id="hole-chip"><b>1</b><span id="hole-name">Buraco</span></span>
+    <span class="chip" id="par"><b>Par</b>4</span>
+    <span class="chip" id="strokes"><b>Pancadas</b>0</span>
+    <span class="chip" id="dist"><b>Bandeira</b>0 m</span>
+    <span class="chip" id="lie"><b>Na</b>tee</span>
+  </div>
+
+  <div id="clubs">
+    <button id="club-prev" aria-label="Taco anterior">‹</button>
+    <div id="club"><span id="club-name">Driver</span><span id="club-reach">230 m</span></div>
+    <button id="club-next" aria-label="Taco seguinte">›</button>
+  </div>
+
+  <div id="power"><i id="power-fill"></i></div>
+  <div id="power-label"></div>
+
+  <div id="hint" class="hud">
+    <span><b>↔</b>arrasta para apontar</span>
+    <span><b>↓↑</b>puxa para baixo e sacode para cima</span>
+    <span><b>↗</b>sacudir torto curva a bola</span>
+  </div>
+
+  <div id="result" class="hud"></div>
+  <div id="stats" class="hud" hidden></div>
+
+  <div id="loading">
+    <div>
+      <div class="logo">OMEGA GOLF</div>
+      <div class="bar"><i id="load-bar"></i></div>
+      <div id="load-text">A carregar…</div>
+    </div>
+  </div>
+
+  <script type="module" src="game.js"></script>
+</body>
+</html>
