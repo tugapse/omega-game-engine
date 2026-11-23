@@ -3,7 +3,7 @@ import { BOOST, makeCar, speedOf, STEP, stepCar } from './car';
 import { drive, guideCurve, makeDriver } from './driver';
 import { makeScore, pending, SCORE, updateScore } from './drift';
 import { keepOnTrack, makeTrack, sampleAhead } from './track';
-import { TRACKS } from './tracks';
+import { ALL_TRACKS as TRACKS } from './tracks';
 
 /** A car sliding at `deg` degrees and `v` m/s (the velocity off the nose). */
 const sliding = (deg: number, v = 20) => {

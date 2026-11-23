@@ -57,11 +57,7 @@
     #flash b { font-weight: 400; font-size: 34px; color: var(--fg); margin: 0 6px; }
     #flash small { font-size: 18px; color: var(--cyan); }
     .total { font-family: var(--display); font-size: 40px; color: var(--fg); }
-    #res-laps { list-style: none; padding: 0; margin: 10px 0; text-align: left; }
-    #res-laps li { display: flex; justify-content: space-between; gap: 30px; padding: 3px 0; color: var(--muted); border-bottom: 1px solid var(--line); }
-    #res-laps li span { font-family: var(--display); color: var(--fg); }
-    #res-laps li.best span { color: var(--gold); }
-    #drift[hidden], #pause[hidden], #lights[hidden], #flash[hidden], #results[hidden], #touch[hidden], #stats[hidden] { display: none; }
+        #drift[hidden], #pause[hidden], #lights[hidden], #flash[hidden], #results[hidden], #touch[hidden], #stats[hidden] { display: none; }
     #stats { left: max(16px, env(safe-area-inset-left)); bottom: max(10px, env(safe-area-inset-bottom)); font-size: 12px; color: var(--fg); }
 
     /* Touch: the steering area on the left, the accelerator and the handbrake on the right. */
@@ -89,9 +85,38 @@
     .panel p { margin: 4px 0; color: var(--muted); }
     .actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
     .actions button { font-family: var(--display); font-size: 15px; padding: 9px 16px; border-radius: 12px; border: 1px solid var(--orange); background: rgba(255, 138, 61, .15); color: var(--fg); cursor: pointer; }
-    .actions button:first-child { background: var(--orange); color: #0c0918; }
+    .actions button:first-of-type:not([hidden]), .actions button.main { background: var(--orange); color: #0c0918; }
+    .actions button[hidden] { display: none; }
+    button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
     .actions.toggles button { font-family: system-ui, sans-serif; font-size: 13px; padding: 6px 12px; background: rgba(12, 9, 24, .6); color: var(--fg); border-color: var(--line); }
 
+
+    /* Title, menu and results. */
+    .logo { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(38px, 11vw, 64px); color: var(--orange); text-shadow: 0 0 22px rgba(255, 138, 61, .7), 0 3px 0 #0c0918; line-height: 1; }
+    .title-panel { text-align: center; }
+    .menu-panel { width: min(560px, 94vw); max-height: 92vh; overflow-y: auto; text-align: left; }
+    .menu-panel h3 { margin: 12px 0 6px; font-family: var(--display); font-weight: 400; font-size: 15px; color: var(--gold); }
+    .menu-panel h3 small { font-family: system-ui, sans-serif; font-size: 12px; color: var(--muted); margin-left: 6px; }
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tabs button { flex: 1; font-family: var(--display); font-size: 13px; padding: 9px 6px; border-radius: 12px; border: 1px solid var(--line); background: rgba(12, 9, 24, .6); color: var(--muted); cursor: pointer; }
+    .tabs button.on { border-color: var(--orange); color: var(--fg); background: rgba(255, 138, 61, .2); }
+    .about { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+    .picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+    .picks button { text-align: left; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: rgba(12, 9, 24, .6); color: var(--fg); cursor: pointer; font: 13px/1.3 system-ui, sans-serif; }
+    .picks button b { display: block; font-family: var(--display); font-weight: 400; font-size: 13px; }
+    .picks button small { color: var(--muted); font-size: 11px; }
+    .picks button.on { border-color: var(--orange); background: rgba(255, 138, 61, .18); }
+    .picks button:disabled { opacity: .45; cursor: default; }
+    .picks .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
+    .medal { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-left: 2px; vertical-align: -1px; background: #3a3350; }
+    .medal.m1 { background: #cd7f32; } .medal.m2 { background: #c9d1dc; } .medal.m3 { background: var(--gold); box-shadow: 0 0 5px var(--gold); }
+    .results-panel { width: min(460px, 94vw); max-height: 92vh; overflow-y: auto; }
+    .rank { list-style: none; padding: 0; margin: 10px 0; text-align: left; }
+    .rank li { display: flex; justify-content: space-between; gap: 16px; padding: 4px 6px; color: var(--muted); border-bottom: 1px solid var(--line); }
+    .rank li.me { color: var(--fg); background: rgba(255, 138, 61, .16); border-radius: 8px; }
+    .rank li span:last-child { font-family: var(--display); color: var(--fg); }
+    #res-medals { font-size: 13px; color: var(--gold); }
+    #title[hidden], #menu[hidden], .hide-hud .hud, .hide-hud #touch { display: none !important; }
     #loading { position: fixed; inset: 0; display: grid; place-content: center; gap: 14px; text-align: center; background: #0c0918; transition: opacity .5s; }
     #loading.done { opacity: 0; pointer-events: none; }
     #loading h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 40px; color: var(--orange); text-shadow: 0 0 16px rgba(255, 138, 61, .6); padding: 0 16px; }
@@ -113,6 +138,7 @@
     </div>
   </div>
   <div id="times" class="hud">
+    <div id="pos-chip" class="chip">Posição <b id="pos">1/6</b></div>
     <div class="chip">Volta <b id="lap">1/3</b></div>
     <div class="chip big"><b id="time">0:00.00</b></div>
     <div class="chip">Melhor <b id="best">–:––.––</b></div>
@@ -138,6 +164,39 @@
     <div id="btn-hand" class="btn">DRIFT</div>
   </div>
 
+  <div id="title" class="screen" hidden>
+    <div class="panel title-panel">
+      <h1 class="logo">Omega Drift</h1>
+      <p>Carros pequenos, curvas largas, muito fumo.</p>
+      <div class="actions">
+        <button data-act="play">Jogar</button>
+      </div>
+      <div class="actions toggles">
+        <button data-act="sound">Som: ligado</button>
+        <button data-act="music">Música: ligada</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="menu" class="screen" hidden>
+    <div class="panel menu-panel">
+      <div class="tabs">
+        <button data-mode="cup">Campeonato</button>
+        <button data-mode="race">Corrida</button>
+        <button data-mode="trial">Contra-relógio</button>
+      </div>
+      <p id="mode-about" class="about"></p>
+      <h3 id="pick-title">Pista</h3>
+      <div id="picks" class="picks"></div>
+      <h3>Carro <small id="medal-total"></small></h3>
+      <div id="cars" class="picks cars"></div>
+      <div class="actions">
+        <button data-act="start">Começar</button>
+        <button data-act="title">Voltar</button>
+      </div>
+    </div>
+  </div>
+
   <div id="pause" class="screen" hidden>
     <div class="panel">
       <h2>Pausa</h2>
@@ -145,21 +204,26 @@
       <div class="actions">
         <button data-act="resume">Continuar</button>
         <button data-act="restart">Recomeçar</button>
+        <button data-act="menu">Menu</button>
       </div>
-      <div class="actions toggles"><button data-act="assist">Ajuda ao drift: ligada</button></div>
+      <div class="actions toggles">
+        <button data-act="assist">Ajuda ao drift: ligada</button>
+        <button data-act="sound">Som: ligado</button>
+        <button data-act="music">Música: ligada</button>
+      </div>
     </div>
   </div>
 
   <div id="results" class="screen" hidden>
-    <div class="panel">
-      <h2>Chegada</h2>
-      <p>Tempo total</p>
-      <div id="res-total" class="total">0:00.00</div>
-      <ol id="res-laps"></ol>
+    <div class="panel results-panel">
+      <h2 id="res-title">Chegada</h2>
+      <div id="res-main"></div>
       <p id="res-points"></p>
-      <p id="res-record"></p>
+      <div id="res-medals"></div>
       <div class="actions">
+        <button data-act="next" hidden>Próxima corrida</button>
         <button data-act="again">Outra vez</button>
+        <button data-act="menu">Menu</button>
       </div>
     </div>
   </div>

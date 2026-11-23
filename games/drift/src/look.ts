@@ -8,6 +8,7 @@ import {
   MeshRendererBehaviour, Resources, Scene, SceneEntity, SpherePrimitive, Texture,
 } from '../../../src';
 import { Car } from './car';
+import { THEMES } from './themes';
 import { Track } from './track';
 
 type Gl = WebGL2RenderingContext;
@@ -135,15 +136,15 @@ export interface TrackLook {
 }
 
 export async function dressTrack(gl: Gl, scene: Scene, track: Track): Promise<TrackLook> {
+  const theme = THEMES[track.theme];
   const asphalt = await canvasTexture(gl, 128, (c, s) => {
-    c.fillStyle = '#3a3a44'; c.fillRect(0, 0, s, s);
+    c.fillStyle = theme.road; c.fillRect(0, 0, s, s);
     // Speckles, darker tyre lines and the dashed middle line.
     for (let i = 0; i < 900; i++) {
-      const g = 50 + ((i * 37) % 30);
-      c.fillStyle = `rgb(${g},${g},${g + 8})`;
+      c.fillStyle = `rgba(${i % 2 ? '255,255,255' : '0,0,0'},${0.04 + ((i * 37) % 10) / 120})`;
       c.fillRect((i * 53) % s, (i * 97) % s, 2, 2);
     }
-    c.fillStyle = 'rgba(20,20,26,.25)';
+    c.fillStyle = 'rgba(10,10,16,.22)';
     c.fillRect(s * 0.22, 0, s * 0.1, s); c.fillRect(s * 0.68, 0, s * 0.1, s);
     c.fillStyle = '#e8e4d8';
     c.fillRect(s / 2 - 2, 0, 4, s / 2);
@@ -151,18 +152,20 @@ export async function dressTrack(gl: Gl, scene: Scene, track: Track): Promise<Tr
     c.fillRect(3, 0, 3, s); c.fillRect(s - 6, 0, 3, s);
   });
   const kerb = await canvasTexture(gl, 32, (c, s) => {
-    c.fillStyle = '#e8263f'; c.fillRect(0, 0, s, s / 2);
-    c.fillStyle = '#f4f1ea'; c.fillRect(0, s / 2, s, s / 2);
+    c.fillStyle = theme.kerb[0]; c.fillRect(0, 0, s, s / 2);
+    c.fillStyle = theme.kerb[1]; c.fillRect(0, s / 2, s, s / 2);
   });
   const tyres = await canvasTexture(gl, 64, (c, s) => {
     c.fillStyle = '#20202a'; c.fillRect(0, 0, s, s);
-    c.fillStyle = '#2de2ff'; c.fillRect(0, s * 0.42, s / 2, s * 0.16);
-    c.fillStyle = '#ff3ea5'; c.fillRect(s / 2, s * 0.42, s / 2, s * 0.16);
+    c.fillStyle = theme.barrier[0]; c.fillRect(0, s * 0.42, s / 2, s * 0.16);
+    c.fillStyle = theme.barrier[1]; c.fillRect(s / 2, s * 0.42, s / 2, s * 0.16);
   });
+  // At night the barriers' stripes glow.
+  const glowStripes = track.theme === 'city' ? tyres : undefined;
   const mats = {
     road: await material(gl, [1, 1, 1], { tex: asphalt, specular: 0.15, roughness: 0.7 }),
-    kerb: await material(gl, [1, 1, 1], { tex: kerb, specular: 0.2 }),
-    wall: await material(gl, [1, 1, 1], { tex: tyres, specular: 0.3, roughness: 0.5 }),
+    kerb: await material(gl, [1, 1, 1], { tex: kerb, specular: 0.2, glow: track.theme === 'city' ? kerb : undefined }),
+    wall: await material(gl, [1, 1, 1], { tex: tyres, specular: 0.3, roughness: 0.5, glow: glowStripes }),
   };
   const n = track.samples.length;
   const pieces: { e: SceneEntity[]; x: number; y: number }[] = [];
@@ -182,7 +185,7 @@ export async function dressTrack(gl: Gl, scene: Scene, track: Track): Promise<Tr
     const mid = track.samples[Math.floor((i0 + i1) / 2) % n];
     pieces.push({ e: es, x: mid.x, y: mid.y });
   }
-  // The start line: a chequered strip across the road.
+  // The start line: a chequered strip across the road, under a gantry.
   const chequer = await canvasTexture(gl, 64, (c, s) => {
     const k = s / 8;
     for (let i = 0; i < 8; i++) for (let j = 0; j < 2; j++) { c.fillStyle = (i + j) % 2 ? '#111' : '#f4f1ea'; c.fillRect(i * k, j * s / 2, k, s / 2); }
@@ -196,6 +199,16 @@ export async function dressTrack(gl: Gl, scene: Scene, track: Track): Promise<Tr
   );
   line.providedNormals = true;
   render(gl, makeEntity(scene, 'Start line'), line, await material(gl, [1, 1, 1], { tex: chequer }));
+  const gantry = makeEntity(scene, 'Gantry');
+  gantry.transform.setLocalPosition(p.x, 0, -p.y);
+  gantry.transform.setLocalRotation(0, (Math.atan2(p.ty, p.tx) * 180) / Math.PI, 0);
+  const w = track.kerbEdge + 0.6;
+  render(gl, gantry, merge(new CubePrimitive(1), [
+    { at: [0, 3, w], scale: [0.5, 6, 0.5] }, { at: [0, 3, -w], scale: [0.5, 6, 0.5] }, { at: [0, 6.2, 0], scale: [0.7, 0.9, w * 2 + 0.5] },
+  ]), await material(gl, [0.16, 0.14, 0.22], { specular: 0.4 }));
+  const banner = makeEntity(scene, 'Banner', gantry);
+  render(gl, banner, merge(new CubePrimitive(1), [{ at: [-0.36, 6.2, 0], scale: [0.04, 0.6, w * 2 - 1] }]),
+    await material(gl, [1, 1, 1], { tex: chequer, glow: chequer }));
 
   return {
     update(x, y) {
@@ -207,16 +220,19 @@ export async function dressTrack(gl: Gl, scene: Scene, track: Track): Promise<Tr
   };
 }
 
-/** Grass under everything, trees round the track (kept off it), the sky's colour and the light. */
+type Places = { at: number[]; scale: number[] }[];
+
+/** The ground off the road, the scenery of the track's place round it, its sky, fog and light. */
 export async function dressWorld(gl: Gl, scene: Scene, track: Track): Promise<void> {
+  const theme = THEMES[track.theme];
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
   for (const p of track.samples) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
-  const pad = 140;
+  const pad = 160;
   x0 -= pad; x1 += pad; y0 -= pad; y1 += pad;
-  const grassTex = await canvasTexture(gl, 128, (c, s) => {
-    c.fillStyle = '#4f9a3c'; c.fillRect(0, 0, s, s);
+  const groundTex = await canvasTexture(gl, 128, (c, s) => {
+    c.fillStyle = theme.ground[0]; c.fillRect(0, 0, s, s);
     for (let i = 0; i < 500; i++) {
-      c.fillStyle = i % 3 ? '#5aa845' : '#468a35';
+      c.fillStyle = i % 3 ? theme.ground[1] : theme.ground[2];
       c.fillRect((i * 71) % s, (i * 43) % s, 3, 2);
     }
   });
@@ -228,42 +244,124 @@ export async function dressWorld(gl: Gl, scene: Scene, track: Track): Promise<vo
     [0, 1, 2, 0, 2, 3],
   );
   ground.providedNormals = true;
-  render(gl, makeEntity(scene, 'Grass'), ground, await material(gl, [1, 1, 1], { tex: grassTex }));
+  render(gl, makeEntity(scene, 'Ground'), ground, await material(gl, [1, 1, 1], { tex: groundTex, specular: theme.name === 'snow' ? 0.3 : 0.05 }));
 
-  // Trees on a loose grid, where nothing of the track is near.
-  const trunks: { at: number[]; scale: number[] }[] = [];
-  const crowns: { at: number[]; scale: number[] }[] = [];
   let seed = 7;
   const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  const clear = track.wall + 4;
-  for (let x = x0 + 10; x < x1 - 10; x += 14) {
-    for (let y = y0 + 10; y < y1 - 10; y += 14) {
-      const tx = x + (rand() - 0.5) * 10, ty = y + (rand() - 0.5) * 10;
-      if (rand() < 0.45) continue;
-      let near = Infinity;
-      for (let i = 0; i < track.samples.length; i += 3) {
-        const p = track.samples[i];
-        near = Math.min(near, Math.hypot(p.x - tx, p.y - ty));
-      }
-      if (near < clear) continue;
-      const h = 3 + rand() * 3;
-      trunks.push({ at: [tx, h * 0.25, -ty], scale: [0.35, h * 0.5, 0.35] });
-      crowns.push({ at: [tx, h * 0.55 + 1.2, -ty], scale: [1.6 + rand(), 1.8 + rand() * 1.5, 1.6 + rand()] });
+  const near = (x: number, y: number) => {
+    let d = Infinity;
+    for (let i = 0; i < track.samples.length; i += 3) { const p = track.samples[i]; d = Math.min(d, Math.hypot(p.x - x, p.y - y)); }
+    return d;
+  };
+  /** Spots on a loose grid, at least `clear` m from the track (and at most `far` m). */
+  const spots = (step: number, keep: number, clear: number, far = Infinity) => {
+    const out: { x: number; y: number; d: number }[] = [];
+    for (let x = x0 + 10; x < x1 - 10; x += step) for (let y = y0 + 10; y < y1 - 10; y += step) {
+      const tx = x + (rand() - 0.5) * step * 0.7, ty = y + (rand() - 0.5) * step * 0.7;
+      if (rand() > keep) continue;
+      const d = near(tx, ty);
+      if (d >= clear && d <= far) out.push({ x: tx, y: ty, d });
     }
-  }
-  if (trunks.length) {
-    render(gl, makeEntity(scene, 'Trunks'), merge(new CubePrimitive(1), trunks), await material(gl, [0.42, 0.28, 0.18]));
-    render(gl, makeEntity(scene, 'Crowns'), merge(new SpherePrimitive(1, 10, 8), crowns), await material(gl, [0.22, 0.55, 0.24], { specular: 0.05 }));
+    return out;
+  };
+  const cube = new CubePrimitive(1);
+  const ball = new SpherePrimitive(1, 10, 8);
+  const cone = new LathePrimitive([[0, 1], [1, 0], [0, 0]], 10);
+  const clear = track.wall + 4;
+  const put = async (name: string, part: MeshData, places: Places, color: number[], opts: Parameters<typeof material>[2] = {}) => {
+    if (places.length) render(gl, makeEntity(scene, name), merge(part, places), await material(gl, color, opts));
+  };
+  // A ring of far things (mountains, mesas, towers) round everything.
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, ring = Math.max(x1 - x0, y1 - y0) / 2 + 40;
+
+  if (theme.scenery === 'city') {
+    const windows = await canvasTexture(gl, 64, (c, s) => {
+      c.fillStyle = '#141428'; c.fillRect(0, 0, s, s);
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 8; j++) {
+        const lit = (i * 7 + j * 13) % 5 < 2;
+        c.fillStyle = lit ? ((i + j) % 3 ? '#ffd27a' : '#7ae8ff') : '#23233a';
+        c.fillRect(4 + i * 15, 3 + j * 8, 9, 5);
+      }
+    });
+    const blocks: Places = [], lamps: Places = [], heads: Places = [];
+    for (const p of spots(22, 0.75, clear + 4)) {
+      const h = 10 + rand() * (p.d > 60 ? 45 : 22), w = 9 + rand() * 8, d = 9 + rand() * 8;
+      blocks.push({ at: [p.x, h / 2, -p.y], scale: [w, h, d] });
+    }
+    for (let a = 0; a < Math.PI * 2; a += 0.12) {
+      const h = 40 + rand() * 50;
+      blocks.push({ at: [cx + Math.cos(a) * ring, h / 2, -(cy + Math.sin(a) * ring)], scale: [18, h, 18] });
+    }
+    // Street lamps along both sides.
+    for (let i = 0; i < track.samples.length; i += 28) {
+      const q = track.samples[i];
+      for (const side of [1, -1]) {
+        const off = side * (track.wall + 1.4);
+        const x = q.x + q.nx * off, y = q.y + q.ny * off;
+        lamps.push({ at: [x, 3, -y], scale: [0.2, 6, 0.2] });
+        heads.push({ at: [x - q.nx * side * 0.6, 6, -(y - q.ny * side * 0.6)], scale: [1.4, 0.25, 0.5] });
+      }
+    }
+    // Windows on every side: the texture tiles by the box's size.
+    await put('Buildings', cube, blocks, [1, 1, 1], { tex: windows, glow: windows, specular: 0.2 });
+    await put('Lamp posts', cube, lamps, [0.25, 0.25, 0.3], { specular: 0.4 });
+    const warm = await canvasTexture(gl, 4, (c, s) => { c.fillStyle = '#ffe2a0'; c.fillRect(0, 0, s, s); });
+    await put('Lamp heads', cube, heads, [1, 0.95, 0.8], { glow: warm });
+  } else if (theme.scenery === 'desert') {
+    const trunks: Places = [], rocks: Places = [], mesas: Places = [];
+    for (const p of spots(16, 0.4, clear)) {
+      if (rand() < 0.55) {
+        const h = 2.5 + rand() * 3;
+        trunks.push({ at: [p.x, h / 2, -p.y], scale: [0.55, h, 0.55] });
+        // Two arms.
+        trunks.push({ at: [p.x + 0.7, h * 0.55, -p.y], scale: [0.9, 0.4, 0.4] }, { at: [p.x + 1.05, h * 0.7, -p.y], scale: [0.4, h * 0.35, 0.4] });
+        if (rand() < 0.6) trunks.push({ at: [p.x - 0.6, h * 0.45, -p.y], scale: [0.8, 0.35, 0.35] }, { at: [p.x - 0.9, h * 0.55, -p.y], scale: [0.35, h * 0.25, 0.35] });
+      } else {
+        const r = 1 + rand() * 2.5;
+        rocks.push({ at: [p.x, r * 0.25, -p.y], scale: [r * (1 + rand()), r * 0.7, r] });
+      }
+    }
+    for (let a = 0; a < Math.PI * 2; a += 0.22) {
+      const h = 25 + rand() * 30, w = 40 + rand() * 50;
+      mesas.push({ at: [cx + Math.cos(a) * (ring + 30), h / 2, -(cy + Math.sin(a) * (ring + 30))], scale: [w, h, w * 0.7] });
+    }
+    await put('Cacti', cube, trunks, [0.3, 0.55, 0.28], { specular: 0.1 });
+    await put('Rocks', ball, rocks, [0.72, 0.42, 0.26], { specular: 0.05 });
+    await put('Mesas', cube, mesas, [0.74, 0.33, 0.2], { specular: 0.02 });
+  } else {
+    const pines: Places = [], tips: Places = [], trunks: Places = [], peaks: Places = [], caps: Places = [];
+    for (const p of spots(13, 0.55, clear)) {
+      const h = 4 + rand() * 5, r = h * 0.3;
+      trunks.push({ at: [p.x, 0.6, -p.y], scale: [0.4, 1.2, 0.4] });
+      pines.push({ at: [p.x, 1, -p.y], scale: [r, h, r] });
+      tips.push({ at: [p.x, 1 + h * 0.62, -p.y], scale: [r * 0.42, h * 0.4, r * 0.42] });
+    }
+    for (let a = 0; a < Math.PI * 2; a += 0.3) {
+      const h = 70 + rand() * 80, r = 60 + rand() * 50;
+      const x = cx + Math.cos(a) * (ring + 60), y = cy + Math.sin(a) * (ring + 60);
+      peaks.push({ at: [x, 0, -y], scale: [r, h, r] });
+      caps.push({ at: [x, h * 0.62, -y], scale: [r * 0.385, h * 0.385, r * 0.385] });
+    }
+    await put('Trunks', cube, trunks, [0.38, 0.26, 0.18]);
+    await put('Pines', cone, pines, [0.12, 0.36, 0.25], { specular: 0.05 });
+    await put('Snow on pines', cone, tips, [0.95, 0.97, 1], { specular: 0.3 });
+    await put('Mountains', cone, peaks, [0.45, 0.5, 0.6], { specular: 0.05 });
+    await put('Snow caps', cone, caps, [0.97, 0.98, 1], { specular: 0.3 });
   }
 
   const ambient = new Light('Ambient light');
-  ambient.color = new Color(0.42, 0.46, 0.55, 1);
+  ambient.color = new Color(theme.ambient[0], theme.ambient[1], theme.ambient[2], 1);
   scene.addEntity(ambient);
   const sun = new DirectionalLight('Sun');
-  sun.color = new Color(1, 0.96, 0.88, 1);
-  sun.transform.rotate(55, 35, 0);
+  sun.color = new Color(theme.sun[0], theme.sun[1], theme.sun[2], 1);
+  sun.transform.rotate(theme.sunAngle[0], theme.sunAngle[1], 0);
   sun.castShadows = true;
   scene.addEntity(sun);
+  scene.sceneFog.enabled = theme.fogDensity > 0;
+  scene.sceneFog.fogType = 1;
+  scene.sceneFog.density = theme.fogDensity;
+  scene.sceneFog.color = new Color(theme.fog[0], theme.fog[1], theme.fog[2], 1);
+  gl.clearColor(theme.sky[0], theme.sky[1], theme.sky[2], 1);
 }
 
 export interface CarLook {
