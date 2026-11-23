@@ -100,6 +100,31 @@ function merge(part: MeshData, places: { at: number[]; scale: number[] }[]): Mes
   return m;
 }
 
+/** The range's rings (inner and outer radius, m) and their colours: 50, 25 and 10 points. */
+const RING_RADII: [number, number][] = [[0, 3], [7.2, 8], [14.2, 15]];
+const RING_COLOURS: number[][] = [[1, 0.24, 0.65], [1, 0.82, 0.25], [0.18, 0.89, 1]];
+
+/** A flat ring (or a disc when the inner radius is 0) on y = 0, facing up. */
+function ringMesh(inner: number, outer: number, seg = 48): MeshData {
+  const v: vec3[] = [], uv: vec2[] = [], idx: number[] = [];
+  for (let i = 0; i <= seg; i++) {
+    const a = (i / seg) * Math.PI * 2, c = Math.cos(a), s = Math.sin(a);
+    v.push([c * inner, 0, s * inner], [c * outer, 0, s * outer]);
+    uv.push([0, 0], [1, 1]);
+    if (i > 0) { const k = i * 2; idx.push(k - 2, k, k - 1, k - 1, k, k + 1); }
+  }
+  const m = new MeshData(v, v.map(() => [0, 1, 0] as vec3), uv, idx);
+  m.providedNormals = true;
+  return m;
+}
+
+/** A material that glows in its colour (so the rings read from far away). */
+async function glowMaterial(gl: Gl, color: number[]): Promise<LitMaterial> {
+  const m = await material(gl, color, { specular: 0 });
+  m.emissiveTex = await canvasTexture(gl, 4, 4, (c) => { c.fillStyle = `rgb(${color.map((x) => Math.round(x * 255)).join(',')})`; c.fillRect(0, 0, 4, 4); });
+  return m;
+}
+
 /** A flat water surface: an ellipse (a fan) or a band along a line, at `level`. */
 function waterMesh(shape: WaterShape, level: number): MeshData {
   const v: vec3[] = [], uv: vec2[] = [], idx: number[] = [];
@@ -164,6 +189,10 @@ export interface CourseLook {
   placeFlag(x: number, y: number, z: number): void;
   /** Shows or takes out the pole and its flag (the cup stays). */
   setPole(visible: boolean): void;
+  /** Shows or hides the whole flag, cup included (the range has none). */
+  setFlag(visible: boolean): void;
+  /** Range targets: rings on the ground at these points, or none. */
+  setTargets(points: { x: number; y: number; z: number }[] | null): Promise<void>;
   /** Shows this hole's ground, water and trees (built the first time), hides the others. */
   showHole(hole: Hole): Promise<void>;
 }
@@ -204,6 +233,8 @@ export async function dressCourse(gl: Gl, scene: Scene): Promise<CourseLook> {
     skirt: await material(gl, SURFACE_RGB.out.map((c) => (c / 255) * 0.85), { specular: 0, roughness: 1 }),
   };
   const looks = new Map<Hole, HoleLook>();
+  const targets: SceneEntity[] = [], poles: SceneEntity[] = [];
+  let flagOn = true;
 
   const ball = entity(scene, 'Ball');
   render(gl, ball, new SpherePrimitive(BALL.radius * BALL_LOOK, 20, 12), await material(gl, [1, 1, 1], { specular: 0.6, roughness: 0.3 }));
@@ -249,7 +280,33 @@ export async function dressCourse(gl: Gl, scene: Scene): Promise<CourseLook> {
   return {
     ball, flag, marker,
     placeFlag(x, y, z) { flag.transform.setLocalPosition(x, y, z); },
-    setPole(visible) { pole.show = visible; cloth.show = visible; },
+    setPole(visible) { pole.show = visible && flagOn; cloth.show = visible && flagOn; },
+    setFlag(visible) { flagOn = visible; pole.show = visible; cloth.show = visible; cup.show = visible; },
+    async setTargets(points) {
+      for (const e of [...targets, ...poles]) e.show = false;
+      if (!points) return;
+      while (targets.length < points.length * RING_COLOURS.length) {
+        const k = targets.length % RING_COLOURS.length;
+        const e = entity(scene, `Target ring ${targets.length}`);
+        render(gl, e, ringMesh(RING_RADII[k][0], RING_RADII[k][1]), await glowMaterial(gl, RING_COLOURS[k]));
+        targets.push(e);
+      }
+      while (poles.length < points.length) {
+        const e = entity(scene, `Target pole ${poles.length}`);
+        e.transform.setLocalScale(0.08, 2.5, 0.08);
+        render(gl, e, new CubePrimitive(2), await glowMaterial(gl, RING_COLOURS[0]));
+        poles.push(e);
+      }
+      points.forEach((p, i) => {
+        poles[i].transform.setLocalPosition(p.x, p.y + 2.5, p.z);
+        poles[i].show = true;
+        for (let k = 0; k < RING_COLOURS.length; k++) {
+          const e = targets[i * RING_COLOURS.length + k];
+          e.transform.setLocalPosition(p.x, p.y + 0.05 + k * 0.01, p.z);
+          e.show = true;
+        }
+      });
+    },
     async showHole(hole) {
       if (!looks.has(hole)) looks.set(hole, await dressHole(gl, scene, hole, mats));
       for (const [h, l] of looks) for (const e of l.parts) e.show = h === hole;

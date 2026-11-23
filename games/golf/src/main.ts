@@ -13,6 +13,8 @@ import { BALL_LOOK, CourseLook, dressCourse, dressGolfer, GolferLook, SHIRTS } f
 import { formatToPar, GolfMatch, MAX_PLAYERS, MAX_STROKES } from './match';
 import { CPU_NAMES, CpuPlan, CpuSkill, planShot } from './cpu';
 import { seeded } from './course';
+import { MISS_METRES, NEAREST, rangePoints, rangeTargets, RANGE_SHOTS } from './modes';
+import { GolfSound } from './sound';
 import { buildGolfer, GolferRig, IMPACT_TIME, PUTT_BACK_TIME, PUTT_IMPACT_TIME, setShaft, SHAFT, TOP_TIME } from './golfer';
 import { GyroSwing } from './gyro';
 import { scoreName } from './score';
@@ -41,12 +43,22 @@ const debug = new URLSearchParams(location.search).has('debug');
 
 type State = 'loading' | 'setup' | 'intro' | 'aim' | 'swinging' | 'flight' | 'result' | 'card' | 'over';
 /** What a game is: a full round, or the front three holes. */
-type Mode = 'round9' | 'round3';
-const MODES: Mode[] = ['round9', 'round3'];
+type Mode = 'round9' | 'round3' | 'nearest' | 'range';
+const MODES: Mode[] = ['round9', 'round3', 'nearest', 'range'];
 const MODE_INFO: Record<Mode, string> = {
   round9: 'Os nove buracos de Vale Omega, par 36. Ganha quem fizer menos pancadas.',
   round3: 'Os três primeiros buracos, par 12: uma volta rápida.',
+  nearest: 'Uma pancada a cada um de três greens. Contam os metros até à bandeira: ganha quem somar menos.',
+  range: `${RANGE_SHOTS} bolas no campo de treino, três alvos: 50, 25 ou 10 pontos por anel. Ganha quem somar mais.`,
 };
+const isRound = () => mode === 'round9' || mode === 'round3';
+/** The range's targets on hole 1 (with their ground height). */
+let targets: { x: number; y: number; z: number }[] = [];
+/** The score of the turn just played in the one-shot games (metres or points). */
+let turnValue = 0;
+const sound = new GolfSound();
+/** What the flight has already made a sound for. */
+let heard = { landed: false, trunk: 0, leaves: false };
 let mode: Mode = 'round9';
 let match = new GolfMatch<CpuSkill>(['Jogador 1'], [4]);
 /** The holes of this game (indices into HOLES). */
@@ -100,6 +112,7 @@ let golfer: GolferRig;
 let golferLook: GolferLook;
 /** The shot chosen by the swing, struck when the club reaches the ball. */
 let pendingShot: Shot | null = null;
+let lastPower = 0;
 const gyro = new GyroSwing();
 const scratch = vec3.create();
 
@@ -145,12 +158,12 @@ const pinDistance = () => Math.hypot(toPin().x, toPin().z);
 
 /** Aims at the pin and picks the club for the distance. */
 function readyShot(): void {
-  const t = toPin();
+  const t = mode === 'range' ? { x: targets[1].x - ball.pos[0], z: targets[1].z - ball.pos[2] } : toPin();
   aim = Math.atan2(t.x, -t.z);
   const s = lie();
-  clubId = suggestClub(pinDistance(), reach, s === 'green', s === 'tee');
+  clubId = suggestClub(mode === 'range' ? Math.hypot(t.x, t.z) : pinDistance(), reach, s === 'green', s === 'tee' && mode !== 'range');
   // Long holes: from the tee, aim down the fairway rather than straight at a far pin.
-  if (s === 'tee' && pinDistance() > reach.driver) {
+  if (s === 'tee' && pinDistance() > reach.driver && mode !== 'range') {
     const p = hole.spec.fairway.find((q) => Math.hypot(q.x - ball.pos[0], q.z - ball.pos[2]) > reach.driver * 0.75) ?? hole.spec.pin;
     aim = Math.atan2(p.x - ball.pos[0], -(p.z - ball.pos[2]));
   }
@@ -159,13 +172,20 @@ function readyShot(): void {
   placeGolfer();
 }
 
+/** A total as this game counts it: against par, metres or points. */
+function formatScore(total: number, toPar: number): string {
+  if (mode === 'nearest') return `${total.toFixed(1)} m`;
+  if (mode === 'range') return `${total} pts`;
+  return formatToPar(toPar);
+}
+
 const shirtCss = (i: number) => `rgb(${SHIRTS[i % SHIRTS.length].map((c) => Math.round(c * 255)).join(',')})`;
 
 function showHud(): void {
   $('hole-num').textContent = String(holeIndex + 1);
   $('hole-name').textContent = hole.spec.name;
   const done = match.player.strokes.length > 0;
-  $('total').innerHTML = `<b>Total</b>${done ? formatToPar(match.toPar(match.player)) : '–'}`;
+  $('total').innerHTML = `<b>Total</b>${done ? formatScore(match.total(match.player), match.toPar(match.player)) : '–'}`;
   const who = $('player-chip');
   who.hidden = match.players.length < 2;
   who.textContent = match.player.name;
@@ -175,6 +195,10 @@ function showHud(): void {
   ($('wind-arrow') as HTMLElement).style.transform = `rotate(${((wind.dir - aim) * 180) / Math.PI}deg)`;
   $('par').innerHTML = `<b>Par</b>${hole.spec.par}`;
   $('strokes').innerHTML = `<b>Pancadas</b>${strokes}`;
+  $('par').hidden = $('strokes').hidden = !isRound();
+  $('dist').hidden = mode === 'range';
+  if (mode === 'nearest') $('hole-name').textContent = `${hole.spec.name} · desafio ${match.hole + 1}/${NEAREST.length}`;
+  if (mode === 'range') $('hole-name').textContent = `Treino · bola ${match.hole + 1}/${RANGE_SHOTS}`;
   $('dist').innerHTML = `<b>Bandeira</b>${pinDistance() < 10 ? pinDistance().toFixed(1) : Math.round(pinDistance())} m`;
   $('lie').innerHTML = `<b>Na</b>${SURFACE_NAME[lie()]}`;
   const c = club(clubId);
@@ -236,6 +260,8 @@ function swing(s: Swing, byComputer = false): void {
   if (a.currentClip?.name !== name) { a.play(name, { loop: false }); a.time = backTime() * Math.max(0.3, s.power); }
   a.speed = 1.15;
   showPower(null);
+  sound.swing(clubId === 'putter' ? 0 : s.power);
+  lastPower = s.power;
   setState('swinging');
 }
 
@@ -245,6 +271,8 @@ function strike(): void {
   shotFrom = { x: ball.pos[0], z: ball.pos[2] };
   hit(ball, pendingShot);
   pendingShot = null;
+  sound.strike(clubId, lastPower);
+  heard = { landed: false, trunk: 0, leaves: false };
   strokes++;
   shotsMade++;
   trail = [[...ball.pos]];
@@ -301,11 +329,15 @@ function showResult(text: string, sub: string, big = false): void {
 /** The ball stopped: say where, and what comes next. */
 function shotOver(): void {
   const travelled = Math.round(Math.hypot(ball.pos[0] - shotFrom.x, ball.pos[2] - shotFrom.z));
+  if (ball.phase === 'holed') sound.cup();
+  if (ball.phase === 'water' || ball.phase === 'out') sound.miss();
+  if (!isRound()) { oneShotOver(); return; }
   if (ball.phase === 'holed') {
     afterResult = 'end-turn';
     const name = scoreName(strokes, hole.spec.par);
     const who = match.players.length > 1 ? `${match.player.name} · ` : '';
     showResult(name, `${who}${strokes} pancada${strokes === 1 ? '' : 's'}`, strokes < hole.spec.par || strokes === 1);
+    if (strokes < hole.spec.par || strokes === 1) sound.chime(strokes === 1 ? 4 : 1 + hole.spec.par - strokes);
     return;
   }
   afterResult = 'next-shot';
@@ -341,17 +373,38 @@ function advance(): void {
   else setState('aim');
 }
 
+/** The one shot of a nearest-the-pin or range turn has stopped: score it. */
+function oneShotOver(): void {
+  afterResult = 'end-turn';
+  const who = match.players.length > 1 ? `${match.player.name} · ` : '';
+  const wet = ball.phase === 'water' || ball.phase === 'out';
+  if (mode === 'nearest') {
+    turnValue = ball.phase === 'holed' ? 0 : wet ? MISS_METRES : Math.round(pinDistance() * 10) / 10;
+    if (ball.phase === 'holed') { sound.chime(4); showResult('Na bandeira!', `${who}0 m`, true); }
+    else if (wet) showResult(ball.phase === 'water' ? 'Água!' : 'Fora!', `${who}contam ${MISS_METRES} m`);
+    else { if (turnValue < 3) sound.chime(2); showResult(`${turnValue.toFixed(1)} m`, `${who}da bandeira`, turnValue < 3); }
+    return;
+  }
+  const travelled = Math.round(Math.hypot(ball.pos[0] - shotFrom.x, ball.pos[2] - shotFrom.z));
+  turnValue = wet ? 0 : rangePoints(targets, ball.pos[0], ball.pos[2]);
+  if (turnValue === 50) sound.chime(3); else if (turnValue === 25) sound.chime(2);
+  showResult(turnValue ? `${turnValue} pontos` : 'Falhou', `${who}${travelled} m`, turnValue === 50);
+}
+
 /** The player holed out (or picked up): the next player, the scorecard after a hole, or the end. */
 function finishTurn(): void {
-  const next = match.finish(strokes);
+  const next = match.finish(isRound() ? strokes : turnValue);
   if (next === 'player') { startTurn(false); return; }
+  // The range goes on ball after ball; its card comes at the end.
+  if (mode === 'range' && next === 'hole') { void startHole(holeOrder[match.hole]); return; }
   showCard(next === 'over');
 }
 
 /** The next player on the tee of this hole (the first one gets the fly-in). */
 function startTurn(first: boolean): void {
   strokes = 0;
-  ball = restingBall(hole.ground, hole.spec.tee.x, hole.spec.tee.z);
+  const from = (mode === 'nearest' ? NEAREST[match.hole].from : undefined) ?? hole.spec.tee;
+  ball = restingBall(hole.ground, from.x, from.z);
   trail = [];
   golferLook.setShirt(match.current);
   showHud();
@@ -379,23 +432,33 @@ async function startHole(i: number): Promise<void> {
   await look.showHole(hole);
   const p = hole.spec.pin;
   look.placeFlag(p.x, hole.ground.height(p.x, p.z), p.z);
+  look.setFlag(mode !== 'range');
+  targets = mode === 'range' ? rangeTargets(hole.spec).map((t) => ({ ...t, y: hole.ground.height(t.x, t.z) })) : [];
+  await look.setTargets(mode === 'range' ? targets : null);
   const length = Math.round(Math.hypot(p.x - hole.spec.tee.x, p.z - hole.spec.tee.z));
-  intro.innerHTML = `<small>Buraco ${holeIndex + 1}</small>${hole.spec.name}<small>Par ${hole.spec.par} · ${length} m</small>`;
-  startTurn(true);
+  intro.innerHTML = mode === 'range' ? '<small>Campo de treino</small>Treino<small>três alvos: 70, 130 e 190 m</small>'
+    : mode === 'nearest' ? `<small>Desafio ${match.hole + 1} de ${NEAREST.length}</small>${hole.spec.name}<small>o mais perto da bandeira</small>`
+      : `<small>Buraco ${holeIndex + 1}</small>${hole.spec.name}<small>Par ${hole.spec.par} · ${length} m</small>`;
+  // The range flies in once; after that each round goes straight to the tee.
+  startTurn(mode !== 'range' || match.hole === 0);
 }
 
 /** The scorecard after a hole (and at the end, before the final screen). */
 function showCard(over: boolean): void {
   const holes = holeOrder.slice(0, Math.max(1, match.hole));
-  const head = `<tr><th></th>${holes.map((h) => `<th>${h + 1}</th>`).join('')}<th>Total</th></tr>`;
-  const par = `<tr class="par"><td>Par</td>${holes.map((h) => `<td>${HOLES[h].par}</td>`).join('')}<td>${holes.reduce((s, h) => s + HOLES[h].par, 0)}</td></tr>`;
+  const head = `<tr><th></th>${holes.map((h, k) => `<th>${isRound() ? h + 1 : k + 1}</th>`).join('')}<th>Total</th></tr>`;
+  const par = isRound() ? `<tr class="par"><td>Par</td>${holes.map((h) => `<td>${HOLES[h].par}</td>`).join('')}<td>${holes.reduce((s, h) => s + HOLES[h].par, 0)}</td></tr>` : '';
+  const cell = (v: number | undefined) => (v === undefined ? '' : mode === 'nearest' ? v.toFixed(1) : String(v));
   const rows = match.players.map((pl, i) => `<tr><td><i style="background:${shirtCss(i)}"></i>${pl.name}</td>${holes.map((h, k) => {
-    const v = pl.strokes[k], d = v - HOLES[h].par;
-    return `<td class="${d < 0 ? 'under' : d > 0 ? 'over' : ''}">${v ?? ''}</td>`;
-  }).join('')}<td><b>${match.total(pl)}</b> <small>${formatToPar(match.toPar(pl))}</small></td></tr>`).join('');
+    const v = pl.strokes[k];
+    const good = isRound() ? v < HOLES[h].par : mode === 'nearest' ? v < 3 : v >= 50;
+    const bad = isRound() ? v > HOLES[h].par : mode === 'nearest' ? v >= MISS_METRES : v === 0;
+    return `<td class="${good ? 'under' : bad ? 'over' : ''}">${cell(v)}</td>`;
+  }).join('')}<td><b>${mode === 'nearest' ? match.total(pl).toFixed(1) : match.total(pl)}</b>${isRound() ? ` <small>${formatToPar(match.toPar(pl))}</small>` : ''}</td></tr>`).join('');
   $('card-table').innerHTML = head + par + rows;
-  $('card-title').textContent = over ? 'Cartão final' : `Depois do buraco ${match.hole}`;
-  $('card-next').textContent = over ? 'Ver resultado' : `Buraco ${holeOrder[match.hole] + 1}`;
+  const step = isRound() ? 'buraco' : mode === 'nearest' ? 'desafio' : 'bola';
+  $('card-title').textContent = over ? 'Cartão final' : `Depois do ${step} ${match.hole}`;
+  $('card-next').textContent = over ? 'Ver resultado' : isRound() ? `Buraco ${holeOrder[match.hole] + 1}` : 'Continuar';
   setState('card');
 }
 
@@ -406,24 +469,25 @@ function leaveCard(): void {
 }
 
 /** The best score on this device for a mode, and whether this one beats it. */
-function bestOf(key: string, total: number): string {
-  let best = Infinity;
-  try { best = Number(localStorage.getItem(`golf.best.${key}`)) || Infinity; } catch { /* no storage */ }
-  if (total < best) {
+function bestOf(key: string, total: number, highWins = false): string {
+  let stored: number | null = null;
+  try { const v = localStorage.getItem(`golf.best.${key}`); stored = v === null ? null : Number(v); } catch { /* no storage */ }
+  if (stored === null || (highWins ? total > stored : total < stored)) {
     try { localStorage.setItem(`golf.best.${key}`, String(total)); } catch { /* no storage */ }
-    return best === Infinity ? '' : 'Novo recorde neste aparelho!';
+    return stored === null ? '' : 'Novo recorde neste aparelho!';
   }
-  return `Recorde neste aparelho: ${best}`;
+  return `Recorde neste aparelho: ${mode === 'nearest' ? `${stored.toFixed(1)} m` : stored}`;
 }
 
 function showFinal(): void {
   const ranking = match.ranking();
   $('final-list').innerHTML = ranking.map((pl, k) => {
     const i = match.players.indexOf(pl);
-    return `<li class="rank${k === 0 ? ' first' : ''}"><div class="head"><i style="background:${shirtCss(i)}"></i>${pl.name}<em>${formatToPar(match.toPar(pl))}</em><b>${match.total(pl)}</b></div></li>`;
+    const total = mode === 'nearest' ? `${match.total(pl).toFixed(1)} m` : mode === 'range' ? `${match.total(pl)} pts` : String(match.total(pl));
+    return `<li class="rank${k === 0 ? ' first' : ''}"><div class="head"><i style="background:${shirtCss(i)}"></i>${pl.name}<em>${isRound() ? formatToPar(match.toPar(pl)) : ''}</em><b>${total}</b></div></li>`;
   }).join('');
   const humans = ranking.filter((pl) => !pl.cpu);
-  $('final-note').textContent = humans.length === 1 ? bestOf(mode, match.total(humans[0])) : '';
+  $('final-note').textContent = humans.length === 1 ? bestOf(mode, match.total(humans[0]), mode === 'range') : '';
   $('final-title').textContent = match.players.length > 1 ? `Ganhou ${ranking[0].name}!` : 'Fim da volta';
   setState('over');
 }
@@ -431,8 +495,10 @@ function showFinal(): void {
 /** Starts a game with the start screen's choices. */
 function startMatch(): void {
   const chosen = Array.from({ length: selectedCount }, (_, i) => names[i]?.trim() || `Jogador ${i + 1}`);
-  holeOrder = mode === 'round3' ? [0, 1, 2] : HOLES.map((_, i) => i);
-  match = new GolfMatch<CpuSkill>(chosen, holeOrder.map((h) => HOLES[h].par), cpuSkill ?? undefined);
+  holeOrder = mode === 'round3' ? [0, 1, 2] : mode === 'nearest' ? NEAREST.map((c) => c.hole)
+    : mode === 'range' ? Array.from({ length: RANGE_SHOTS }, () => 0) : HOLES.map((_, i) => i);
+  const scoring = mode === 'nearest' ? 'metres' : mode === 'range' ? 'points' : 'strokes';
+  match = new GolfMatch<CpuSkill>(chosen, holeOrder.map((h) => (isRound() ? HOLES[h].par : 0)), cpuSkill ?? undefined, scoring);
   try {
     localStorage.setItem('golf.names', JSON.stringify(names));
     localStorage.setItem('golf.players', String(selectedCount));
@@ -494,7 +560,10 @@ function goToMenu(): void {
 function updateCpu(): void {
   if (!cpuTurn || state !== 'aim' || paused) return;
   if (!cpuTurn.plan && stateTime > 0.8) {
-    cpuTurn.plan = planShot(match.player.cpu!, hole, course, { x: ball.pos[0], z: ball.pos[2] }, reach, cpuRandom);
+    // On the range it picks a target and plays at it as if it were the pin.
+    const t = mode === 'range' ? targets[Math.floor(cpuRandom() * targets.length)] : null;
+    const h = t ? { ...hole, spec: { ...hole.spec, pin: t, fairway: [] } } : hole;
+    cpuTurn.plan = planShot(match.player.cpu!, h, t ? { ...course, cup: t } : course, { x: ball.pos[0], z: ball.pos[2] }, reach, cpuRandom);
     clubId = cpuTurn.plan.club;
     aim = cpuTurn.plan.aim;
     showHud();
@@ -605,6 +674,10 @@ function update(dt: number): void {
       steps++;
       if (steps % 4 === 0 && ball.phase === 'flying') trail.push([...ball.pos]);
     }
+    if (ball.landed && !heard.landed) { heard.landed = true; sound.land(lie(), Math.hypot(...ball.vel)); }
+    if (ball.trunkHits > heard.trunk) { heard.trunk = ball.trunkHits; sound.trunk(); }
+    if (ball.inLeaves && !heard.leaves) { heard.leaves = true; sound.leaves(); }
+    if (ball.phase === 'water') sound.splash();
     if (ball.phase !== 'flying' && ball.phase !== 'rolling') shotOver();
     else showHud();
   } else if (state === 'result') {
@@ -777,6 +850,7 @@ async function start(): Promise<void> {
     onTap: () => { if (state === 'card') leaveCard(); else advance(); },
   });
   Pointer.onDown(() => {
+    sound.unlock();
     if (paused) return;
     if (state === 'result' || state === 'intro') advance();
     else if (humanAims() && gyro.enabled) gyro.hold();
@@ -818,7 +892,21 @@ async function start(): Promise<void> {
   $('final-menu').addEventListener('click', goToMenu);
   $('card-next').addEventListener('click', leaveCard);
   document.addEventListener('visibilitychange', () => { if (document.hidden) openPause(); });
+  let muted = false;
+  try { muted = localStorage.getItem('golf.muted') === '1'; } catch { /* no storage */ }
+  const soundButton = $('sound') as HTMLButtonElement;
+  const showSound = () => { soundButton.textContent = muted ? '🔇 Sem som' : '🔊 Som'; soundButton.classList.toggle('on', !muted); };
+  sound.setMuted(muted);
+  showSound();
+  soundButton.addEventListener('click', () => {
+    muted = !muted;
+    sound.setMuted(muted);
+    sound.unlock();
+    try { localStorage.setItem('golf.muted', muted ? '1' : '0'); } catch { /* no storage */ }
+    showSound();
+  });
   window.addEventListener('keydown', (e) => {
+    sound.unlock();
     if (e.repeat || (e.target as HTMLElement)?.tagName === 'INPUT') return;
     if (state === 'setup') {
       const n = Number(e.key);

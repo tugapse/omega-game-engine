@@ -73,7 +73,8 @@
     /* Hidden on the start screen. */
     .gone { visibility: hidden; }
     #player-chip { border-left: 4px solid var(--shirt, var(--cyan)); font-weight: 700; }
-    #player-chip[hidden] { display: none; }
+    #player-chip[hidden], .chip[hidden] { display: none; }
+    .toggle.on { color: var(--lime); border-color: var(--lime); }
     #pause { position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: max(128px, calc(env(safe-area-inset-bottom) + 112px)); width: 44px; height: 44px; border-radius: 50%; background: var(--panel); border: 1px solid var(--cyan); box-shadow: 0 0 10px rgba(45, 226, 255, .35); font-size: 15px; font-weight: 800; letter-spacing: 1px; color: var(--cyan); }
     #pause[hidden] { display: none; }
     #turn { top: 26%; left: 0; right: 0; text-align: center; font-family: var(--display); font-size: 26px; color: var(--fg); opacity: 0; text-shadow: 0 0 10px var(--shirt, var(--cyan)), 0 2px 12px #000; }
@@ -182,7 +183,7 @@
     <div class="card">
       <h1 class="logo">Omega<span>Golf</span></h1>
       <span class="label">Jogo</span>
-      <div class="seg"><button data-mode="round9">9 buracos</button><button data-mode="round3">3 buracos</button></div>
+      <div class="seg"><button data-mode="round9">9 buracos</button><button data-mode="round3">3 buracos</button><button data-mode="nearest">Bandeira</button><button data-mode="range">Treino</button></div>
       <p id="mode-info"></p>
       <span class="label">Jogadores</span>
       <div class="seg"><button data-players="1">1</button><button data-players="2">2</button><button data-players="3">3</button><button data-players="4">4</button></div>
@@ -199,6 +200,7 @@
       <button id="resume" class="big">Continuar</button>
       <button id="restart" class="ghost">Recomeçar</button>
       <button id="to-menu" class="ghost">Menu</button>
+      <button id="sound" class="ghost toggle">Som</button>
     </div>
   </div>
 
