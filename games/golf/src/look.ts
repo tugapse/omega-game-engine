@@ -2,11 +2,11 @@
 // the aim marker, the sky and the light.
 import { vec2, vec3 } from 'gl-matrix';
 import {
-  Color, CubePrimitive, DirectionalLight, Light, LitMaterial, LitShader, Mesh, MeshData, MeshRendererBehaviour,
+  Color, CubePrimitive, DirectionalLight, LathePrimitive, Light, LitMaterial, LitShader, Mesh, MeshData, MeshRendererBehaviour,
   Resources, Scene, SceneEntity, SpherePrimitive, Texture,
 } from '../../../src';
-import { BALL } from './ball';
-import { Hole } from './course';
+import { BALL, Tree } from './ball';
+import { Hole, WaterShape } from './course';
 import { HeightField, Surface } from './terrain';
 
 type Gl = WebGL2RenderingContext;
@@ -48,7 +48,7 @@ function render(gl: Gl, entity: SceneEntity, meshData: MeshData, m: LitMaterial)
   entity.addBehaviour(renderer);
 }
 
-function entity(scene: Scene, name: string, parent?: SceneEntity): SceneEntity {
+function makeEntity(scene: Scene, name: string, parent?: SceneEntity): SceneEntity {
   const e = new SceneEntity(name);
   if (parent) e.transform.setParent(parent.transform);
   scene.addEntity(e);
@@ -75,7 +75,58 @@ export function terrainMesh(field: HeightField): MeshData {
       idx.push(a, c, b, b, c, d);
     }
   }
-  return new MeshData(v, nrm, uv, idx);
+  const m = new MeshData(v, nrm, uv, idx);
+  m.providedNormals = true;
+  return m;
+}
+
+/** Copies of `part`, each moved and scaled, as one mesh (the engine has no instancing). */
+function merge(part: MeshData, places: { at: number[]; scale: number[] }[]): MeshData {
+  const v: vec3[] = [], n: vec3[] = [], uv: vec2[] = [], idx: number[] = [];
+  for (const { at, scale } of places) {
+    const base = v.length;
+    part.vertices.forEach((p, i) => {
+      v.push([p[0] * scale[0] + at[0], p[1] * scale[1] + at[1], p[2] * scale[2] + at[2]]);
+      const q = part.normals[i] ?? [0, 1, 0];
+      const nx = q[0] / scale[0], ny = q[1] / scale[1], nz = q[2] / scale[2], l = Math.hypot(nx, ny, nz) || 1;
+      n.push([nx / l, ny / l, nz / l]);
+      uv.push(part.uvs[i] ?? [0, 0]);
+    });
+    for (const i of part.indices) idx.push(base + i);
+  }
+  const m = new MeshData(v, n, uv, idx);
+  m.providedNormals = true;
+  return m;
+}
+
+/** A flat water surface: an ellipse (a fan) or a band along a line, at `level`. */
+function waterMesh(shape: WaterShape, level: number): MeshData {
+  const v: vec3[] = [], uv: vec2[] = [], idx: number[] = [];
+  if (shape.kind === 'lake') {
+    const c = Math.cos(shape.rot ?? 0), s = Math.sin(shape.rot ?? 0), seg = 40;
+    v.push([shape.x, level, shape.z]); uv.push([0.5, 0.5]);
+    for (let i = 0; i <= seg; i++) {
+      const a = (i / seg) * Math.PI * 2, u = Math.cos(a) * (shape.rx + 1.5), w = Math.sin(a) * (shape.rz + 1.5);
+      v.push([shape.x + u * c - w * s, level, shape.z + u * s + w * c]); uv.push([0.5 + Math.cos(a) / 2, 0.5 + Math.sin(a) / 2]);
+      if (i > 0) idx.push(0, i + 1, i);
+    }
+  } else {
+    const half = shape.width / 2 + 1.5;
+    shape.line.forEach((p, i) => {
+      const a = shape.line[Math.max(0, i - 1)], b = shape.line[Math.min(shape.line.length - 1, i + 1)];
+      const dx = b.x - a.x, dz = b.z - a.z, l = Math.hypot(dx, dz) || 1;
+      const nx = -dz / l, nz = dx / l;
+      v.push([p.x + nx * half, level, p.z + nz * half], [p.x - nx * half, level, p.z - nz * half]);
+      uv.push([0, i], [1, i]);
+      if (i > 0) { const k = i * 2; idx.push(k - 2, k - 1, k, k - 1, k + 1, k); }
+    });
+  }
+  // Facing up either way round.
+  const tri = idx.slice();
+  for (let i = 0; i < tri.length; i += 3) idx.push(tri[i], tri[i + 2], tri[i + 1]);
+  const m = new MeshData(v, v.map(() => [0, 1, 0] as vec3), uv, idx);
+  m.providedNormals = true;
+  return m;
 }
 
 /** Paints the surface grid, one pixel per cell, with mowing stripes and a little noise. */
@@ -99,28 +150,57 @@ function drawSurfaces(c: CanvasRenderingContext2D, field: HeightField): void {
   c.putImageData(img, 0, 0);
 }
 
+export interface HoleLook {
+  /** Every entity of the hole (show is not inherited, so each is shown or hidden). */
+  parts: SceneEntity[];
+}
+
 export interface CourseLook {
   ball: SceneEntity;
   flag: SceneEntity;
   marker: SceneEntity;
   /** Puts the flag (and cup) at a point on the ground. */
   placeFlag(x: number, y: number, z: number): void;
+  /** Shows this hole's ground, water and trees (built the first time), hides the others. */
+  showHole(hole: Hole): Promise<void>;
 }
 
 /** How much bigger the ball is drawn than it is, so it can be seen. */
 export const BALL_LOOK = 1.6;
 
-export async function dressCourse(gl: Gl, scene: Scene, hole: Hole): Promise<CourseLook> {
+async function dressHole(gl: Gl, scene: Scene, hole: Hole, mats: { water: LitMaterial; trunk: LitMaterial; leaves: LitMaterial; skirt: LitMaterial }): Promise<HoleLook> {
   const field = hole.ground;
+  const parts: SceneEntity[] = [];
+  const entity = (sc: Scene, name: string, parent?: SceneEntity) => { const e = makeEntity(sc, name, parent); parts.push(e); return e; };
+  const root = entity(scene, `Hole ${hole.spec.name}`);
   const tex = await canvasTexture(gl, field.snx, field.snz, (c) => drawSurfaces(c, field));
-  const ground = entity(scene, 'Terrain');
+  const ground = entity(scene, 'Terrain', root);
   render(gl, ground, terrainMesh(field), await material(gl, [1, 1, 1], { tex, specular: 0, roughness: 1 }));
   // A wide skirt below the edges, so the world does not end at the hole's area.
-  const skirt = entity(scene, 'Skirt');
+  const skirt = entity(scene, 'Skirt', root);
   const lowest = field.heights.reduce((a, b) => Math.min(a, b), Infinity);
   skirt.transform.setLocalPosition((field.x0 + field.x1) / 2, lowest - 3.5, (field.z0 + field.z1) / 2);
   skirt.transform.setLocalScale(1500, 1, 1500);
-  render(gl, skirt, new CubePrimitive(1), await material(gl, SURFACE_RGB.out.map((c) => (c / 255) * 0.85), { specular: 0, roughness: 1 }));
+  render(gl, skirt, new CubePrimitive(1), mats.skirt);
+  hole.water.forEach((w, i) => render(gl, entity(scene, `Water ${i}`, root), waterMesh(w.shape, w.level), mats.water));
+  if (hole.trees.length) {
+    const trunk = new LathePrimitive([[1, 0], [0.8, 0.5], [0.6, 1]], 7);
+    const crown = new SpherePrimitive(1, 9, 6);
+    render(gl, entity(scene, 'Trunks', root), merge(trunk, hole.trees.map((t: Tree) => ({ at: [t.x, t.y - 0.2, t.z], scale: [t.trunkRadius, t.canopyY - t.y, t.trunkRadius] }))), mats.trunk);
+    render(gl, entity(scene, 'Crowns', root), merge(crown, hole.trees.map((t: Tree) => ({ at: [t.x, t.canopyY, t.z], scale: [t.canopyRadius, t.canopyRadius * 1.15, t.canopyRadius] }))), mats.leaves);
+  }
+  return { parts };
+}
+
+export async function dressCourse(gl: Gl, scene: Scene): Promise<CourseLook> {
+  const entity = makeEntity;
+  const mats = {
+    water: await material(gl, [0.2, 0.52, 0.85], { specular: 0.9, roughness: 0.15 }),
+    trunk: await material(gl, [0.42, 0.29, 0.18]),
+    leaves: await material(gl, [0.2, 0.48, 0.2], { specular: 0.05 }),
+    skirt: await material(gl, SURFACE_RGB.out.map((c) => (c / 255) * 0.85), { specular: 0, roughness: 1 }),
+  };
+  const looks = new Map<Hole, HoleLook>();
 
   const ball = entity(scene, 'Ball');
   render(gl, ball, new SpherePrimitive(BALL.radius * BALL_LOOK, 20, 12), await material(gl, [1, 1, 1], { specular: 0.6, roughness: 0.3 }));
@@ -139,7 +219,7 @@ export async function dressCourse(gl: Gl, scene: Scene, hole: Hole): Promise<Cou
   cup.transform.setLocalScale(BALL.cupRadius, 0.004, BALL.cupRadius);
   render(gl, cup, new CubePrimitive(2), await material(gl, [0.05, 0.05, 0.05]));
 
-  // Where the ball should land: a ring of four bright bars on the ground.
+  // Where the ball should land: a ring of four bright bars on the ground and a beacon above.
   const marker = entity(scene, 'Marker');
   const markMat = await material(gl, [0.2, 0.95, 1]);
   for (let k = 0; k < 4; k++) {
@@ -149,7 +229,6 @@ export async function dressCourse(gl: Gl, scene: Scene, hole: Hole): Promise<Cou
     bar.transform.setLocalScale(k % 2 ? 1.2 : 0.18, 0.05, k % 2 ? 0.18 : 1.2);
     render(gl, bar, new CubePrimitive(2), markMat);
   }
-  // A thin beacon above it, so it can be seen from far away.
   const beacon = entity(scene, 'Beacon', marker);
   beacon.transform.setLocalPosition(0, 3, 0);
   beacon.transform.setLocalScale(0.12, 3, 0.12);
@@ -167,5 +246,9 @@ export async function dressCourse(gl: Gl, scene: Scene, hole: Hole): Promise<Cou
   return {
     ball, flag, marker,
     placeFlag(x, y, z) { flag.transform.setLocalPosition(x, y, z); },
+    async showHole(hole) {
+      if (!looks.has(hole)) looks.set(hole, await dressHole(gl, scene, hole, mats));
+      for (const [h, l] of looks) for (const e of l.parts) e.show = h === hole;
+    },
   };
 }

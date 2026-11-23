@@ -1,6 +1,6 @@
 // The five clubs, and how a swing (power and curve) becomes a shot.
 import { Shot } from './ball';
-import { FEEL } from './terrain';
+import { FEEL, Surface } from './terrain';
 
 export type ClubId = 'driver' | 'wood' | 'iron' | 'wedge' | 'putter';
 
@@ -68,4 +68,15 @@ export function suggestClub(distance: number, reach: Record<ClubId, number>, onG
     if (reach[id] >= distance) return id;
   }
   return fromTee ? 'driver' : 'wood';
+}
+
+/**
+ * How much of its speed a club keeps from this lie: the rough grabs the club,
+ * sand takes most of it (less with the wedge, made for it). Putts are untouched.
+ */
+export function lieFactor(lie: Surface, id: ClubId): number {
+  if (id === 'putter') return 1;
+  if (lie === 'rough') return id === 'wedge' || id === 'iron' ? 0.82 : 0.72;
+  if (lie === 'sand') return id === 'wedge' ? 0.75 : 0.45;
+  return 1;
 }
