@@ -64,6 +64,7 @@
     .actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
     .actions button { font-family: var(--display); font-size: 15px; padding: 9px 16px; border-radius: 12px; border: 1px solid var(--orange); background: rgba(255, 138, 61, .15); color: var(--fg); cursor: pointer; }
     .actions button:first-child { background: var(--orange); color: #0c0918; }
+    .actions.toggles button { font-family: system-ui, sans-serif; font-size: 13px; padding: 6px 12px; background: rgba(12, 9, 24, .6); color: var(--fg); border-color: var(--line); }
 
     #loading { position: fixed; inset: 0; display: grid; place-content: center; gap: 14px; text-align: center; background: #0c0918; transition: opacity .5s; }
     #loading.done { opacity: 0; pointer-events: none; }
@@ -104,11 +105,12 @@
   <div id="pause" class="screen" hidden>
     <div class="panel">
       <h2>Pausa</h2>
-      <p id="keys">↑ acelera · ↓ trava e faz marcha-atrás · ← → vira · espaço é o travão de mão · R volta à pista</p>
+      <p id="keys">↑ acelera · ↓ trava e faz marcha-atrás · ← → vira · espaço é o travão de mão · R volta à pista · para derrapar: vira e toca no espaço; para sair, vira para o outro lado</p>
       <div class="actions">
         <button data-act="resume">Continuar</button>
         <button data-act="restart">Recomeçar</button>
       </div>
+      <div class="actions toggles"><button data-act="assist">Ajuda ao drift: ligada</button></div>
     </div>
   </div>
 

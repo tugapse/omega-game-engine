@@ -65,6 +65,15 @@ let scene: Scene, engine: Engine;
 let quality = 1;
 /** Steps not yet run (s), the time on track (s), and the last wall hit (m/s), for the HUD. */
 let pending = 0;
+/** Settings kept in the browser: the drift assist (on by default). */
+const settings = { assist: true };
+try { Object.assign(settings, JSON.parse(localStorage.getItem('omega-drift-settings') ?? '{}')); } catch { /* none kept */ }
+function saveSettings(): void {
+  try { localStorage.setItem('omega-drift-settings', JSON.stringify(settings)); } catch { /* private mode */ }
+  const b = document.querySelector('[data-act="assist"]');
+  if (b) b.textContent = `Ajuda ao drift: ${settings.assist ? 'ligada' : 'desligada'}`;
+  if (car) car.assist = settings.assist;
+}
 let clock = 0;
 let bump = 0;
 
@@ -72,6 +81,7 @@ let bump = 0;
 function reset(atStart = false): void {
   const p = track.samples[atStart || !place ? 0 : place.index];
   car = makeCar(p.x, p.y, Math.atan2(p.ty, p.tx), car?.spec);
+  car.assist = settings.assist;
   place = keepOnTrack(track, car);
   chase = makeChase(car);
   controls.clear();
@@ -100,7 +110,7 @@ function hud(): void {
   $('speed').textContent = String(kmh);
   $('gear').textContent = car.reversing ? 'R' : forwardSpeed(car) < 0.5 && kmh < 2 ? 'N' : 'D';
   const angle = Math.abs(driftAngle(car)) * 180 / Math.PI;
-  const drifting = angle > 12 && speedOf(car) > 10;
+  const drifting = !!car.drift || (angle > 12 && speedOf(car) > 10);
   const meter = $('drift');
   meter.hidden = !drifting;
   if (drifting) $('drift-angle').textContent = `${Math.round(angle)}°`;
@@ -202,15 +212,17 @@ async function start(): Promise<void> {
 
   const touchOn = params.has('touch') || matchMedia('(pointer: coarse)').matches;
   $('touch').hidden = !touchOn;
-  if (touchOn) $('keys').textContent = 'Arrasta à esquerda para virar (para baixo trava) · acelerador e travão de mão à direita';
+  if (touchOn) $('keys').textContent = 'Arrasta à esquerda para virar (para baixo trava) · acelerador e travão de mão à direita · para derrapar: vira e toca no travão de mão; para sair, vira para o outro lado';
   controls.bindTouch($('wheel-area'), $('knob'), $('btn-gas'), $('btn-hand'));
   $('stats').hidden = !debug;
+  saveSettings();
   $('pause-button').addEventListener('click', () => pause());
   $('reset-button').addEventListener('click', () => reset());
   $('pause').addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest('button');
     if (b?.dataset.act === 'resume') resume();
     else if (b?.dataset.act === 'restart') { reset(true); clock = 0; resume(); }
+    else if (b?.dataset.act === 'assist') { settings.assist = !settings.assist; saveSettings(); }
   });
   window.addEventListener('keydown', (e) => {
     if (state === 'play' && (e.code === 'Escape' || e.code === 'KeyP')) pause();

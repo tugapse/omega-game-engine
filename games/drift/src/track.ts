@@ -2,7 +2,7 @@
 // sampled every metre or so) with a width. Across it, from the middle out:
 // the road, a kerb, a strip of grass, then a wall. It answers where the car
 // is along and across it, what is under it, and pushes it off the walls.
-import { Car } from './car';
+import { Car, endDrift } from './car';
 
 export interface TrackSpec {
   name: string;
@@ -169,6 +169,7 @@ export function keepOnTrack(track: Track, car: Car, hint = -1): Place & { hit: n
       car.vx = tx * WALL.scrape - into * WALL.bounce * nx;
       car.vy = ty * WALL.scrape - into * WALL.bounce * ny;
       car.spin *= 0.6;
+      if (into > 3) endDrift(car);
     }
     place = placeOn(track, car.x, car.y, place.index);
   }
