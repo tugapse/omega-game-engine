@@ -26,6 +26,9 @@ export class GolfSound {
     if (this.ctx.state === 'suspended') void this.ctx.resume();
   }
 
+  /** The audio context once unlocked (the music plays through it too). */
+  context(): AudioContext | null { return this.ctx; }
+
   setMuted(muted: boolean): void {
     this.muted = muted;
     if (this.out && this.ctx) this.out.gain.setTargetAtTime(muted ? 0 : 0.7, this.ctx.currentTime, 0.02);

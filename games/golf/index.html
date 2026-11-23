@@ -75,6 +75,8 @@
     #player-chip { border-left: 4px solid var(--shirt, var(--cyan)); font-weight: 700; }
     #player-chip[hidden], .chip[hidden] { display: none; }
     .toggle.on { color: var(--lime); border-color: var(--lime); }
+    .toggles { display: flex; gap: 8px; }
+    .toggles .ghost { flex: 1; }
     #pause { position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: max(128px, calc(env(safe-area-inset-bottom) + 112px)); width: 44px; height: 44px; border-radius: 50%; background: var(--panel); border: 1px solid var(--cyan); box-shadow: 0 0 10px rgba(45, 226, 255, .35); font-size: 15px; font-weight: 800; letter-spacing: 1px; color: var(--cyan); }
     #pause[hidden] { display: none; }
     #turn { top: 26%; left: 0; right: 0; text-align: center; font-family: var(--display); font-size: 26px; color: var(--fg); opacity: 0; text-shadow: 0 0 10px var(--shirt, var(--cyan)), 0 2px 12px #000; }
@@ -200,7 +202,7 @@
       <button id="resume" class="big">Continuar</button>
       <button id="restart" class="ghost">Recomeçar</button>
       <button id="to-menu" class="ghost">Menu</button>
-      <button id="sound" class="ghost toggle">Som</button>
+      <div class="toggles"><button id="sound" class="ghost toggle">Som</button><button id="music" class="ghost toggle">Música</button></div>
     </div>
   </div>
 

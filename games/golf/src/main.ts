@@ -15,6 +15,7 @@ import { CPU_NAMES, CpuPlan, CpuSkill, planShot } from './cpu';
 import { seeded } from './course';
 import { MISS_METRES, NEAREST, rangePoints, rangeTargets, RANGE_SHOTS } from './modes';
 import { GolfSound } from './sound';
+import { GolfMusic } from './music';
 import { buildGolfer, GolferRig, IMPACT_TIME, PUTT_BACK_TIME, PUTT_IMPACT_TIME, setShaft, SHAFT, TOP_TIME } from './golfer';
 import { GyroSwing } from './gyro';
 import { scoreName } from './score';
@@ -57,6 +58,13 @@ let targets: { x: number; y: number; z: number }[] = [];
 /** The score of the turn just played in the one-shot games (metres or points). */
 let turnValue = 0;
 const sound = new GolfSound();
+const music = new GolfMusic(() => sound.context());
+let musicOn = true;
+/** Unlocks audio (it needs a gesture) and starts the music if it is on. */
+function unlockAudio(): void {
+  sound.unlock();
+  if (musicOn && !music.playing) music.start();
+}
 /** What the flight has already made a sound for. */
 let heard = { landed: false, trunk: 0, leaves: false };
 let mode: Mode = 'round9';
@@ -113,6 +121,11 @@ let golferLook: GolferLook;
 /** The shot chosen by the swing, struck when the club reaches the ball. */
 let pendingShot: Shot | null = null;
 let lastPower = 0;
+/** The downswing in progress: the clip time it started from, and seconds since. */
+let downswing = { from: 0, t: 0 };
+const DOWNSWING = 0.15;
+/** When the last swing was asked for and when its ball left (ms), to check the delay. */
+const timing = { swing: 0, strike: 0 };
 const gyro = new GyroSwing();
 const scratch = vec3.create();
 
@@ -258,8 +271,12 @@ function swing(s: Swing, byComputer = false): void {
   const name = swingClip();
   const a = golfer.animator;
   if (a.currentClip?.name !== name) { a.play(name, { loop: false }); a.time = backTime() * Math.max(0.3, s.power); }
-  a.speed = 1.15;
+  // A quick downswing on the game's own clock: the club reaches the ball 0.15 s
+  // after the flick, wherever the backswing stopped, whatever the frame rate.
+  a.speed = 0;
+  downswing = { from: a.time, t: 0 };
   showPower(null);
+  timing.swing = performance.now();
   sound.swing(clubId === 'putter' ? 0 : s.power);
   lastPower = s.power;
   setState('swinging');
@@ -271,6 +288,8 @@ function strike(): void {
   shotFrom = { x: ball.pos[0], z: ball.pos[2] };
   hit(ball, pendingShot);
   pendingShot = null;
+  golfer.animator.speed = 1; // the follow-through at its own pace
+  timing.strike = performance.now();
   sound.strike(clubId, lastPower);
   heard = { landed: false, trunk: 0, leaves: false };
   strokes++;
@@ -544,11 +563,13 @@ function openPause(): void {
   if (state === 'setup' || state === 'over' || state === 'loading' || paused) return;
   paused = true;
   pauseMenu.classList.add('show');
+  music.duck(true);
 }
 
 function closePause(): void {
   paused = false;
   pauseMenu.classList.remove('show');
+  music.duck(false);
 }
 
 function goToMenu(): void {
@@ -663,7 +684,12 @@ function update(dt: number): void {
   // The pole would block a short putt: it comes out when the ball is close.
   look.setPole(!(state !== 'intro' && pinDistance() < 6 && lie() === 'green'));
   updateCpu();
-  if (state === 'swinging' && golfer.animator.time >= impactTime()) strike();
+  if (state === 'swinging') {
+    downswing.t += dt;
+    const k = Math.min(1, downswing.t / DOWNSWING);
+    golfer.animator.time = downswing.from + (impactTime() - downswing.from) * k * k; // speeding up into the ball
+    if (k >= 1) strike();
+  }
   if (state === 'flight') {
     // A little faster than real time in the air: long shots take a while.
     accumulator += dt * (ball.phase === 'flying' ? 1.4 : 1.2);
@@ -850,7 +876,7 @@ async function start(): Promise<void> {
     onTap: () => { if (state === 'card') leaveCard(); else advance(); },
   });
   Pointer.onDown(() => {
-    sound.unlock();
+    unlockAudio();
     if (paused) return;
     if (state === 'result' || state === 'intro') advance();
     else if (humanAims() && gyro.enabled) gyro.hold();
@@ -898,6 +924,16 @@ async function start(): Promise<void> {
   const showSound = () => { soundButton.textContent = muted ? '🔇 Sem som' : '🔊 Som'; soundButton.classList.toggle('on', !muted); };
   sound.setMuted(muted);
   showSound();
+  try { musicOn = localStorage.getItem('golf.music') !== '0'; } catch { /* no storage */ }
+  const musicButton = $('music') as HTMLButtonElement;
+  const showMusic = () => { musicButton.textContent = musicOn ? '♪ Música' : '♪ Sem música'; musicButton.classList.toggle('on', musicOn); };
+  showMusic();
+  musicButton.addEventListener('click', () => {
+    musicOn = !musicOn;
+    if (musicOn) { sound.unlock(); music.start(); music.duck(paused); } else music.stop();
+    try { localStorage.setItem('golf.music', musicOn ? '1' : '0'); } catch { /* no storage */ }
+    showMusic();
+  });
   soundButton.addEventListener('click', () => {
     muted = !muted;
     sound.setMuted(muted);
@@ -906,7 +942,7 @@ async function start(): Promise<void> {
     showSound();
   });
   window.addEventListener('keydown', (e) => {
-    sound.unlock();
+    unlockAudio();
     if (e.repeat || (e.target as HTMLElement)?.tagName === 'INPUT') return;
     if (state === 'setup') {
       const n = Number(e.key);
@@ -940,7 +976,7 @@ async function start(): Promise<void> {
   });
   (window as any).golf = {
     get state() { return state; }, get ball() { return ball; }, get strokes() { return strokes; }, get aim() { return aim; },
-    get club() { return clubId; }, get golfer() { return golfer; }, reach, get hole() { return hole; }, get holeIndex() { return holeIndex; }, startHole, get match() { return match; }, startMatch, chooseMode, chooseCpu, selectCount, leaveCard, goToMenu, openPause, closePause, get paused() { return paused; }, get wind() { return wind; }, swing, advance, turnAim, changeClub,
+    get club() { return clubId; }, get golfer() { return golfer; }, reach, get hole() { return hole; }, get holeIndex() { return holeIndex; }, startHole, get match() { return match; }, startMatch, chooseMode, chooseCpu, selectCount, leaveCard, goToMenu, openPause, closePause, get paused() { return paused; }, music, timing, get wind() { return wind; }, swing, advance, turnAim, changeClub,
     placeBall(x: number, z: number) { ball = restingBall(hole.ground, x, z); setState('aim'); snapCamera(); },
     toggleMap, showPower,
     setClub(id: ClubId) { clubId = id; showHud(); placeMarker(); },
