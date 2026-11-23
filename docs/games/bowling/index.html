@@ -81,7 +81,9 @@
     @keyframes blink { 50% { opacity: .35; } }
 
     /* Full screens: start, pause, end, loading. */
-    .screen { position: fixed; inset: 0; display: none; place-items: center; padding: 16px; box-sizing: border-box; background: rgba(7, 5, 13, .6); overflow-y: auto; }
+    .screen { position: fixed; inset: 0; display: none; padding: 16px; box-sizing: border-box; background: rgba(7, 5, 13, .6); overflow-y: auto; }
+    /* margin: auto centres the card but, unlike centring the grid, keeps a card taller than the screen scrollable from its top. */
+    .screen .card { margin: auto; }
     .screen.show { display: grid; }
     .card { width: min(100%, 380px); box-sizing: border-box; padding: 20px 18px; text-align: center; background: var(--panel); border: 1px solid rgba(45, 226, 255, .5); border-radius: 16px; box-shadow: 0 0 24px rgba(45, 226, 255, .18), inset 0 0 30px rgba(255, 62, 165, .05); backdrop-filter: blur(4px); }
     .logo { margin: 0 0 14px; font-family: var(--display); font-weight: 400; font-size: 34px; line-height: 1; color: var(--pink); text-shadow: 0 0 10px rgba(255, 62, 165, .9), 0 0 26px rgba(255, 62, 165, .45); }
@@ -113,6 +115,19 @@
     .rank.first .head { color: var(--gold); }
     #final-note { margin: 10px 0 0; font-size: 14px; font-weight: 600; color: var(--cyan); }
     #final-note:empty { display: none; }
+    /* Short screens (a phone on its side): a tighter card, so Play stays in reach. */
+    @media (max-height: 520px) {
+      .card { padding: 12px 16px; width: min(100%, 520px); }
+      .logo { font-size: 24px; margin-bottom: 6px; }
+      .logo span { display: inline; font-size: 24px; margin-left: 8px; letter-spacing: .04em; }
+      .label { margin: 8px 0 4px; }
+      #mode-info { min-height: 0; margin-top: 4px; font-size: 12px; }
+      .seg button { padding: 7px 4px; }
+      .big { margin-top: 10px; padding: 10px; font-size: 18px; }
+      .ghost { padding: 8px; margin-top: 6px; }
+      #names { grid-template-columns: repeat(4, 1fr); }
+      #names input { padding: 5px 6px 5px 22px; font-size: 13px; background-position: 0 0; }
+    }
     #loading { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 18px; background: #07050d; transition: opacity .4s; }
     #loading.done { opacity: 0; pointer-events: none; }
     #loading .logo { margin: 0; }
