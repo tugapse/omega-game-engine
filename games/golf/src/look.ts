@@ -8,6 +8,7 @@ import {
 import { BALL, Tree } from './ball';
 import { Hole, WaterShape } from './course';
 import { HeightField, Surface } from './terrain';
+import { GolferRig, rigEntities } from './golfer';
 
 type Gl = WebGL2RenderingContext;
 
@@ -252,6 +253,85 @@ export async function dressCourse(gl: Gl, scene: Scene): Promise<CourseLook> {
     async showHole(hole) {
       if (!looks.has(hole)) looks.set(hole, await dressHole(gl, scene, hole, mats));
       for (const [h, l] of looks) for (const e of l.parts) e.show = h === hole;
+    },
+  };
+}
+
+/** Shirt colours, one per player. */
+export const SHIRTS: number[][] = [[0.85, 0.28, 0.17], [0.12, 0.62, 0.6], [0.88, 0.65, 0.15], [0.48, 0.3, 0.77]];
+
+/** A capsule-like limb hanging down from its joint: radius r0 at the joint, r1 at `length`. */
+function limb(length: number, r0: number, r1: number): MeshData {
+  const profile: [number, number][] = [];
+  for (let k = 0; k <= 4; k++) { const a = (k / 4) * (Math.PI / 2); profile.push([r0 * Math.sin(a), r0 * Math.cos(a) * 0.8]); }
+  for (let k = 0; k <= 4; k++) { const a = (k / 4) * (Math.PI / 2); profile.push([r1 * Math.cos(a), -length - r1 * Math.sin(a) * 0.8]); }
+  return new LathePrimitive(profile, 12);
+}
+
+export interface GolferLook {
+  setShirt(player: number): void;
+  setVisible(visible: boolean): void;
+  /** Shows the club's head for this club (a putter's is flat and long). */
+  setClub(id: string, shaft: number): void;
+}
+
+/** Gives the golfer its meshes (rounded shapes, a cap, shoes) and a club in its hands. */
+export async function dressGolfer(gl: Gl, scene: Scene, rig: GolferRig): Promise<GolferLook> {
+  const shirt = await material(gl, SHIRTS[0], { specular: 0.15 });
+  const pants = await material(gl, [0.9, 0.88, 0.8], { specular: 0.1 });
+  const skin = await material(gl, [0.86, 0.64, 0.5], { specular: 0.2, roughness: 0.6 });
+  const cap = await material(gl, [0.12, 0.13, 0.2], { specular: 0.2 });
+  const shoe = await material(gl, [0.96, 0.96, 0.94], { specular: 0.3, roughness: 0.5 });
+  const steel = await material(gl, [0.75, 0.76, 0.8], { specular: 0.9, roughness: 0.2 });
+  const grip = await material(gl, [0.1, 0.1, 0.1]);
+  for (const e of rigEntities(rig)) scene.addEntity(e);
+  const b = (name: string) => rig.bones.get(name)!;
+  const parts: SceneEntity[] = [];
+  const add = (joint: SceneEntity, mesh: MeshData, m: LitMaterial, at: number[] = [0, 0, 0], scale: number[] = [1, 1, 1]) => {
+    const e = makeEntity(scene, `${joint.name} (mesh)`, joint);
+    e.transform.setLocalPosition(at[0], at[1], at[2]);
+    e.transform.setLocalScale(scale[0], scale[1], scale[2]);
+    render(gl, e, mesh, m);
+    parts.push(e);
+    return e;
+  };
+  add(b('Hips'), new LathePrimitive([[0, 0.07], [0.13, 0.06], [0.155, -0.01], [0.14, -0.09], [0, -0.1]], 16), pants, [0, 0, 0], [1, 1, 0.72]);
+  add(b('Spine'), new LathePrimitive([[0, 0.25], [0.15, 0.24], [0.135, 0.12], [0.145, 0], [0, -0.02]], 16), shirt, [0, 0, 0], [1, 1, 0.66]);
+  add(b('Chest'), new LathePrimitive([[0, 0.21], [0.12, 0.2], [0.2, 0.16], [0.19, 0.05], [0.15, -0.02], [0, -0.03]], 16), shirt, [0, 0, 0], [1, 1, 0.62]);
+  add(b('Head'), new LathePrimitive([[0.045, 0.07], [0.05, -0.01]], 10), skin);
+  add(b('Head'), new SpherePrimitive(0.105, 18, 12), skin, [0, 0.15, -0.005], [0.95, 1.05, 1]);
+  add(b('Head'), new SpherePrimitive(0.112, 18, 12), cap, [0, 0.19, 0.01], [1, 0.7, 1]);
+  add(b('Head'), new CubePrimitive(2), cap, [0, 0.17, -0.11], [0.08, 0.008, 0.06]);
+  for (const side of ['R', 'L']) {
+    add(b(`Shoulder${side}`), limb(0.31, 0.052, 0.042), shirt);
+    add(b(`Elbow${side}`), limb(0.27, 0.04, 0.032), skin);
+    add(b(`Hand${side}`), new SpherePrimitive(0.045, 12, 8), side === 'L' ? await material(gl, [0.97, 0.97, 0.97]) : skin, [0, -0.04, 0], [0.8, 1.2, 0.6]);
+    add(b(`Hip${side}`), limb(0.44, 0.078, 0.058), pants);
+    add(b(`Knee${side}`), limb(0.44, 0.056, 0.042), pants);
+    add(b(`Foot${side}`), new CubePrimitive(2), shoe, [0, -0.025, -0.055], [0.05, 0.035, 0.12]);
+  }
+  // The club: a shaft along -y, a grip at the top, a head at the end.
+  const shaft = add(rig.club, new CubePrimitive(2), steel, [0, -0.5, 0], [0.008, 0.5, 0.008]);
+  add(rig.club, new CubePrimitive(2), grip, [0, -0.1, 0], [0.014, 0.1, 0.014]);
+  const wood = add(rig.head, new SpherePrimitive(1, 12, 8), await material(gl, [0.15, 0.15, 0.18], { specular: 0.8, roughness: 0.25 }), [-0.04, -0.01, 0], [0.06, 0.03, 0.045]);
+  const blade = add(rig.head, new CubePrimitive(2), steel, [-0.035, -0.01, 0], [0.04, 0.025, 0.008]);
+  const putter = add(rig.head, new CubePrimitive(2), steel, [-0.05, -0.008, 0], [0.06, 0.012, 0.018]);
+  let visible = true, kind = 'iron';
+  const show = () => {
+    for (const p of parts) p.show = visible;
+    wood.show = visible && (kind === 'driver' || kind === 'wood');
+    blade.show = visible && (kind === 'iron' || kind === 'wedge');
+    putter.show = visible && kind === 'putter';
+  };
+  show();
+  return {
+    setShirt(player) { const c = SHIRTS[player % SHIRTS.length]; shirt.color = new Color(c[0], c[1], c[2], 1); },
+    setVisible(v) { visible = v; show(); },
+    setClub(id, length) {
+      kind = id;
+      shaft.transform.setLocalPosition(0, -length / 2, 0);
+      shaft.transform.setLocalScale(0.008, length / 2, 0.008);
+      show();
     },
   };
 }

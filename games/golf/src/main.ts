@@ -5,11 +5,13 @@ import {
   Camera, CanvasViewport, Color, DefaultResourceLoader, DependencyManager, Engine, Pointer, RenderPipelineSettings,
   Resources, Scene, ToneMapping,
 } from '../../../src';
-import { BALL, BallState, Course, hit, restingBall, simulate, stepBall } from './ball';
+import { BALL, BallState, Course, hit, restingBall, Shot, simulate, stepBall } from './ball';
 import { club, ClubId, CLUBS, lieFactor, MAX_PUTT, shotFor, suggestClub } from './clubs';
 import { buildHole, dropPoint, Hole } from './course';
 import { COURSE_NAME, HOLES } from './holes';
-import { BALL_LOOK, CourseLook, dressCourse } from './look';
+import { BALL_LOOK, CourseLook, dressCourse, dressGolfer, GolferLook } from './look';
+import { buildGolfer, GolferRig, IMPACT_TIME, PUTT_BACK_TIME, PUTT_IMPACT_TIME, setShaft, SHAFT, TOP_TIME } from './golfer';
+import { GyroSwing } from './gyro';
 import { scoreName } from './score';
 import { bindSwing, Swing } from './swing';
 import { downhill, HeightField, Surface } from './terrain';
@@ -27,7 +29,7 @@ const mapButton = $('map') as HTMLButtonElement;
 const intro = $('intro');
 const debug = new URLSearchParams(location.search).has('debug');
 
-type State = 'loading' | 'intro' | 'aim' | 'flight' | 'result';
+type State = 'loading' | 'intro' | 'aim' | 'swinging' | 'flight' | 'result';
 /** The view from above the hole, while aiming. */
 let mapView = false;
 /** Where the marker stands (for the map view). */
@@ -64,6 +66,12 @@ let shotsMade = 0;
 const HINT_SHOTS = 3;
 /** Keyboard swing: held space, its power and curve. */
 let keySwing: { start: number; curve: number } | null = null;
+let golfer: GolferRig;
+let golferLook: GolferLook;
+/** The shot chosen by the swing, struck when the club reaches the ball. */
+let pendingShot: Shot | null = null;
+const gyro = new GyroSwing();
+const scratch = vec3.create();
 
 const gl = canvas.getContext('webgl2', { antialias: true })!;
 if (!gl) { $('load-text').textContent = 'Este browser não tem WebGL 2.'; throw new Error('No WebGL 2'); }
@@ -118,6 +126,7 @@ function readyShot(): void {
   }
   showHud();
   placeMarker();
+  placeGolfer();
 }
 
 function showHud(): void {
@@ -174,8 +183,22 @@ function swing(s: Swing): void {
   // Off the fairway the ball comes out slower.
   const shot = shotFor(c, s.power, aim, s.curve);
   shot.speed *= lieFactor(lie(), c.id);
+  pendingShot = shot;
+  // The club comes down from wherever the backswing got to (from the start for keys and the gyro).
+  const name = swingClip();
+  const a = golfer.animator;
+  if (a.currentClip?.name !== name) { a.play(name, { loop: false }); a.time = backTime() * Math.max(0.3, s.power); }
+  a.speed = 1.15;
+  showPower(null);
+  setState('swinging');
+}
+
+/** The ball leaves the club face. */
+function strike(): void {
+  if (!pendingShot) return;
   shotFrom = { x: ball.pos[0], z: ball.pos[2] };
-  hit(ball, shot);
+  hit(ball, pendingShot);
+  pendingShot = null;
   strokes++;
   shotsMade++;
   trail = [[...ball.pos]];
@@ -183,6 +206,44 @@ function swing(s: Swing): void {
   accumulator = 0;
   showHud();
   setState('flight');
+}
+
+const swingClip = () => (clubId === 'putter' ? 'Putt' : 'Swing');
+const backTime = () => (clubId === 'putter' ? PUTT_BACK_TIME : TOP_TIME);
+const impactTime = () => (clubId === 'putter' ? PUTT_IMPACT_TIME : IMPACT_TIME);
+
+/** The golfer's yaw (degrees) for an aim: it faces across the line, the target to its left. */
+const golferYaw = () => -90 - (aim * 180) / Math.PI;
+
+/**
+ * Stands the golfer at the ball: where the club head is at impact (with the
+ * root at the origin, turned for the aim) gives where the root must go.
+ */
+function placeGolfer(): void {
+  const a = golfer.animator;
+  setShaft(golfer, clubId);
+  golferLook.setClub(clubId, SHAFT[clubId]);
+  golfer.root.transform.setLocalPosition(0, 0, 0);
+  golfer.root.transform.setLocalRotation(0, golferYaw(), 0);
+  a.play(swingClip(), { loop: false });
+  a.time = impactTime();
+  golfer.root.transform.updateMatrices();
+  vec3.copy(scratch, golfer.head.transform.worldPosition);
+  const x = ball.pos[0] - scratch[0], z = ball.pos[2] - scratch[2];
+  golfer.root.transform.setLocalPosition(x, hole.ground.height(x, z), z);
+  a.play('Idle', { loop: true });
+  a.speed = 1;
+  golferLook.setVisible(true);
+}
+
+/** The backswing follows the power bar. */
+function scrubBackswing(p: number | null): void {
+  if (state !== 'aim' || !golfer) return;
+  const a = golfer.animator;
+  if (p === null) { if (a.currentClip?.name !== 'Idle') { a.play('Idle', { loop: true }); a.speed = 1; } return; }
+  if (a.currentClip?.name !== swingClip()) a.play(swingClip(), { loop: false });
+  a.speed = 0;
+  a.time = p * backTime();
 }
 
 function showResult(text: string, sub: string, big = false): void {
@@ -247,6 +308,7 @@ async function startHole(i: number): Promise<void> {
   look.placeFlag(p.x, hole.ground.height(p.x, p.z), p.z);
   const length = Math.round(Math.hypot(p.x - hole.spec.tee.x, p.z - hole.spec.tee.z));
   intro.innerHTML = `<small>Buraco ${holeIndex + 1}</small>${hole.spec.name}<small>Par ${hole.spec.par} · ${length} m</small>`;
+  golferLook.setVisible(false);
   setState('intro');
   snapCamera();
 }
@@ -257,12 +319,14 @@ function changeClub(step: number): void {
   clubId = CLUBS[(i + step + CLUBS.length) % CLUBS.length].id;
   showHud();
   placeMarker();
+  placeGolfer();
 }
 
 function turnAim(da: number): void {
   if (state !== 'aim') return;
   aim += da;
   placeMarker(power ?? 1);
+  if (power === null) placeGolfer();
 }
 
 /** Camera: behind the ball looking down the aim; chasing it in flight. */
@@ -290,10 +354,12 @@ function cameraGoal(outEye: vec3, outLook: vec3): void {
     vec3.set(outLook, mx, hole.ground.height(mx, mz), mz);
     return;
   }
-  if (state === 'aim') {
+  if (state === 'aim' || state === 'swinging') {
     const fx = Math.sin(aim), fz = -Math.cos(aim);
-    const back = putting ? 2.8 : 4.6, up = putting ? 1.7 : 2.3;
-    vec3.set(outEye, b[0] - fx * back, b[1] + up, b[2] - fz * back);
+    const back = putting ? 3 : 4.8, up = putting ? 1.8 : 2.4;
+    // A little to the right of the line: the golfer stands on its left.
+    const side = putting ? 0.5 : 0.8;
+    vec3.set(outEye, b[0] - fx * back - fz * side, b[1] + up, b[2] - fz * back + fx * side);
     const ahead = putting ? Math.min(pinDistance(), 4) : 9;
     vec3.set(outLook, b[0] + fx * ahead, hole.ground.height(b[0] + fx * ahead, b[2] + fz * ahead), b[2] + fz * ahead);
     return;
@@ -331,6 +397,7 @@ function update(dt: number): void {
   if (state === 'intro' && stateTime > INTRO_TIME + 0.4) setState('aim');
   // The pole would block a short putt: it comes out when the ball is close.
   look.setPole(!(state !== 'intro' && pinDistance() < 6 && lie() === 'green'));
+  if (state === 'swinging' && golfer.animator.time >= impactTime()) strike();
   if (state === 'flight') {
     // A little faster than real time in the air: long shots take a while.
     accumulator += dt * (ball.phase === 'flying' ? 1.4 : 1.2);
@@ -358,6 +425,7 @@ function update(dt: number): void {
 
 function showPower(p: number | null): void {
   power = p;
+  if (state === 'aim') scrubBackswing(p);
   powerBox.classList.toggle('show', p !== null && state === 'aim');
   powerLabel.classList.toggle('show', p !== null && state === 'aim');
   if (p === null) return;
@@ -483,6 +551,9 @@ async function start(): Promise<void> {
   scene = new Scene();
   scene.name = 'Golf';
   look = await dressCourse(gl, scene);
+  await loaded(0.6, 'A chamar o jogador…');
+  golfer = buildGolfer();
+  golferLook = await dressGolfer(gl, scene, golfer);
   await loaded(0.8, 'A acender o sol…');
   scene.sceneFog.enabled = true;
   scene.sceneFog.fogType = 1;
@@ -501,11 +572,25 @@ async function start(): Promise<void> {
 
   bindSwing(canvas, {
     onAim: (f) => turnAim(f * 0.6),
-    onPower: (p) => { if (state === 'aim') showPower(p); },
-    onSwing: swing,
+    onPower: (p) => { if (state === 'aim' && !gyro.enabled) showPower(p); },
+    onSwing: (sw) => { if (!gyro.enabled) swing(sw); },
     onTap: () => advance(),
   });
-  Pointer.onDown(() => { if (state === 'result' || state === 'intro') advance(); });
+  Pointer.onDown(() => {
+    if (state === 'result' || state === 'intro') advance();
+    else if (state === 'aim' && gyro.enabled) gyro.hold();
+  });
+  Pointer.onUp(() => {
+    if (!gyro.enabled || state !== 'aim') return;
+    const sw = gyro.release();
+    if (sw) swing(sw);
+  });
+  const gyroButton = $('gyro') as HTMLButtonElement;
+  if (GyroSwing.available && new URLSearchParams(location.search).has('gyro')) gyroButton.hidden = false;
+  gyroButton.addEventListener('click', async () => {
+    if (gyro.enabled) gyro.disable(); else await gyro.enable();
+    gyroButton.classList.toggle('on', gyro.enabled);
+  });
   mapButton.addEventListener('click', toggleMap);
   $('club-prev').addEventListener('click', () => changeClub(-1));
   $('club-next').addEventListener('click', () => changeClub(1));
@@ -533,9 +618,9 @@ async function start(): Promise<void> {
   });
   (window as any).golf = {
     get state() { return state; }, get ball() { return ball; }, get strokes() { return strokes; }, get aim() { return aim; },
-    get club() { return clubId; }, reach, get hole() { return hole; }, get holeIndex() { return holeIndex; }, startHole, get wind() { return wind; }, swing, advance, turnAim, changeClub,
+    get club() { return clubId; }, get golfer() { return golfer; }, reach, get hole() { return hole; }, get holeIndex() { return holeIndex; }, startHole, get wind() { return wind; }, swing, advance, turnAim, changeClub,
     placeBall(x: number, z: number) { ball = restingBall(hole.ground, x, z); setState('aim'); snapCamera(); },
-    toggleMap,
+    toggleMap, showPower,
     setClub(id: ClubId) { clubId = id; showHud(); placeMarker(); },
   };
   $('stats').hidden = !debug;
