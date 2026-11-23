@@ -60,12 +60,71 @@ describe('car', () => {
     expect(most).toBeGreaterThan(20);
   });
 
-  it('straightens out of a slide when the steering is let go', () => {
-    const car = makeCar(0, 0, 0); car.vx = 22;
+  it('without the assist, straightens out of a slide when the steering is let go', () => {
+    const car = makeCar(0, 0, 0); car.vx = 22; car.assist = false;
     run({ throttle: 0.7, steer: 1, handbrake: true }, 0.6, car);
     expect(Math.abs(deg(driftAngle(car)))).toBeGreaterThan(15);
     run({ throttle: 0.3 }, 2, car);
     expect(Math.abs(deg(driftAngle(car)))).toBeLessThan(5);
+  });
+
+  describe('drift assist', () => {
+    /** A tap of the handbrake with the wheel turned right, then `after` held; the angle each half second. */
+    const drift = (after: Partial<CarInput>, seconds = 3) => {
+      const car = makeCar(0, 0, 0); car.vx = 22;
+      run({ throttle: 1, steer: 1, handbrake: true }, 0.15, car);
+      run({ throttle: 1, steer: 1 }, 0.15, car);
+      const angles: number[] = [];
+      for (let t = 0; t < seconds; t += 0.5) { run({ throttle: 0, brake: 0, steer: 0, handbrake: false, ...after }, 0.5, car); angles.push(deg(driftAngle(car))); }
+      return { car, angles };
+    };
+
+    it('starts with a tap of the handbrake and the wheel turned, the way it turns', () => {
+      const car = makeCar(0, 0, 0); car.vx = 22;
+      run({ throttle: 1, steer: 1, handbrake: true }, 0.1, car);
+      expect(car.drift?.turn).toBe(-1);
+      const left = makeCar(0, 0, 0); left.vx = 22;
+      run({ throttle: 1, steer: -1, handbrake: true }, 0.1, left);
+      expect(left.drift?.turn).toBe(1);
+    });
+
+    it('does not start slow or with the wheel straight', () => {
+      const slow = makeCar(0, 0, 0); slow.vx = 6;
+      run({ throttle: 1, steer: 1, handbrake: true }, 0.2, slow);
+      expect(slow.drift).toBeNull();
+      const straight = makeCar(0, 0, 0); straight.vx = 22;
+      run({ throttle: 1, handbrake: true }, 0.2, straight);
+      expect(straight.drift).toBeNull();
+    });
+
+    it('holds the slide with the wheel let go, deeper steering into the bend, and never spins', () => {
+      const mid = drift({ throttle: 1 });
+      const deep = drift({ throttle: 1, steer: 1 });
+      expect(mid.car.drift).not.toBeNull();
+      expect(deep.car.drift).not.toBeNull();
+      // Sliding right: the velocity is left of the nose (a positive angle).
+      for (const a of mid.angles) { expect(a).toBeGreaterThan(15); expect(a).toBeLessThan(30); }
+      for (const a of deep.angles.slice(1)) { expect(a).toBeGreaterThan(32); expect(a).toBeLessThan(45); }
+      // Going round: the car keeps turning right, at speed with the throttle.
+      expect(deep.car.heading).toBeLessThan(-1.5);
+      expect(speedOf(deep.car)).toBeGreaterThan(20);
+    });
+
+    it('scrubs speed off the throttle', () => {
+      const { car } = drift({});
+      expect(speedOf(car)).toBeLessThan(17);
+    });
+
+    it('ends by steering out of it, lined up and without swinging the other way', () => {
+      const { car, angles } = drift({ throttle: 0.6, steer: -1 }, 2);
+      expect(car.drift).toBeNull();
+      for (const a of angles.slice(1)) expect(Math.abs(a)).toBeLessThan(12);
+    });
+
+    it('ends with the brake', () => {
+      const { car } = drift({ brake: 1 }, 0.5);
+      expect(car.drift).toBeNull();
+    });
   });
 
   it('brakes to a stop, then reverses with the brake held', () => {
