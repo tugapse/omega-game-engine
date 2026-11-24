@@ -5,12 +5,11 @@ import { mat4, vec3 } from 'gl-matrix';
 import { EntityBehaviour } from '../behaviours/entity-behaviour';
 import { SceneEntity } from '../entities/entity';
 import { JsonSerializedData } from '../interfaces/json-serialized-data';
-import { ColorMaterial } from '../materials/color-material';
-import { LitMaterial } from '../materials/lit-material';
-import { LitShader } from '../shaders/lit-shader';
 import { Shader } from '../shaders/shader';
 import { decodeHeights, DEFAULT_TERRAIN_SETTINGS, encodeHeights, TerrainChunkData, TerrainGrid, TerrainSettings } from './terrain-data';
 import { TerrainChunkRenderer } from './terrain-chunk-renderer';
+import { TerrainMaterial } from './terrain-material';
+import { TerrainShader } from './terrain-shader';
 
 /** A chunk as saved: its cell and its data in base64 (16-bit heights, RGBA splats). */
 export interface SavedTerrainChunk {
@@ -28,11 +27,8 @@ export class TerrainBehaviour extends EntityBehaviour {
   }
 
   public grid: TerrainGrid;
-  /**
-   * The material every chunk is drawn with. Until the terrain material (phase
-   * 2) it is a lit colour.
-   */
-  public material: ColorMaterial;
+  /** The material every chunk is drawn with: its layers, rules and blending. */
+  public material: TerrainMaterial;
   /** Distances (m) at which chunks drop to levels of detail 1, 2 and 3, as multiples of a chunk's size. */
   public lodDistances: number[] = [1, 2, 4];
   /** Multiplies the level-of-detail distances (lower on slow devices). */
@@ -46,10 +42,7 @@ export class TerrainBehaviour extends EntityBehaviour {
   constructor(public gl: WebGL2RenderingContext, settings: TerrainSettings = { ...DEFAULT_TERRAIN_SETTINGS }) {
     super();
     this.grid = new TerrainGrid(settings);
-    const m = new LitMaterial();
-    m.specularStrength = 0.05;
-    m.roughness = 0.9;
-    this.material = m;
+    this.material = new TerrainMaterial();
     this._serializationIgnoreKeys.push('gl', 'grid', 'material', 'chunkEntities', 'pending');
   }
 
@@ -68,9 +61,16 @@ export class TerrainBehaviour extends EntityBehaviour {
     this.sync();
   }
 
-  /** Makes the shader for one chunk (the terrain material overrides this in phase 2). */
-  protected createShader(): Shader {
-    return new LitShader(this.gl, this.material as LitMaterial);
+  /** Makes the shader for one chunk. */
+  protected createShader(chunk: TerrainChunkData): Shader {
+    return new TerrainShader(this.gl, this.material, chunk);
+  }
+
+  /**
+   * Compiles the chunks' shaders again, after changing `material.triplanar`.
+   */
+  recompile(): void {
+    for (const e of this.chunkEntities.values()) e.getBehaviour(TerrainChunkRenderer)?.shader?.recompile();
   }
 
   /** Adds a chunk at a grid cell (joined to its neighbours) and its entity. */
@@ -177,7 +177,7 @@ export class TerrainBehaviour extends EntityBehaviour {
       e.transform.setParent(this.transform);
       e.transform.setLocalPosition(c.cx * n, 0, c.cz * n);
       const r = new TerrainChunkRenderer(this.gl, this.grid, c);
-      r.shader = this.createShader();
+      r.shader = this.createShader(c);
       r.castShadows = this.castShadows;
       this.applyLod(r);
       e.addBehaviour(r);
@@ -253,7 +253,7 @@ export class TerrainBehaviour extends EntityBehaviour {
     const { settings, material, chunks, ...rest } = jsonObject as any;
     this.deserializeAutomatically(rest);
     if (settings) this.grid = new TerrainGrid({ ...DEFAULT_TERRAIN_SETTINGS, ...settings });
-    if (material) this.material.fromJson(material);
+    if (material) void this.material.fromJson(material);
     if (chunks) this.pending = chunks;
   }
 }

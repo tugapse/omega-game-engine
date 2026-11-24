@@ -38,18 +38,23 @@ export class Noise2D {
     for (let i = 0; i < 512; i++) this.perm[i] = p[i & 255];
   }
 
-  get(x: number, z: number): number {
+  /**
+   * The noise at (x, z). With `period` (a whole number up to 256) it repeats
+   * every `period` units, for textures that tile.
+   */
+  get(x: number, z: number, period = 256): number {
     const xi = Math.floor(x), zi = Math.floor(z);
     const fx = x - xi, fz = z - zi;
-    const X = xi & 255, Z = zi & 255;
+    const wrap = (v: number) => ((v % period) + period) % period;
+    const X = wrap(xi), Z = wrap(zi), X1 = wrap(xi + 1), Z1 = wrap(zi + 1);
     const g = (ix: number, iz: number, dx: number, dz: number) => {
       const h = this.perm[ix + this.perm[iz]];
       return this.gx[h] * dx + this.gz[h] * dz;
     };
     const u = fx * fx * fx * (fx * (fx * 6 - 15) + 10);
     const v = fz * fz * fz * (fz * (fz * 6 - 15) + 10);
-    const a = g(X, Z, fx, fz), b = g(X + 1, Z, fx - 1, fz);
-    const c = g(X, Z + 1, fx, fz - 1), d = g(X + 1, Z + 1, fx - 1, fz - 1);
+    const a = g(X, Z, fx, fz), b = g(X1, Z, fx - 1, fz);
+    const c = g(X, Z1, fx, fz - 1), d = g(X1, Z1, fx - 1, fz - 1);
     const ab = a + u * (b - a), cd = c + u * (d - c);
     return (ab + v * (cd - ab)) * 1.4142;
   }
@@ -83,7 +88,9 @@ export function relief(noise: Noise2D, x: number, z: number, o: Required<ReliefO
     amp *= o.persistence;
     freq *= 2;
   }
-  let t = (sum / norm) * 0.5 + 0.5; // 0..1
+  // Gradient noise seldom passes ±0.6: stretched so the amplitude is about
+  // the range of heights you get.
+  let t = (sum / norm) * 0.8 + 0.5; // 0..1
   t = Math.pow(Math.min(Math.max(t, 0), 1), o.sharpness);
   return o.base + (t - 0.5) * o.amplitude;
 }
