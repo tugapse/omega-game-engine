@@ -24,6 +24,7 @@ uniform vec4 u_layerTint[MAX_LAYERS];     // rgb tint, 0
 uniform float u_heightBlend;              // depth of the blend by texture height (0 = plain mix)
 uniform float u_terrainBaseY;             // world height of the terrain's origin
 uniform float u_macroVariation;           // large-scale brightness variation (0 to 1)
+uniform vec4 u_brush;                     // the editing brush: world x, z, radius, shown (1/0)
 
 in vec2 v_uv;
 in vec3 v_normal;
@@ -143,6 +144,15 @@ void main() {
         vec3 mainLightDir = u_lightCounts.x > 0 ? u_dirDirection[0].xyz : vec3(0.0);
         vec3 mainLightCol = u_lightCounts.x > 0 ? u_dirColor[0].rgb : vec3(0.0);
         fogged = applyFog(lit, v_fogDistance, v_position, u_cameraPosition, u_lightCounts.x, mainLightDir, mainLightCol);
+    }
+    // The brush: a ring and a dot where it would act.
+    if (u_brush.w > 0.5) {
+        float d = distance(v_position.xz, u_brush.xy);
+        float width = max(u_brush.z * 0.035, 0.12);
+        float ring = 1.0 - smoothstep(width * 0.5, width, abs(d - u_brush.z));
+        float centre = 1.0 - smoothstep(width * 0.6, width, d);
+        fogged = mix(fogged, vec3(1.0, 0.82, 0.25), max(ring, centre) * 0.9);
+        fogged = mix(fogged, fogged * 1.15 + vec3(0.03), step(d, u_brush.z) * 0.35);
     }
     fragColor = vec4(max(fogged, 0.0), 1.0);
 }

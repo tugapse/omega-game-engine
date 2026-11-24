@@ -32,6 +32,8 @@ export class TerrainMaterial extends LitMaterial {
   public macroVariation = 0.3;
   /** Projects the textures from the sides on steep slopes (off on slow devices). */
   public triplanar = true;
+  /** The editing brush drawn on the ground: world x, z, radius, shown (1/0). Not saved. */
+  public brush: [number, number, number, number] = [0, 0, 0, 0];
   /** Texels a side of each layer's textures. */
   public textureSize = 512;
 
@@ -45,7 +47,7 @@ export class TerrainMaterial extends LitMaterial {
 
   constructor() {
     super();
-    this._serializationIgnoreKeys.push('arrays', 'packed', 'textureVersion', 'version');
+    this._serializationIgnoreKeys.push('arrays', 'packed', 'textureVersion', 'version', 'brush');
   }
 
   /** Call after changing the layers: `textures` true when their textures changed too. */

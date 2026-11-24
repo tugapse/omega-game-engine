@@ -72,6 +72,7 @@ export class TerrainShader extends LitShader {
     gl.uniform1f(loc('u_heightBlend'), m.heightBlend);
     gl.uniform1f(loc('u_macroVariation'), m.macroVariation);
     gl.uniform1f(loc('u_terrainBaseY'), this.baseY);
+    gl.uniform4fv(loc('u_brush'), m.brush);
     this.setVec3(ShaderUniformsEnum.U_CAMERA_POSITION, Camera.mainCamera.transform.worldPosition);
 
     const arrays = m.textures(gl);
