@@ -30,6 +30,8 @@ While developing with the editor, install the local build there with `npm instal
 | Render pipeline | `src/core/render` | Forward pipeline, described below. |
 | Lights | `src/entities/lights` | Ambient, directional, point and spot lights. Each light has `castShadows`, `shadowStrength` (0 to 1) and `shadowDepthBias` / `shadowNormalBias` (in shadow-map texels). Point and spot lights also have a `range`, where their light fades to 0. |
 | Materials and shaders | `src/materials`, `src/shaders` | `LitMaterial` + `LitShader` (Blinn-Phong, normal/specular/roughness/AO/emissive maps), unlit, skybox. |
+| Terrain | `src/terrain` | `TerrainBehaviour`: height chunks joined on a grid, levels of detail, a layered material placed by height and slope rules and by painting, a brush with undo, heightmaps in and out, heightfield colliders. Described below. |
+| Physics | `src/physics` | `PhysicsWorld`, `RigidBodyBehaviour`, `ColliderBehaviour` over a swappable backend (`RapierBackend`). |
 
 ## Render pipeline
 
@@ -51,6 +53,14 @@ Before the main camera, every other active camera with a `targetTexture` runs th
 A scene saves only `RenderPipelineSettings`: shadows on/off and distance, HDR, tone mapping, exposure, saturation, contrast and the retro effect. GPU objects are always rebuilt.
 
 `RenderTarget` and `FullscreenProgram` are exported for custom passes and effects.
+
+## Terrain
+
+A terrain is an entity with a `TerrainBehaviour`. Its `grid` (`TerrainGrid`) holds square chunks on a sparse grid, each (N+1)² heights in metres (N a power of two, 128 by default, over 128 m). Neighbours share their border row and every write goes to all the copies, so chunks never part; `addChunk(cx, cz)` copies the borders already there. Each chunk is drawn by a child entity (`transient`: not saved, not listed in the editor) with a `TerrainChunkRenderer`, which writes its vertex buffers from the heights and picks one of four levels of detail by the camera's distance; skirts hide the cracks between levels.
+
+`TerrainMaterial` has up to 8 layers (`TerrainLayer`): a ground texture (made in code: grass, dirt, rock, snow, sand, gravel; or images), tiling, tint, and rules on height and slope with noisy edges. Each layer covers those before it where its rules hold; the painted splat (two RGBA textures per chunk) goes on top, its weights summing to how much it covers. The layers blend by the height of their textures, with triplanar mapping on steep slopes (`triplanar`) and a large-scale variation against tiling. All in `terrain.frag`; `terrain-rules.ts` has the same sums in TypeScript.
+
+Editing, in world space: `sculptAt` (raise, lower, smooth, flatten, noise), `paintAt` (a layer, or erasing back to the rules), `beginStroke` / `endStroke` with `undo` / `redo`, `bakeRules` (the rules written into the painting, to touch up by hand), `generateRelief` (seeded noise), `exportHeightmap` / `importHeightmap` (16-bit, .r16 or 8-bit PNG). Reading: `heightAt`, `normalAt`, `raycast`. With a `PhysicsWorld`, every chunk gets a heightfield collider, made again when a stroke ends. The scene saves the settings, the material and each chunk's heights (16-bit) and painting (only when painted).
 
 ## Shaders
 

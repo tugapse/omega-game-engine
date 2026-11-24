@@ -22,6 +22,13 @@ const walk = new AnimationClip('Walk', [{ target: 'Hips', property: 'translation
 const idle = new AnimationClip('Idle', [{ target: 'Hips', property: 'translation', interpolation: 'LINEAR', times: Float32Array.from([0, 1]), values: Float32Array.from([5, 1, 0, 5, 1, 0]) }]);
 
 describe('Animator', () => {
+  it('keeps clips added in code when it is initialised again (added to a scene)', async () => {
+    const { animator } = rig([walk]);
+    animator.initialize();
+    await animator.whenLoaded();
+    expect(animator.clipList.map((c) => c.name)).toEqual(['Walk']);
+  });
+
   it('poses bones by name and advances time', () => {
     const { hips, animator } = rig([walk]);
     animator.play('Walk', { loop: false });

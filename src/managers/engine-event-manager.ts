@@ -1,4 +1,4 @@
-import { Mouse, Keybord, GamepadManager } from "../core";
+import { Mouse, Keybord, GamepadManager, Pointer } from "../core";
 import { Engine } from "../engine";
 
 export class EngineEventManager {
@@ -23,6 +23,12 @@ export class EngineEventManager {
     this.canvas.addEventListener('focus', this.onEngineFocus);
     this.canvas.addEventListener('blur', this.onEngineBlur);
     this.canvas.addEventListener('wheel', this.onEngineMouseScroll);
+    // Touch, pen and mouse as pointers (Pointer); no browser scrolling or zooming on the canvas.
+    this.canvas.style.touchAction = 'none';
+    this.canvas.addEventListener('pointerdown', this.onPointerDown);
+    this.canvas.addEventListener('pointermove', this.onPointerMove);
+    this.canvas.addEventListener('pointerup', this.onPointerUp);
+    this.canvas.addEventListener('pointercancel', this.onPointerUp);
 
     // Global event listeners
     document.addEventListener(
@@ -32,6 +38,27 @@ export class EngineEventManager {
     window.addEventListener('focus', this.onEngineWindowFocus);
     window.addEventListener('blur', this.onEngineWindowBlur);
   }
+
+  private pointerXY(event: PointerEvent): [number, number] {
+    const rect = this.canvas.getBoundingClientRect();
+    return [event.clientX - rect.left, event.clientY - rect.top];
+  }
+
+  private onPointerDown = (event: PointerEvent): void => {
+    this.canvas.setPointerCapture?.(event.pointerId);
+    Pointer._down(event.pointerId, event.pointerType, ...this.pointerXY(event), event.timeStamp);
+  };
+
+  private onPointerMove = (event: PointerEvent): void => {
+    if (!Pointer.active.has(event.pointerId)) return;
+    // Coalesced events keep the full path of fast swipes.
+    const events = event.getCoalescedEvents?.() ?? [];
+    for (const e of events.length ? events : [event]) Pointer._move(event.pointerId, ...this.pointerXY(e), e.timeStamp);
+  };
+
+  private onPointerUp = (event: PointerEvent): void => {
+    Pointer._up(event.pointerId, ...this.pointerXY(event), event.timeStamp);
+  };
 
   public update(): void {
     Mouse.mouseMovement.x = 0;

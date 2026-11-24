@@ -1,6 +1,6 @@
 {
   "name": "omega-game-engine",
-  "version": "5.0.0",
+  "version": "6.0.0",
   "description": "Omega game engine library.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -11,7 +11,7 @@
     "build-js": "npm run build-js:dev && npm run build-js:prod",
     "build-js:dev": "rollup -c && api-extractor run --local --verbose",
     "build-js:prod": "cross-env NODE_ENV=production rollup -c && api-extractor run --local --verbose",
-    "build-docs": "npx typedoc --entryPointStrategy Expand src",
+    "build-docs": "npx typedoc --entryPointStrategy Expand src --cleanOutputDir false",
     "serve-docs": "npx serve docs",
     "build-all": "npm run build && npm run build-js && npm run build-docs",
     "test": "vitest run",
@@ -22,12 +22,14 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@dimforge/rapier3d-compat": "^0.21.0",
     "@microsoft/api-extractor": "^7.52.11",
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.4",
     "cross-env": "^10.0.0",
     "dts-bundle-generator": "^9.5.1",
+    "esbuild": "^0.25.10",
     "rollup": "^2.79.2",
     "rollup-plugin-terser": "^7.0.2",
     "typedoc": "^0.28.10",
@@ -37,5 +39,13 @@
     "gl-matrix": "^3.4.4",
     "tslib": "^2.8.1",
     "uuid": "^11.1.0"
+  },
+  "peerDependencies": {
+    "@dimforge/rapier3d-compat": "^0.21.0"
+  },
+  "peerDependenciesMeta": {
+    "@dimforge/rapier3d-compat": {
+      "optional": true
+    }
   }
 }

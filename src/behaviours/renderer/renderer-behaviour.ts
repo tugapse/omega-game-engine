@@ -460,10 +460,19 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
     }
     this.shader.use();
     this.shader.bindBuffers();
-    this._gl.drawElements(this.drawPrimitiveType, this.mesh.meshData.indices.length, this.shader.indexType, 0);
+    this._gl.drawElements(this.drawPrimitiveType, this.indexCount, this.shader.indexType, 0);
     this.shader.release();
   }
 
+
+  /**
+   * How many indices of the bound index buffer a draw uses (the mesh's by
+   * default; a terrain chunk changes it with its level of detail). The shadow
+   * pass draws the same count.
+   */
+  public get indexCount(): number {
+    return this.mesh?.meshData?.indices?.length ?? 0;
+  }
 
   /**
    * Called by the render pipeline once per camera, before the shadow and

@@ -87,6 +87,8 @@ export class Animator extends EntityBehaviour {
   public readonly onLoop = new AnimationEvent<AnimationClip>();
 
   private clips: AnimationClip[] = [];
+  /** Clips added with addClip: kept when (re)initialising loads the clipUris. */
+  private codeClips: AnimationClip[] = [];
   private current: PlayState | null = null;
   private previous: PlayState | null = null;
   private fadeDuration = 0;
@@ -100,7 +102,7 @@ export class Animator extends EntityBehaviour {
 
   constructor() {
     super();
-    this._serializationIgnoreKeys.push('onFinished', 'onLoop', 'clips', 'current', 'previous', 'fadeDuration', 'fadeTime', 'bonesByName', 'loading', 'value', 'blendA', 'q1', 'q2');
+    this._serializationIgnoreKeys.push('onFinished', 'onLoop', 'clips', 'codeClips', 'current', 'previous', 'fadeDuration', 'fadeTime', 'bonesByName', 'loading', 'value', 'blendA', 'q1', 'q2');
   }
 
   /** The loaded clips. */
@@ -146,12 +148,13 @@ export class Animator extends EntityBehaviour {
       const clip = model.clips[part.index];
       if (clip) clips.push(clip);
     }
-    this.clips = clips;
+    this.clips = [...clips, ...this.codeClips];
     if (this.playOnStart && clips.length && !this.current) this.play(this.defaultClip || clips[0].name);
   }
 
   /** Adds a clip at run time (e.g. one built in code). */
   addClip(clip: AnimationClip): void {
+    this.codeClips.push(clip);
     this.clips.push(clip);
   }
 

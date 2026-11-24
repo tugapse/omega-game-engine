@@ -248,8 +248,8 @@ export class ShadowAtlasPass {
     const renderer = entity.getBehaviour(RendererBehaviour);
     const shader = renderer?.shader;
     const buffers = shader?.buffers;
-    const indices = renderer?.mesh?.meshData?.indices;
-    if (!shader || !buffers?.position || !buffers.indices || !indices?.length) return;
+    const count = renderer?.indexCount ?? 0;
+    if (!shader || !buffers?.position || !buffers.indices || !count) return;
 
     const jointTexture = renderer.jointTexture;
     const caster = jointTexture && buffers.joints ? this.skinned : this.plain;
@@ -268,7 +268,7 @@ export class ShadowAtlasPass {
       shader.bindSkinAttributes(caster.program);
     }
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
-    gl.drawElements(gl.TRIANGLES, indices.length, shader.indexType, 0);
+    gl.drawElements(gl.TRIANGLES, count, shader.indexType, 0);
     if (caster === this.skinned) ShadowAtlasPass.disableSkinAttributes(gl, caster.program);
   }
 

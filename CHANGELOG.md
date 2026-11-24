@@ -1,5 +1,32 @@
 # Changelog
 
+## 6.0.0 (2026-11-24)
+
+### Added
+
+- Terrain (`src/terrain`, see the README and the "Omega Terreno: plano" doc):
+  - `TerrainBehaviour`: a grid of height chunks (`TerrainGrid`, shared borders, 16-bit heights saved with the scene), drawn by transient child entities with `TerrainChunkRenderer` (vertex buffers from the heights, four levels of detail by distance, skirts); `heightAt`, `normalAt`, `raycast` in world space; a heightfield collider per chunk when there is a `PhysicsWorld`.
+  - `TerrainMaterial` + `TerrainShader` (`terrain.frag`): up to 8 layers placed by height and slope rules with noisy edges, the painted splat on top, blending by texture height, triplanar on steep slopes, large-scale variation; one shared program per context. Ground textures made in code (`groundTexture`: grass, dirt, rock, snow, sand, gravel) or images.
+  - Editing: `sculpt` / `sculptAt` (raise, lower, smooth, flatten, noise), `paint` / `paintAt`, `TerrainHistory` (undo and redo of strokes), `bakeRules`, `clearPainting`, `showBrush` (a ring drawn on the ground), `generateRelief` (`Noise2D`, seeded), heightmaps in and out (`exportHeightmap`, `importHeightmap`, .r16 and 8-bit grey).
+- `TextureArray` (WebGL2 2D texture arrays, with mipmaps and anisotropy).
+- `ColliderShape` `heightfield` (fixed bodies), mapped to Rapier's heightfield with the same cell diagonals as the terrain.
+- `SceneEntity.transient`: entities made at run time by another entity's behaviour, left out of the saved scene.
+- `RendererBehaviour.indexCount`: how many indices a draw (and its shadow) uses.
+- `calculateLitColorWithNormal` in `light.frag`, for shaders that work out their own normal.
+
+- Physics module (`src/physics`), with Omega's own API and the engine behind it swappable:
+  - `PhysicsWorld`: gravity, fixed steps (1/60 s by default, at most 5 per frame) with interpolated drawing, `raycast`, contact events (`onContact`) and contact forces (`onContactForce`), `onBeforeStep` for custom forces on the fixed timestep, `timeScale` for slow motion, `stepOnce()` for tests and replays. Add it to a scene with `scene.addBehaviour(world)` to step it every frame, or call `step(elapsed)`.
+  - `RigidBodyBehaviour`: dynamic, kinematic (follows its entity's transform) or fixed; mass, damping, CCD, gravity scale, sleeping; velocities, impulses, forces, `teleport`.
+  - `ColliderBehaviour`: sphere, box, capsule, cylinder, convex hull and triangle mesh shapes, scaled by the entity; friction, restitution, density or mass, sensors, per-collider `onContact`. Colliders on child entities join the parent's body (compound bodies); with no body they are fixed.
+  - `PhysicsBackend` / `PhysicsBackendWorld`: the interface a physics engine implements. `RapierBackend` wraps Rapier 3D (`@dimforge/rapier3d-compat`, an optional peer dependency): the game passes the module in (`await RapierBackend.load(RAPIER)`), so the engine never loads the WebAssembly itself.
+- `Pointer`: touch, pen and mouse input through pointer events (several pointers, a short position history, `velocity()` for swipes, `onDown` / `onMove` / `onUp`). The canvas gets `touch-action: none`.
+- `LathePrimitive`: a surface of revolution from a [radius, height] profile (smooth normals, UV v along the profile, optional partial sweep).
+- The games made to try the engine out (bowling, golf, platformer, drift) live in their own repository, [omega-games](https://github.com/tugapse/omega-games), played at https://tugapse.github.io/omega-games/; `docs/games/` here only sends the old links there.
+
+### Fixed
+
+- `Animator`: clips added in code with `addClip` were dropped when the animator initialised again (for example when its entity was added to a scene), since loading `clipUris` replaced the list.
+
 ## 5.0.0 (2026-11-21)
 
 ### Added
