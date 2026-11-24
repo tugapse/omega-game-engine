@@ -1,3 +1,4 @@
+import { TerrainBehaviour } from '../terrain/terrain-behaviour';
 import { SkinnedMeshRendererBehaviour } from '../behaviours/renderer/skinned-mesh-renderer-behaviour';
 import { Animator } from '../animation/animator';
 import {
@@ -263,6 +264,12 @@ export class DependencyManager {
       type: ClassType.EntityBehaviour,
       path: 'Behaviours/RotateBehaviour',
       description: 'Continuously rotates the entity along its axis over time.',
+    });
+    ObjectInstanciator.addDependency('TerrainBehaviour', TerrainBehaviour.instanciate, {
+      name: 'TerrainBehaviour',
+      type: ClassType.EntityBehaviour,
+      path: 'Behaviours/Terrain',
+      description: 'A terrain of height chunks joined on a grid, painted by height and slope rules and by hand.',
     });
     ObjectInstanciator.addDependency('Animator', Animator.instanciate, {
       name: 'Animator',

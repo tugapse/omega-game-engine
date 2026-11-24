@@ -67,6 +67,12 @@ export class SceneEntity extends JsonSerializable {
    */
   public updateInEditor: boolean = false;
   /**
+    Made at run time by another entity's behaviour (a terrain's chunks): left
+    out of the saved scene and of the editor's hierarchy, since its owner
+    makes it again.
+   */
+  public transient: boolean = false;
+  /**
     A collection of behaviours attached to the entity.
    * @protected
    * @type {EntityBehaviour[]}
