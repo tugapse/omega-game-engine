@@ -56,6 +56,8 @@ export class TerrainBehaviour extends EntityBehaviour {
   }
 
   override initialize(): boolean {
+    // A new terrain (not loaded) starts with one flat chunk.
+    if (!this.pending && this.grid.count === 0) this.grid.add(0, 0);
     const ok = super.initialize();
     this.sync();
     return ok;
@@ -290,7 +292,8 @@ export class TerrainBehaviour extends EntityBehaviour {
       cx: c.cx,
       cz: c.cz,
       heights: toBase64(new Uint8Array(encodeHeights(c.heights, this.settings.heightRange).buffer)),
-      splat: [toBase64(c.splat[0]), toBase64(c.splat[1])],
+      // Unpainted chunks (most) keep no splat.
+      splat: c.splat[0].some((v) => v) || c.splat[1].some((v) => v) ? [toBase64(c.splat[0]), toBase64(c.splat[1])] : undefined,
     }));
   }
 

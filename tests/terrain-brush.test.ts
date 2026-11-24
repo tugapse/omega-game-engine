@@ -101,3 +101,18 @@ describe('bake and history', () => {
     expect(h.redo(g)).toBe(false);
   });
 });
+
+import { exportHeightmap, heightmapToRaw, importHeightmap, rawToHeightmap } from '../src/terrain/terrain-heightmap';
+
+describe('heightmaps', () => {
+  it('export and import give the terrain back', () => {
+    const g = grid();
+    sculpt(g, 'raise', 10, 20, { radius: 6, strength: 1, hardness: 0.2 }, 1);
+    const map = exportHeightmap(g)!;
+    expect(map.width).toBe(33);
+    const raw = rawToHeightmap(heightmapToRaw(map));
+    const back = grid();
+    importHeightmap(back, raw);
+    for (const [x, z] of [[10, 20], [12, 18], [3, 3], [30, 30]]) expect(back.heightAt(x, z)!).toBeCloseTo(g.heightAt(x, z)!, 2);
+  });
+});

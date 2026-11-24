@@ -29,7 +29,7 @@ export const DEFAULT_TERRAIN_SETTINGS: TerrainSettings = {
   resolution: 128,
   size: 128,
   heightRange: [-64, 192],
-  splatResolution: 256,
+  splatResolution: 128,
 };
 
 /** Most layers a terrain can have: two RGBA splat textures. */
