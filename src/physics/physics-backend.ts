@@ -33,7 +33,14 @@ export type ColliderShape =
   /** Flat x, y, z list of points; the shape is their convex hull. */
   | { type: 'convexHull'; points: number[] }
   /** Triangle mesh, for fixed bodies only (no volume, so no mass). */
-  | { type: 'trimesh'; vertices: number[]; indices: number[] };
+  | { type: 'trimesh'; vertices: number[]; indices: number[] }
+  /**
+   * A grid of heights, for fixed bodies only (terrain chunks): (cols+1) ×
+   * (rows+1) heights, row by row along z (heights[j·(cols+1) + i], i along x),
+   * spanning size[0] along x and size[1] along z, centred on the collider.
+   * Each cell is split along the diagonal from (i, j) to (i+1, j+1).
+   */
+  | { type: 'heightfield'; rows: number; cols: number; heights: ArrayLike<number>; size: [number, number] };
 
 export interface BackendBodyDesc {
   type: RigidBodyType;

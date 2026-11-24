@@ -5,6 +5,8 @@ import { mat4, vec3 } from 'gl-matrix';
 import { EntityBehaviour } from '../behaviours/entity-behaviour';
 import { SceneEntity } from '../entities/entity';
 import { JsonSerializedData } from '../interfaces/json-serialized-data';
+import { ColliderBehaviour } from '../physics/collider-behaviour';
+import { PhysicsWorld } from '../physics/physics-world';
 import { Shader } from '../shaders/shader';
 import { decodeHeights, DEFAULT_TERRAIN_SETTINGS, encodeHeights, TerrainChunkData, TerrainGrid, TerrainSettings } from './terrain-data';
 import { BrushSettings, clearSplat, fillSplat, paint, sculpt, SculptTool, TerrainHistory } from './terrain-brush';
@@ -37,18 +39,26 @@ export class TerrainBehaviour extends EntityBehaviour {
   public lodBias = 1;
   /** Whether the chunks cast shadows. */
   public castShadows = true;
+  /**
+   * Gives each chunk a heightfield collider in PhysicsWorld.main (when there
+   * is one), made again once a stroke ends.
+   */
+  public colliders = true;
+  /** Friction of the ground's colliders. */
+  public friction = 0.8;
 
   /** Undo and redo of brush strokes. */
   public readonly history = new TerrainHistory();
 
   private readonly chunkEntities = new Map<string, SceneEntity>();
+  private readonly colliderVersions = new Map<SceneEntity, number>();
   private pending: SavedTerrainChunk[] | null = null;
 
   constructor(public gl: WebGL2RenderingContext, settings: TerrainSettings = { ...DEFAULT_TERRAIN_SETTINGS }) {
     super();
     this.grid = new TerrainGrid(settings);
     this.material = new TerrainMaterial();
-    this._serializationIgnoreKeys.push('gl', 'grid', 'material', 'chunkEntities', 'pending', 'history');
+    this._serializationIgnoreKeys.push('gl', 'grid', 'material', 'chunkEntities', 'pending', 'history', 'colliderVersions');
   }
 
   get settings(): TerrainSettings {
@@ -66,6 +76,30 @@ export class TerrainBehaviour extends EntityBehaviour {
   override update(elapsed: number): void {
     super.update(elapsed);
     this.sync();
+    this.refreshColliders();
+  }
+
+  /**
+   * Makes each chunk's collider again if its heights changed (not during a
+   * stroke: once it ends). Called every update; call it yourself after
+   * changing heights when the terrain is not updated.
+   */
+  refreshColliders(force = false): void {
+    const world = PhysicsWorld.main;
+    if (!this.colliders || !world || (this.history.isOpen && !force)) return;
+    const n = this.settings.resolution, size = this.settings.size;
+    for (const [key, e] of this.chunkEntities) {
+      const [cx, cz] = key.split(',').map(Number);
+      const c = this.grid.get(cx, cz);
+      if (!c || (!force && this.colliderVersions.get(e) === c.heightVersion)) continue;
+      const old = e.getBehaviour(ColliderBehaviour);
+      if (old) e.removeBehaviour(old);
+      const col = new ColliderBehaviour({ type: 'heightfield', rows: n, cols: n, heights: c.heights.slice(), size: [size, size] });
+      col.offset = [size / 2, 0, size / 2];
+      col.friction = this.friction;
+      e.addBehaviour(col);
+      this.colliderVersions.set(e, c.heightVersion);
+    }
   }
 
   /** Makes the shader for one chunk. */
@@ -263,6 +297,7 @@ export class TerrainBehaviour extends EntityBehaviour {
       scene.removeEntity(e);
       e.transform.setParent(null);
       this.chunkEntities.delete(key);
+      this.colliderVersions.delete(e);
     }
   }
 
@@ -281,6 +316,7 @@ export class TerrainBehaviour extends EntityBehaviour {
       e.transform.setParent(null);
     }
     this.chunkEntities.clear();
+    this.colliderVersions.clear();
     super.destroy();
   }
 

@@ -188,6 +188,8 @@ export class TerrainHistory {
 
   constructor(public limit = 24) {}
 
+  /** A stroke is under way (begun, not yet ended). */
+  get isOpen(): boolean { return this.open !== null; }
   get canUndo(): boolean { return this.undoStack.length > 0; }
   get canRedo(): boolean { return this.redoStack.length > 0; }
 

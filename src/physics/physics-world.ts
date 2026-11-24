@@ -344,5 +344,9 @@ function scaleShape(shape: ColliderShape, s: vec3): ColliderShape {
     case 'cylinder': return { type: shape.type, halfHeight: shape.halfHeight * sy, radius: shape.radius * Math.max(sx, sz) };
     case 'convexHull': return { type: 'convexHull', points: shape.points.map((x, i) => x * [sx, sy, sz][i % 3]) };
     case 'trimesh': return { type: 'trimesh', vertices: shape.vertices.map((x, i) => x * [sx, sy, sz][i % 3]), indices: shape.indices };
+    case 'heightfield': return {
+      type: 'heightfield', rows: shape.rows, cols: shape.cols, size: [shape.size[0] * sx, shape.size[1] * sz],
+      heights: sy === 1 ? shape.heights : Array.from(shape.heights, (h) => h * sy),
+    };
   }
 }
