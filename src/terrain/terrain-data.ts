@@ -109,7 +109,7 @@ export function encodeHeights(heights: Float32Array, range: [number, number]): U
   return out;
 }
 
-export function decodeHeights(data: Uint16Array, range: [number, number], out = new Float32Array(data.length)): Float32Array {
+export function decodeHeights(data: Uint16Array, range: [number, number], out: Float32Array = new Float32Array(data.length)): Float32Array {
   const [lo, hi] = range;
   const k = (hi - lo) / 65535;
   for (let i = 0; i < data.length; i++) out[i] = lo + data[i] * k;

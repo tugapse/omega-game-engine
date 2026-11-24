@@ -1,2 +1,5 @@
 export * from './terrain-data'
 export * from './terrain-noise'
+export * from './terrain-mesh'
+export * from './terrain-chunk-renderer'
+export * from './terrain-behaviour'

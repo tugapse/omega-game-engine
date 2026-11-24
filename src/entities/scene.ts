@@ -273,7 +273,7 @@ export class Scene extends SceneEntity {
       .map((o) => o.getBehaviour(RendererBehaviour) as RendererBehaviour);
 
     for (const renderer of renderers) {
-      if (!renderer) continue;
+      if (!renderer || renderer.parent?.transient) continue;
 
       if (renderer.shader?.material) {
         for (const key of Object.keys(renderer.shader.material)) {
@@ -300,7 +300,7 @@ export class Scene extends SceneEntity {
       ...this.getBaseJsonInfo(),
       renderPipeline: this._renderPipeline.toJsonObject(),
       sceneFog: this.sceneFog.toJsonObject(),
-      objects: this.objects.map((o) => o.toJsonObject()),
+      objects: this.objects.filter((o) => !o.transient).map((o) => o.toJsonObject()),
       meshMaps,
       textureMaps,
     };
