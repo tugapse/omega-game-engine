@@ -7,7 +7,9 @@ import { SceneEntity } from '../entities/entity';
 import { JsonSerializedData } from '../interfaces/json-serialized-data';
 import { Shader } from '../shaders/shader';
 import { decodeHeights, DEFAULT_TERRAIN_SETTINGS, encodeHeights, TerrainChunkData, TerrainGrid, TerrainSettings } from './terrain-data';
+import { BrushSettings, clearSplat, fillSplat, paint, sculpt, SculptTool, TerrainHistory } from './terrain-brush';
 import { TerrainChunkRenderer } from './terrain-chunk-renderer';
+import { ruleNoise, terrainAutoWeights } from './terrain-rules';
 import { TerrainMaterial } from './terrain-material';
 import { TerrainShader } from './terrain-shader';
 
@@ -36,6 +38,9 @@ export class TerrainBehaviour extends EntityBehaviour {
   /** Whether the chunks cast shadows. */
   public castShadows = true;
 
+  /** Undo and redo of brush strokes. */
+  public readonly history = new TerrainHistory();
+
   private readonly chunkEntities = new Map<string, SceneEntity>();
   private pending: SavedTerrainChunk[] | null = null;
 
@@ -43,7 +48,7 @@ export class TerrainBehaviour extends EntityBehaviour {
     super();
     this.grid = new TerrainGrid(settings);
     this.material = new TerrainMaterial();
-    this._serializationIgnoreKeys.push('gl', 'grid', 'material', 'chunkEntities', 'pending');
+    this._serializationIgnoreKeys.push('gl', 'grid', 'material', 'chunkEntities', 'pending', 'history');
   }
 
   get settings(): TerrainSettings {
@@ -155,6 +160,72 @@ export class TerrainBehaviour extends EntityBehaviour {
       if (d !== undefined) { prev = d; prevT = t; } else if (prev !== undefined && prev <= 0) prev = undefined;
     }
     return undefined;
+  }
+
+  // ---- Editing (world space) ----
+
+  /** Starts a brush stroke (one undo step): 'heights' to sculpt, 'splat' to paint. */
+  beginStroke(kind: 'heights' | 'splat'): void {
+    this.history.begin(kind);
+  }
+
+  endStroke(): void {
+    this.history.end();
+  }
+
+  /** One step of a sculpting tool at a world point. `target` is the world height `flatten` pulls to. */
+  sculptAt(tool: SculptTool, point: vec3, brush: BrushSettings, dt: number, target?: number): boolean {
+    const local = this.toLocal(point);
+    const scale = this.transform.worldScale?.[0] || 1;
+    const b = { ...brush, radius: brush.radius / scale };
+    this.history.saveAround(this.grid, local[0], local[2], b.radius);
+    const t = target === undefined ? 0 : this.toLocal(vec3.fromValues(point[0], target, point[2]))[1];
+    return !!sculpt(this.grid, tool, local[0], local[2], b, dt, t);
+  }
+
+  /** One step of painting a layer (or erasing the painting) at a world point. */
+  paintAt(layer: number, point: vec3, brush: BrushSettings, dt: number, erase = false): boolean {
+    const local = this.toLocal(point);
+    const scale = this.transform.worldScale?.[0] || 1;
+    const b = { ...brush, radius: brush.radius / scale };
+    this.history.saveAround(this.grid, local[0], local[2], b.radius);
+    return paint(this.grid, layer, local[0], local[2], b, dt, erase).length > 0;
+  }
+
+  undo(): boolean { return this.history.undo(this.grid); }
+  redo(): boolean { return this.history.redo(this.grid); }
+
+  /**
+   * "Apply the rules": writes what the rules give into the painting, so it
+   * can be touched up by hand from there (one undo step).
+   */
+  bakeRules(): void {
+    const m = this.transform.modelMatrix;
+    const layers = this.material.layers;
+    const nrm = vec3.create(), world = vec3.create();
+    this.history.begin('splat');
+    for (const c of this.grid.all()) this.history.save(c);
+    fillSplat(this.grid, (x, z, out) => {
+      const h = this.grid.heightAt(x, z) ?? 0;
+      this.grid.normalAt(x, z, nrm);
+      const slope = Math.acos(Math.min(Math.max(nrm[1], 0), 1)) * 180 / Math.PI;
+      vec3.transformMat4(world, vec3.fromValues(x, h, z), m);
+      return terrainAutoWeights(layers, world[1] - m[13], slope, ruleNoise(world[0], world[1], world[2]), out);
+    });
+    this.history.end();
+  }
+
+  /** Clears the painting, back to the rules (one undo step). */
+  clearPainting(): void {
+    this.history.begin('splat');
+    for (const c of this.grid.all()) this.history.save(c);
+    clearSplat(this.grid);
+    this.history.end();
+  }
+
+  /** Shows the brush on the ground at a world point (or hides it with null). */
+  showBrush(point: vec3 | null, radius = 0): void {
+    this.material.brush = point ? [point[0], point[2], radius, 1] : [0, 0, 0, 0];
   }
 
   // ---- Chunk entities ----

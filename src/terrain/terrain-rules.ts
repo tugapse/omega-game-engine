@@ -91,7 +91,7 @@ export function ruleNoise(x: number, y: number, z: number): number {
  * the terrain's origin (m), `slope` in degrees, `n` from ruleNoise. Each layer
  * covers those before it; the weights sum to 1.
  */
-export function terrainAutoWeights(layers: TerrainLayer[], height: number, slope: number, n: number, out = new Float32Array(MAX_TERRAIN_LAYERS)): Float32Array {
+export function terrainAutoWeights(layers: TerrainLayer[], height: number, slope: number, n: number, out: Float32Array = new Float32Array(MAX_TERRAIN_LAYERS)): Float32Array {
   out.fill(0);
   const count = Math.min(layers.length, MAX_TERRAIN_LAYERS);
   for (let i = 0; i < count; i++) {
