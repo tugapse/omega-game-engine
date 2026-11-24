@@ -188,3 +188,23 @@ describe('PhysicsWorld', () => {
     expect(steps.length).toBe(3);
   });
 });
+
+describe('heightfield', () => {
+  it('matches the terrain surface, cell diagonals included', async () => {
+    const { TerrainGrid } = await import('../src/terrain/terrain-data');
+    world = new PhysicsWorld(backend);
+    const g = new TerrainGrid({ resolution: 4, size: 8, heightRange: [-10, 10], splatResolution: 4 });
+    const c = g.add(0, 0);
+    // A bump that makes the two triangles of each cell differ.
+    c.heights.forEach((_, k) => (c.heights[k] = ((k * 7) % 5) * 0.6));
+    const col = collider({ type: 'heightfield', rows: 4, cols: 4, heights: Array.from(c.heights), size: [8, 8] });
+    col.offset = [4, 0, 4];
+    entity([10, 1, -3], col);
+    world.stepOnce();
+    for (const [x, z] of [[0.7, 1.5], [1.5, 0.7], [3.1, 5.9], [6.6, 2.2], [4, 4]]) {
+      const hit = world.raycast(vec3.fromValues(10 + x, 20, -3 + z), vec3.fromValues(0, -1, 0), 50);
+      expect(hit, `${x}, ${z}`).not.toBeNull();
+      expect(hit!.point[1] - 1, `${x}, ${z}`).toBeCloseTo(g.heightAt(x, z)!, 3);
+    }
+  });
+});

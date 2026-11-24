@@ -1,8 +1,18 @@
 # Changelog
 
-## Unreleased
+## 6.0.0 (2026-11-24)
 
 ### Added
+
+- Terrain (`src/terrain`, see the README and the "Omega Terreno: plano" doc):
+  - `TerrainBehaviour`: a grid of height chunks (`TerrainGrid`, shared borders, 16-bit heights saved with the scene), drawn by transient child entities with `TerrainChunkRenderer` (vertex buffers from the heights, four levels of detail by distance, skirts); `heightAt`, `normalAt`, `raycast` in world space; a heightfield collider per chunk when there is a `PhysicsWorld`.
+  - `TerrainMaterial` + `TerrainShader` (`terrain.frag`): up to 8 layers placed by height and slope rules with noisy edges, the painted splat on top, blending by texture height, triplanar on steep slopes, large-scale variation; one shared program per context. Ground textures made in code (`groundTexture`: grass, dirt, rock, snow, sand, gravel) or images.
+  - Editing: `sculpt` / `sculptAt` (raise, lower, smooth, flatten, noise), `paint` / `paintAt`, `TerrainHistory` (undo and redo of strokes), `bakeRules`, `clearPainting`, `showBrush` (a ring drawn on the ground), `generateRelief` (`Noise2D`, seeded), heightmaps in and out (`exportHeightmap`, `importHeightmap`, .r16 and 8-bit grey).
+- `TextureArray` (WebGL2 2D texture arrays, with mipmaps and anisotropy).
+- `ColliderShape` `heightfield` (fixed bodies), mapped to Rapier's heightfield with the same cell diagonals as the terrain.
+- `SceneEntity.transient`: entities made at run time by another entity's behaviour, left out of the saved scene.
+- `RendererBehaviour.indexCount`: how many indices a draw (and its shadow) uses.
+- `calculateLitColorWithNormal` in `light.frag`, for shaders that work out their own normal.
 
 - Physics module (`src/physics`), with Omega's own API and the engine behind it swappable:
   - `PhysicsWorld`: gravity, fixed steps (1/60 s by default, at most 5 per frame) with interpolated drawing, `raycast`, contact events (`onContact`) and contact forces (`onContactForce`), `onBeforeStep` for custom forces on the fixed timestep, `timeScale` for slow motion, `stepOnce()` for tests and replays. Add it to a scene with `scene.addBehaviour(world)` to step it every frame, or call `step(elapsed)`.

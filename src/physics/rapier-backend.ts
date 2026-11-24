@@ -110,6 +110,13 @@ class RapierWorld implements PhysicsBackendWorld {
         return desc;
       }
       case 'trimesh': return ColliderDesc.trimesh(new Float32Array(shape.vertices), new Uint32Array(shape.indices));
+      case 'heightfield': {
+        // Rapier wants the matrix column by column, its rows along z.
+        const { rows, cols, heights } = shape;
+        const m = new Float32Array((rows + 1) * (cols + 1));
+        for (let j = 0; j <= rows; j++) for (let i = 0; i <= cols; i++) m[i * (rows + 1) + j] = heights[j * (cols + 1) + i];
+        return ColliderDesc.heightfield(rows, cols, m, { x: shape.size[0], y: 1, z: shape.size[1] });
+      }
     }
   }
 
