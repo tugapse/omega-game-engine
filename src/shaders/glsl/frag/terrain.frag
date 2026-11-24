@@ -98,6 +98,9 @@ void main() {
     float best = -1.0;
     for (int i = 0; i < MAX_LAYERS; i++) {
         score[i] = -1.0;
+        albedo[i] = vec4(0.0);
+    }
+    for (int i = 0; i < MAX_LAYERS; i++) {
         if (i >= u_layerCount) break;
         w[i] = w[i] * (1.0 - cover) + painted[i];
         if (w[i] < 0.004) continue;
