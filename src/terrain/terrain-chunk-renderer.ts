@@ -8,6 +8,7 @@ import { MeshData } from '../core/mesh';
 import { Sphere } from '../core/render/culling';
 import { Camera } from '../entities/camera';
 import { TerrainChunkData, TerrainGrid } from './terrain-data';
+import { TerrainShader } from './terrain-shader';
 import { chooseLod, chunkIndices, chunkVertexCount, fillChunkVertices, TERRAIN_LODS } from './terrain-mesh';
 
 export class TerrainChunkRenderer extends MeshRendererBehaviour {
@@ -98,6 +99,7 @@ export class TerrainChunkRenderer extends MeshRendererBehaviour {
   override beforeRender(): void {
     this.refresh();
     if (!this.shader || !this.parent) return;
+    if (this.shader instanceof TerrainShader) this.shader.baseY = this.parent.transform.modelMatrix[13];
     const lod = chooseLod(this.distanceTo(Camera.mainCamera?.transform.worldPosition), this.lodDistances);
     if (lod !== this.lod) {
       this.lod = lod;

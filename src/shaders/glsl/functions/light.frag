@@ -217,25 +217,14 @@ vec3 applySpotLight(int index, vec3 baseColor, vec3 viewDir, vec3 normal, float 
     return (diffuse + specular) * u_spotColor[index].rgb * attenuation * coneFactor * shadow;
 }
 
-vec3 calculateTotalLitColor(vec3 baseColor, vec2 uv) {
-    vec3 finalNormal = getFinalNormal(uv);
-    
+// Light reaching a surface of colour `baseColor` with normal `normal`, from
+// the ambient light and every light of the frame (with their shadows).
+vec3 calculateLitColorWithNormal(vec3 baseColor, vec3 finalNormal, float finalSpecularStrength, float finalRoughness, float ao, vec3 emissive) {
     vec3 cameraDelta = u_cameraPosition - v_position;
     vec3 viewDir = length(cameraDelta) > 0.0001 ? normalize(cameraDelta) : vec3(0.0, 0.0, 1.0);
-    
-    float sampledSpecular = texture(u_specularMap, uv).r;
-    float sampledRoughness = texture(u_roughnessMap, uv).r;
-    
-    float finalRoughness = sampledRoughness * u_roughness;
-    
-    // Fade out specular intensity completely on rough surfaces to prevent the milky wash
-    float finalSpecularStrength = sampledSpecular * u_specularStrength * (1.0 - finalRoughness);
-    
+
     float clampedRoughness = clamp(finalRoughness * finalRoughness, 0.001, 0.999);
     float shininess = (2.0 / clampedRoughness) - 2.0;
-
-    float ao = texture(u_aoMap, uv).r;
-    vec3 emissive = texture(u_emissiveMap, uv).rgb;
 
     vec3 totalLitColorRGB = (u_lightAmbient.rgb * baseColor * ao) + emissive;
 
@@ -250,6 +239,23 @@ vec3 calculateTotalLitColor(vec3 baseColor, vec2 uv) {
     for (int i = 0; i < u_lightCounts.z; ++i) {
         totalLitColorRGB += applySpotLight(i, baseColor, viewDir, finalNormal, shininess, finalSpecularStrength);
     }
-    
+
     return totalLitColorRGB;
+}
+
+vec3 calculateTotalLitColor(vec3 baseColor, vec2 uv) {
+    vec3 finalNormal = getFinalNormal(uv);
+
+    float sampledSpecular = texture(u_specularMap, uv).r;
+    float sampledRoughness = texture(u_roughnessMap, uv).r;
+
+    float finalRoughness = sampledRoughness * u_roughness;
+
+    // Fade out specular intensity completely on rough surfaces to prevent the milky wash
+    float finalSpecularStrength = sampledSpecular * u_specularStrength * (1.0 - finalRoughness);
+
+    float ao = texture(u_aoMap, uv).r;
+    vec3 emissive = texture(u_emissiveMap, uv).rgb;
+
+    return calculateLitColorWithNormal(baseColor, finalNormal, finalSpecularStrength, finalRoughness, ao, emissive);
 }

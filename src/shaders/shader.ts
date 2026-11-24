@@ -65,7 +65,7 @@ export class Shader extends JsonSerializable {
   public get initialized() {
     return this._initialized;
   }
-  private _initialized: boolean = false;
+  protected _initialized: boolean = false;
 
   public get buffers(): WebGLBuffers {
     return this._buffers;

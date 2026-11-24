@@ -11,6 +11,7 @@ export class ShaderSources {
     depth_only: 'assets/shaders/frag/depth-only.frag',
     screen_blit: 'assets/shaders/frag/screen-blit.frag',
     skybox: 'assets/shaders/frag/skybox.frag',
+    terrain: 'assets/shaders/frag/terrain.frag',
     fog: 'assets/shaders/functions/fog.frag',
     functions: 'assets/shaders/functions/functions.frag',
     light: 'assets/shaders/functions/light.frag',
