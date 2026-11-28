@@ -3,6 +3,7 @@
 // everywhere, and chunks generated apart join because they read the same
 // world coordinates.
 import { TerrainGrid } from './terrain-data';
+import { gridArea, Heightmap } from './terrain-heightmap';
 
 /** A small seeded random generator (mulberry32). */
 export function seededRandom(seed: number): () => number {
@@ -99,18 +100,89 @@ export const DEFAULT_RELIEF: Required<ReliefOptions> = {
   seed: 1, scale: 256, octaves: 5, persistence: 0.5, amplitude: 60, base: 0, ridges: 0, sharpness: 1,
 };
 
-/** Writes a relief into every chunk of a grid (borders stay joined). */
-export function generateRelief(grid: TerrainGrid, options: ReliefOptions = {}): void {
-  const o = { ...DEFAULT_RELIEF, ...options };
-  const noise = new Noise2D(o.seed);
+/** A box in terrain space: what a relief's island and image are laid over. */
+export interface ReliefArea { x0: number; z0: number; x1: number; z1: number }
+
+/** A relief with two more numbers, for `heightField`. */
+export interface ReliefFieldOptions extends ReliefOptions {
+  /** 0 to 1: bends the relief by more noise, for winding valleys and ridges. */
+  warp?: number;
+  /** 0 to 1: sinks the ground towards the edges of the area (to the bottom of the relief), with a wobbly coast. */
+  island?: number;
+}
+
+export const DEFAULT_RELIEF_FIELD: Required<ReliefFieldOptions> = { ...DEFAULT_RELIEF, warp: 0, island: 0 };
+
+const smoothstep = (a: number, b: number, x: number) => {
+  const t = Math.min(Math.max((x - a) / (b - a), 0), 1);
+  return t * t * (3 - 2 * t);
+};
+
+/**
+ * A relief as a height function of terrain-space (x, z). With `image` the
+ * heights come from it instead of the noise: stretched over `area`, its grey
+ * 0 to 1 is base ∓ amplitude/2. `warp` and `island` work on either; the
+ * island is the middle of `area` (without one there is no island). With warp
+ * and island 0 it is exactly `relief`.
+ */
+export function heightField(options: ReliefFieldOptions = {}, area?: ReliefArea, image?: Heightmap | null): (x: number, z: number) => number {
+  const s = { ...DEFAULT_RELIEF_FIELD, ...options };
+  const noise = new Noise2D(s.seed);
+  const warpX = new Noise2D(s.seed + 1013), warpZ = new Noise2D(s.seed + 2027);
+  const a = area ?? { x0: 0, z0: 0, x1: s.scale, z1: s.scale };
+  const w = a.x1 - a.x0, d = a.z1 - a.z0;
+  const cx = a.x0 + w / 2, cz = a.z0 + d / 2, r = Math.min(w, d) / 2;
+  const floor = s.base - s.amplitude / 2 - 6;
+  const reach = s.warp * s.scale * 0.45, f = 1 / s.scale;
+  const island = area ? s.island : 0;
+  const fractal = (n: Noise2D, x: number, z: number) => n.get(x * f, z * f) + 0.5 * n.get(x * f * 2 + 5.2, z * f * 2 + 1.3);
+
+  const sample = image
+    ? (x: number, z: number) => {
+        const u = Math.min(Math.max((x - a.x0) / w, 0), 1) * (image.width - 1);
+        const v = Math.min(Math.max((z - a.z0) / d, 0), 1) * (image.height - 1);
+        const i0 = Math.floor(u), j0 = Math.floor(v);
+        const i1 = Math.min(i0 + 1, image.width - 1), j1 = Math.min(j0 + 1, image.height - 1);
+        const tu = u - i0, tv = v - j0, at = (i: number, j: number) => image.data[j * image.width + i];
+        const top = at(i0, j0) + (at(i1, j0) - at(i0, j0)) * tu;
+        const bottom = at(i0, j1) + (at(i1, j1) - at(i0, j1)) * tu;
+        return s.base + ((top + (bottom - top) * tv) / 65535 - 0.5) * s.amplitude;
+      }
+    : (x: number, z: number) => relief(noise, x, z, s);
+
+  return (x, z) => {
+    let px = x, pz = z;
+    if (reach > 0) {
+      px += fractal(warpX, x, z) * reach;
+      pz += fractal(warpZ, x, z) * reach;
+    }
+    let h = sample(px, pz);
+    if (island > 0) {
+      const t = Math.hypot(x - cx, z - cz) / r;
+      const edge = smoothstep(0.45, 1.02, t + noise.get(x * 0.012 + 40, z * 0.012 - 40) * 0.18);
+      h += (floor - h) * edge * island;
+    }
+    return h;
+  };
+}
+
+/** Writes a height function of terrain-space (x, z) into every chunk (shared borders get the same value). */
+export function generateFrom(grid: TerrainGrid, height: (x: number, z: number) => number): void {
   const n = grid.settings.resolution;
   for (const c of grid.all()) {
-    const s = c.spacing;
+    const sp = c.spacing;
     for (let j = 0; j <= n; j++) {
-      for (let i = 0; i <= n; i++) {
-        c.heights[j * (n + 1) + i] = relief(noise, c.originX + i * s, c.originZ + j * s, o);
-      }
+      for (let i = 0; i <= n; i++) c.heights[j * (n + 1) + i] = height(c.originX + i * sp, c.originZ + j * sp);
     }
     c.heightVersion++;
   }
+}
+
+/**
+ * Writes a relief into every chunk (borders stay joined). `warp` and
+ * `island` (laid over the box around the chunks) are optional; without them
+ * it is the plain fractal relief.
+ */
+export function generateRelief(grid: TerrainGrid, options: ReliefFieldOptions = {}): void {
+  generateFrom(grid, heightField(options, gridArea(grid)));
 }

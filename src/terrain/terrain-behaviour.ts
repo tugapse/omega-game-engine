@@ -9,9 +9,10 @@ import { ColliderBehaviour } from '../physics/collider-behaviour';
 import { PhysicsWorld } from '../physics/physics-world';
 import { Shader } from '../shaders/shader';
 import { decodeHeights, DEFAULT_TERRAIN_SETTINGS, encodeHeights, TerrainChunkData, TerrainGrid, TerrainSettings } from './terrain-data';
-import { BrushSettings, clearSplat, fillSplat, paint, sculpt, SculptTool, TerrainHistory } from './terrain-brush';
+import { BrushSettings, clearSplat, fillSplat, paint, sculpt, SculptTool, TerrainHistory, touchAround } from './terrain-brush';
 import { TerrainChunkRenderer } from './terrain-chunk-renderer';
 import { erode, EROSION } from './terrain-erosion';
+import { fillChunk } from './terrain-grow';
 import { ramp, stamp, StampShape, terrace } from './terrain-shapes';
 import { ruleNoise, terrainAutoWeights } from './terrain-rules';
 import { TerrainMaterial } from './terrain-material';
@@ -119,6 +120,21 @@ export class TerrainBehaviour extends EntityBehaviour {
   /** Adds a chunk at a grid cell (joined to its neighbours) and its entity. */
   addChunk(cx: number, cz: number, height = 0): TerrainChunkData {
     const c = this.grid.add(cx, cz, height);
+    this.sync();
+    return c;
+  }
+
+  /**
+   * Adds a chunk at a free cell and fills it from `height` (terrain-space x, z
+   * → height, such as a `heightField`), bent within `blend` metres of the
+   * borders it shares so it meets the ground there exactly. Not undone.
+   */
+  growChunk(cx: number, cz: number, height: (x: number, z: number) => number, blend = 32): TerrainChunkData {
+    if (this.grid.get(cx, cz)) throw new Error(`there is a chunk at ${cx},${cz} already`);
+    this.grid.add(cx, cz);
+    const c = fillChunk(this.grid, cx, cz, height, blend);
+    const n = this.settings.resolution;
+    touchAround(this.grid, { i0: cx * n, j0: cz * n, i1: (cx + 1) * n, j1: (cz + 1) * n });
     this.sync();
     return c;
   }
