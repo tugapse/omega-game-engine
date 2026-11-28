@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 vi.hoisted(() => {
   (globalThis as any).WebGL2RenderingContext ??= new Proxy({}, { get: () => 0 });
 });
-import { grassFalloff, grassTile, grassTuft, INSTANCE_FLOATS, TerrainGrid } from '../src';
+import { GRASS_PRESETS, grassFalloff, grassTile, grassTuft, INSTANCE_FLOATS, packInstance, splitGrass, TerrainGrid } from '../src';
 
 const grass = (_x: number, _z: number, out: Float32Array) => { out.fill(0); out[0] = 1; return out; };
 
@@ -70,5 +70,48 @@ describe('falloff', () => {
     expect(grassFalloff(45, 60)).toBeLessThan(1);
     expect(grassFalloff(59.9, 60)).toBeCloseTo(0.15, 2);
     expect(grassFalloff(60, 60)).toBe(0);
+  });
+});
+
+describe('kinds of grass', () => {
+  it('a tuft takes its shape from the options, and the old arguments still work', () => {
+    expect(grassTuft(5, 3, 3).vertices).toEqual(grassTuft().vertices);
+    expect(grassTuft({ blades: 9 }).vertices.length).toBe(9 * 7);
+    expect(grassTuft({ segments: 5 }).vertices.length).toBe(5 * 11);
+    const reach = (o: object) => Math.max(...grassTuft(o).vertices.map((v) => Math.hypot(v[0], v[2])));
+    expect(reach({ spread: 0.1, lean: 0 })).toBeLessThan(reach({ spread: 1, lean: 0 }));
+    expect(reach({ lean: 1 })).toBeGreaterThan(reach({ lean: 0 }));
+    const top = (o: object) => Math.max(...grassTuft(o).vertices.map((v) => v[1]));
+    expect(top({ droop: 1 })).toBeLessThan(top({ droop: 0 }));
+  });
+
+  it('splits tufts among kinds by weight, scaled to each, keeping every tuft', () => {
+    const n = 2000, data = new Float32Array(n * INSTANCE_FLOATS);
+    for (let i = 0; i < n; i++) packInstance(data, i, (i % 50) * 0.7, 0, Math.floor(i / 50) * 0.7, 0, 1, 1);
+    const parts = splitGrass(data, n, [{ weight: 3, height: 0.5, width: 0.3 }, { weight: 1, height: 1.2, width: 0.2 }], 1, 0);
+    expect(parts[0].count + parts[1].count).toBe(n);
+    expect(parts[0].count / n).toBeGreaterThan(0.65);
+    expect(parts[0].count / n).toBeLessThan(0.85);
+    expect(parts[1].data[5]).toBeCloseTo(1.2, 5);
+    expect(parts[0].data[4]).toBeCloseTo(0.3, 5);
+    expect(splitGrass(data, n, [{ weight: 0, height: 1, width: 1 }, { weight: 1, height: 1, width: 1 }], 1, 0.7)[1].count).toBe(n);
+  });
+
+  it('in patches, neighbours mostly share a kind', () => {
+    const n = 2500, data = new Float32Array(n * INSTANCE_FLOATS);
+    for (let i = 0; i < n; i++) packInstance(data, i, (i % 50) * 2, 0, Math.floor(i / 50) * 2, 0, 1, 1);
+    const kindAt = (patches: number) => {
+      const parts = splitGrass(data, n, [{ weight: 1, height: 1, width: 1 }, { weight: 1, height: 2, width: 1 }], 4, patches);
+      const map = new Map<string, number>();
+      parts.forEach((p, k) => { for (let i = 0; i < p.count; i++) map.set(`${p.data[i * 8]},${p.data[i * 8 + 2]}`, k); });
+      let same = 0;
+      for (let i = 0; i < n - 1; i++) if (i % 50 !== 49 && map.get(`${(i % 50) * 2},${Math.floor(i / 50) * 2}`) === map.get(`${(i % 50 + 1) * 2},${Math.floor(i / 50) * 2}`)) same++;
+      return same / (n - 50);
+    };
+    expect(kindAt(1)).toBeGreaterThan(kindAt(0) + 0.1);
+  });
+
+  it('every preset makes a tuft', () => {
+    for (const k of GRASS_PRESETS) expect(grassTuft(k.tuft).indices.length, k.name).toBeGreaterThan(0);
   });
 });
