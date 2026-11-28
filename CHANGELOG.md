@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 6.1.0 (2026-11-28)
 
 ### Added
 
@@ -13,6 +13,7 @@
 ### Fixed
 
 - `TerrainBehaviour.loadChunks` over chunks already drawn left their renderers drawing the old chunks; their entities are now made again.
+- The npm package leaves out the tests (and their 48 MB of fixtures), the API site and the screenshots: about 1 MB instead of 34 MB.
 
 ## 6.0.0 (2026-11-24)
 
