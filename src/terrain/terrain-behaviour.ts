@@ -8,7 +8,7 @@ import { JsonSerializedData } from '../interfaces/json-serialized-data';
 import { ColliderBehaviour } from '../physics/collider-behaviour';
 import { PhysicsWorld } from '../physics/physics-world';
 import { Shader } from '../shaders/shader';
-import { decodeHeights, DEFAULT_TERRAIN_SETTINGS, encodeHeights, TerrainChunkData, TerrainGrid, TerrainSettings } from './terrain-data';
+import { decodeHeights, DEFAULT_TERRAIN_SETTINGS, encodeHeights, MAX_TERRAIN_LAYERS, TerrainChunkData, TerrainGrid, TerrainSettings } from './terrain-data';
 import { BrushSettings, clearSplat, fillSplat, paint, sculpt, SculptTool, TerrainHistory, touchAround } from './terrain-brush';
 import { TerrainChunkRenderer } from './terrain-chunk-renderer';
 import { erode, EROSION } from './terrain-erosion';
@@ -61,7 +61,7 @@ export class TerrainBehaviour extends EntityBehaviour {
     super();
     this.grid = new TerrainGrid(settings);
     this.material = new TerrainMaterial();
-    this._serializationIgnoreKeys.push('gl', 'grid', 'material', 'chunkEntities', 'pending', 'history', 'colliderVersions');
+    this._serializationIgnoreKeys.push('gl', 'grid', 'material', 'chunkEntities', 'pending', 'history', 'colliderVersions', 'scratchNormal', 'scratchWorld', 'scratchWeights');
   }
 
   get settings(): TerrainSettings {
@@ -313,6 +313,38 @@ export class TerrainBehaviour extends EntityBehaviour {
 
   undo(): boolean { return this.history.undo(this.grid); }
   redo(): boolean { return this.history.redo(this.grid); }
+
+  /**
+   * What the ground is at a terrain-space point, as drawn: each layer's weight
+   * (0 to 1, summing to 1), the painting over the rules. All zero off the
+   * terrain. What plants use to know where they grow.
+   */
+  layerWeightsAt(x: number, z: number, out: Float32Array = new Float32Array(MAX_TERRAIN_LAYERS)): Float32Array {
+    out.fill(0);
+    const [cx, cz] = this.grid.cellAt(x, z);
+    const c = this.grid.get(cx, cz);
+    if (!c) return out;
+    const h = c.heightAtLocal(x - c.originX, z - c.originZ);
+    const nrm = this.grid.normalAt(x, z, this.scratchNormal) ?? vec3.set(this.scratchNormal, 0, 1, 0);
+    const slope = Math.acos(Math.min(Math.max(nrm[1], 0), 1)) * 180 / Math.PI;
+    const m = this.transform.modelMatrix;
+    const world = vec3.transformMat4(this.scratchWorld, vec3.set(this.scratchWorld, x, h, z), m);
+    terrainAutoWeights(this.material.layers, world[1] - m[13], slope, ruleNoise(world[0], world[1], world[2]), this.scratchWeights);
+    // The nearest splat texel: the painting covers the rules by how much it sums to.
+    const s = this.settings.splatResolution;
+    const u = Math.min(Math.max(Math.round(((x - c.originX) / c.size) * (s - 1)), 0), s - 1);
+    const v = Math.min(Math.max(Math.round(((z - c.originZ) / c.size) * (s - 1)), 0), s - 1);
+    const k = (v * s + u) * 4;
+    let painted = 0;
+    for (let l = 0; l < MAX_TERRAIN_LAYERS; l++) painted += c.splat[l >> 2][k + (l & 3)] / 255;
+    const rules = Math.max(0, 1 - painted);
+    for (let l = 0; l < MAX_TERRAIN_LAYERS; l++) out[l] = c.splat[l >> 2][k + (l & 3)] / 255 + rules * this.scratchWeights[l];
+    return out;
+  }
+
+  private readonly scratchNormal = vec3.create();
+  private readonly scratchWorld = vec3.create();
+  private readonly scratchWeights = new Float32Array(MAX_TERRAIN_LAYERS);
 
   /**
    * "Apply the rules": writes what the rules give into the painting, so it
