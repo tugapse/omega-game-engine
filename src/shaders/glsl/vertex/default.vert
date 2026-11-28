@@ -44,6 +44,19 @@ mat4 skinMatrix() {
 }
 #endif
 
+#ifdef INSTANCED
+// Per instance (InstancedMeshRendererBehaviour): position and turn about y,
+// then width and height scales, a tint (0.5 = as is) and a phase.
+in vec4 a_instanceA;
+in vec4 a_instanceB;
+out float v_tint;
+#endif
+
+#ifdef WIND
+// Direction (x, z), strength (m at the top) and speed; bends by the square of the uv's v (0 at the foot).
+uniform vec4 u_wind;
+#endif
+
 // Outputs to the fragment shader
 out vec2 v_uv;
 out vec3 v_normal;
@@ -68,8 +81,35 @@ void main() {
   localBitangent = mat3(skin) * localBitangent;
 #endif
 
+#ifdef INSTANCED
+  float ic = cos(a_instanceA.w), isn = sin(a_instanceA.w);
+  vec3 p = localPosition.xyz;
+  localPosition = vec4((p.x * ic - p.z * isn) * a_instanceB.x + a_instanceA.x, p.y * a_instanceB.y + a_instanceA.y, (p.x * isn + p.z * ic) * a_instanceB.x + a_instanceA.z, 1.0);
+  vec3 sn = vec3(localNormal.x / a_instanceB.x, localNormal.y / a_instanceB.y, localNormal.z / a_instanceB.x);
+  localNormal = normalize(vec3(sn.x * ic - sn.z * isn, sn.y, sn.x * isn + sn.z * ic));
+  vec3 st = localTangent;
+  localTangent = vec3(st.x * ic - st.z * isn, st.y, st.x * isn + st.z * ic);
+  vec3 sb = localBitangent;
+  localBitangent = vec3(sb.x * ic - sb.z * isn, sb.y, sb.x * isn + sb.z * ic);
+  v_tint = a_instanceB.z;
+#endif
+
   // Standard vertex transformations
   vec4 worldPosition = u_worldMatrix * localPosition;
+#ifdef WIND
+  {
+    float bend = a_uv.y * a_uv.y;
+#ifdef INSTANCED
+    float phase = a_instanceB.w;
+#else
+    float phase = 0.0;
+#endif
+    // A gust running along the wind, and a quicker flutter.
+    float along = dot(worldPosition.xz, u_wind.xy) * 0.08;
+    float sway = sin(u_time * u_wind.w - along + phase) * 0.7 + sin(u_time * u_wind.w * 2.3 + phase * 3.1) * 0.3;
+    worldPosition.xz += u_wind.xy * (sway * 0.6 + 0.4) * u_wind.z * bend;
+  }
+#endif
   
   vec4 viewPosition = u_viewMatrix * worldPosition;
 
