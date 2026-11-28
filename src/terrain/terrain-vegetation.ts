@@ -1,11 +1,11 @@
 // Plants on a terrain: species scattered per chunk (terrain-scatter.ts) where
-// their layers cover the ground, drawn as one merged mesh per part and look on
-// each chunk (transient child entities), built again when a chunk's heights,
-// painting or the numbers change. Merged meshes work with the lights, shadows
-// and fog as they are; with instancing only the drawing here would change.
+// their layers cover the ground, drawn as instances (one instanced renderer per
+// part and look on each chunk, transient child entities), built again when a
+// chunk's heights, painting or the numbers change.
 import { vec2, vec3 } from 'gl-matrix';
 import { EntityBehaviour } from '../behaviours/entity-behaviour';
-import { MeshRendererBehaviour } from '../behaviours/renderer/mesh-renderer-behaviour';
+import { InstancedMeshRendererBehaviour } from '../behaviours/renderer/instanced-mesh-renderer-behaviour';
+import { INSTANCE_FLOATS, packInstance } from '../core/render/instancing';
 import { Color } from '../core/color';
 import { Mesh, MeshData } from '../core/mesh';
 import { SceneEntity } from '../entities/entity';
@@ -237,32 +237,39 @@ export class TerrainVegetationBehaviour extends EntityBehaviour {
     super.destroy();
   }
 
-  /** One entity per part and look that has plants, children of the terrain's entity. */
+  /** One instanced renderer per part and look that has plants, children of the terrain's entity. */
   private buildMeshes(items: ScatterItem[], id: string): SceneEntity[] {
     const scene = this.parent?.scene;
     if (!scene || !items.length) return [];
-    const groups = new Map<string, { mesh: MeshData; material: LitMaterial; places: MeshPlacement[] }>();
+    const groups = new Map<string, { mesh: MeshData; material: LitMaterial; items: ScatterItem[] }>();
     for (const it of items) {
       const s = this.species[it.species];
-      const w = s.radius * it.scale, h = s.height * it.scale;
       s.parts.forEach((p, k) => {
         const material = p.materials[it.variant % p.materials.length];
         const key = `${it.species}:${k}:${p.materials.indexOf(material)}`;
         let g = groups.get(key);
-        if (!g) groups.set(key, (g = { mesh: p.mesh, material, places: [] }));
-        g.places.push({ at: [it.x, it.y, it.z], scale: [w, h, w], turn: it.turn });
+        if (!g) groups.set(key, (g = { mesh: p.mesh, material, items: [] }));
+        g.items.push(it);
       });
     }
     const entities: SceneEntity[] = [];
     for (const g of groups.values()) {
+      const data = new Float32Array(g.items.length * INSTANCE_FLOATS);
+      g.items.forEach((it, i) => {
+        const s = this.species[it.species];
+        // A little lighter or darker each, from where it stands.
+        const tint = 0.42 + 0.16 * ((Math.sin(it.x * 12.9898 + it.z * 78.233) * 43758.5453) % 1 + 1) % 1;
+        packInstance(data, i, it.x, it.y, it.z, it.turn, s.radius * it.scale, s.height * it.scale, tint);
+      });
       const e = new SceneEntity(`Plants ${id}`);
       e.transient = true;
       e.transform.setParent(this.transform);
-      const r = new MeshRendererBehaviour(this.gl);
+      const r = new InstancedMeshRendererBehaviour(this.gl);
       r.mesh = new Mesh();
-      r.mesh.meshData = mergePlaced(g.mesh, g.places);
+      r.mesh.meshData = g.mesh;
       r.shader = new LitShader(this.gl, g.material);
       r.castShadows = this.castShadows;
+      r.setInstances(data);
       e.addBehaviour(r);
       scene.addEntity(e);
       entities.push(e);
