@@ -448,8 +448,18 @@ export class TerrainBehaviour extends EntityBehaviour {
     }));
   }
 
-  /** Replaces the grid's chunks with saved ones. */
+  /**
+   * Replaces the grid's chunks with saved ones. The chunks' entities are made
+   * again (their renderers hold the chunks they drew), on the next `sync`.
+   */
   loadChunks(saved: SavedTerrainChunk[]): void {
+    const scene = this.parent?.scene;
+    for (const e of this.chunkEntities.values()) {
+      scene?.removeEntity(e);
+      e.transform.setParent(null);
+    }
+    this.chunkEntities.clear();
+    this.colliderVersions.clear();
     for (const c of this.grid.all()) this.grid.remove(c.cx, c.cz);
     for (const s of saved) {
       const c = this.grid.add(s.cx, s.cz);
