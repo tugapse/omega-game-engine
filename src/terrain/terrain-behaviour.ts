@@ -11,6 +11,8 @@ import { Shader } from '../shaders/shader';
 import { decodeHeights, DEFAULT_TERRAIN_SETTINGS, encodeHeights, TerrainChunkData, TerrainGrid, TerrainSettings } from './terrain-data';
 import { BrushSettings, clearSplat, fillSplat, paint, sculpt, SculptTool, TerrainHistory } from './terrain-brush';
 import { TerrainChunkRenderer } from './terrain-chunk-renderer';
+import { erode, EROSION } from './terrain-erosion';
+import { ramp, stamp, StampShape, terrace } from './terrain-shapes';
 import { ruleNoise, terrainAutoWeights } from './terrain-rules';
 import { TerrainMaterial } from './terrain-material';
 import { TerrainShader } from './terrain-shader';
@@ -226,6 +228,71 @@ export class TerrainBehaviour extends EntityBehaviour {
     const b = { ...brush, radius: brush.radius / scale };
     this.history.saveAround(this.grid, local[0], local[2], b.radius);
     return paint(this.grid, layer, local[0], local[2], b, dt, erase).length > 0;
+  }
+
+  /** One step of the terrace brush at a world point: flat steps `step` metres apart (world). */
+  terraceAt(point: vec3, brush: BrushSettings, dt: number, step: number): boolean {
+    const local = this.toLocal(point);
+    const scale = this.transform.worldScale?.[0] || 1;
+    const b = { ...brush, radius: brush.radius / scale };
+    this.history.saveAround(this.grid, local[0], local[2], b.radius);
+    return !!terrace(this.grid, local[0], local[2], b, dt, step / (this.transform.worldScale?.[1] || 1));
+  }
+
+  /**
+   * One step of erosion at a world point: about `EROSION.rate` drops a second
+   * for a 14 m brush (as many more as its area is larger), at most
+   * `EROSION.maxDrops` a step. `random` gives 0 to 1 (seeded for tests).
+   */
+  erodeAt(point: vec3, brush: BrushSettings, dt: number, random: () => number = Math.random): boolean {
+    const local = this.toLocal(point);
+    const scale = this.transform.worldScale?.[0] || 1;
+    const b = { ...brush, radius: brush.radius / scale };
+    // Drops run up to 1.5 radii out: the chunks there are saved too.
+    this.history.saveAround(this.grid, local[0], local[2], b.radius * 1.6);
+    const drops = Math.min(EROSION.maxDrops, Math.round(EROSION.rate * dt * (brush.radius / 14) ** 2));
+    return !!erode(this.grid, local[0], local[2], b, drops, random);
+  }
+
+  /**
+   * A stamp of `radius` and `height` (negative digs it in) at a world point,
+   * as one undo step (or within the stroke already open).
+   */
+  stampAt(shape: StampShape, point: vec3, radius: number, height: number): boolean {
+    const local = this.toLocal(point);
+    const r = radius / (this.transform.worldScale?.[0] || 1);
+    return this.oneStep(() => {
+      this.history.saveAround(this.grid, local[0], local[2], r);
+      return !!stamp(this.grid, shape, local[0], local[2], r, height / (this.transform.worldScale?.[1] || 1));
+    });
+  }
+
+  /**
+   * A straight ramp between two world points, each at its own height: `width`
+   * (world) either side of the line, its edges as soft as `hardness` leaves
+   * them, as one undo step (or within the stroke already open).
+   */
+  rampAt(from: vec3, to: vec3, width: number, hardness: number): boolean {
+    const a = this.toLocal(from), b = this.toLocal(to);
+    const w = width / (this.transform.worldScale?.[0] || 1);
+    const size = this.settings.size, pad = w + size / this.settings.resolution;
+    return this.oneStep(() => {
+      for (const c of this.grid.all()) {
+        if (Math.max(a[0], b[0]) + pad < c.originX || Math.min(a[0], b[0]) - pad > c.originX + size) continue;
+        if (Math.max(a[2], b[2]) + pad < c.originZ || Math.min(a[2], b[2]) - pad > c.originZ + size) continue;
+        this.history.save(c);
+      }
+      return !!ramp(this.grid, { x: a[0], z: a[2], h: a[1] }, { x: b[0], z: b[2], h: b[1] }, w, hardness);
+    });
+  }
+
+  /** Runs an edit as its own undo step, or inside the stroke already open. */
+  private oneStep(edit: () => boolean): boolean {
+    if (this.history.isOpen) return edit();
+    this.history.begin('heights');
+    const done = edit();
+    this.history.end();
+    return done;
   }
 
   undo(): boolean { return this.history.undo(this.grid); }
