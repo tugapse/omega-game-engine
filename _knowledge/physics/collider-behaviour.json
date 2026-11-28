@@ -1,0 +1,159 @@
+{
+  "component": {
+    "name": "ColliderBehaviour",
+    "source_path": "/physics/collider-behaviour.ts",
+    "doc_path": "/physics/collider-behaviour.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "ColliderBehaviour defines the physical geometry and interaction properties for an entity within a physics simulation. It inherits from EntityBehaviour and manages parameters like friction, restitution, and mass, utilizing a ColliderShape for geometric definition. The class registers itself with a PhysicsWorld upon initialization and ensures proper cleanup during destruction. It supports optional linking to a RigidBodyBehaviour for dynamic simulation participation."
+  },
+  "graph_nodes": [
+    {
+      "id": "/physics/collider-behaviour.ts#ColliderBehaviour",
+      "label": "Class",
+      "name": "ColliderBehaviour",
+      "signature": "class ColliderBehaviour extends EntityBehaviour"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#shape",
+      "label": "Variable",
+      "name": "shape",
+      "signature": "shape: ColliderShape = { type: 'box', halfExtents: [0.5, 0.5, 0.5] }"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#offset",
+      "label": "Variable",
+      "name": "offset",
+      "signature": "offset: number[] = [0, 0, 0]"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#friction",
+      "label": "Variable",
+      "name": "friction",
+      "signature": "friction = 0.5"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#restitution",
+      "label": "Variable",
+      "name": "restitution",
+      "signature": "restitution = 0"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#density",
+      "label": "Variable",
+      "name": "density",
+      "signature": "density = 1"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#mass",
+      "label": "Variable",
+      "name": "mass",
+      "signature": "mass = 0"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#sensor",
+      "label": "Variable",
+      "name": "sensor",
+      "signature": "sensor = false"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#contactEvents",
+      "label": "Variable",
+      "name": "contactEvents",
+      "signature": "contactEvents = false"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#contactForceThreshold",
+      "label": "Variable",
+      "name": "contactForceThreshold",
+      "signature": "contactForceThreshold = -1"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#onContact",
+      "label": "Variable",
+      "name": "onContact",
+      "signature": "onContact?: (event: ContactEvent, other: ColliderBehaviour) => void"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#world",
+      "label": "Variable",
+      "name": "world",
+      "signature": "world: PhysicsWorld | null = null"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#_handle",
+      "label": "Variable",
+      "name": "_handle",
+      "signature": "_handle = -1"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#_body",
+      "label": "Variable",
+      "name": "_body",
+      "signature": "_body: RigidBodyBehaviour | null = null"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "override initialize(): boolean"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "override destroy(): void"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#body",
+      "label": "Method",
+      "name": "body",
+      "signature": "get body(): RigidBodyBehaviour | null"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/physics/collider-behaviour.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "override fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/physics/collider-behaviour.ts",
+      "target": "/src/behaviours/entity-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/collider-behaviour.ts",
+      "target": "/src/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/collider-behaviour.ts",
+      "target": "/physics/physics-backend.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/collider-behaviour.ts",
+      "target": "/physics/rigid-body-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/collider-behaviour.ts",
+      "target": "/physics/physics-world.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

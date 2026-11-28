@@ -1,0 +1,29 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/parsers/fbx/index.ts",
+    "doc_path": "/parsers/fbx/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as the primary facade for the FBX parsing subsystem, aggregating core functionality from its sub-components. It re-exports all members from './fbx-reader' and './fbx-parser', providing a unified entry point for consumers. Its role is purely structural, aggregating implementations without containing complex business logic or side effects."
+  },
+  "graph_nodes": [],
+  "graph_edges": [
+    {
+      "source": "/parsers/fbx/index.ts",
+      "target": "/parsers/fbx/fbx-reader.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/parsers/fbx/index.ts",
+      "target": "/parsers/fbx/fbx-parser.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

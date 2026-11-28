@@ -1,0 +1,39 @@
+{
+  "component": {
+    "name": "blend.enum",
+    "source_path": "/enums/gl/blend.enum.ts",
+    "doc_path": "/enums/gl/blend.enum.json",
+    "type": "utility"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines two TypeScript enumerations, BlendingSourceFactor and BlendingDestinationFactor, which encapsulate the constant factors used in WebGL rendering blending operations. It serves as a strongly typed wrapper around low-level WebGL2RenderingContext constants like SRC_ALPHA and ONE. Its primary role is to ensure type safety when configuring color compositing logic within the graphics pipeline. It provides specific constants for both the source and destination color contributions during rendering."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/gl/blend.enum.ts#BlendingSourceFactor",
+      "label": "Enum",
+      "name": "BlendingSourceFactor",
+      "signature": "enum BlendingSourceFactor"
+    },
+    {
+      "id": "/enums/gl/blend.enum.ts#BlendingDestinationFactor",
+      "label": "Enum",
+      "name": "BlendingDestinationFactor",
+      "signature": "enum BlendingDestinationFactor"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/enums/gl/blend.enum.ts",
+      "target": "/enums/gl/blend.enum.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "WebGL2RenderingContext"
+    ],
+    "has_side_effects": false
+  }
+}

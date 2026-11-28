@@ -1,0 +1,109 @@
+{
+  "component": {
+    "name": "Pointer",
+    "source_path": "/core/pointer.ts",
+    "doc_path": "/core/pointer.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The Pointer class serves as a centralized input service managing the state of all active input devices (mouse, touch, pen). It tracks individual pointer states, including position history, to facilitate gesture detection and velocity calculation. It acts as a facade, registering listeners for down, move, and up events, and maintains a static map of active pointers. The implementation relies on static state management and synchronous invocation of registered callbacks."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/pointer.ts#PointerSample",
+      "label": "Interface",
+      "name": "PointerSample",
+      "signature": "interface PointerSample { x: number; y: number; time: number; }"
+    },
+    {
+      "id": "/core/pointer.ts#PointerState",
+      "label": "Interface",
+      "name": "PointerState",
+      "signature": "interface PointerState { id: number; type: string; x: number; y: number; startX: number; startY: number; startTime: number; history: PointerSample[]; }"
+    },
+    {
+      "id": "/core/pointer.ts#PointerListener",
+      "label": "Type",
+      "name": "PointerListener",
+      "signature": "type PointerListener = (pointer: PointerState) => void;"
+    },
+    {
+      "id": "/core/pointer.ts#Pointer",
+      "label": "Class",
+      "name": "Pointer",
+      "signature": "class Pointer"
+    },
+    {
+      "id": "/core/pointer.ts#Pointer.historyMs",
+      "label": "Variable",
+      "name": "historyMs",
+      "signature": "static historyMs = 250;"
+    },
+    {
+      "id": "/core/pointer.ts#Pointer.active",
+      "label": "Variable",
+      "name": "active",
+      "signature": "static readonly active = new Map<number, PointerState>();"
+    },
+    {
+      "id": "/core/pointer.ts#Pointer.primary",
+      "label": "Method",
+      "name": "primary",
+      "signature": "static get primary(): PointerState | undefined"
+    },
+    {
+      "id": "/core/pointer.ts#Pointer.onDown",
+      "label": "Method",
+      "name": "onDown",
+      "signature": "static onDown(listener: PointerListener): () => void"
+    },
+    {
+      "id": "/core/pointer.ts#Pointer.onMove",
+      "label": "Method",
+      "name": "onMove",
+      "signature": "static onMove(listener: PointerListener): () => void"
+    },
+    {
+      "id": "/core/pointer.ts#Pointer.onUp",
+      "label": "Method",
+      "name": "onUp",
+      "signature": "static onUp(listener: PointerListener): () => void"
+    },
+    {
+      "id": "/core/pointer.ts#Pointer.velocity",
+      "label": "Method",
+      "name": "velocity",
+      "signature": "static velocity(pointer: PointerState, windowMs = 100): { x: number; y: number }"
+    },
+    {
+      "id": "/core/pointer.ts#Pointer._down",
+      "label": "Method",
+      "name": "_down",
+      "signature": "static _down(id: number, type: string, x: number, y: number, time: number): void"
+    },
+    {
+      "id": "/core/pointer.ts#Pointer._move",
+      "label": "Method",
+      "name": "_move",
+      "signature": "static _move(id: number, x: number, y: number, time: number): void"
+    },
+    {
+      "id": "/core/pointer.ts#Pointer._up",
+      "label": "Method",
+      "name": "_up",
+      "signature": "static _up(id: number, x: number, y: number, time: number): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/pointer.ts",
+      "target": "/core/pointer.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

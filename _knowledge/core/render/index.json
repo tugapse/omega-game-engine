@@ -1,0 +1,71 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/core/render/index.ts",
+    "doc_path": "/core/render/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module serves as the primary barrel export for the entire rendering subsystem. It aggregates and exposes all necessary components, interfaces, and definitions related to the rendering pipeline in a single, centralized entry point. It acts as a high-level facade, allowing client code to uniformly access core rendering features like render pipelines, passes, and frame data structures."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/index.ts#index",
+      "label": "Module",
+      "name": "index",
+      "signature": ""
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/index.ts",
+      "target": "/core/render/render-pipeline.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/index.ts",
+      "target": "/core/render/render-pass.interface.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/index.ts",
+      "target": "/core/render/pass.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/index.ts",
+      "target": "/core/render/render-target.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/index.ts",
+      "target": "/core/render/fullscreen-program.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/index.ts",
+      "target": "/core/render/frame-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/index.ts",
+      "target": "/core/render/post-effect.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/index.ts",
+      "target": "/core/render/lights-ubo.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/index.ts",
+      "target": "/core/render/shadows.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

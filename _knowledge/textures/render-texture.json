@@ -1,0 +1,102 @@
+{
+  "component": {
+    "name": "RenderTexture",
+    "source_path": "/textures/render-texture.ts",
+    "doc_path": "/textures/render-texture.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "RenderTexture is a specialized class extending Texture, designed to function as a rendering target for cameras. It implements a ping-pong buffering mechanism using two internal RenderTarget instances to prevent rendering feedback loops. Its primary role is to manage the double buffering state via readIndex and written flags, providing a mechanism for materials to read the most recently completed render output."
+  },
+  "graph_nodes": [
+    {
+      "id": "/textures/render-texture.ts#RENDER_TEXTURE_SCHEME",
+      "label": "Constant",
+      "name": "RENDER_TEXTURE_SCHEME",
+      "signature": ""
+    },
+    {
+      "id": "/textures/render-texture.ts#isRenderTextureUri",
+      "label": "Function",
+      "name": "isRenderTextureUri",
+      "signature": "isRenderTextureUri(uri: string | undefined | null): boolean"
+    },
+    {
+      "id": "/textures/render-texture.ts#renderTextureUri",
+      "label": "Function",
+      "name": "renderTextureUri",
+      "signature": "renderTextureUri(name: string): string"
+    },
+    {
+      "id": "/textures/render-texture.ts#RenderTexture",
+      "label": "Class",
+      "name": "RenderTexture",
+      "signature": "class RenderTexture"
+    },
+    {
+      "id": "/textures/render-texture.ts#textureName",
+      "label": "Method",
+      "name": "textureName",
+      "signature": "get textureName(): string"
+    },
+    {
+      "id": "/textures/render-texture.ts#glTexture",
+      "label": "Method",
+      "name": "glTexture",
+      "signature": "override get glTexture(): WebGLTexture | null"
+    },
+    {
+      "id": "/textures/render-texture.ts#beginWrite",
+      "label": "Method",
+      "name": "beginWrite",
+      "signature": "beginWrite(width: number, height: number): RenderTarget"
+    },
+    {
+      "id": "/textures/render-texture.ts#endWrite",
+      "label": "Method",
+      "name": "endWrite",
+      "signature": "endWrite(): void"
+    },
+    {
+      "id": "/textures/render-texture.ts#load",
+      "label": "Method",
+      "name": "load",
+      "signature": "override load(): Promise<void>"
+    },
+    {
+      "id": "/textures/render-texture.ts#setTextureParameters",
+      "label": "Method",
+      "name": "setTextureParameters",
+      "signature": "override setTextureParameters(): void"
+    },
+    {
+      "id": "/textures/render-texture.ts#bind",
+      "label": "Method",
+      "name": "bind",
+      "signature": "override bind(): void"
+    },
+    {
+      "id": "/textures/render-texture.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "override destroy(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/textures/render-texture.ts",
+      "target": "/src/textures/texture.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/textures/render-texture.ts",
+      "target": "/core/render/render-target.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

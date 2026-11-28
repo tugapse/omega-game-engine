@@ -1,0 +1,73 @@
+{
+  "component": {
+    "name": "terrain-heightmap",
+    "source_path": "/terrain/terrain-heightmap.ts",
+    "doc_path": "/terrain/terrain-heightmap.json",
+    "type": "utility"
+  },
+  "vector_memory": {
+    "semantic_summary": "This utility module manages the serialization and deserialization of terrain data between various formats. It provides functions to convert the internal TerrainGrid structure into standardized 16-bit heightmaps (.r16) or 8-bit RGBA image representations. Key operations include calculating grid bounds, exporting the full terrain heightmap, and importing external heightmap data using bilinear interpolation for smooth integration."
+  },
+  "graph_nodes": [
+    {
+      "id": "/terrain/terrain-heightmap.ts#Heightmap",
+      "label": "Interface",
+      "name": "Heightmap",
+      "signature": "interface Heightmap { width: number; height: number; data: Uint16Array; }"
+    },
+    {
+      "id": "/terrain/terrain-heightmap.ts#gridBounds",
+      "label": "Function",
+      "name": "gridBounds",
+      "signature": "gridBounds(grid: TerrainGrid): { cx0: number; cz0: number; cx1: number; cz1: number } | null"
+    },
+    {
+      "id": "/terrain/terrain-heightmap.ts#exportHeightmap",
+      "label": "Function",
+      "name": "exportHeightmap",
+      "signature": "exportHeightmap(grid: TerrainGrid): Heightmap | null"
+    },
+    {
+      "id": "/terrain/terrain-heightmap.ts#importHeightmap",
+      "label": "Function",
+      "name": "importHeightmap",
+      "signature": "importHeightmap(grid: TerrainGrid, map: Heightmap): void"
+    },
+    {
+      "id": "/terrain/terrain-heightmap.ts#heightmapToRaw",
+      "label": "Function",
+      "name": "heightmapToRaw",
+      "signature": "heightmapToRaw(map: Heightmap): Uint8Array"
+    },
+    {
+      "id": "/terrain/terrain-heightmap.ts#rawToHeightmap",
+      "label": "Function",
+      "name": "rawToHeightmap",
+      "signature": "rawToHeightmap(bytes: Uint8Array): Heightmap"
+    },
+    {
+      "id": "/terrain/terrain-heightmap.ts#rgbaToHeightmap",
+      "label": "Function",
+      "name": "rgbaToHeightmap",
+      "signature": "rgbaToHeightmap(rgba: Uint8ClampedArray | Uint8Array, width: number, height: number): Heightmap"
+    },
+    {
+      "id": "/terrain/terrain-heightmap.ts#heightmapToRgba",
+      "label": "Function",
+      "name": "heightmapToRgba",
+      "signature": "heightmapToRgba(map: Heightmap): Uint8ClampedArray"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/terrain/terrain-heightmap.ts",
+      "target": "/src/terrain/terrain-data.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

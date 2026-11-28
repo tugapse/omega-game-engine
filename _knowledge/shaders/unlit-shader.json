@@ -1,0 +1,77 @@
+{
+  "component": {
+    "name": "UnlitShader",
+    "source_path": "/shaders/unlit-shader.ts",
+    "doc_path": "/shaders/unlit-shader.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "UnlitShader is a specialized class inheriting from Shader, designed to manage rendering pipelines for materials that do not require lighting calculations. It is responsible for correctly loading and passing material properties like base color, UV scale, and UV offset to the GPU via uniforms. The component orchestrates data transfer by calling parent loading methods and asynchronously handling texture loading via the associated UnlitMaterial.",
+    "logic_summary": "The component implements static instantiation, overrides data loading to set specific uniforms (U_MAT_COLOR, U_UV_SCALE, U_UV_OFFSET), and manages texture binding/unbinding during its lifecycle."
+  },
+  "graph_nodes": [
+    {
+      "id": "/shaders/unlit-shader.ts#UnlitShader",
+      "label": "Class",
+      "name": "UnlitShader",
+      "signature": "class UnlitShader extends Shader"
+    },
+    {
+      "id": "/shaders/unlit-shader.ts#instanciate",
+      "label": "Static Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(gl: WebGL2RenderingContext, material: UnlitMaterial): UnlitShader"
+    },
+    {
+      "id": "/shaders/unlit-shader.ts#constructor",
+      "label": "Constructor",
+      "name": "constructor",
+      "signature": "constructor(gl: WebGL2RenderingContext, material: UnlitMaterial)"
+    },
+    {
+      "id": "/shaders/unlit-shader.ts#loadDataIntoShader",
+      "label": "Method",
+      "name": "loadDataIntoShader",
+      "signature": "override async loadDataIntoShader(): Promise<void>"
+    },
+    {
+      "id": "/shaders/unlit-shader.ts#checkAndLoadTextures",
+      "label": "Method",
+      "name": "checkAndLoadTextures",
+      "signature": "protected async checkAndLoadTextures(): Promise<void>"
+    },
+    {
+      "id": "/shaders/unlit-shader.ts#release",
+      "label": "Method",
+      "name": "release",
+      "signature": "override release(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/shaders/unlit-shader.ts",
+      "target": "/shaders/shader.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/unlit-shader.ts",
+      "target": "/shaders/unlit-material.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/unlit-shader.ts",
+      "target": "/enums/shader-uniforms.enum.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/unlit-shader.ts",
+      "target": "/shaders/shader-sources.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

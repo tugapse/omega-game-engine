@@ -1,0 +1,85 @@
+{
+  "component": {
+    "name": "TerrainMaterial",
+    "source_path": "/terrain/terrain-material.ts",
+    "doc_path": "/terrain/terrain-material.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "TerrainMaterial is the core rendering configuration service for terrain chunks, extending LitMaterial to manage visual properties. It centralizes terrain appearance by handling the blending of multiple terrain layers and managing texture arrays for WebGL rendering. It controls state via 'version' and 'textureVersion', ensuring efficient caching of packed shader uniforms and GPU resources. It integrates texture loading from URIs asynchronously and manages resource lifecycle for texture arrays."
+  },
+  "graph_nodes": [
+    {
+      "id": "/terrain/terrain-material.ts#cachedGroundTexture",
+      "label": "Function",
+      "name": "cachedGroundTexture",
+      "signature": "cachedGroundTexture(kind: TerrainLayer['ground'], size: number): GroundTexture"
+    },
+    {
+      "id": "/terrain/terrain-material.ts#TerrainMaterial",
+      "label": "Class",
+      "name": "TerrainMaterial",
+      "signature": "class TerrainMaterial extends LitMaterial"
+    },
+    {
+      "id": "/terrain/terrain-material.ts#changed",
+      "label": "Method",
+      "name": "changed",
+      "signature": "changed(textures = false): void"
+    },
+    {
+      "id": "/terrain/terrain-material.ts#uniforms",
+      "label": "Method",
+      "name": "uniforms",
+      "signature": "uniforms(): ReturnType<typeof packLayerUniforms>"
+    },
+    {
+      "id": "/terrain/terrain-material.ts#textures",
+      "label": "Method",
+      "name": "textures",
+      "signature": "textures(gl: WebGL2RenderingContext): { albedo: TextureArray; normal: TextureArray }"
+    },
+    {
+      "id": "/terrain/terrain-material.ts#loadInto",
+      "label": "Function",
+      "name": "loadInto",
+      "signature": "loadInto(array: TextureArray, layer: number, uri: string): Promise<void>"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/terrain/terrain-material.ts",
+      "target": "/src/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-material.ts",
+      "target": "/src/materials/lit-material.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-material.ts",
+      "target": "/src/textures/texture-array.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-material.ts",
+      "target": "/terrain/terrain-rules.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-material.ts",
+      "target": "/terrain/terrain-textures.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "Image",
+      "canvas",
+      "WebGL2RenderingContext"
+    ],
+    "has_side_effects": true
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/terrain/index.ts",
+    "doc_path": "/terrain/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as a central barrel export for the entire terrain subsystem, aggregating and exposing all related components under a single entry point. It functions as a high-level facade, simplifying client consumption by unifying access to terrain data, noise generation, rendering, and behavioral rules. It promotes modularity by abstracting away the internal path structure of the terrain domain."
+  },
+  "graph_nodes": [],
+  "graph_edges": [
+    {
+      "source": "/terrain/index.ts",
+      "target": "/src/terrain/terrain-data.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/index.ts",
+      "target": "/src/terrain/terrain-noise.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/index.ts",
+      "target": "/src/terrain/terrain-mesh.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/index.ts",
+      "target": "/src/terrain/terrain-chunk-renderer.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/index.ts",
+      "target": "/src/terrain/terrain-behaviour.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/index.ts",
+      "target": "/src/terrain/terrain-textures.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/index.ts",
+      "target": "/src/terrain/terrain-rules.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/index.ts",
+      "target": "/src/terrain/terrain-material.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/index.ts",
+      "target": "/src/terrain/terrain-shader.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/index.ts",
+      "target": "/src/terrain/terrain-brush.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/index.ts",
+      "target": "/src/terrain/terrain-heightmap.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

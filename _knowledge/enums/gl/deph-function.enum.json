@@ -1,0 +1,33 @@
+{
+  "component": {
+    "name": "deph-function.enum.ts",
+    "source_path": "/enums/gl/deph-function.enum.ts",
+    "doc_path": "/enums/gl/deph-function.enum.json",
+    "type": "utility"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the DephFunction enumeration, which centralizes standard depth testing functions required for WebGL rendering pipelines. It maps named constants like 'Less' and 'Greater' to specific numerical constants provided by the WebGL2RenderingContext. Its primary role is to provide a strongly typed, consistent configuration mechanism for managing depth buffer comparisons during rasterization in graphics contexts."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/gl/deph-function.enum.ts#DephFunction",
+      "label": "Type",
+      "name": "DephFunction",
+      "signature": "enum"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/enums/gl/deph-function.enum.ts",
+      "target": "/enums/gl/deph-function.enum.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "WebGL2RenderingContext"
+    ],
+    "has_side_effects": false
+  }
+}

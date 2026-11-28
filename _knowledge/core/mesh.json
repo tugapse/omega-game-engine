@@ -1,0 +1,120 @@
+{
+  "component": {
+    "name": "mesh.ts",
+    "source_path": "/core/mesh.ts",
+    "doc_path": "/core/mesh.json",
+    "type": "model"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines MeshData and Mesh, core classes for geometric data representation in the engine. MeshData encapsulates raw mesh attributes like vertices, normals, UVs, and indices, providing methods for calculating derived data such as smooth normals, tangents, and bounding volumes. The Mesh class acts as a reference wrapper around MeshData, managing its serialization and providing a high-level interface for asset handling."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/mesh.ts#MeshData",
+      "label": "Class",
+      "name": "MeshData",
+      "signature": "constructor(vertices: vec3[], normals: vec3[] = [], uvs: vec2[] = [], indices: number[] = [])"
+    },
+    {
+      "id": "/core/mesh.ts#Mesh",
+      "label": "Class",
+      "name": "Mesh",
+      "signature": "constructor()"
+    },
+    {
+      "id": "/core/mesh.ts#MeshData.instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static instanciate(vertices?: vec3[], normals: vec3[] = [], uvs: vec2[] = [], indices: number[] = []): MeshData"
+    },
+    {
+      "id": "/core/mesh.ts#MeshData.calculateNormals",
+      "label": "Method",
+      "name": "calculateNormals",
+      "signature": "calculateNormals(): void"
+    },
+    {
+      "id": "/core/mesh.ts#MeshData.getBoundingBox",
+      "label": "Method",
+      "name": "getBoundingBox",
+      "signature": "static getBoundingBox(vertices: vec3[]): BoundingBox | null"
+    },
+    {
+      "id": "/core/mesh.ts#MeshData.getBoundingSphere",
+      "label": "Method",
+      "name": "getBoundingSphere",
+      "signature": "static getBoundingSphere(vertices: vec3[]): BoundingSphere | null"
+    },
+    {
+      "id": "/core/mesh.ts#MeshData.invertNormals",
+      "label": "Method",
+      "name": "invertNormals",
+      "signature": "invertNormals(): void"
+    },
+    {
+      "id": "/core/mesh.ts#MeshData.calculateTangentsAndBitangents",
+      "label": "Method",
+      "name": "calculateTangentsAndBitangents",
+      "signature": "calculateTangentsAndBitangents(): void"
+    },
+    {
+      "id": "/core/mesh.ts#MeshData.toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/core/mesh.ts#MeshData.fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/core/mesh.ts#Mesh.toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/core/mesh.ts#Mesh.fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/mesh.ts",
+      "target": "/src/core/json-serializable.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/mesh.ts",
+      "target": "/src/interfaces/json-serialized-data.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/mesh.ts",
+      "target": "/src/interfaces/meshData.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/mesh.ts",
+      "target": "/src/core/bounding-box.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/mesh.ts",
+      "target": "/src/core/mesh.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix",
+      "uuid"
+    ],
+    "has_side_effects": true
+  }
+}

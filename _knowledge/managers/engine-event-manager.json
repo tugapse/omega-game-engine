@@ -1,0 +1,155 @@
+{
+  "component": {
+    "name": "EngineEventManager",
+    "source_path": "/managers/engine-event-manager.ts",
+    "doc_path": "/managers/engine-event-manager.json",
+    "type": "service"
+  },
+  "vector_memory": {
+    "semantic_summary": "EngineEventManager serves as the central service layer for capturing and standardizing all raw input events from the browser, including mouse, keyboard, gamepad, and pointer interactions. It initializes listeners on the canvas and document, translating DOM events into engine-consumable state changes for core systems. Its primary role is bridging the browser's event system with the core game loop logic, managing input state updates during the engine's update cycle."
+  },
+  "graph_nodes": [
+    {
+      "id": "/managers/engine-event-manager.ts#EngineEventManager",
+      "label": "Class",
+      "name": "EngineEventManager",
+      "signature": "constructor(engine: Engine, canvas: HTMLCanvasElement)"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "initialize(): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#pointerXY",
+      "label": "Method",
+      "name": "pointerXY",
+      "signature": "pointerXY(event: PointerEvent): [number, number]"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onPointerDown",
+      "label": "Method",
+      "name": "onPointerDown",
+      "signature": "onPointerDown = (event: PointerEvent): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onPointerMove",
+      "label": "Method",
+      "name": "onPointerMove",
+      "signature": "onPointerMove = (event: PointerEvent): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onPointerUp",
+      "label": "Method",
+      "name": "onPointerUp",
+      "signature": "onPointerUp = (event: PointerEvent): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#update",
+      "label": "Method",
+      "name": "update",
+      "signature": "update(): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineContextMenu",
+      "label": "Method",
+      "name": "onEngineContextMenu",
+      "signature": "onEngineContextMenu = (event: MouseEvent): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineKeyDown",
+      "label": "Method",
+      "name": "onEngineKeyDown",
+      "signature": "onEngineKeyDown = (event: KeyboardEvent): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineKeyUp",
+      "label": "Method",
+      "name": "onEngineKeyUp",
+      "signature": "onEngineKeyUp = (event: KeyboardEvent): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineMouseMove",
+      "label": "Method",
+      "name": "onEngineMouseMove",
+      "signature": "onEngineMouseMove = (event: MouseEvent): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineMouseDown",
+      "label": "Method",
+      "name": "onEngineMouseDown",
+      "signature": "onEngineMouseDown = (event: MouseEvent): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineMouseUp",
+      "label": "Method",
+      "name": "onEngineMouseUp",
+      "signature": "onEngineMouseUp = (event: MouseEvent): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineMouseLeave",
+      "label": "Method",
+      "name": "onEngineMouseLeave",
+      "signature": "onEngineMouseLeave(): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineFocus",
+      "label": "Method",
+      "name": "onEngineFocus",
+      "signature": "onEngineFocus(): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineBlur",
+      "label": "Method",
+      "name": "onEngineBlur",
+      "signature": "onEngineBlur(): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineMouseScroll",
+      "label": "Method",
+      "name": "onEngineMouseScroll",
+      "signature": "onEngineMouseScroll = (event: WheelEvent): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineVisibilityChange",
+      "label": "Method",
+      "name": "onEngineVisibilityChange",
+      "signature": "onEngineVisibilityChange = (): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineWindowFocus",
+      "label": "Method",
+      "name": "onEngineWindowFocus",
+      "signature": "onEngineWindowFocus = (): void"
+    },
+    {
+      "id": "/managers/engine-event-manager.ts#onEngineWindowBlur",
+      "label": "Method",
+      "name": "onEngineWindowBlur",
+      "signature": "onEngineWindowBlur = (): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/managers/engine-event-manager.ts",
+      "target": "/src/core.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/managers/engine-event-manager.ts",
+      "target": "/src/engine.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/managers/engine-event-manager.ts",
+      "target": "/src/core.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

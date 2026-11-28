@@ -1,0 +1,96 @@
+{
+  "component": {
+    "name": "SequencerClock",
+    "source_path": "/audio/sequencer-clock.ts",
+    "doc_path": "/audio/sequencer-clock.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "SequencerClock manages the precise timing and scheduling of events for an audio sequence, acting as a core timing service. It calculates step durations based on BPM and ticks-per-beat, utilizing the AudioContext for accurate time tracking. The component delegates periodic ticking to a Web Worker to maintain responsiveness, scheduling ahead based on a defined lookahead window."
+  },
+  "graph_nodes": [
+    {
+      "id": "/audio/sequencer-clock.ts#ClockConfig",
+      "label": "Interface",
+      "name": "ClockConfig",
+      "signature": "interface ClockConfig { bpm: number; ticksPerBeat: number; lookaheadMs: number; overlapMs: number; }"
+    },
+    {
+      "id": "/audio/sequencer-clock.ts#SequencerClock",
+      "label": "Class",
+      "name": "SequencerClock",
+      "signature": "class SequencerClock { constructor(audioContext: AudioContext, config: ClockConfig = { bpm: 120, ticksPerBeat: 4, lookaheadMs: 150.0, overlapMs: 35.0 }) }"
+    },
+    {
+      "id": "/audio/sequencer-clock.ts#SequencerClock.start",
+      "label": "Method",
+      "name": "start",
+      "signature": "start(callback: (tick: number, time: number, stepDuration: number) => void): void"
+    },
+    {
+      "id": "/audio/sequencer-clock.ts#SequencerClock.stop",
+      "label": "Method",
+      "name": "stop",
+      "signature": "stop(): void"
+    },
+    {
+      "id": "/audio/sequencer-clock.ts#SequencerClock.setBpm",
+      "label": "Method",
+      "name": "setBpm",
+      "signature": "setBpm(newBpm: number): void"
+    },
+    {
+      "id": "/audio/sequencer-clock.ts#SequencerClock.getBpm",
+      "label": "Method",
+      "name": "getBpm",
+      "signature": "getBpm(): number"
+    },
+    {
+      "id": "/audio/sequencer-clock.ts#SequencerClock.getTick",
+      "label": "Method",
+      "name": "getTick",
+      "signature": "getTick(): number"
+    },
+    {
+      "id": "/audio/sequencer-clock.ts#getStepDuration",
+      "label": "Method",
+      "name": "getStepDuration",
+      "signature": "getStepDuration(): number"
+    },
+    {
+      "id": "/audio/sequencer-clock.ts#scheduleAhead",
+      "label": "Method",
+      "name": "scheduleAhead",
+      "signature": "scheduleAhead(): void"
+    },
+    {
+      "id": "/audio/sequencer-clock.ts#advanceTick",
+      "label": "Method",
+      "name": "advanceTick",
+      "signature": "advanceTick(): void"
+    },
+    {
+      "id": "/audio/sequencer-clock.ts#spawnWorker",
+      "label": "Method",
+      "name": "spawnWorker",
+      "signature": "spawnWorker(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/audio/sequencer-clock.ts",
+      "target": "/audio/sequencer-clock.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "AudioContext",
+      "Worker",
+      "Blob",
+      "URL"
+    ],
+    "has_side_effects": true
+  }
+}

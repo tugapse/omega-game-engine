@@ -1,0 +1,51 @@
+{
+  "component": {
+    "name": "interfaces",
+    "source_path": "/parsers/interfaces.ts",
+    "doc_path": "/parsers/interfaces.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the core TypeScript interfaces that serve as the primary data model for geometry and material properties imported from 3D file formats like OBJ and MTL. It establishes strict contracts for structured data, including ParsedObjData for mesh geometry, ObjFace for polygon definitions, and MtlMaterial for material properties. It acts as the foundational data layer for the parsing subsystem, ensuring type safety across the application when handling imported assets."
+  },
+  "graph_nodes": [
+    {
+      "id": "/parsers/interfaces.ts#ParsedObjData",
+      "label": "Interface",
+      "name": "ParsedObjData",
+      "signature": "interface ParsedObjData"
+    },
+    {
+      "id": "/parsers/interfaces.ts#ObjFace",
+      "label": "Interface",
+      "name": "ObjFace",
+      "signature": "interface ObjFace"
+    },
+    {
+      "id": "/parsers/interfaces.ts#MtlMaterial",
+      "label": "Interface",
+      "name": "MtlMaterial",
+      "signature": "interface MtlMaterial"
+    },
+    {
+      "id": "/parsers/interfaces.ts#ParsedMtlData",
+      "label": "Interface",
+      "name": "ParsedMtlData",
+      "signature": "interface ParsedMtlData"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/parsers/interfaces.ts",
+      "target": "/gl-matrix",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

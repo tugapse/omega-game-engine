@@ -1,0 +1,71 @@
+{
+  "component": {
+    "name": "TrianglePrimitive",
+    "source_path": "/primitives/triangle-primitive.ts",
+    "doc_path": "/primitives/triangle-primitive.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "TrianglePrimitive is a concrete implementation of a geometric primitive, inheriting from MeshData. It encapsulates the necessary vertex data (positions, normals, texture coordinates) and connectivity indices for a standardized 2D triangle. The constructor initializes the geometry with three vertices, defining normals pointing along the Z-axis, and sets up the index buffer [0, 1, 2]. This class serves as a fundamental, self-contained data model for rendering basic triangle shapes within the engine's pipeline."
+  },
+  "graph_nodes": [
+    {
+      "id": "/primitives/triangle-primitive.ts#TrianglePrimitive",
+      "label": "Class",
+      "name": "TrianglePrimitive",
+      "signature": "constructor()"
+    },
+    {
+      "id": "/primitives/triangle-primitive.ts#vec2",
+      "label": "Type",
+      "name": "vec2",
+      "signature": "import { vec2, vec3 } from \"gl-matrix\";"
+    },
+    {
+      "id": "/primitives/triangle-primitive.ts#vec3",
+      "label": "Type",
+      "name": "vec3",
+      "signature": "import { vec2, vec3 } from \"gl-matrix\";"
+    },
+    {
+      "id": "/primitives/triangle-primitive.ts#MeshData",
+      "label": "Class",
+      "name": "MeshData",
+      "signature": "import { MeshData } from \"../core/mesh\";"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/primitives/triangle-primitive.ts",
+      "target": "/primitives/triangle-primitive.ts#TrianglePrimitive",
+      "relation": "defines"
+    },
+    {
+      "source": "/primitives/triangle-primitive.ts",
+      "target": "/primitives/triangle-primitive.ts#MeshData",
+      "relation": "extends"
+    },
+    {
+      "source": "/primitives/triangle-primitive.ts",
+      "target": "/primitives/triangle-primitive.ts#vec2",
+      "relation": "uses"
+    },
+    {
+      "source": "/primitives/triangle-primitive.ts",
+      "target": "/primitives/triangle-primitive.ts#vec3",
+      "relation": "uses"
+    },
+    {
+      "source": "/primitives/triangle-primitive.ts",
+      "target": "/core/mesh.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

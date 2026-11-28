@@ -1,0 +1,74 @@
+{
+  "component": {
+    "name": "physics-backend",
+    "source_path": "/physics/physics-backend.ts",
+    "doc_path": "/physics/physics-backend.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the abstract contract for integrating any physics engine into the Omega simulation loop. It establishes interfaces like PhysicsBackend and PhysicsBackendWorld to decouple high-level game logic from low-level physics solver details. It provides structured types for describing rigid bodies, colliders, and raycast results, ensuring a standardized interaction pattern across different backend implementations like Rapier. The component focuses purely on defining the service layer boundary without containing complex operational logic."
+  },
+  "graph_nodes": [
+    {
+      "id": "/physics/physics-backend.ts#PhysicsBackend",
+      "label": "Interface",
+      "name": "PhysicsBackend",
+      "signature": "readonly name: string; createWorld(gravity: vec3): PhysicsBackendWorld;"
+    },
+    {
+      "id": "/physics/physics-backend.ts#RigidBodyType",
+      "label": "Enum",
+      "name": "RigidBodyType",
+      "signature": "Dynamic = 'dynamic'; Fixed = 'fixed'; Kinematic = 'kinematic';"
+    },
+    {
+      "id": "/physics/physics-backend.ts#ColliderShape",
+      "label": "Type",
+      "name": "ColliderShape",
+      "signature": "type ColliderShape = | { type: 'sphere'; radius: number } | { type: 'box'; halfExtents: [number, number, number] } | { type: 'capsule'; halfHeight: number; radius: number } | { type: 'cylinder'; halfHeight: number; radius: number } | { type: 'convexHull'; points: number[] } | { type: 'trimesh'; vertices: number[]; indices: number[] } | { type: 'heightfield'; rows: number; cols: number; heights: ArrayLike<number>; size: [number, number] };"
+    },
+    {
+      "id": "/physics/physics-backend.ts#BackendBodyDesc",
+      "label": "Interface",
+      "name": "BackendBodyDesc",
+      "signature": "type RigidBodyType; position: vec3; rotation: quat; linearDamping: number; angularDamping: number; ccd: boolean; gravityScale: number; canSleep: boolean;"
+    },
+    {
+      "id": "/physics/physics-backend.ts#BackendColliderDesc",
+      "label": "Interface",
+      "name": "BackendColliderDesc",
+      "signature": "ColliderShape; position: vec3; rotation: quat; friction: number; restitution: number; density: number; mass: number; sensor: boolean; contactEvents: boolean; contactForceThreshold: number;"
+    },
+    {
+      "id": "/physics/physics-backend.ts#BackendRaycastHit",
+      "label": "Interface",
+      "name": "BackendRaycastHit",
+      "signature": "collider: number; distance: number; point: vec3; normal: vec3;"
+    },
+    {
+      "id": "/physics/physics-backend.ts#PhysicsBackendWorld",
+      "label": "Interface",
+      "name": "PhysicsBackendWorld",
+      "signature": "setGravity(gravity: vec3): void; step(dt: number): void; createBody(desc: BackendBodyDesc): number; removeBody(body: number): void; createCollider(desc: BackendColliderDesc, body: number | null): number; removeCollider(collider: number): void; getBodyPose(body: number, position: vec3, rotation: quat): void; setBodyPose(body: number, position: vec3, rotation: quat): void; setKinematicTarget(body: number, position: vec3, rotation: quat): void; getLinearVelocity(body: number, out: vec3): vec3; setLinearVelocity(body: number, velocity: vec3): void; getAngularVelocity(body: number, out: vec3): vec3; setAngularVelocity(body: number, velocity: vec3): void; applyImpulse(body: number, impulse: vec3, point?: vec3): void; applyTorqueImpulse(body: number, impulse: vec3): void; addForce(body: number, force: vec3): void; resetForces(body: number): void; isSleeping(body: number): boolean; wakeUp(body: number): void; raycast(origin: vec3, direction: vec3, maxDistance: number, solid: boolean): BackendRaycastHit | null; drainEvents(onContact: (colliderA: number, colliderB: number, started: boolean) => void, onContactForce: (colliderA: number, colliderB: number, force: number) => void): void; destroy(): void;"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/physics/physics-backend.ts",
+      "target": "/gl-matrix#quat",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/physics-backend.ts",
+      "target": "/gl-matrix#vec3",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

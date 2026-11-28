@@ -1,0 +1,66 @@
+{
+  "component": {
+    "name": "LightAttenuation",
+    "source_path": "/entities/lights/light-attenuation.ts",
+    "doc_path": "/entities/lights/light-attenuation.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "LightAttenuation models the physical decay of light intensity based on distance from a source. It encapsulates three distinct attenuation factors: constant, linear, and quadratic. This class implements JsonSerializable, allowing its state to be reliably persisted and retrieved from structured data formats. Its primary role is to serve as a core, serializable data model within the entity system."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/lights/light-attenuation.ts#LightAttenuation",
+      "label": "Class",
+      "name": "LightAttenuation",
+      "signature": "class LightAttenuation extends JsonSerializable"
+    },
+    {
+      "id": "/entities/lights/light-attenuation.ts#constant",
+      "label": "Variable",
+      "name": "constant",
+      "signature": "public constant: number = 0.2"
+    },
+    {
+      "id": "/entities/lights/light-attenuation.ts#linear",
+      "label": "Variable",
+      "name": "linear",
+      "signature": "public linear: number = 0.01"
+    },
+    {
+      "id": "/entities/lights/light-attenuation.ts#quadratic",
+      "label": "Variable",
+      "name": "quadratic",
+      "signature": "public quadratic: number = 0.001"
+    },
+    {
+      "id": "/entities/lights/light-attenuation.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "public override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/entities/lights/light-attenuation.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "public override fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/lights/light-attenuation.ts",
+      "target": "/core/core.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/light-attenuation.ts",
+      "target": "/interfaces/interfaces.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

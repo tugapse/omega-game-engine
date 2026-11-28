@@ -1,0 +1,109 @@
+{
+  "component": {
+    "name": "RenderTarget",
+    "source_path": "/core/render/render-target.ts",
+    "doc_path": "/core/render/render-target.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The RenderTarget class manages an off-screen framebuffer, abstracting complex WebGL resource management for rendering pipelines. It handles the creation, configuration, and destruction of color and depth attachments, supporting both standard RGBA8 and high-precision RGBA16F formats. Its core function is to provide a bound, isolated rendering surface for off-screen operations, with resizing triggering a full recreation of GPU resources."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/render-target.ts#RenderTargetColor",
+      "label": "Type",
+      "name": "RenderTargetColor",
+      "signature": " 'rgba8' | 'rgba16f' "
+    },
+    {
+      "id": "/core/render/render-target.ts#RenderTargetOptions",
+      "label": "Interface",
+      "name": "RenderTargetOptions",
+      "signature": " { color?: RenderTargetColor | null; depth?: 'texture' | 'renderbuffer' | null; } "
+    },
+    {
+      "id": "/core/render/render-target.ts#RenderTarget",
+      "label": "Class",
+      "name": "RenderTarget",
+      "signature": " constructor(gl: WebGL2RenderingContext, width: number, height: number, options: RenderTargetOptions = {}) "
+    },
+    {
+      "id": "/core/render/render-target.ts#RenderTarget.supportsFloatColor",
+      "label": "Method",
+      "name": "supportsFloatColor",
+      "signature": " static supportsFloatColor(gl: WebGL2RenderingContext): boolean"
+    },
+    {
+      "id": "/core/render/render-target.ts#width",
+      "label": "Getter",
+      "name": "width",
+      "signature": " get width(): number"
+    },
+    {
+      "id": "/core/render/render-target.ts#height",
+      "label": "Getter",
+      "name": "height",
+      "signature": " get height(): number"
+    },
+    {
+      "id": "/core/render/render-target.ts#framebuffer",
+      "label": "Getter",
+      "name": "framebuffer",
+      "signature": " get framebuffer(): WebGLFramebuffer | null"
+    },
+    {
+      "id": "/core/render/render-target.ts#colorTexture",
+      "label": "Getter",
+      "name": "colorTexture",
+      "signature": " get colorTexture(): WebGLTexture | null"
+    },
+    {
+      "id": "/core/render/render-target.ts#depthTexture",
+      "label": "Getter",
+      "name": "depthTexture",
+      "signature": " get depthTexture(): WebGLTexture | null"
+    },
+    {
+      "id": "/core/render/render-target.ts#resize",
+      "label": "Method",
+      "name": "resize",
+      "signature": " resize(width: number, height: number): void"
+    },
+    {
+      "id": "/core/render/render-target.ts#bind",
+      "label": "Method",
+      "name": "bind",
+      "signature": " bind(): void"
+    },
+    {
+      "id": "/core/render/render-target.ts#clear",
+      "label": "Method",
+      "name": "clear",
+      "signature": " clear(color?: ArrayLike<number>): void"
+    },
+    {
+      "id": "/core/render/render-target.ts#dispose",
+      "label": "Method",
+      "name": "dispose",
+      "signature": " dispose(): void"
+    },
+    {
+      "id": "/core/render/render-target.ts#createTexture",
+      "label": "Method",
+      "name": "createTexture",
+      "signature": " private createTexture(internal: number, format: number, type: number, filter: number): WebGLTexture"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/render-target.ts",
+      "target": "/core/render/render-target.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

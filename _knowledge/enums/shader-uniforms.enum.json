@@ -1,0 +1,25 @@
+{
+  "component": {
+    "name": "ShaderUniformsEnum",
+    "source_path": "/enums/shader-uniforms.enum.ts",
+    "doc_path": "/enums/shader-uniforms.enum.json",
+    "type": "utility"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines ShaderUniformsEnum, a TypeScript enumeration that serves as a centralized, type-safe registry for string constants representing GLSL shader uniform variable names. It acts as a critical configuration layer, bridging high-level application state (like camera position or material color) to low-level shader programs. By centralizing these string literals, it ensures consistency across the rendering pipeline, covering matrices, lighting parameters, texture samplers, and fog settings."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/shader-uniforms.enum.ts#ShaderUniformsEnum",
+      "label": "Enum",
+      "name": "ShaderUniformsEnum",
+      "signature": "enum ShaderUniformsEnum"
+    }
+  ],
+  "graph_edges": [],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

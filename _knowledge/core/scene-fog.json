@@ -1,0 +1,106 @@
+{
+  "component": {
+    "name": "SceneFog",
+    "source_path": "/core/scene-fog.ts",
+    "doc_path": "/core/scene-fog.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "SceneFog is a configuration model class responsible for defining and managing atmospheric fog parameters within a rendering pipeline. It encapsulates properties such as fog type (LINEAR, EXPONENTIAL), density, distance falloff, and color. By implementing JsonSerializable, it ensures that the entire fog configuration state can be reliably persisted to and loaded from serialized data structures."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/scene-fog.ts#FogType",
+      "label": "Enum",
+      "name": "FogType",
+      "signature": "LINEAR = 0, EXPONENTIAL = 1, EXPONEMTIAL_SQUARED = 2"
+    },
+    {
+      "id": "/core/scene-fog.ts#SceneFog",
+      "label": "Class",
+      "name": "SceneFog",
+      "signature": "constructor(name: string)"
+    },
+    {
+      "id": "/core/scene-fog.ts#SceneFog.toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "public override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/core/scene-fog.ts#SceneFog.fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "public override fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/core/scene-fog.ts#SceneFog.enabled",
+      "label": "Variable",
+      "name": "enabled",
+      "signature": "boolean"
+    },
+    {
+      "id": "/core/scene-fog.ts#SceneFog.fogType",
+      "label": "Variable",
+      "name": "fogType",
+      "signature": "number"
+    },
+    {
+      "id": "/core/scene-fog.ts#SceneFog.distance",
+      "label": "Variable",
+      "name": "distance",
+      "signature": "number"
+    },
+    {
+      "id": "/core/scene-fog.ts#SceneFog.density",
+      "label": "Variable",
+      "name": "density",
+      "signature": "number"
+    },
+    {
+      "id": "/core/scene-fog.ts#SceneFog.heightFalloff",
+      "label": "Variable",
+      "name": "heightFalloff",
+      "signature": "number"
+    },
+    {
+      "id": "/core/scene-fog.ts#SceneFog.baseHeight",
+      "label": "Variable",
+      "name": "baseHeight",
+      "signature": "number"
+    },
+    {
+      "id": "/core/scene-fog.ts#SceneFog.color",
+      "label": "Variable",
+      "name": "color",
+      "signature": "Color"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/scene-fog.ts",
+      "target": "/core/interfaces.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/scene-fog.ts",
+      "target": "/core/color.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/scene-fog.ts",
+      "target": "/core/colors.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/scene-fog.ts",
+      "target": "/core/json-serializable.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

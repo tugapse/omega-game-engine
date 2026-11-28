@@ -1,0 +1,86 @@
+{
+  "component": {
+    "name": "model-data",
+    "source_path": "/core/model/model-data.ts",
+    "doc_path": "/core/model/model-data.json",
+    "type": "model"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the core data structures for representing 3D models loaded from external formats like FBX or glTF. It encompasses interfaces for ModelNode, ModelSkin, ModelMaterial, and the root ModelData container, which aggregates all model parts. Utility functions are provided to parse and construct URI fragments referencing specific model components (e.g., #mesh/0). The component is purely declarative, serving as the primary data model layer for asset loading."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/model/model-data.ts#SkinnedMeshData",
+      "label": "Class",
+      "name": "SkinnedMeshData",
+      "signature": "extends MeshData"
+    },
+    {
+      "id": "/core/model/model-data.ts#ModelNode",
+      "label": "Interface",
+      "name": "ModelNode",
+      "signature": "name: string; parent: number; translation: vec3; rotation: quat; scale: vec3; mesh?: number; skin?: number; material?: number;"
+    },
+    {
+      "id": "/core/model/model-data.ts#ModelSkin",
+      "label": "Interface",
+      "name": "ModelSkin",
+      "signature": "joints: number[]; inverseBindMatrices: mat4[]"
+    },
+    {
+      "id": "/core/model/model-data.ts#ModelMaterial",
+      "label": "Interface",
+      "name": "ModelMaterial",
+      "signature": "name: string; color: [number, number, number, number]; albedo?: number; normal?: number; specular?: number; emissive?: number;"
+    },
+    {
+      "id": "/core/model/model-data.ts#ModelImage",
+      "label": "Interface",
+      "name": "ModelImage",
+      "signature": "name: string; mimeType: string; data?: Uint8Array; path?: string;"
+    },
+    {
+      "id": "/core/model/model-data.ts#ModelData",
+      "label": "Interface",
+      "name": "ModelData",
+      "signature": "nodes: ModelNode[]; meshes: MeshData[]; skins: ModelSkin[]; clips: AnimationClip[]; materials: ModelMaterial[]; images: ModelImage[]; unitScale: number;"
+    },
+    {
+      "id": "/core/model/model-data.ts#ModelPartKind",
+      "label": "Type",
+      "name": "ModelPartKind",
+      "signature": "'mesh' | 'skin' | 'anim' | 'image'"
+    },
+    {
+      "id": "/core/model/model-data.ts#parseModelPartUri",
+      "label": "Function",
+      "name": "parseModelPartUri",
+      "signature": "parseModelPartUri(uri: string): { modelUri: string; kind: ModelPartKind; index: number } | null"
+    },
+    {
+      "id": "/core/model/model-data.ts#modelPartUri",
+      "label": "Function",
+      "name": "modelPartUri",
+      "signature": "modelPartUri(modelUri: string, kind: ModelPartKind, index: number): string"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/model/model-data.ts",
+      "target": "/core/mesh/mesh-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/model/model-data.ts",
+      "target": "/core/animation/animation-clip.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "component": {
+    "name": "ResourceLoader",
+    "source_path": "/core/resources/resource-loader.ts",
+    "doc_path": "/core/resources/resource-loader.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the contract and implementation for loading various external assets like text, images, and binary data within the application. The ResourceLoader interface abstracts resource retrieval, allowing the core engine to remain decoupled from specific fetching mechanisms. DefaultResourceLoader implements this contract using browser APIs like fetch and Image, relying on an injected UriResolver to resolve resource URIs into concrete URLs."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/resources/resource-loader.ts#LoadedImage",
+      "label": "Type",
+      "name": "LoadedImage",
+      "signature": "type LoadedImage = (HTMLImageElement | ImageBitmap) & { width: number; height: number }"
+    },
+    {
+      "id": "/core/resources/resource-loader.ts#ResourceLoader",
+      "label": "Interface",
+      "name": "ResourceLoader",
+      "signature": "interface ResourceLoader { loadText(uri: string): Promise<string>; loadImage(uri: string): Promise<LoadedImage>; loadBinary?(uri: string): Promise<ArrayBuffer>; }"
+    },
+    {
+      "id": "/core/resources/resource-loader.ts#UriResolver",
+      "label": "Type",
+      "name": "UriResolver",
+      "signature": "type UriResolver = (uri: string) => string | Promise<string>"
+    },
+    {
+      "id": "/core/resources/resource-loader.ts#DefaultResourceLoader",
+      "label": "Class",
+      "name": "DefaultResourceLoader",
+      "signature": "class DefaultResourceLoader implements ResourceLoader"
+    },
+    {
+      "id": "/core/resources/resource-loader.ts#DefaultResourceLoader.loadText",
+      "label": "Method",
+      "name": "loadText",
+      "signature": "async loadText(uri: string): Promise<string>"
+    },
+    {
+      "id": "/core/resources/resource-loader.ts#DefaultResourceLoader.loadBinary",
+      "label": "Method",
+      "name": "loadBinary",
+      "signature": "async loadBinary(uri: string): Promise<ArrayBuffer>"
+    },
+    {
+      "id": "/core/resources/resource-loader.ts#DefaultResourceLoader.loadImage",
+      "label": "Method",
+      "name": "loadImage",
+      "signature": "async loadImage(uri: string): Promise<LoadedImage>"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/resources/resource-loader.ts",
+      "target": "/core/resources/resource-loader.ts",
+      "relation": "implements"
+    },
+    {
+      "source": "/core/resources/resource-loader.ts",
+      "target": "/core/resources/resource-loader.ts",
+      "relation": "uses"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "fetch",
+      "Image"
+    ],
+    "has_side_effects": true
+  }
+}

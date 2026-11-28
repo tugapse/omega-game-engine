@@ -1,0 +1,56 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/entities/lights/index.ts",
+    "doc_path": "/entities/lights/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module serves as the central barrel file for the entire lighting system within the engine. Its function is purely aggregative, exporting all defined light entity types—such as directional, point, and spot lights—from their respective sub-modules. It provides a unified, high-level entry point for consumers needing to interact with the engine's lighting data model. The component itself contains no complex logic or side effects, acting only as an export manifest."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/lights/index.ts#index",
+      "label": "Module",
+      "name": "index",
+      "signature": "export *"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/lights/index.ts",
+      "target": "/entities/lights/directional-light.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/index.ts",
+      "target": "/entities/lights/light-attenuation.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/index.ts",
+      "target": "/entities/lights/light-cone.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/index.ts",
+      "target": "/entities/lights/light.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/index.ts",
+      "target": "/entities/lights/point-light.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/index.ts",
+      "target": "/entities/lights/spot-light.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "component": {
+    "name": "terrain-mesh.ts",
+    "source_path": "/terrain/terrain-mesh.ts",
+    "doc_path": "/terrain/terrain-mesh.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module is the core geometry generation service for terrain chunks, responsible for creating vertex and index buffers for rendering. It calculates the mesh structure, including the main height grid and necessary skirts to hide LOD cracks between adjacent chunks. It relies on TerrainGrid data to calculate vertex normals and populates provided Float32Array buffers with positional, normal, and UV data."
+  },
+  "graph_nodes": [
+    {
+      "id": "/terrain/terrain-mesh.ts#TERRAIN_LODS",
+      "label": "Variable",
+      "name": "TERRAIN_LODS",
+      "signature": "4"
+    },
+    {
+      "id": "/terrain/terrain-mesh.ts#chunkVertexCount",
+      "label": "Function",
+      "name": "chunkVertexCount",
+      "signature": "chunkVertexCount(n: number): number"
+    },
+    {
+      "id": "/terrain/terrain-mesh.ts#skirtSource",
+      "label": "Function",
+      "name": "skirtSource",
+      "signature": "skirtSource(n: number, side: number, k: number): [number, number]"
+    },
+    {
+      "id": "/terrain/terrain-mesh.ts#chunkIndices",
+      "label": "Function",
+      "name": "chunkIndices",
+      "signature": "chunkIndices(n: number, lod: number): Uint32Array"
+    },
+    {
+      "id": "/terrain/terrain-mesh.ts#fillChunkVertices",
+      "label": "Function",
+      "name": "fillChunkVertices",
+      "signature": "fillChunkVertices(grid: TerrainGrid, c: TerrainChunkData, skirtDepth: number, positions: Float32Array, normals: Float32Array, uvs: Float32Array): void"
+    },
+    {
+      "id": "/terrain/terrain-mesh.ts#chooseLod",
+      "label": "Function",
+      "name": "chooseLod",
+      "signature": "chooseLod(distance: number, distances: number[]): number"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/terrain/terrain-mesh.ts",
+      "target": "/terrain/terrain-data.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

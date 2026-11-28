@@ -1,0 +1,96 @@
+{
+  "component": {
+    "name": "terrain-rules.ts",
+    "source_path": "/terrain/terrain-rules.ts",
+    "doc_path": "/terrain/terrain-rules.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module defines the core procedural logic for terrain generation, encapsulating rules that determine which terrain layer (e.g., grass, snow, rock) should occupy a specific world coordinate. It provides functions to calculate layer weights based on height, slope, and complex noise functions derived from 3D Perlin-like noise. The API includes utilities for constructing layer definitions, generating default terrain compositions, and packing layer properties into shader-consumable uniform arrays."
+  },
+  "graph_nodes": [
+    {
+      "id": "/terrain/terrain-rules.ts#TerrainLayer",
+      "label": "Interface",
+      "name": "TerrainLayer",
+      "signature": "interface TerrainLayer"
+    },
+    {
+      "id": "/terrain/terrain-rules.ts#makeLayer",
+      "label": "Function",
+      "name": "makeLayer",
+      "signature": "makeLayer(name: string, ground: GroundKind, rules: Partial<TerrainLayer> = {}): TerrainLayer"
+    },
+    {
+      "id": "/terrain/terrain-rules.ts#defaultLayers",
+      "label": "Function",
+      "name": "defaultLayers",
+      "signature": "defaultLayers(): TerrainLayer[]"
+    },
+    {
+      "id": "/terrain/terrain-rules.ts#noise3D",
+      "label": "Function",
+      "name": "noise3D",
+      "signature": "noise3D(x: number, y: number, z: number): number"
+    },
+    {
+      "id": "/terrain/terrain-rules.ts#ruleNoise",
+      "label": "Function",
+      "name": "ruleNoise",
+      "signature": "ruleNoise(x: number, y: number, z: number): number"
+    },
+    {
+      "id": "/terrain/terrain-rules.ts#terrainAutoWeights",
+      "label": "Function",
+      "name": "terrainAutoWeights",
+      "signature": "terrainAutoWeights(layers: TerrainLayer[], height: number, slope: number, n: number, out: Float32Array = new Float32Array(MAX_TERRAIN_LAYERS)): Float32Array"
+    },
+    {
+      "id": "/terrain/terrain-rules.ts#packLayerUniforms",
+      "label": "Function",
+      "name": "packLayerUniforms",
+      "signature": "packLayerUniforms(layers: TerrainLayer[]): { tiling: Float32Array; height: Float32Array; slope: Float32Array; tint: Float32Array }"
+    },
+    {
+      "id": "/terrain/terrain-rules.ts#fract",
+      "label": "Function",
+      "name": "fract",
+      "signature": "fract(x: number): number"
+    },
+    {
+      "id": "/terrain/terrain-rules.ts#hash3D",
+      "label": "Function",
+      "name": "hash3D",
+      "signature": "hash3D(x: number, y: number, z: number): number"
+    },
+    {
+      "id": "/terrain/terrain-rules.ts#smoothstep",
+      "label": "Function",
+      "name": "smoothstep",
+      "signature": "smoothstep(a: number, b: number, x: number): number"
+    },
+    {
+      "id": "/terrain/terrain-rules.ts#band",
+      "label": "Function",
+      "name": "band",
+      "signature": "band(x: number, lo: number, hi: number, blend: number): number"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/terrain/terrain-rules.ts",
+      "target": "/src/terrain/terrain-textures.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-rules.ts",
+      "target": "/src/terrain/terrain-data.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

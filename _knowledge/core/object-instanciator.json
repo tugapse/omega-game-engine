@@ -1,0 +1,84 @@
+{
+  "component": {
+    "name": "ObjectInstanciator",
+    "source_path": "/core/object-instanciator.ts",
+    "doc_path": "/core/object-instanciator.json",
+    "type": "service"
+  },
+  "vector_memory": {
+    "semantic_summary": "ObjectInstanciator serves as a centralized factory and dependency resolver, managing the lifecycle of application objects. It uses static maps to register class constructors or factory functions against string names. Its primary functions allow for dynamic instantiation from class names, retrieval of associated metadata, and dependency lookup. It enforces a service layer pattern, decoupling object creation from business logic."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/object-instanciator.ts#ObjectInstanciator",
+      "label": "Class",
+      "name": "ObjectInstanciator",
+      "signature": ""
+    },
+    {
+      "id": "/core/object-instanciator.ts#dependecies",
+      "label": "Variable",
+      "name": "dependecies",
+      "signature": "{ [key: string]: Function }"
+    },
+    {
+      "id": "/core/object-instanciator.ts#metadata",
+      "label": "Variable",
+      "name": "metadata",
+      "signature": "{ [key: string]: ClassMetadata }"
+    },
+    {
+      "id": "/core/object-instanciator.ts#addDependency",
+      "label": "Method",
+      "name": "addDependency",
+      "signature": "addDependency(className: string, func: Function, metadata?: ClassMetadata): void"
+    },
+    {
+      "id": "/core/object-instanciator.ts#getDependency",
+      "label": "Method",
+      "name": "getDependency",
+      "signature": "getDependency(className: string): Function"
+    },
+    {
+      "id": "/core/object-instanciator.ts#instanciateObjectFromJsonData",
+      "label": "Method",
+      "name": "instanciateObjectFromJsonData",
+      "signature": "instanciateObjectFromJsonData<T>(className: string, args?: any[]): T | undefined"
+    },
+    {
+      "id": "/core/object-instanciator.ts#getMetadata",
+      "label": "Method",
+      "name": "getMetadata",
+      "signature": "getMetadata(types?: ClassType | ClassType[]): ClassMetadata[]"
+    },
+    {
+      "id": "/core/object-instanciator.ts#ClassType",
+      "label": "Type",
+      "name": "ClassType",
+      "signature": ""
+    },
+    {
+      "id": "/core/object-instanciator.ts#ClassMetadata",
+      "label": "Type",
+      "name": "ClassMetadata",
+      "signature": ""
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/object-instanciator.ts",
+      "target": "/src/enums/class-type.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/object-instanciator.ts",
+      "target": "/src/interfaces/class-metadata.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

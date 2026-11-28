@@ -1,0 +1,69 @@
+{
+  "component": {
+    "name": "culling",
+    "source_path": "/core/render/culling.ts",
+    "doc_path": "/core/render/culling.json",
+    "type": "utility"
+  },
+  "vector_memory": {
+    "semantic_summary": "This utility module provides core mathematical functions for visibility determination within a rendering pipeline. It implements frustum culling by deriving clipping planes from a projection matrix and testing sphere containment. It also handles bounding volume calculations, specifically generating local bounding spheres for mesh data using a caching mechanism, and transforming these spheres into world space using matrix scaling factors."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/culling.ts#Sphere",
+      "label": "Interface",
+      "name": "Sphere",
+      "signature": "interface Sphere { center: vec3; radius: number; }"
+    },
+    {
+      "id": "/core/render/culling.ts#createSphere",
+      "label": "Function",
+      "name": "createSphere",
+      "signature": "createSphere(): Sphere"
+    },
+    {
+      "id": "/core/render/culling.ts#frustumPlanes",
+      "label": "Function",
+      "name": "frustumPlanes",
+      "signature": "frustumPlanes(m: mat4, out: Float32Array): Float32Array"
+    },
+    {
+      "id": "/core/render/culling.ts#sphereInFrustum",
+      "label": "Function",
+      "name": "sphereInFrustum",
+      "signature": "sphereInFrustum(planes: Float32Array, center: vec3, radius: number): boolean"
+    },
+    {
+      "id": "/core/render/culling.ts#localBoundingSphere",
+      "label": "Function",
+      "name": "localBoundingSphere",
+      "signature": "localBoundingSphere(meshData: MeshData | undefined): Sphere | null"
+    },
+    {
+      "id": "/core/render/culling.ts#maxScale",
+      "label": "Function",
+      "name": "maxScale",
+      "signature": "maxScale(m: mat4): number"
+    },
+    {
+      "id": "/core/render/culling.ts#transformSphere",
+      "label": "Function",
+      "name": "transformSphere",
+      "signature": "transformSphere(out: Sphere, local: Sphere, m: mat4): Sphere"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/culling.ts",
+      "target": "/core/mesh.md",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

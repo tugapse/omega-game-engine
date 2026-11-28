@@ -1,0 +1,166 @@
+{
+  "component": {
+    "name": "fbx-reader",
+    "source_path": "/parsers/fbx/fbx-reader.ts",
+    "doc_path": "/parsers/fbx/fbx-reader.json",
+    "type": "service"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component serves as the core data ingestion service for FBX files, handling both binary and ASCII formats. It transforms raw file streams into a structured, in-memory tree representation defined by FbxNode. It manages complex binary parsing, including asynchronous decompression of compressed arrays, and provides synchronous parsing for ASCII input. It acts as the primary interface for consuming FBX data within the application's parsing layer."
+  },
+  "graph_nodes": [
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#FbxNode",
+      "label": "Interface",
+      "name": "FbxNode",
+      "signature": "interface FbxNode { name: string; props: FbxProp[]; children: FbxNode[]; }"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#FbxProp",
+      "label": "Type",
+      "name": "FbxProp",
+      "signature": "type FbxProp = | number | boolean | string | Uint8Array | Int32Array | Float32Array | Float64Array | boolean[];"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#fbxVersion",
+      "label": "Function",
+      "name": "fbxVersion",
+      "signature": "fbxVersion(buffer: ArrayBuffer): number | null"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#isFbx",
+      "label": "Function",
+      "name": "isFbx",
+      "signature": "isFbx(buffer: ArrayBuffer): boolean"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#isAsciiFbx",
+      "label": "Function",
+      "name": "isAsciiFbx",
+      "signature": "isAsciiFbx(buffer: ArrayBuffer): boolean"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#readFbx",
+      "label": "Function",
+      "name": "readFbx",
+      "signature": "readFbx(buffer: ArrayBuffer): Promise<{ version: number; nodes: FbxNode[] }>"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#fbxChild",
+      "label": "Function",
+      "name": "fbxChild",
+      "signature": "fbxChild(node: FbxNode | undefined, name: string): FbxNode | undefined"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#fbxValue",
+      "label": "Function",
+      "name": "fbxValue",
+      "signature": "fbxValue<T extends FbxProp>(node: FbxNode | undefined, name: string): T | undefined"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#readAsciiFbx",
+      "label": "Function",
+      "name": "readAsciiFbx",
+      "signature": "readAsciiFbx(text: string): { version: number; nodes: FbxNode[] }"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#Reader",
+      "label": "Class",
+      "name": "Reader",
+      "signature": "constructor(buffer: ArrayBuffer, wide: boolean)"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#readNodes",
+      "label": "Method",
+      "name": "readNodes",
+      "signature": "readNodes(start: number, end: number): FbxNode[]"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#readProps",
+      "label": "Method",
+      "name": "readProps",
+      "signature": "readProps(start: number, count: number): FbxProp[]"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#inflateInto",
+      "label": "Function",
+      "name": "inflateInto",
+      "signature": "inflateInto(item: PendingArray): Promise<void>"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#decodeArray",
+      "label": "Function",
+      "name": "decodeArray",
+      "signature": "decodeArray(type: string, data: Uint8Array, length: number): FbxProp"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#AsciiTokens",
+      "label": "Class",
+      "name": "AsciiTokens",
+      "signature": "constructor(s: string)"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#peek",
+      "label": "Method",
+      "name": "peek",
+      "signature": "peek(): AsciiToken | null"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#next",
+      "label": "Method",
+      "name": "next",
+      "signature": "next(): AsciiToken | null"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#read",
+      "label": "Method",
+      "name": "read",
+      "signature": "read(): AsciiToken | null"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#parseAsciiNodes",
+      "label": "Function",
+      "name": "parseAsciiNodes",
+      "signature": "parseAsciiNodes(tokens: AsciiTokens, nested: boolean): FbxNode[]"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#parseAsciiNode",
+      "label": "Function",
+      "name": "parseAsciiNode",
+      "signature": "parseAsciiNode(name: string, tokens: AsciiTokens): FbxNode"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#parseAsciiArray",
+      "label": "Function",
+      "name": "parseAsciiArray",
+      "signature": "parseAsciiArray(name: string, count: number, tokens: AsciiTokens): FbxProp"
+    },
+    {
+      "id": "/parsers/fbx/fbx-reader.ts#decodeBase64",
+      "label": "Function",
+      "name": "decodeBase64",
+      "signature": "decodeBase64(base64: string): Uint8Array"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/parsers/fbx/fbx-reader.ts",
+      "target": "/parsers/fbx/fbx-reader.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "TextDecoder",
+      "DataView",
+      "Uint8Array",
+      "ArrayBuffer",
+      "Blob",
+      "DecompressionStream",
+      "Response",
+      "atob"
+    ],
+    "has_side_effects": true
+  }
+}

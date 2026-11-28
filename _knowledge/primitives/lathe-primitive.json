@@ -1,0 +1,45 @@
+{
+  "component": {
+    "name": "LathePrimitive",
+    "source_path": "/primitives/lathe-primitive.ts",
+    "doc_path": "/primitives/lathe-primitive.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "LathePrimitive generates mesh data for surfaces of revolution by sweeping a 2D profile around the Y-axis. It takes an array of [radius, height] points and calculates vertices, normals, and UVs based on angular segments and a specified sweep angle. The resulting mesh is a concrete implementation of the MeshData concept, suitable for rendering shapes like vases or bottles. It handles geometric calculations, including tangent and normal derivation, to ensure smooth surface representation."
+  },
+  "graph_nodes": [
+    {
+      "id": "/primitives/lathe-primitive.ts#LathePrimitive",
+      "label": "Class",
+      "name": "LathePrimitive",
+      "signature": "class LathePrimitive extends MeshData"
+    },
+    {
+      "id": "/primitives/lathe-primitive.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(): LathePrimitive"
+    },
+    {
+      "id": "/primitives/lathe-primitive.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(profile: ArrayLike<number>[], segments = 24, sweep = Math.PI * 2, startAngle = 0)"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/primitives/lathe-primitive.ts",
+      "target": "/core/mesh.md",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

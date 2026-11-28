@@ -1,0 +1,71 @@
+{
+  "component": {
+    "name": "ColorMaterial",
+    "source_path": "/materials/color-material.ts",
+    "doc_path": "/materials/color-material.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "ColorMaterial is a concrete model representing a rendering material defined solely by a Color object. It inherits from JsonSerializable, enforcing serialization capabilities for persistence. The class provides static instantiation and implements methods to convert its state, including the color's serialized form, to and from JsonSerializedData objects."
+  },
+  "graph_nodes": [
+    {
+      "id": "/materials/color-material.ts#ColorMaterial",
+      "label": "Class",
+      "name": "ColorMaterial",
+      "signature": "class ColorMaterial extends JsonSerializable"
+    },
+    {
+      "id": "/materials/color-material.ts#type",
+      "label": "Getter",
+      "name": "type",
+      "signature": "get type(): string"
+    },
+    {
+      "id": "/materials/color-material.ts#instanciate",
+      "label": "Function",
+      "name": "instanciate",
+      "signature": "static instanciate(): ColorMaterial"
+    },
+    {
+      "id": "/materials/color-material.ts#color",
+      "label": "Property",
+      "name": "color",
+      "signature": "public color: Color"
+    },
+    {
+      "id": "/materials/color-material.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "public override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/materials/color-material.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "override fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/materials/color-material.ts",
+      "target": "/core/color.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/color-material.ts",
+      "target": "/core/json-serializable.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/materials/color-material.ts",
+      "target": "/interfaces/json-serialized-data.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

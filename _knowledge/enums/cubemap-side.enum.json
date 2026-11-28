@@ -1,0 +1,61 @@
+{
+  "component": {
+    "name": "CubeMapSide",
+    "source_path": "/enums/cubemap-side.enum.ts",
+    "doc_path": "/enums/cubemap-side.enum.json",
+    "type": "utility"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the `CubeMapSide` enumeration, which serves as a strongly-typed constant set for referencing the six distinct faces of a cube map texture. It maps specific integer values (0 through 5) to directional identifiers such as RIGHT, LEFT, TOP, BOTTOM, FRONT, and BACK. Its primary role is to standardize face indexing when interacting with rendering APIs like WebGL, ensuring consistent texture sampling and generation across the pipeline."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/cubemap-side.enum.ts#CubeMapSide",
+      "label": "Enum",
+      "name": "CubeMapSide",
+      "signature": ""
+    },
+    {
+      "id": "/enums/cubemap-side.enum.ts#RIGHT",
+      "label": "Variable",
+      "name": "RIGHT",
+      "signature": ""
+    },
+    {
+      "id": "/enums/cubemap-side.enum.ts#LEFT",
+      "label": "Variable",
+      "name": "LEFT",
+      "signature": ""
+    },
+    {
+      "id": "/enums/cubemap-side.enum.ts#TOP",
+      "label": "Variable",
+      "name": "TOP",
+      "signature": ""
+    },
+    {
+      "id": "/enums/cubemap-side.enum.ts#BOTTOM",
+      "label": "Variable",
+      "name": "BOTTOM",
+      "signature": ""
+    },
+    {
+      "id": "/enums/cubemap-side.enum.ts#FRONT",
+      "label": "Variable",
+      "name": "FRONT",
+      "signature": ""
+    },
+    {
+      "id": "/enums/cubemap-side.enum.ts#BACK",
+      "label": "Variable",
+      "name": "BACK",
+      "signature": ""
+    }
+  ],
+  "graph_edges": [],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

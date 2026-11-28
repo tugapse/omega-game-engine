@@ -1,5 +1,20 @@
 # Changelog
 
+## 6.1.0 (2026-11-28)
+
+### Added
+
+- Terrain shaping, in terrain space and on `TerrainBehaviour` in world space: `ramp` / `rampAt` (a straight slope between two points with soft edges), `terrace` / `terraceAt` (flat steps), `stamp` / `stampAt` (hill, crater, plateau, volcano; `stampProfile`), `erode` / `erodeAt` (droplet erosion on a copy of the heights, `EROSION`). `rampAt` and `stampAt` are one undo step each, or join an open stroke.
+- Relief: `heightField` (the fractal relief or a grey image as a height function, with `warp` and `island` in `ReliefFieldOptions`), `generateFrom`, `gridArea`, `sampleField`, `smoothHeightmap`. `generateRelief` takes the new options and gives the same relief as before without them.
+- Growing: `fillChunk` and `TerrainBehaviour.growChunk` (a new chunk from a height function, meeting the ground it touches exactly).
+- `TerrainBehaviour.layerWeightsAt`: each layer's weight at a point, the painting over the rules.
+- Vegetation: `scatter` / `speciesFit` (`terrain-scatter.ts`), `TerrainVegetationBehaviour` (species per chunk, built again when a chunk changes, `pushOut` for trunks), `defaultTrees`, `treeParts`, `mergePlaced`.
+
+### Fixed
+
+- `TerrainBehaviour.loadChunks` over chunks already drawn left their renderers drawing the old chunks; their entities are now made again.
+- The npm package leaves out the tests (and their 48 MB of fixtures), the API site and the screenshots: about 1 MB instead of 34 MB.
+
 ## 6.0.0 (2026-11-24)
 
 ### Added

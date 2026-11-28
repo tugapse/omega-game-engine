@@ -1,0 +1,80 @@
+{
+  "component": {
+    "name": "ObjParser",
+    "source_path": "/parsers/obj-parser.ts",
+    "doc_path": "/parsers/obj-parser.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "ObjParser is a specialized service responsible for ingesting raw string content from Wavefront .obj files. It parses geometric primitives like vertices, UVs, and normals, and then consolidates this raw data into a WebGL-ready MeshData structure. The core logic merges geometrically identical elements based on the combination of position, UV, and normal indices to ensure efficient buffer usage for rendering systems."
+  },
+  "graph_nodes": [
+    {
+      "id": "/parsers/obj-parser.ts#ObjParser",
+      "label": "Class",
+      "name": "ObjParser",
+      "signature": ""
+    },
+    {
+      "id": "/parsers/obj-parser.ts#parse",
+      "label": "Method",
+      "name": "parse",
+      "signature": "parse(objContent: string): MeshData"
+    },
+    {
+      "id": "/parsers/obj-parser.ts#resetParser",
+      "label": "Method",
+      "name": "resetParser",
+      "signature": "resetParser(): void"
+    },
+    {
+      "id": "/parsers/obj-parser.ts#parseVertex",
+      "label": "Method",
+      "name": "parseVertex",
+      "signature": "parseVertex(parts: string[]): void"
+    },
+    {
+      "id": "/parsers/obj-parser.ts#parseUV",
+      "label": "Method",
+      "name": "parseUV",
+      "signature": "parseUV(parts: string[]): void"
+    },
+    {
+      "id": "/parsers/obj-parser.ts#parseNormal",
+      "label": "Method",
+      "name": "parseNormal",
+      "signature": "parseNormal(parts: string[]): void"
+    },
+    {
+      "id": "/parsers/obj-parser.ts#parseFace",
+      "label": "Method",
+      "name": "parseFace",
+      "signature": "parseFace(parts: string[]): void"
+    },
+    {
+      "id": "/parsers/obj-parser.ts#consolidateMeshData",
+      "label": "Method",
+      "name": "consolidateMeshData",
+      "signature": "consolidateMeshData(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/parsers/obj-parser.ts",
+      "target": "/core/mesh.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/parsers/obj-parser.ts",
+      "target": "/src/parsers/interfaces.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

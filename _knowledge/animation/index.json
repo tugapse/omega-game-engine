@@ -1,0 +1,29 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/animation/index.ts",
+    "doc_path": "/animation/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module serves as the primary facade for the application's animation subsystem. It aggregates and re-exports core functionalities from its constituent parts. Its role is to provide a unified, single entry point for consumers to access the animation feature set, simplifying dependency management across the codebase."
+  },
+  "graph_nodes": [],
+  "graph_edges": [
+    {
+      "source": "/animation/index.ts",
+      "target": "/animation/animation-clip.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/animation/index.ts",
+      "target": "/animation/animator.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

@@ -1,0 +1,285 @@
+{
+  "component": {
+    "name": "Animator",
+    "source_path": "/animation/animator.ts",
+    "doc_path": "/animation/animator.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The Animator class manages skeletal animation playback for an entity, handling loading, state transitions, and pose calculation. It controls playback speed, looping, and crossfading between multiple AnimationClip instances. Core logic involves stepping time, sampling channels from both current and previous clips, and blending the resulting bone transformations onto the entity's descendants via Transform objects."
+  },
+  "graph_nodes": [
+    {
+      "id": "/animation/animator.ts#Animator",
+      "label": "Class",
+      "name": "Animator",
+      "signature": "class Animator extends EntityBehaviour"
+    },
+    {
+      "id": "/animation/animator.ts#AnimationEvent",
+      "label": "Class",
+      "name": "AnimationEvent",
+      "signature": "class AnimationEvent<T>"
+    },
+    {
+      "id": "/animation/animator.ts#PlayState",
+      "label": "Interface",
+      "name": "PlayState",
+      "signature": "interface PlayState"
+    },
+    {
+      "id": "/animation/animator.ts#firstKey",
+      "label": "Function",
+      "name": "firstKey",
+      "signature": "function firstKey(channel: AnimationChannel): Float32Array"
+    },
+    {
+      "id": "/animation/animator.ts#boneAlias",
+      "label": "Function",
+      "name": "boneAlias",
+      "signature": "function boneAlias(name: string): string"
+    },
+    {
+      "id": "/animation/animator.ts#clipUris",
+      "label": "Variable",
+      "name": "clipUris",
+      "signature": "public clipUris: string[]"
+    },
+    {
+      "id": "/animation/animator.ts#defaultClip",
+      "label": "Variable",
+      "name": "defaultClip",
+      "signature": "public defaultClip = ''"
+    },
+    {
+      "id": "/animation/animator.ts#speed",
+      "label": "Variable",
+      "name": "speed",
+      "signature": "public speed = 1"
+    },
+    {
+      "id": "/animation/animator.ts#onFinished",
+      "label": "Variable",
+      "name": "onFinished",
+      "signature": "public readonly onFinished = new AnimationEvent<AnimationClip>()"
+    },
+    {
+      "id": "/animation/animator.ts#onLoop",
+      "label": "Variable",
+      "name": "onLoop",
+      "signature": "public readonly onLoop = new AnimationEvent<AnimationClip>()"
+    },
+    {
+      "id": "/animation/animator.ts#current",
+      "label": "Variable",
+      "name": "current",
+      "signature": "private current: PlayState | null"
+    },
+    {
+      "id": "/animation/animator.ts#previous",
+      "label": "Variable",
+      "name": "previous",
+      "signature": "private previous: PlayState | null"
+    },
+    {
+      "id": "/animation/animator.ts#fadeDuration",
+      "label": "Variable",
+      "name": "fadeDuration",
+      "signature": "private fadeDuration = 0"
+    },
+    {
+      "id": "/animation/animator.ts#fadeTime",
+      "label": "Variable",
+      "name": "fadeTime",
+      "signature": "private fadeTime = 0"
+    },
+    {
+      "id": "/animation/animator.ts#bonesByName",
+      "label": "Variable",
+      "name": "bonesByName",
+      "signature": "private bonesByName = new Map<string, Transform>()"
+    },
+    {
+      "id": "/animation/animator.ts#loading",
+      "label": "Variable",
+      "name": "loading",
+      "signature": "private loading: Promise<void> | null"
+    },
+    {
+      "id": "/animation/animator.ts#clipList",
+      "label": "Getter",
+      "name": "clipList",
+      "signature": "get clipList(): readonly AnimationClip[]"
+    },
+    {
+      "id": "/animation/animator.ts#currentClip",
+      "label": "Getter",
+      "name": "currentClip",
+      "signature": "get currentClip(): AnimationClip | null"
+    },
+    {
+      "id": "/animation/animator.ts#time",
+      "label": "Getter/Setter",
+      "name": "time",
+      "signature": "get time(): number; set time(seconds: number)"
+    },
+    {
+      "id": "/animation/animator.ts#whenLoaded",
+      "label": "Method",
+      "name": "whenLoaded",
+      "signature": "whenLoaded(): Promise<void>"
+    },
+    {
+      "id": "/animation/animator.ts#addClip",
+      "label": "Method",
+      "name": "addClip",
+      "signature": "addClip(clip: AnimationClip): void"
+    },
+    {
+      "id": "/animation/animator.ts#getClip",
+      "label": "Method",
+      "name": "getClip",
+      "signature": "getClip(nameOrIndex: string | number): AnimationClip | undefined"
+    },
+    {
+      "id": "/animation/animator.ts#play",
+      "label": "Method",
+      "name": "play",
+      "signature": "play(nameOrIndex: string | number, options?: { loop?: boolean }): boolean"
+    },
+    {
+      "id": "/animation/animator.ts#crossFade",
+      "label": "Method",
+      "name": "crossFade",
+      "signature": "crossFade(nameOrIndex: string | number, duration?: number, options?: { loop?: boolean }): boolean"
+    },
+    {
+      "id": "/animation/animator.ts#stop",
+      "label": "Method",
+      "name": "stop",
+      "signature": "stop(): void"
+    },
+    {
+      "id": "/animation/animator.ts#isPlaying",
+      "label": "Method",
+      "name": "isPlaying",
+      "signature": "isPlaying(name?: string): boolean"
+    },
+    {
+      "id": "/animation/animator.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "override initialize(): boolean"
+    },
+    {
+      "id": "/animation/animator.ts#loadClips",
+      "label": "Method",
+      "name": "loadClips",
+      "signature": "private async loadClips(): Promise<void>"
+    },
+    {
+      "id": "/animation/animator.ts#update",
+      "label": "Method",
+      "name": "update",
+      "signature": "override update(elapsed: number): void"
+    },
+    {
+      "id": "/animation/animator.ts#advance",
+      "label": "Method",
+      "name": "advance",
+      "signature": "advance(elapsed: number): void"
+    },
+    {
+      "id": "/animation/animator.ts#step",
+      "label": "Method",
+      "name": "step",
+      "signature": "private step(state: PlayState, dt: number): void"
+    },
+    {
+      "id": "/animation/animator.ts#stateFor",
+      "label": "Method",
+      "name": "stateFor",
+      "signature": "private stateFor(clip: AnimationClip, loop: boolean): PlayState"
+    },
+    {
+      "id": "/animation/animator.ts#collectBones",
+      "label": "Method",
+      "name": "collectBones",
+      "signature": "private collectBones(): void"
+    },
+    {
+      "id": "/animation/animator.ts#apply",
+      "label": "Method",
+      "name": "apply",
+      "signature": "private apply(): void"
+    },
+    {
+      "id": "/animation/animator.ts#mix",
+      "label": "Method",
+      "name": "mix",
+      "signature": "private mix(channel: AnimationChannel, from: Float32Array, to: Float32Array, w: number): void"
+    },
+    {
+      "id": "/animation/animator.ts#write",
+      "label": "Method",
+      "name": "write",
+      "signature": "private write(bone: Transform, channel: AnimationChannel, v: Float32Array): void"
+    },
+    {
+      "id": "/animation/animator.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/animation/animator.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "override fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/animation/animator.ts",
+      "target": "/src/behaviours/entity-behaviour.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/animation/animator.ts",
+      "target": "/src/core/resources/resources.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/animation/animator.ts",
+      "target": "/src/core/transform.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/animation/animator.ts",
+      "target": "/src/core/model/model-data.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/animation/animator.ts",
+      "target": "/src/interfaces/json-serialized-data.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/animation/animator.ts",
+      "target": "/src/animation/animation-clip.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/animation/animator.ts",
+      "target": "/gl-matrix",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

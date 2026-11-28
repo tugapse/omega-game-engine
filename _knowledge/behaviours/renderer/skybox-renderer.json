@@ -1,0 +1,117 @@
+{
+  "component": {
+    "name": "SkyboxRenderer",
+    "source_path": "/behaviours/renderer/skybox-renderer.ts",
+    "doc_path": "/behaviours/renderer/skybox-renderer.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "SkyboxRenderer is a specialized class inheriting from MeshRendererBehaviour, designed to render a large cube representing a skybox environment. It initializes by setting up a CubePrimitive and loading a white cubemap into a SkyboxMaterial. Key logic involves scaling the transform to 1000 units and modifying the camera's view matrix by zeroing translation components to ensure the skybox remains centered relative to the camera's orientation during rendering."
+  },
+  "graph_nodes": [
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#SkyboxRenderer",
+      "label": "Class",
+      "name": "SkyboxRenderer",
+      "signature": "class SkyboxRenderer extends MeshRendererBehaviour"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#SkyboxRenderer.instanciate",
+      "label": "Static Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(gl: WebGL2RenderingContext): SkyboxRenderer"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#SkyboxRenderer.constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(gl:WebGL2RenderingContext)"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#SkyboxRenderer.createDefaultSkybox",
+      "label": "Method",
+      "name": "createDefaultSkybox",
+      "signature": "protected async createDefaultSkybox(): Promise<void>"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#SkyboxRenderer.initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "override initialize(): boolean"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#SkyboxRenderer.material",
+      "label": "Getter",
+      "name": "material",
+      "signature": "public get material():SkyboxMaterial"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#SkyboxRenderer.setGlSettings",
+      "label": "Method",
+      "name": "setGlSettings",
+      "signature": "protected override setGlSettings(): void"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#SkyboxRenderer.setCameraMatrices",
+      "label": "Method",
+      "name": "setCameraMatrices",
+      "signature": "override setCameraMatrices(): void"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#SkyboxRenderer.draw",
+      "label": "Method",
+      "name": "draw",
+      "signature": "override draw(): void"
+    },
+    {
+      "id": "/behaviours/renderer/skybox-renderer.ts#SkyboxRenderer.setShaderVariables",
+      "label": "Method",
+      "name": "setShaderVariables",
+      "signature": "override setShaderVariables(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/../../core/resources/resources.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/../../entities.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/../../enums.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/../../materials.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/../../primitives.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/../../shaders.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skybox-renderer.ts",
+      "target": "/./mesh-renderer-behaviour.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

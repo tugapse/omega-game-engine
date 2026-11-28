@@ -1,0 +1,197 @@
+{
+  "component": {
+    "name": "FbxParser",
+    "source_path": "/parsers/fbx/fbx-parser.ts",
+    "doc_path": "/parsers/fbx/fbx-parser.json",
+    "type": "service"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component serves as the primary service for ingesting complex FBX file formats, transforming raw binary/ASCII data into a structured ModelData object. It orchestrates parsing by utilizing FbxConverter to traverse the scene graph, extracting nodes, meshes, materials, and animation clips. It handles intricate data mapping, including vertex deduplication for meshes and converting FBX curves into linear animation channels."
+  },
+  "graph_nodes": [
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#FbxParseOptions",
+      "label": "Interface",
+      "name": "FbxParseOptions",
+      "signature": "interface FbxParseOptions { fps?: number; }"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#parseFbx",
+      "label": "Function",
+      "name": "parseFbx",
+      "signature": "async function parseFbx(buffer: ArrayBuffer, options: FbxParseOptions = {}): Promise<ModelData>"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#FbxConverter",
+      "label": "Class",
+      "name": "FbxConverter",
+      "signature": "class FbxConverter { constructor(root: FbxNode[], fps: number) {} }"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#FbxConverter.convert",
+      "label": "Method",
+      "name": "convert",
+      "signature": "convert(): ModelData"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#readSettings",
+      "label": "Method",
+      "name": "readSettings",
+      "signature": "private readSettings(): void"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#readNodes",
+      "label": "Method",
+      "name": "readNodes",
+      "signature": "private readNodes(): void"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#readMeshes",
+      "label": "Method",
+      "name": "readMeshes",
+      "signature": "private readMeshes(): void"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#readMaterial",
+      "label": "Method",
+      "name": "readMaterial",
+      "signature": "private readMaterial(material: FbxObject): number"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#readTextureImage",
+      "label": "Method",
+      "name": "readTextureImage",
+      "signature": "private readTextureImage(texture: FbxObject): number | undefined"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#readAnimations",
+      "label": "Method",
+      "name": "readAnimations",
+      "signature": "private readAnimations(): void"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#readStack",
+      "label": "Method",
+      "name": "readStack",
+      "signature": "private readStack(stack: FbxObject): AnimationClip | null"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#childrenOf",
+      "label": "Method",
+      "name": "childrenOf",
+      "signature": "private childrenOf(parentId: number): FbxObject[]"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#bindPose",
+      "label": "Method",
+      "name": "bindPose",
+      "signature": "private bindPose(): Map<number, mat4>"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#globalMatrix",
+      "label": "Method",
+      "name": "globalMatrix",
+      "signature": "private globalMatrix(nodeIndex: number): mat4"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#fbxNodeOf",
+      "label": "Method",
+      "name": "fbxNodeOf",
+      "signature": "private fbxNodeOf(nodeIndex: number): FbxNode | undefined"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#layer",
+      "label": "Function",
+      "name": "layer",
+      "signature": "function layer(element: FbxNode | undefined, dataName: string, indexName: string): LayerReader | null"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#buildMesh",
+      "label": "Function",
+      "name": "buildMesh",
+      "signature": "function buildMesh(geometry: FbxNode, clusters: FbxNode[]): MeshData"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#localTransform",
+      "label": "Function",
+      "name": "localTransform",
+      "signature": "function localTransform(node: FbxNode): Pick<ModelNode, 'translation' | 'rotation' | 'scale'>"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#eulerToQuat",
+      "label": "Function",
+      "name": "eulerToQuat",
+      "signature": "export function eulerToQuat(degrees: vec3, order: number): quat"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#matrixOf",
+      "label": "Function",
+      "name": "matrixOf",
+      "signature": "function matrixOf(values: Float64Array | undefined): mat4"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#vec3Of",
+      "label": "Function",
+      "name": "vec3Of",
+      "signature": "function vec3Of(values: FbxProp[] | undefined): vec3"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#evaluate",
+      "label": "Function",
+      "name": "evaluate",
+      "signature": "function evaluate(curve: FbxCurve | number, time: number): number"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#props70",
+      "label": "Function",
+      "name": "props70",
+      "signature": "function props70(node: FbxNode | undefined): Map<string, FbxProp[]>"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#cleanName",
+      "label": "Function",
+      "name": "cleanName",
+      "signature": "function cleanName(name: string): string"
+    },
+    {
+      "id": "/parsers/fbx/fbx-parser.ts#mimeOf",
+      "label": "Function",
+      "name": "mimeOf",
+      "signature": "function mimeOf(data: Uint8Array, name: string): string"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/parsers/fbx/fbx-parser.ts",
+      "target": "/src/parsers/fbx/fbx-reader.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/parsers/fbx/fbx-parser.ts",
+      "target": "/src/animation/animation-clip.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/parsers/fbx/fbx-parser.ts",
+      "target": "/src/core/mesh.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/parsers/fbx/fbx-parser.ts",
+      "target": "/src/core/model/model-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/parsers/fbx/fbx-parser.ts",
+      "target": "/src/parsers/fbx/fbx-reader.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/primitives/index.ts",
+    "doc_path": "/primitives/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as a facade for the entire geometry primitive subsystem, consolidating exports from various fundamental shape definitions. It provides a unified entry point for consumers to access primitives like cubes, spheres, and triangles through a single interface. Architecturally, it cleans up the underlying structure of the geometry library by aggregating specific primitive implementations. It serves purely as a structural aggregator with no complex logic or side effects."
+  },
+  "graph_nodes": [],
+  "graph_edges": [
+    {
+      "source": "/primitives/index.ts",
+      "target": "/primitives/cube-primitive.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/primitives/index.ts",
+      "target": "/primitives/quad-primitive.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/primitives/index.ts",
+      "target": "/primitives/skybox-primitive.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/primitives/index.ts",
+      "target": "/primitives/sphere-primitive.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/primitives/index.ts",
+      "target": "/primitives/triangle-primitive.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/primitives/index.ts",
+      "target": "/primitives/plane-primitive.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/primitives/index.ts",
+      "target": "/primitives/lathe-primitive.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

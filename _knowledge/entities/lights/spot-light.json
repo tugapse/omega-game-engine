@@ -1,0 +1,117 @@
+{
+  "component": {
+    "name": "SpotLight",
+    "source_path": "/entities/lights/spot-light.ts",
+    "doc_path": "/entities/lights/spot-light.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "SpotLight models a conical light source, extending the base Light class to incorporate specific directional and intensity constraints. It manages light shape via coneAngles and intensity decay through attenuation properties. The class provides serialization methods (toJsonObject/fromJson) for state persistence and includes a static factory method, instanciate, for controlled instantiation."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/lights/spot-light.ts#SpotLight",
+      "label": "Class",
+      "name": "SpotLight",
+      "signature": "class SpotLight extends Light"
+    },
+    {
+      "id": "/entities/lights/spot-light.ts#entityType",
+      "label": "Property",
+      "name": "entityType",
+      "signature": "public override entityType: EntityType = EntityType.LIGHT_SPOT"
+    },
+    {
+      "id": "/entities/lights/spot-light.ts#coneAngles",
+      "label": "Property",
+      "name": "coneAngles",
+      "signature": "public coneAngles: LightConeAngles = new LightConeAngles()"
+    },
+    {
+      "id": "/entities/lights/spot-light.ts#attenuation",
+      "label": "Property",
+      "name": "attenuation",
+      "signature": "public attenuation: LightAttenuation = new LightAttenuation()"
+    },
+    {
+      "id": "/entities/lights/spot-light.ts#range",
+      "label": "Property",
+      "name": "range",
+      "signature": "public range = 25"
+    },
+    {
+      "id": "/entities/lights/spot-light.ts#toLightDirection",
+      "label": "Getter",
+      "name": "toLightDirection",
+      "signature": "get toLightDirection(): vec3"
+    },
+    {
+      "id": "/entities/lights/spot-light.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(name: string)"
+    },
+    {
+      "id": "/entities/lights/spot-light.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "public override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/entities/lights/spot-light.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "public override fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/entities/lights/spot-light.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(name?: string, transform?: Transform): SpotLight"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/lights/spot-light.ts",
+      "target": "/src/core.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/spot-light.ts",
+      "target": "/src/core.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/spot-light.ts",
+      "target": "/src/enums.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/spot-light.ts",
+      "target": "/src/interfaces.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/spot-light.ts",
+      "target": "/entities/lights/light.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/spot-light.ts",
+      "target": "/entities/lights/light-attenuation.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/spot-light.ts",
+      "target": "/entities/lights/light-cone.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

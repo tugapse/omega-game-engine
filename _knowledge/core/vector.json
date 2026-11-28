@@ -1,0 +1,199 @@
+{
+  "component": {
+    "name": "Vector2",
+    "source_path": "/core/vector.ts",
+    "doc_path": "/core/vector.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines a hierarchy of fixed-dimension mathematical vector classes (Vector2, Vector3, Vector4) used for spatial and directional data representation. It wraps underlying gl-matrix types (vec2, vec3, vec4) to provide a strongly typed, object-oriented TypeScript interface. Crucially, all classes implement JsonSerializable, enabling reliable state persistence and deserialization from JSON structures."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/vector.ts#Vector2",
+      "label": "Class",
+      "name": "Vector2",
+      "signature": "constructor(x: number = 0, y: number = 0)"
+    },
+    {
+      "id": "/core/vector.ts#Vector2.className",
+      "label": "Static Property",
+      "name": "className",
+      "signature": "get className(): string"
+    },
+    {
+      "id": "/core/vector.ts#Vector2.vector",
+      "label": "Getter",
+      "name": "vector",
+      "signature": "get vector(): vec2"
+    },
+    {
+      "id": "/core/vector.ts#Vector2.x",
+      "label": "Getter/Setter",
+      "name": "x",
+      "signature": "get x(): number; set x(value: number)"
+    },
+    {
+      "id": "/core/vector.ts#Vector2.y",
+      "label": "Getter/Setter",
+      "name": "y",
+      "signature": "get y(): number; set y(value: number)"
+    },
+    {
+      "id": "/core/vector.ts#Vector2.fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/core/vector.ts#Vector2.toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/core/vector.ts#Vector2.set",
+      "label": "Method",
+      "name": "set",
+      "signature": "set(x: number = 0, y: number = 0): void"
+    },
+    {
+      "id": "/core/vector.ts#Vector3",
+      "label": "Class",
+      "name": "Vector3",
+      "signature": "constructor(x: number = 0, y: number = 0, z: number = 0)"
+    },
+    {
+      "id": "/core/vector.ts#Vector3.className",
+      "label": "Static Property",
+      "name": "className",
+      "signature": "get className(): string"
+    },
+    {
+      "id": "/core/vector.ts#Vector3.vector",
+      "label": "Getter",
+      "name": "vector",
+      "signature": "get vector(): vec3"
+    },
+    {
+      "id": "/core/vector.ts#Vector3.x",
+      "label": "Getter/Setter",
+      "name": "x",
+      "signature": "get x(): number; set x(value: number)"
+    },
+    {
+      "id": "/core/vector.ts#Vector3.y",
+      "label": "Getter/Setter",
+      "name": "y",
+      "signature": "get y(): number; set y(value: number)"
+    },
+    {
+      "id": "/core/vector.ts#Vector3.z",
+      "label": "Getter/Setter",
+      "name": "z",
+      "signature": "get z(): number; set z(value: number)"
+    },
+    {
+      "id": "/core/vector.ts#Vector3.fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/core/vector.ts#Vector3.toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/core/vector.ts#Vector3.set",
+      "label": "Method",
+      "name": "set",
+      "signature": "set(x: number = 0, y: number = 0, z: number = 0): void"
+    },
+    {
+      "id": "/core/vector.ts#Vector4",
+      "label": "Class",
+      "name": "Vector4",
+      "signature": "constructor(x: number = 0, y: number = 0, z: number = 0, w: number = 0)"
+    },
+    {
+      "id": "/core/vector.ts#Vector4.className",
+      "label": "Static Property",
+      "name": "className",
+      "signature": "get className(): string"
+    },
+    {
+      "id": "/core/vector.ts#Vector4.vector",
+      "label": "Getter",
+      "name": "vector",
+      "signature": "get vector(): vec4"
+    },
+    {
+      "id": "/core/vector.ts#Vector4.x",
+      "label": "Getter/Setter",
+      "name": "x",
+      "signature": "get x(): number; set x(value: number)"
+    },
+    {
+      "id": "/core/vector.ts#Vector4.y",
+      "label": "Getter/Setter",
+      "name": "y",
+      "signature": "get y(): number; set y(value: number)"
+    },
+    {
+      "id": "/core/vector.ts#Vector4.z",
+      "label": "Getter/Setter",
+      "name": "z",
+      "signature": "get z(): number; set z(value: number)"
+    },
+    {
+      "id": "/core/vector.ts#Vector4.w",
+      "label": "Getter/Setter",
+      "name": "w",
+      "signature": "get w(): number; set w(value: number)"
+    },
+    {
+      "id": "/core/vector.ts#Vector4.fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/core/vector.ts#Vector4.toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/core/vector.ts#Vector4.set",
+      "label": "Method",
+      "name": "set",
+      "signature": "set(x: number = 0, y: number = 0, z: number = 0, w: number = 0): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/vector.ts",
+      "target": "/src/core/vector.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/vector.ts",
+      "target": "/../interfaces",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/vector.ts",
+      "target": "/./json-serializable",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

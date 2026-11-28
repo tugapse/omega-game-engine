@@ -1,0 +1,102 @@
+{
+  "component": {
+    "name": "TerrainBrush",
+    "source_path": "/terrain/terrain-brush.ts",
+    "doc_path": "/terrain/terrain-brush.json",
+    "type": "service"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component provides the core service layer for manipulating terrain data, enabling heightmap sculpting and material painting across a TerrainGrid. It implements tools like raising, lowering, smoothing, and noise application using deterministic functions operating on grid data. It manages state changes via TerrainHistory, allowing for undo/redo operations on both height and splat data."
+  },
+  "graph_nodes": [
+    {
+      "id": "/terrain/terrain-brush.ts#SculptTool",
+      "label": "Type",
+      "name": "SculptTool",
+      "signature": " 'raise' | 'lower' | 'smooth' | 'flatten' | 'noise'"
+    },
+    {
+      "id": "/terrain/terrain-brush.ts#BrushSettings",
+      "label": "Interface",
+      "name": "BrushSettings",
+      "signature": " { radius: number; strength: number; hardness: number; }"
+    },
+    {
+      "id": "/terrain/terrain-brush.ts#DEFAULT_BRUSH",
+      "label": "Variable",
+      "name": "DEFAULT_BRUSH",
+      "signature": " { radius: 12, strength: 0.6, hardness: 0.3 }"
+    },
+    {
+      "id": "/terrain/terrain-brush.ts#brushFalloff",
+      "label": "Function",
+      "name": "brushFalloff",
+      "signature": " brushFalloff(t: number, hardness: number): number"
+    },
+    {
+      "id": "/terrain/terrain-brush.ts#VertexRect",
+      "label": "Interface",
+      "name": "VertexRect",
+      "signature": " { i0: number; j0: number; i1: number; j1: number; }"
+    },
+    {
+      "id": "/terrain/terrain-brush.ts#sculpt",
+      "label": "Function",
+      "name": "sculpt",
+      "signature": " sculpt(grid: TerrainGrid, tool: SculptTool, x: number, z: number, brush: BrushSettings, dt: number, target = 0): VertexRect | null"
+    },
+    {
+      "id": "/terrain/terrain-brush.ts#touchAround",
+      "label": "Function",
+      "name": "touchAround",
+      "signature": " touchAround(grid: TerrainGrid, rect: VertexRect): void"
+    },
+    {
+      "id": "/terrain/terrain-brush.ts#paint",
+      "label": "Function",
+      "name": "paint",
+      "signature": " paint(grid: TerrainGrid, layer: number, x: number, z: number, brush: BrushSettings, dt: number, erase = false): TerrainChunkData[]"
+    },
+    {
+      "id": "/terrain/terrain-brush.ts#fillSplat",
+      "label": "Function",
+      "name": "fillSplat",
+      "signature": " fillSplat(grid: TerrainGrid, weightsAt: (x: number, z: number, out: Float32Array) => Float32Array): void"
+    },
+    {
+      "id": "/terrain/terrain-brush.ts#clearSplat",
+      "label": "Function",
+      "name": "clearSplat",
+      "signature": " clearSplat(grid: TerrainGrid): void"
+    },
+    {
+      "id": "/terrain/terrain-brush.ts#TerrainHistory",
+      "label": "Class",
+      "name": "TerrainHistory",
+      "signature": " constructor(public limit = 24): TerrainHistory"
+    },
+    {
+      "id": "/terrain/terrain-brush.ts#copyOf",
+      "label": "Function",
+      "name": "copyOf",
+      "signature": " copyOf(c: TerrainChunkData, kind: 'heights' | 'splat'): ChunkCopy"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/terrain/terrain-brush.ts",
+      "target": "/src/terrain/terrain-data.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-brush.ts",
+      "target": "/src/terrain/terrain-noise.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

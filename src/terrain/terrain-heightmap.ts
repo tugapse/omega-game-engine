@@ -21,6 +21,60 @@ export function gridBounds(grid: TerrainGrid): { cx0: number; cz0: number; cx1: 
   };
 }
 
+/** The box around every chunk in terrain space (one chunk's box when there are none). */
+export function gridArea(grid: TerrainGrid): { x0: number; z0: number; x1: number; z1: number } {
+  const b = gridBounds(grid), s = grid.settings.size;
+  if (!b) return { x0: 0, z0: 0, x1: s, z1: s };
+  return { x0: b.cx0 * s, z0: b.cz0 * s, x1: (b.cx1 + 1) * s, z1: (b.cz1 + 1) * s };
+}
+
+/**
+ * A height function sampled on a size × size grid over a terrain-space box
+ * (row by row along z, the corners included), with its lowest and highest
+ * values: for previews and maps of a relief before it is written.
+ */
+export function sampleField(height: (x: number, z: number) => number, area: { x0: number; z0: number; x1: number; z1: number }, size: number): { heights: Float32Array; size: number; min: number; max: number } {
+  const heights = new Float32Array(size * size);
+  let min = Infinity, max = -Infinity;
+  const sx = (area.x1 - area.x0) / (size - 1), sz = (area.z1 - area.z0) / (size - 1);
+  for (let j = 0; j < size; j++) {
+    for (let i = 0; i < size; i++) {
+      const h = height(area.x0 + i * sx, area.z0 + j * sz);
+      heights[j * size + i] = h;
+      if (h < min) min = h;
+      if (h > max) max = h;
+    }
+  }
+  return { heights, size, min, max };
+}
+
+/**
+ * A box blur `r` pixels each way, run twice (nearly a Gaussian), for 8-bit
+ * images: their 256 greys are steps of a metre or so, which show as terraces.
+ */
+export function smoothHeightmap(map: Heightmap, r = 2): Heightmap {
+  const { width: w, height: h } = map;
+  const src = Float32Array.from(map.data);
+  const tmp = new Float32Array(w * h);
+  const pass = (from: Float32Array, to: Float32Array, horizontal: boolean) => {
+    const lines = horizontal ? h : w, len = horizontal ? w : h;
+    for (let l = 0; l < lines; l++) {
+      for (let k = 0; k < len; k++) {
+        let sum = 0;
+        for (let d = -r; d <= r; d++) {
+          const q = Math.min(Math.max(k + d, 0), len - 1);
+          sum += from[horizontal ? l * w + q : q * w + l];
+        }
+        to[horizontal ? l * w + k : k * w + l] = sum / (2 * r + 1);
+      }
+    }
+  };
+  for (let n = 0; n < 2; n++) { pass(src, tmp, true); pass(tmp, src, false); }
+  const data = new Uint16Array(w * h);
+  for (let i = 0; i < data.length; i++) data[i] = Math.round(src[i]);
+  return { width: w, height: h, data };
+}
+
 /** The terrain as one heightmap. */
 export function exportHeightmap(grid: TerrainGrid): Heightmap | null {
   const b = gridBounds(grid);

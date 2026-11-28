@@ -1,0 +1,33 @@
+{
+  "component": {
+    "name": "CullFace",
+    "source_path": "/enums/gl/cull-face.enum.ts",
+    "doc_path": "/enums/gl/cull-face.enum.json",
+    "type": "utility"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the CullFace enumeration, which provides a type-safe mapping for face culling modes used within WebGL rendering contexts. It encapsulates constants like FRONT, BACK, and NONE, directly referencing values from WebGL2RenderingContext. Its primary role is to configure the geometry processing state during rasterization, ensuring correct visibility determination in the rendering pipeline."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/gl/cull-face.enum.ts#CullFace",
+      "label": "Enum",
+      "name": "CullFace",
+      "signature": "export enum CullFace"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/enums/gl/cull-face.enum.ts",
+      "target": "/enums/gl/cull-face.enum.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "WebGL2RenderingContext"
+    ],
+    "has_side_effects": false
+  }
+}

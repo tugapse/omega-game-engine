@@ -1,0 +1,259 @@
+{
+  "component": {
+    "name": "Transform",
+    "source_path": "/core/transform.ts",
+    "doc_path": "/core/transform.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The Transform class manages the spatial properties (position, rotation, scale) of entities within a 3D scene graph. It encapsulates local and world-space transformations using model matrices (mat4) and supports hierarchical relationships via parent/children pointers. It implements serialization via JsonSerializable, allowing state persistence, and provides methods for manipulating position, rotation, and scale in both local and world coordinate systems."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/transform.ts#Transform",
+      "label": "Class",
+      "name": "Transform",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#toEuler",
+      "label": "Function",
+      "name": "toEuler",
+      "signature": "toEuler(out: vec3, q: quat): void"
+    },
+    {
+      "id": "/core/transform.ts#modelMatrix",
+      "label": "Getter",
+      "name": "modelMatrix",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#localPosition",
+      "label": "Getter",
+      "name": "localPosition",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#localRotation",
+      "label": "Getter",
+      "name": "localRotation",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#localRotationQuat",
+      "label": "Getter",
+      "name": "localRotationQuat",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#localScale",
+      "label": "Getter",
+      "name": "localScale",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#worldPosition",
+      "label": "Getter/Setter",
+      "name": "worldPosition",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#worldRotationQuat",
+      "label": "Getter/Setter",
+      "name": "worldRotationQuat",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#worldRotation",
+      "label": "Getter/Setter",
+      "name": "worldRotation",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#worldScale",
+      "label": "Getter/Setter",
+      "name": "worldScale",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#parent",
+      "label": "Getter",
+      "name": "parent",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#children",
+      "label": "Getter",
+      "name": "children",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#setLocalPosition",
+      "label": "Method",
+      "name": "setLocalPosition",
+      "signature": "setLocalPosition(x: number, y: number, z: number): void"
+    },
+    {
+      "id": "/core/transform.ts#setLocalRotation",
+      "label": "Method",
+      "name": "setLocalRotation",
+      "signature": "setLocalRotation(xDegrees: number, yDegrees: number, zDegrees: number): void"
+    },
+    {
+      "id": "/core/transform.ts#setLocalScale",
+      "label": "Method",
+      "name": "setLocalScale",
+      "signature": "setLocalScale(x: number, y: number, z: number): void"
+    },
+    {
+      "id": "/core/transform.ts#setWorldPosition",
+      "label": "Method",
+      "name": "setWorldPosition",
+      "signature": "setWorldPosition(x: number, y: number, z: number): void"
+    },
+    {
+      "id": "/core/transform.ts#setWorldRotation",
+      "label": "Method",
+      "name": "setWorldRotation",
+      "signature": "setWorldRotation(xDegrees: number, yDegrees: number, zDegrees: number): void"
+    },
+    {
+      "id": "/core/transform.ts#setWorldScale",
+      "label": "Method",
+      "name": "setWorldScale",
+      "signature": "setWorldScale(x: number, y: number, z: number): void"
+    },
+    {
+      "id": "/core/transform.ts#translate",
+      "label": "Method",
+      "name": "translate",
+      "signature": "translate(x: number, y: number, z: number): void"
+    },
+    {
+      "id": "/core/transform.ts#rotate",
+      "label": "Method",
+      "name": "rotate",
+      "signature": "rotate(xDegrees: number, yDegrees: number, zDegrees: number): void"
+    },
+    {
+      "id": "/core/transform.ts#scale",
+      "label": "Method",
+      "name": "scale",
+      "signature": "scale(x: number, y: number, z: number): void"
+    },
+    {
+      "id": "/core/transform.ts#setParent",
+      "label": "Method",
+      "name": "setParent",
+      "signature": "setParent(parent: Transform | null): void"
+    },
+    {
+      "id": "/core/transform.ts#right",
+      "label": "Getter",
+      "name": "right",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#left",
+      "label": "Getter",
+      "name": "left",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#up",
+      "label": "Getter",
+      "name": "up",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#down",
+      "label": "Getter",
+      "name": "down",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#forward",
+      "label": "Getter",
+      "name": "forward",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#back",
+      "label": "Getter",
+      "name": "back",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#lookAt",
+      "label": "Method",
+      "name": "lookAt",
+      "signature": "lookAt(target: vec3 | Vector3, worldUp?: vec3 | Vector3): void"
+    },
+    {
+      "id": "/core/transform.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": ""
+    },
+    {
+      "id": "/core/transform.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/core/transform.ts#rotateByQuat",
+      "label": "Method",
+      "name": "rotateByQuat",
+      "signature": "rotateByQuat(q: quat): void"
+    },
+    {
+      "id": "/core/transform.ts#setDirty",
+      "label": "Method",
+      "name": "setDirty",
+      "signature": "setDirty(dirty: boolean): void"
+    },
+    {
+      "id": "/core/transform.ts#setLocalRotationQuat",
+      "label": "Method",
+      "name": "setLocalRotationQuat",
+      "signature": "setLocalRotationQuat(newRotation: quat): void"
+    },
+    {
+      "id": "/core/transform.ts#getEulerFromQuat",
+      "label": "Method",
+      "name": "getEulerFromQuat",
+      "signature": "getEulerFromQuat(q: quat): vec3"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/transform.ts",
+      "target": "/src/core/json-serializable.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/transform.ts",
+      "target": "/src/core/entities.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/transform.ts",
+      "target": "/src/interfaces/json-serialized-data.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/transform.ts",
+      "target": "/core/vector.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix",
+      "uuid"
+    ],
+    "has_side_effects": true
+  }
+}

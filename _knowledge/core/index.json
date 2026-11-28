@@ -1,0 +1,251 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/core/index.ts",
+    "doc_path": "/core/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as the primary barrel export for the core engine, aggregating and unifying access to fundamental types, utilities, and systems. It serves as a facade, providing a single entry point for consumers to interact with disparate engine subsystems like rendering, geometry, resource management, and input handling. Its role is purely structural, exposing definitions from numerous internal submodules without implementing complex logic or side effects."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/index.ts#bounding-box",
+      "label": "Type",
+      "name": "bounding-box",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#camera-ubo",
+      "label": "Type",
+      "name": "camera-ubo",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#canvas-viewport",
+      "label": "Type",
+      "name": "canvas-viewport",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#color",
+      "label": "Type",
+      "name": "color",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#colors",
+      "label": "Type",
+      "name": "colors",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#event-emitter",
+      "label": "Type",
+      "name": "event-emitter",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#input",
+      "label": "Type",
+      "name": "input",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#json-serializable",
+      "label": "Type",
+      "name": "json-serializable",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#mesh",
+      "label": "Type",
+      "name": "mesh",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#object-instanciator",
+      "label": "Type",
+      "name": "object-instanciator",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#range",
+      "label": "Type",
+      "name": "range",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#scene-fog",
+      "label": "Type",
+      "name": "scene-fog",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#transform",
+      "label": "Type",
+      "name": "transform",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#vector",
+      "label": "Type",
+      "name": "vector",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#render",
+      "label": "Type",
+      "name": "render",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#resource-cache",
+      "label": "Type",
+      "name": "resource-cache",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#resource-loader",
+      "label": "Type",
+      "name": "resource-loader",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#resource-manager",
+      "label": "Type",
+      "name": "resource-manager",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#resources",
+      "label": "Type",
+      "name": "resources",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#builtin-textures",
+      "label": "Type",
+      "name": "builtin-textures",
+      "signature": ""
+    },
+    {
+      "id": "/core/index.ts#pointer",
+      "label": "Type",
+      "name": "pointer",
+      "signature": ""
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/index.ts",
+      "target": "/core/bounding-box.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/camera-ubo.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/canvas-viewport.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/color.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/colors.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/event-emitter.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/input.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/json-serializable.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/mesh.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/object-instanciator.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/range.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/scene-fog.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/transform.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/vector.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/render.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/resources/resource-cache.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/resources/resource-loader.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/resources/resource-manager.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/resources/resources.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/resources/builtin-textures.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/index.ts",
+      "target": "/core/pointer.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

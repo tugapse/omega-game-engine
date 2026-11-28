@@ -1,0 +1,73 @@
+{
+  "component": {
+    "name": "terrain-textures",
+    "source_path": "/terrain/terrain-textures.ts",
+    "doc_path": "/terrain/terrain-textures.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module is a core utility for procedural terrain generation, responsible for creating tileable ground textures based on defined material types like grass, dirt, and rock. It utilizes noise functions from terrain-noise.ts to drive height fields and color mixing logic. The primary function, groundTexture, generates structured GroundTexture objects containing albedo (color/height) and normal maps (roughness) for rendering pipelines."
+  },
+  "graph_nodes": [
+    {
+      "id": "/terrain/terrain-textures.ts#GroundKind",
+      "label": "Type",
+      "name": "GroundKind",
+      "signature": " 'grass' | 'dirt' | 'rock' | 'snow' | 'sand' | 'gravel'"
+    },
+    {
+      "id": "/terrain/terrain-textures.ts#GROUND_KINDS",
+      "label": "Variable",
+      "name": "GROUND_KINDS",
+      "signature": "GroundKind[]"
+    },
+    {
+      "id": "/terrain/terrain-textures.ts#GroundTexture",
+      "label": "Interface",
+      "name": "GroundTexture",
+      "signature": "size: number; albedo: Uint8Array; normal: Uint8Array"
+    },
+    {
+      "id": "/terrain/terrain-textures.ts#mix",
+      "label": "Function",
+      "name": "mix",
+      "signature": "mix(a: Rgb, b: Rgb, t: number): Rgb"
+    },
+    {
+      "id": "/terrain/terrain-textures.ts#clamp01",
+      "label": "Function",
+      "name": "clamp01",
+      "signature": "clamp01(v: number): number"
+    },
+    {
+      "id": "/terrain/terrain-textures.ts#Recipe",
+      "label": "Interface",
+      "name": "Recipe",
+      "signature": "height(f: (x: number, z: number, cells: number) => number, u: number, v: number): number; color(h: number, f: (x: number, z: number, cells: number) => number, u: number, v: number): Rgb; roughness: number; bump: number"
+    },
+    {
+      "id": "/terrain/terrain-textures.ts#RECIPES",
+      "label": "Variable",
+      "name": "RECIPES",
+      "signature": "Record<GroundKind, Recipe>"
+    },
+    {
+      "id": "/terrain/terrain-textures.ts#groundTexture",
+      "label": "Function",
+      "name": "groundTexture",
+      "signature": "groundTexture(kind: GroundKind, size = 256, seed = 1): GroundTexture"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/terrain/terrain-textures.ts",
+      "target": "/src/terrain/terrain-noise.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "component": {
+    "name": "EventEmitter",
+    "source_path": "/core/event-emitter.ts",
+    "doc_path": "/core/event-emitter.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The EventEmitter class implements the Observer pattern, serving as a core asynchronous communication utility. It manages event subscriptions using an internal Map, allowing disparate parts of the application to communicate without direct coupling. The primary methods, 'on' and 'emit', facilitate subscribing to named events and triggering associated callbacks when an event is broadcast. This component promotes a reactive, decoupled architecture across services."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/event-emitter.ts#EventEmitter",
+      "label": "Class",
+      "name": "EventEmitter",
+      "signature": ""
+    },
+    {
+      "id": "/core/event-emitter.ts#listeners",
+      "label": "Variable",
+      "name": "listeners",
+      "signature": "private listeners: Map<string, Function[]> = new Map();"
+    },
+    {
+      "id": "/core/event-emitter.ts#on",
+      "label": "Method",
+      "name": "on",
+      "signature": "public on(event: string, callback: Function): void"
+    },
+    {
+      "id": "/core/event-emitter.ts#emit",
+      "label": "Method",
+      "name": "emit",
+      "signature": "public emit(event: string, data?: any): void"
+    }
+  ],
+  "graph_edges": [],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

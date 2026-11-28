@@ -1,0 +1,51 @@
+{
+  "component": {
+    "name": "CubePrimitive",
+    "source_path": "/primitives/cube-primitive.ts",
+    "doc_path": "/primitives/cube-primitive.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "CubePrimitive is a concrete implementation of MeshData designed to procedurally generate the geometry for a standard cube. It calculates and populates arrays for vertices, normals, UV coordinates, and indices based on a specified size parameter. The class utilizes a private helper function, addFace, to systematically construct the six faces of the cube by defining two triangles per face. It serves as a fundamental, ready-to-use geometry data model within the rendering pipeline."
+  },
+  "graph_nodes": [
+    {
+      "id": "/primitives/cube-primitive.ts#CubePrimitive",
+      "label": "Class",
+      "name": "CubePrimitive",
+      "signature": "class CubePrimitive extends MeshData"
+    },
+    {
+      "id": "/primitives/cube-primitive.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "public static override instanciate(vertices?: vec3[], normals?: vec3[], uvs?: vec2[], indices?: number[]): CubePrimitive"
+    },
+    {
+      "id": "/primitives/cube-primitive.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(size: number = 2.0)"
+    },
+    {
+      "id": "/primitives/cube-primitive.ts#addFace",
+      "label": "Function",
+      "name": "addFace",
+      "signature": "const addFace = (v0: vec3, v1: vec3, v2: vec3, v3: vec3, normal: vec3, uv0: vec2, uv1: vec2, uv2: vec2, uv3: vec2, baseIndex: number): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/primitives/cube-primitive.ts",
+      "target": "/../core/mesh.md",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

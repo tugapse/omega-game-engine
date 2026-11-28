@@ -1,0 +1,297 @@
+{
+  "component": {
+    "name": "TerrainBehaviour",
+    "source_path": "/terrain/terrain-behaviour.ts",
+    "doc_path": "/terrain/terrain-behaviour.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "TerrainBehaviour is the core service managing the state, rendering, and interaction logic for a terrain surface. It orchestrates the TerrainGrid, handling procedural generation, heightmap/splat map modification, and rendering via TerrainChunkRenderer. It provides world-space query methods like raycast and heightAt, and manages editing history using TerrainHistory for sculpting and painting operations."
+  },
+  "graph_nodes": [
+    {
+      "id": "/terrain/terrain-behaviour.ts#TerrainBehaviour",
+      "label": "Class",
+      "name": "TerrainBehaviour",
+      "signature": "constructor(gl: WebGL2RenderingContext, settings: TerrainSettings = { ...DEFAULT_TERRAIN_SETTINGS })"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#SavedTerrainChunk",
+      "label": "Interface",
+      "name": "SavedTerrainChunk",
+      "signature": "interface SavedTerrainChunk { cx: number; cz: number; heights: string; splat?: [string, string]; }"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#settings",
+      "label": "Getter",
+      "name": "settings",
+      "signature": "get settings(): TerrainSettings"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#grid",
+      "label": "Property",
+      "name": "grid",
+      "signature": "public grid: TerrainGrid"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#material",
+      "label": "Property",
+      "name": "material",
+      "signature": "public material: TerrainMaterial"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#lodDistances",
+      "label": "Property",
+      "name": "lodDistances",
+      "signature": "public lodDistances: number[] = [1, 2, 4]"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#lodBias",
+      "label": "Property",
+      "name": "lodBias",
+      "signature": "public lodBias = 1"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#castShadows",
+      "label": "Property",
+      "name": "castShadows",
+      "signature": "public castShadows = true"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#colliders",
+      "label": "Property",
+      "name": "colliders",
+      "signature": "public colliders = true"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#friction",
+      "label": "Property",
+      "name": "friction",
+      "signature": "public friction = 0.8"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#history",
+      "label": "Property",
+      "name": "history",
+      "signature": "public readonly history = new TerrainHistory()"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#addChunk",
+      "label": "Method",
+      "name": "addChunk",
+      "signature": "addChunk(cx: number, cz: number, height = 0): TerrainChunkData"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#removeChunk",
+      "label": "Method",
+      "name": "removeChunk",
+      "signature": "removeChunk(cx: number, cz: number): void"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#rendererOf",
+      "label": "Method",
+      "name": "rendererOf",
+      "signature": "rendererOf(cx: number, cz: number): TerrainChunkRenderer | undefined"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#refreshAll",
+      "label": "Method",
+      "name": "refreshAll",
+      "signature": "refreshAll(): void"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#toLocal",
+      "label": "Method",
+      "name": "toLocal",
+      "signature": "toLocal(point: vec3, out = vec3.create()): vec3"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#heightAt",
+      "label": "Method",
+      "name": "heightAt",
+      "signature": "heightAt(x: number, z: number): number | undefined"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#normalAt",
+      "label": "Method",
+      "name": "normalAt",
+      "signature": "normalAt(x: number, z: number, out = vec3.create()): vec3 | undefined"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#raycast",
+      "label": "Method",
+      "name": "raycast",
+      "signature": "raycast(origin: vec3, direction: vec3, maxDistance = 2000): vec3 | undefined"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#beginStroke",
+      "label": "Method",
+      "name": "beginStroke",
+      "signature": "beginStroke(kind: 'heights' | 'splat'): void"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#endStroke",
+      "label": "Method",
+      "name": "endStroke",
+      "signature": "endStroke(): void"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#sculptAt",
+      "label": "Method",
+      "name": "sculptAt",
+      "signature": "sculptAt(tool: SculptTool, point: vec3, brush: BrushSettings, dt: number, target?: number): boolean"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#paintAt",
+      "label": "Method",
+      "name": "paintAt",
+      "signature": "paintAt(layer: number, point: vec3, brush: BrushSettings, dt: number, erase = false): boolean"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#undo",
+      "label": "Method",
+      "name": "undo",
+      "signature": "undo(): boolean"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#redo",
+      "label": "Method",
+      "name": "redo",
+      "signature": "redo(): boolean"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#bakeRules",
+      "label": "Method",
+      "name": "bakeRules",
+      "signature": "bakeRules(): void"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#clearPainting",
+      "label": "Method",
+      "name": "clearPainting",
+      "signature": "clearPainting(): void"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#showBrush",
+      "label": "Method",
+      "name": "showBrush",
+      "signature": "showBrush(point: vec3 | null, radius = 0): void"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#sync",
+      "label": "Method",
+      "name": "sync",
+      "signature": "sync(): void"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#applyLod",
+      "label": "Method",
+      "name": "applyLod",
+      "signature": "applyLod(only?: TerrainChunkRenderer): void"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "destroy(): void"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#saveChunks",
+      "label": "Method",
+      "name": "saveChunks",
+      "signature": "saveChunks(): SavedTerrainChunk[]"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#loadChunks",
+      "label": "Method",
+      "name": "loadChunks",
+      "signature": "loadChunks(saved: SavedTerrainChunk[]): void"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/terrain/terrain-behaviour.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/terrain/terrain-behaviour.ts",
+      "target": "/src/terrain/terrain-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-behaviour.ts",
+      "target": "/src/behaviours/entity-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-behaviour.ts",
+      "target": "/src/entities/entity.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-behaviour.ts",
+      "target": "/src/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-behaviour.ts",
+      "target": "/src/physics/collider-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-behaviour.ts",
+      "target": "/src/physics/physics-world.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-behaviour.ts",
+      "target": "/src/shaders/shader.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-behaviour.ts",
+      "target": "/src/terrain/terrain-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-behaviour.ts",
+      "target": "/src/terrain/terrain-brush.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-behaviour.ts",
+      "target": "/src/terrain/terrain-chunk-renderer.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-behaviour.ts",
+      "target": "/src/terrain/terrain-rules.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-behaviour.ts",
+      "target": "/src/terrain/terrain-material.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-behaviour.ts",
+      "target": "/src/terrain/terrain-shader.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

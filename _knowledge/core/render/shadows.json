@@ -1,0 +1,190 @@
+{
+  "component": {
+    "name": "shadows.ts",
+    "source_path": "/core/render/shadows.ts",
+    "doc_path": "/core/render/shadows.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module manages the planning phase for shadow mapping, determining which lights cast shadows and how to allocate their depth views within a fixed-size shadow atlas. It calculates necessary light matrices (orthographic/perspective) and defines the geometric layout via ShadowPlan structures. The core logic involves filtering lights by budget and distance, then serializing the resulting plan into a GPU-consumable Float32Array conforming to the ShadowsBlock UBO layout."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/shadows.ts#SHADOW_ATLAS_SIZE",
+      "label": "Variable",
+      "name": "SHADOW_ATLAS_SIZE",
+      "signature": "4096"
+    },
+    {
+      "id": "/core/render/shadows.ts#SHADOW_BUDGET",
+      "label": "Variable",
+      "name": "SHADOW_BUDGET",
+      "signature": "{ directional: 1, spot: 4, point: 2 }"
+    },
+    {
+      "id": "/core/render/shadows.ts#MAX_SHADOW_SLOTS",
+      "label": "Variable",
+      "name": "MAX_SHADOW_SLOTS",
+      "signature": "SHADOW_BUDGET.directional + SHADOW_BUDGET.spot + SHADOW_BUDGET.point"
+    },
+    {
+      "id": "/core/render/shadows.ts#MAX_SHADOW_VIEWS",
+      "label": "Variable",
+      "name": "MAX_SHADOW_VIEWS",
+      "signature": "SHADOW_BUDGET.directional + SHADOW_BUDGET.spot + 6 * SHADOW_BUDGET.point"
+    },
+    {
+      "id": "/core/render/shadows.ts#POINT_FACE_FOV_DEGREES",
+      "label": "Variable",
+      "name": "POINT_FACE_FOV_DEGREES",
+      "signature": "95"
+    },
+    {
+      "id": "/core/render/shadows.ts#AtlasRect",
+      "label": "Interface",
+      "name": "AtlasRect",
+      "signature": "interface AtlasRect { x: number; y: number; size: number; }"
+    },
+    {
+      "id": "/core/render/shadows.ts#ATLAS_TILES",
+      "label": "Variable",
+      "name": "ATLAS_TILES",
+      "signature": "object"
+    },
+    {
+      "id": "/core/render/shadows.ts#ShadowView",
+      "label": "Interface",
+      "name": "ShadowView",
+      "signature": "interface ShadowView { light: Light; matrix: mat4; rect: AtlasRect; }"
+    },
+    {
+      "id": "/core/render/shadows.ts#ShadowSlot",
+      "label": "Interface",
+      "name": "ShadowSlot",
+      "signature": "interface ShadowSlot { light: Light; firstView: number; viewCount: number; texelSize: number; perspective: boolean; }"
+    },
+    {
+      "id": "/core/render/shadows.ts#ShadowPlan",
+      "label": "Interface",
+      "name": "ShadowPlan",
+      "signature": "interface ShadowPlan { atlasSize: number; slots: ShadowSlot[]; views: ShadowView[]; slotOf: Map<Light, number>; }"
+    },
+    {
+      "id": "/core/render/shadows.ts#ShadowPlanOptions",
+      "label": "Interface",
+      "name": "ShadowPlanOptions",
+      "signature": "interface ShadowPlanOptions { directionalDistance: number; atlasSize?: number; budget?: { spot?: number; point?: number }; }"
+    },
+    {
+      "id": "/core/render/shadows.ts#scaledTile",
+      "label": "Function",
+      "name": "scaledTile",
+      "signature": "function scaledTile(rect: AtlasRect, atlasSize: number): AtlasRect"
+    },
+    {
+      "id": "/core/render/shadows.ts#planShadows",
+      "label": "Function",
+      "name": "planShadows",
+      "signature": "function planShadows(lights: Light[], eye: vec3, options: ShadowPlanOptions): ShadowPlan"
+    },
+    {
+      "id": "/core/render/shadows.ts#directionalMatrix",
+      "label": "Function",
+      "name": "directionalMatrix",
+      "signature": "function directionalMatrix(direction: vec3, eye: vec3, distance: number, tileSize: number): mat4"
+    },
+    {
+      "id": "/core/render/shadows.ts#directionalDepthRange",
+      "label": "Function",
+      "name": "directionalDepthRange",
+      "signature": "function directionalDepthRange(distance: number): number"
+    },
+    {
+      "id": "/core/render/shadows.ts#spotFov",
+      "label": "Function",
+      "name": "spotFov",
+      "signature": "function spotFov(light: SpotLight): number"
+    },
+    {
+      "id": "/core/render/shadows.ts#spotMatrix",
+      "label": "Function",
+      "name": "spotMatrix",
+      "signature": "function spotMatrix(light: SpotLight): mat4"
+    },
+    {
+      "id": "/core/render/shadows.ts#CUBE_FACES",
+      "label": "Variable",
+      "name": "CUBE_FACES",
+      "signature": "array of { dir: vec3; up: vec3 }[]"
+    },
+    {
+      "id": "/core/render/shadows.ts#cubeFaceFor",
+      "label": "Function",
+      "name": "cubeFaceFor",
+      "signature": "function cubeFaceFor(v: vec3): number"
+    },
+    {
+      "id": "/core/render/shadows.ts#pointMatrices",
+      "label": "Function",
+      "name": "pointMatrices",
+      "signature": "function pointMatrices(light: PointLight): mat4[]"
+    },
+    {
+      "id": "/core/render/shadows.ts#SHADOWS_LAYOUT",
+      "label": "Variable",
+      "name": "SHADOWS_LAYOUT",
+      "signature": "object"
+    },
+    {
+      "id": "/core/render/shadows.ts#ShadowFilter",
+      "label": "Enum",
+      "name": "ShadowFilter",
+      "signature": "enum"
+    },
+    {
+      "id": "/core/render/shadows.ts#packShadows",
+      "label": "Function",
+      "name": "packShadows",
+      "signature": "function packShadows(plan: ShadowPlan, enabled: boolean, out?: Float32Array, filter = ShadowFilter.Softer): Float32Array"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/shadows.ts",
+      "target": "/src/core/render/shadows.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/shadows.ts",
+      "target": "/src/core/enums/entity-type.enum.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/shadows.ts",
+      "target": "/src/core/entities/lights/directional-light.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/shadows.ts",
+      "target": "/src/core/entities/lights/light.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/shadows.ts",
+      "target": "/src/core/entities/lights/point-light.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/shadows.ts",
+      "target": "/src/core/entities/lights/spot-light.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

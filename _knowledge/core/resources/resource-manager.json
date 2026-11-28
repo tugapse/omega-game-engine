@@ -1,0 +1,212 @@
+{
+  "component": {
+    "name": "ResourceManager",
+    "source_path": "/core/resources/resource-manager.ts",
+    "doc_path": "/core/resources/resource-manager.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "ResourceManager is the central service managing the lifecycle, loading, and caching of all application assets, including textures, meshes, shaders, and models. It abstracts asset loading via a replaceable ResourceLoader, ensuring efficient reuse across the rendering engine. It maintains specialized caches for different asset types and handles context-specific resources like RenderTextures. The class provides methods for acquiring, loading, and disposing of resources based on their URI or configuration."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/resources/resource-manager.ts#ResourceManagerStats",
+      "label": "Interface",
+      "name": "ResourceManagerStats",
+      "signature": "textures: ResourceCacheStats; cubemaps: ResourceCacheStats; meshes: ResourceCacheStats; shaders: ResourceCacheStats; models: ResourceCacheStats;"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#ResourceManager",
+      "label": "Class",
+      "name": "ResourceManager",
+      "signature": "constructor(gl: WebGL2RenderingContext | null, loader: ResourceLoader)"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#cubemapKey",
+      "label": "Static Method",
+      "name": "cubemapKey",
+      "signature": "static cubemapKey(sides: ICubemapSides): string"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#getTexture",
+      "label": "Method",
+      "name": "getTexture",
+      "signature": "async getTexture(uri: string): Promise<Texture>"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#getCubemap",
+      "label": "Method",
+      "name": "getCubemap",
+      "signature": "async getCubemap(sides: ICubemapSides): Promise<CubemapTexture>"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#getRenderTexture",
+      "label": "Method",
+      "name": "getRenderTexture",
+      "signature": "getRenderTexture(name: string): RenderTexture"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#getWhiteCubemap",
+      "label": "Method",
+      "name": "getWhiteCubemap",
+      "signature": "getWhiteCubemap(): Promise<CubemapTexture>"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#getMesh",
+      "label": "Method",
+      "name": "getMesh",
+      "signature": "async getMesh(uri: string): Promise<MeshData>"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#getModel",
+      "label": "Method",
+      "name": "getModel",
+      "signature": "async getModel(uri: string): Promise<ModelData>"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#loadBinary",
+      "label": "Method",
+      "name": "loadBinary",
+      "signature": "async loadBinary(uri: string): Promise<ArrayBuffer>"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#getShader",
+      "label": "Method",
+      "name": "getShader",
+      "signature": "async getShader(uri: string): Promise<string>"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#peekValue",
+      "label": "Static Method",
+      "name": "peekValue",
+      "signature": "static peekValue<V>(handle: { value: V; release(): void }): V"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#setLoader",
+      "label": "Method",
+      "name": "setLoader",
+      "signature": "setLoader(loader: ResourceLoader): void"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#getLoader",
+      "label": "Method",
+      "name": "getLoader",
+      "signature": "getLoader(): ResourceLoader"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#stats",
+      "label": "Method",
+      "name": "stats",
+      "signature": "stats(): ResourceManagerStats"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#trim",
+      "label": "Method",
+      "name": "trim",
+      "signature": "trim(): number"
+    },
+    {
+      "id": "/core/resources/resource-manager.ts#dispose",
+      "label": "Method",
+      "name": "dispose",
+      "signature": "dispose(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/resources/resource-cache.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/resources/resource-loader.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/resources/interfaces/cubemap.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/parsers/obj-parser.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/textures/cubemap-texture.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/textures/texture.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/textures/render-texture.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/mesh/mesh-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/resources/builtin-textures.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/shaders/embedded-shaders.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/model/model-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/parsers/fbx/fbx-parser.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/parsers/collada/collada-parser.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/parsers/fbx/fbx-reader.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/parsers/collada/collada-parser.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/resources/resource-loader.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resource-manager.ts",
+      "target": "/core/resources/resource-loader.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "fetch",
+      "TextDecoder",
+      "Blob",
+      "ImageBitmap"
+    ],
+    "has_side_effects": true
+  }
+}

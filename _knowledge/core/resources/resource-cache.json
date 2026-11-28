@@ -1,0 +1,115 @@
+{
+  "component": {
+    "name": "ResourceCache",
+    "source_path": "/core/resources/resource-cache.ts",
+    "doc_path": "/core/resources/resource-cache.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "ResourceCache implements a keyed, reference-counted caching mechanism for managing application resources. It ensures resources are loaded only once per key by coordinating asynchronous loading via provided options. The cache manages resource lifecycle through explicit reference counting, allowing consumers to acquire handles and release them when finished. It provides methods for trimming unused resources and clearing the entire cache while respecting external disposal logic."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/resources/resource-cache.ts#ResourceHandle",
+      "label": "Interface",
+      "name": "ResourceHandle",
+      "signature": "readonly key: string; readonly value: V; release(): void"
+    },
+    {
+      "id": "/core/resources/resource-cache.ts#ResourceCacheOptions",
+      "label": "Interface",
+      "name": "ResourceCacheOptions",
+      "signature": "load: (key: string) => Promise<V>; dispose?: (value: V) => void"
+    },
+    {
+      "id": "/core/resources/resource-cache.ts#ResourceCacheStats",
+      "label": "Interface",
+      "name": "ResourceCacheStats",
+      "signature": "entries: number; loading: number; unused: number; references: number"
+    },
+    {
+      "id": "/core/resources/resource-cache.ts#Entry",
+      "label": "Type",
+      "name": "Entry",
+      "signature": "refs: number; promise: Promise<V>; value?: V; loaded: boolean"
+    },
+    {
+      "id": "/core/resources/resource-cache.ts#ResourceCache",
+      "label": "Class",
+      "name": "ResourceCache",
+      "signature": "constructor(private readonly options: ResourceCacheOptions<V>)"
+    },
+    {
+      "id": "/core/resources/resource-cache.ts#acquire",
+      "label": "Method",
+      "name": "acquire",
+      "signature": "async acquire(key: string): Promise<ResourceHandle<V>>"
+    },
+    {
+      "id": "/core/resources/resource-cache.ts#peek",
+      "label": "Method",
+      "name": "peek",
+      "signature": "peek(key: string): V | undefined"
+    },
+    {
+      "id": "/core/resources/resource-cache.ts#has",
+      "label": "Method",
+      "name": "has",
+      "signature": "has(key: string): boolean"
+    },
+    {
+      "id": "/core/resources/resource-cache.ts#remove",
+      "label": "Method",
+      "name": "remove",
+      "signature": "remove(key: string, value?: V): boolean"
+    },
+    {
+      "id": "/core/resources/resource-cache.ts#trim",
+      "label": "Method",
+      "name": "trim",
+      "signature": "trim(): number"
+    },
+    {
+      "id": "/core/resources/resource-cache.ts#clear",
+      "label": "Method",
+      "name": "clear",
+      "signature": "clear(): void"
+    },
+    {
+      "id": "/core/resources/resource-cache.ts#stats",
+      "label": "Method",
+      "name": "stats",
+      "signature": "stats(): ResourceCacheStats"
+    },
+    {
+      "id": "/core/resources/resource-cache.ts#startLoad",
+      "label": "Method",
+      "name": "startLoad",
+      "signature": "private startLoad(key: string): Entry<V>"
+    },
+    {
+      "id": "/core/resources/resource-cache.ts#createHandle",
+      "label": "Method",
+      "name": "createHandle",
+      "signature": "private createHandle(key: string, entry: Entry<V>, value: V): ResourceHandle<V>"
+    },
+    {
+      "id": "/core/resources/resource-cache.ts#disposeValue",
+      "label": "Method",
+      "name": "disposeValue",
+      "signature": "private disposeValue(value: V): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/resources/resource-cache.ts",
+      "target": "/core/resources/resource-cache.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

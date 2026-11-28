@@ -8,9 +8,12 @@ import { JsonSerializedData } from '../interfaces/json-serialized-data';
 import { ColliderBehaviour } from '../physics/collider-behaviour';
 import { PhysicsWorld } from '../physics/physics-world';
 import { Shader } from '../shaders/shader';
-import { decodeHeights, DEFAULT_TERRAIN_SETTINGS, encodeHeights, TerrainChunkData, TerrainGrid, TerrainSettings } from './terrain-data';
-import { BrushSettings, clearSplat, fillSplat, paint, sculpt, SculptTool, TerrainHistory } from './terrain-brush';
+import { decodeHeights, DEFAULT_TERRAIN_SETTINGS, encodeHeights, MAX_TERRAIN_LAYERS, TerrainChunkData, TerrainGrid, TerrainSettings } from './terrain-data';
+import { BrushSettings, clearSplat, fillSplat, paint, sculpt, SculptTool, TerrainHistory, touchAround } from './terrain-brush';
 import { TerrainChunkRenderer } from './terrain-chunk-renderer';
+import { erode, EROSION } from './terrain-erosion';
+import { fillChunk } from './terrain-grow';
+import { ramp, stamp, StampShape, terrace } from './terrain-shapes';
 import { ruleNoise, terrainAutoWeights } from './terrain-rules';
 import { TerrainMaterial } from './terrain-material';
 import { TerrainShader } from './terrain-shader';
@@ -58,7 +61,7 @@ export class TerrainBehaviour extends EntityBehaviour {
     super();
     this.grid = new TerrainGrid(settings);
     this.material = new TerrainMaterial();
-    this._serializationIgnoreKeys.push('gl', 'grid', 'material', 'chunkEntities', 'pending', 'history', 'colliderVersions');
+    this._serializationIgnoreKeys.push('gl', 'grid', 'material', 'chunkEntities', 'pending', 'history', 'colliderVersions', 'scratchNormal', 'scratchWorld', 'scratchWeights');
   }
 
   get settings(): TerrainSettings {
@@ -117,6 +120,21 @@ export class TerrainBehaviour extends EntityBehaviour {
   /** Adds a chunk at a grid cell (joined to its neighbours) and its entity. */
   addChunk(cx: number, cz: number, height = 0): TerrainChunkData {
     const c = this.grid.add(cx, cz, height);
+    this.sync();
+    return c;
+  }
+
+  /**
+   * Adds a chunk at a free cell and fills it from `height` (terrain-space x, z
+   * → height, such as a `heightField`), bent within `blend` metres of the
+   * borders it shares so it meets the ground there exactly. Not undone.
+   */
+  growChunk(cx: number, cz: number, height: (x: number, z: number) => number, blend = 32): TerrainChunkData {
+    if (this.grid.get(cx, cz)) throw new Error(`there is a chunk at ${cx},${cz} already`);
+    this.grid.add(cx, cz);
+    const c = fillChunk(this.grid, cx, cz, height, blend);
+    const n = this.settings.resolution;
+    touchAround(this.grid, { i0: cx * n, j0: cz * n, i1: (cx + 1) * n, j1: (cz + 1) * n });
     this.sync();
     return c;
   }
@@ -228,8 +246,105 @@ export class TerrainBehaviour extends EntityBehaviour {
     return paint(this.grid, layer, local[0], local[2], b, dt, erase).length > 0;
   }
 
+  /** One step of the terrace brush at a world point: flat steps `step` metres apart (world). */
+  terraceAt(point: vec3, brush: BrushSettings, dt: number, step: number): boolean {
+    const local = this.toLocal(point);
+    const scale = this.transform.worldScale?.[0] || 1;
+    const b = { ...brush, radius: brush.radius / scale };
+    this.history.saveAround(this.grid, local[0], local[2], b.radius);
+    return !!terrace(this.grid, local[0], local[2], b, dt, step / (this.transform.worldScale?.[1] || 1));
+  }
+
+  /**
+   * One step of erosion at a world point: about `EROSION.rate` drops a second
+   * for a 14 m brush (as many more as its area is larger), at most
+   * `EROSION.maxDrops` a step. `random` gives 0 to 1 (seeded for tests).
+   */
+  erodeAt(point: vec3, brush: BrushSettings, dt: number, random: () => number = Math.random): boolean {
+    const local = this.toLocal(point);
+    const scale = this.transform.worldScale?.[0] || 1;
+    const b = { ...brush, radius: brush.radius / scale };
+    // Drops run up to 1.5 radii out: the chunks there are saved too.
+    this.history.saveAround(this.grid, local[0], local[2], b.radius * 1.6);
+    const drops = Math.min(EROSION.maxDrops, Math.round(EROSION.rate * dt * (brush.radius / 14) ** 2));
+    return !!erode(this.grid, local[0], local[2], b, drops, random);
+  }
+
+  /**
+   * A stamp of `radius` and `height` (negative digs it in) at a world point,
+   * as one undo step (or within the stroke already open).
+   */
+  stampAt(shape: StampShape, point: vec3, radius: number, height: number): boolean {
+    const local = this.toLocal(point);
+    const r = radius / (this.transform.worldScale?.[0] || 1);
+    return this.oneStep(() => {
+      this.history.saveAround(this.grid, local[0], local[2], r);
+      return !!stamp(this.grid, shape, local[0], local[2], r, height / (this.transform.worldScale?.[1] || 1));
+    });
+  }
+
+  /**
+   * A straight ramp between two world points, each at its own height: `width`
+   * (world) either side of the line, its edges as soft as `hardness` leaves
+   * them, as one undo step (or within the stroke already open).
+   */
+  rampAt(from: vec3, to: vec3, width: number, hardness: number): boolean {
+    const a = this.toLocal(from), b = this.toLocal(to);
+    const w = width / (this.transform.worldScale?.[0] || 1);
+    const size = this.settings.size, pad = w + size / this.settings.resolution;
+    return this.oneStep(() => {
+      for (const c of this.grid.all()) {
+        if (Math.max(a[0], b[0]) + pad < c.originX || Math.min(a[0], b[0]) - pad > c.originX + size) continue;
+        if (Math.max(a[2], b[2]) + pad < c.originZ || Math.min(a[2], b[2]) - pad > c.originZ + size) continue;
+        this.history.save(c);
+      }
+      return !!ramp(this.grid, { x: a[0], z: a[2], h: a[1] }, { x: b[0], z: b[2], h: b[1] }, w, hardness);
+    });
+  }
+
+  /** Runs an edit as its own undo step, or inside the stroke already open. */
+  private oneStep(edit: () => boolean): boolean {
+    if (this.history.isOpen) return edit();
+    this.history.begin('heights');
+    const done = edit();
+    this.history.end();
+    return done;
+  }
+
   undo(): boolean { return this.history.undo(this.grid); }
   redo(): boolean { return this.history.redo(this.grid); }
+
+  /**
+   * What the ground is at a terrain-space point, as drawn: each layer's weight
+   * (0 to 1, summing to 1), the painting over the rules. All zero off the
+   * terrain. What plants use to know where they grow.
+   */
+  layerWeightsAt(x: number, z: number, out: Float32Array = new Float32Array(MAX_TERRAIN_LAYERS)): Float32Array {
+    out.fill(0);
+    const [cx, cz] = this.grid.cellAt(x, z);
+    const c = this.grid.get(cx, cz);
+    if (!c) return out;
+    const h = c.heightAtLocal(x - c.originX, z - c.originZ);
+    const nrm = this.grid.normalAt(x, z, this.scratchNormal) ?? vec3.set(this.scratchNormal, 0, 1, 0);
+    const slope = Math.acos(Math.min(Math.max(nrm[1], 0), 1)) * 180 / Math.PI;
+    const m = this.transform.modelMatrix;
+    const world = vec3.transformMat4(this.scratchWorld, vec3.set(this.scratchWorld, x, h, z), m);
+    terrainAutoWeights(this.material.layers, world[1] - m[13], slope, ruleNoise(world[0], world[1], world[2]), this.scratchWeights);
+    // The nearest splat texel: the painting covers the rules by how much it sums to.
+    const s = this.settings.splatResolution;
+    const u = Math.min(Math.max(Math.round(((x - c.originX) / c.size) * (s - 1)), 0), s - 1);
+    const v = Math.min(Math.max(Math.round(((z - c.originZ) / c.size) * (s - 1)), 0), s - 1);
+    const k = (v * s + u) * 4;
+    let painted = 0;
+    for (let l = 0; l < MAX_TERRAIN_LAYERS; l++) painted += c.splat[l >> 2][k + (l & 3)] / 255;
+    const rules = Math.max(0, 1 - painted);
+    for (let l = 0; l < MAX_TERRAIN_LAYERS; l++) out[l] = c.splat[l >> 2][k + (l & 3)] / 255 + rules * this.scratchWeights[l];
+    return out;
+  }
+
+  private readonly scratchNormal = vec3.create();
+  private readonly scratchWorld = vec3.create();
+  private readonly scratchWeights = new Float32Array(MAX_TERRAIN_LAYERS);
 
   /**
    * "Apply the rules": writes what the rules give into the painting, so it
@@ -333,8 +448,18 @@ export class TerrainBehaviour extends EntityBehaviour {
     }));
   }
 
-  /** Replaces the grid's chunks with saved ones. */
+  /**
+   * Replaces the grid's chunks with saved ones. The chunks' entities are made
+   * again (their renderers hold the chunks they drew), on the next `sync`.
+   */
   loadChunks(saved: SavedTerrainChunk[]): void {
+    const scene = this.parent?.scene;
+    for (const e of this.chunkEntities.values()) {
+      scene?.removeEntity(e);
+      e.transform.setParent(null);
+    }
+    this.chunkEntities.clear();
+    this.colliderVersions.clear();
     for (const c of this.grid.all()) this.grid.remove(c.cx, c.cz);
     for (const s of saved) {
       const c = this.grid.add(s.cx, s.cz);

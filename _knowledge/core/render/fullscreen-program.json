@@ -1,0 +1,72 @@
+{
+  "component": {
+    "name": "FullscreenProgram",
+    "source_path": "/core/render/fullscreen-program.ts",
+    "doc_path": "/core/render/fullscreen-program.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "FullscreenProgram is a rendering utility class designed to manage a specialized WebGL program for full-screen rendering passes. It encapsulates the setup for drawing a full-screen triangle, which is essential for post-processing effects like tone mapping or texture copying. The class handles the lifecycle of GPU resources, including compiling shaders and managing the Vertex Array Object (VAO) for efficient screen-space operations."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/fullscreen-program.ts#FullscreenProgram",
+      "label": "Class",
+      "name": "FullscreenProgram",
+      "signature": ""
+    },
+    {
+      "id": "/core/render/fullscreen-program.ts#FullscreenProgram.use",
+      "label": "Method",
+      "name": "use",
+      "signature": "use(): void"
+    },
+    {
+      "id": "/core/render/fullscreen-program.ts#FullscreenProgram.uniform",
+      "label": "Method",
+      "name": "uniform",
+      "signature": "uniform(name: string): WebGLUniformLocation | null"
+    },
+    {
+      "id": "/core/render/fullscreen-program.ts#FullscreenProgram.bindTexture",
+      "label": "Method",
+      "name": "bindTexture",
+      "signature": "bindTexture(name: string, texture: WebGLTexture | null, unit: number): void"
+    },
+    {
+      "id": "/core/render/fullscreen-program.ts#FullscreenProgram.draw",
+      "label": "Method",
+      "name": "draw",
+      "signature": "draw(): void"
+    },
+    {
+      "id": "/core/render/fullscreen-program.ts#FullscreenProgram.dispose",
+      "label": "Method",
+      "name": "dispose",
+      "signature": "dispose(): void"
+    },
+    {
+      "id": "/core/render/fullscreen-program.ts#FullscreenProgram.link",
+      "label": "Function",
+      "name": "link",
+      "signature": "private static link(gl: WebGL2RenderingContext, vs: string, fs: string): WebGLProgram"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/fullscreen-program.ts",
+      "target": "/core/shaders/embedded-shaders.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/fullscreen-program.ts",
+      "target": "/core/shaders/shader-sources.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "component": {
+    "name": "animation-clip.ts",
+    "source_path": "/animation/animation-clip.ts",
+    "doc_path": "/animation/animation-clip.json",
+    "type": "model"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the core data model for skeletal animation sequences, centered around the AnimationClip class. It manages collections of AnimationChannels, which track property changes (translation, rotation, scale) over time for specific bones. Key functions like findKey and sampleChannel provide time-based interpolation logic, supporting STEP, LINEAR, and CUBICSPLINE methods to accurately retrieve animated values at any given time point."
+  },
+  "graph_nodes": [
+    {
+      "id": "/animation/animation-clip.ts#AnimationInterpolation",
+      "label": "Type",
+      "name": "AnimationInterpolation",
+      "signature": " 'STEP' | 'LINEAR' | 'CUBICSPLINE'"
+    },
+    {
+      "id": "/animation/animation-clip.ts#AnimatedProperty",
+      "label": "Type",
+      "name": "AnimatedProperty",
+      "signature": " 'translation' | 'rotation' | 'scale'"
+    },
+    {
+      "id": "/animation/animation-clip.ts#AnimationChannel",
+      "label": "Interface",
+      "name": "AnimationChannel",
+      "signature": "target: string, property: AnimatedProperty, times: Float32Array, values: Float32Array, interpolation: AnimationInterpolation"
+    },
+    {
+      "id": "/animation/animation-clip.ts#AnimationClip",
+      "label": "Class",
+      "name": "AnimationClip",
+      "signature": "constructor(name: string, channels: AnimationChannel[], duration: number)"
+    },
+    {
+      "id": "/animation/animation-clip.ts#AnimationClip.durationOf",
+      "label": "Static Method",
+      "name": "AnimationClip.durationOf",
+      "signature": "static durationOf(channels: AnimationChannel[]): number"
+    },
+    {
+      "id": "/animation/animation-clip.ts#componentCount",
+      "label": "Function",
+      "name": "componentCount",
+      "signature": "componentCount(property: AnimatedProperty): number"
+    },
+    {
+      "id": "/animation/animation-clip.ts#findKey",
+      "label": "Function",
+      "name": "findKey",
+      "signature": "findKey(times: Float32Array, t: number, hint: number): number"
+    },
+    {
+      "id": "/animation/animation-clip.ts#sampleChannel",
+      "label": "Function",
+      "name": "sampleChannel",
+      "signature": "sampleChannel(channel: AnimationChannel, t: number, out: Float32Array | number[], hint: number): number"
+    },
+    {
+      "id": "/animation/animation-clip.ts#normalize4",
+      "label": "Function",
+      "name": "normalize4",
+      "signature": "normalize4(v: Float32Array | number[]): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/animation/animation-clip.ts",
+      "target": "/gl-matrix#quat",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

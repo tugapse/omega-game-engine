@@ -1,0 +1,109 @@
+{
+  "component": {
+    "name": "TerrainShader",
+    "source_path": "/terrain/terrain-shader.ts",
+    "doc_path": "/terrain/terrain-shader.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "TerrainShader is a specialized rendering component inheriting from LitShader, responsible for managing the fragment shader logic for a single terrain chunk. It integrates TerrainMaterial to define visual properties and uses TerrainChunkData to load chunk-specific splat maps. Its core logic handles shader program compilation and caching based on material defines, while its updateSplat method ensures chunk data is correctly uploaded to WebGL textures."
+  },
+  "graph_nodes": [
+    {
+      "id": "/terrain/terrain-shader.ts#TerrainShader",
+      "label": "Class",
+      "name": "TerrainShader",
+      "signature": "constructor(gl: WebGL2RenderingContext, material: TerrainMaterial, chunk?: TerrainChunkData)"
+    },
+    {
+      "id": "/terrain/terrain-shader.ts#baseY",
+      "label": "Variable",
+      "name": "baseY",
+      "signature": "public baseY: number"
+    },
+    {
+      "id": "/terrain/terrain-shader.ts#splatTextures",
+      "label": "Variable",
+      "name": "splatTextures",
+      "signature": "private splatTextures: [WebGLTexture | null, WebGLTexture | null]"
+    },
+    {
+      "id": "/terrain/terrain-shader.ts#splatVersion",
+      "label": "Variable",
+      "name": "splatVersion",
+      "signature": "private splatVersion: number"
+    },
+    {
+      "id": "/terrain/terrain-shader.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "override async initialize(): Promise<boolean>"
+    },
+    {
+      "id": "/terrain/terrain-shader.ts#recompile",
+      "label": "Method",
+      "name": "recompile",
+      "signature": "override recompile(): void"
+    },
+    {
+      "id": "/terrain/terrain-shader.ts#loadDataIntoShader",
+      "label": "Method",
+      "name": "loadDataIntoShader",
+      "signature": "override loadDataIntoShader(): void"
+    },
+    {
+      "id": "/terrain/terrain-shader.ts#updateSplat",
+      "label": "Method",
+      "name": "updateSplat",
+      "signature": "private updateSplat(): void"
+    },
+    {
+      "id": "/terrain/terrain-shader.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "override destroy(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/terrain/terrain-shader.ts",
+      "target": "/src/entities/camera.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-shader.ts",
+      "target": "/src/enums/shader-uniforms.enum.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-shader.ts",
+      "target": "/src/shaders/lit-shader.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-shader.ts",
+      "target": "/src/shaders/shader.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-shader.ts",
+      "target": "/src/shaders/shader-sources.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-shader.ts",
+      "target": "/terrain/terrain-data.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-shader.ts",
+      "target": "/terrain/terrain-material.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

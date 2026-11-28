@@ -1,0 +1,69 @@
+{
+  "component": {
+    "name": "TerrainNoise",
+    "source_path": "/terrain/terrain-noise.ts",
+    "doc_path": "/terrain/terrain-noise.json",
+    "type": "service"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component provides the mathematical infrastructure for procedural terrain generation using 2D gradient noise and fractal summation. It implements core utilities like `seededRandom` and the `Noise2D` class to generate repeatable, seeded noise patterns. The `relief` function combines multiple noise octaves to create complex heightmaps, which are then applied across a `TerrainGrid` via `generateRelief` to populate terrain data."
+  },
+  "graph_nodes": [
+    {
+      "id": "/terrain/terrain-noise.ts#seededRandom",
+      "label": "Function",
+      "name": "seededRandom",
+      "signature": "seededRandom(seed: number): () => number"
+    },
+    {
+      "id": "/terrain/terrain-noise.ts#Noise2D",
+      "label": "Class",
+      "name": "Noise2D",
+      "signature": "Noise2D(seed = 1)"
+    },
+    {
+      "id": "/terrain/terrain-noise.ts#get",
+      "label": "Method",
+      "name": "get",
+      "signature": "get(x: number, z: number, period = 256): number"
+    },
+    {
+      "id": "/terrain/terrain-noise.ts#ReliefOptions",
+      "label": "Interface",
+      "name": "ReliefOptions",
+      "signature": "ReliefOptions"
+    },
+    {
+      "id": "/terrain/terrain-noise.ts#relief",
+      "label": "Function",
+      "name": "relief",
+      "signature": "relief(noise: Noise2D, x: number, z: number, o: Required<ReliefOptions>): number"
+    },
+    {
+      "id": "/terrain/terrain-noise.ts#DEFAULT_RELIEF",
+      "label": "Variable",
+      "name": "DEFAULT_RELIEF",
+      "signature": "DEFAULT_RELIEF: Required<ReliefOptions>"
+    },
+    {
+      "id": "/terrain/terrain-noise.ts#generateRelief",
+      "label": "Function",
+      "name": "generateRelief",
+      "signature": "generateRelief(grid: TerrainGrid, options: ReliefOptions = {}): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/terrain/terrain-noise.ts",
+      "target": "/src/terrain/terrain-data.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "Math"
+    ],
+    "has_side_effects": true
+  }
+}

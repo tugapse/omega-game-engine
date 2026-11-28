@@ -1,0 +1,67 @@
+{
+  "component": {
+    "name": "xml.ts",
+    "source_path": "/parsers/xml.ts",
+    "doc_path": "/parsers/xml.json",
+    "type": "utility"
+  },
+  "vector_memory": {
+    "semantic_summary": "This utility module provides a forgiving XML parser designed specifically for ingesting structured data like COLLADA files. It transforms raw XML strings into an in-memory representation defined by the XmlElement interface, handling nested structures, attributes, and special content like CDATA. The core logic uses an iterative, stack-based approach to parse the input string without relying on a full DOM, making it suitable for both browser and Node environments."
+  },
+  "graph_nodes": [
+    {
+      "id": "/parsers/xml.ts#XmlElement",
+      "label": "Interface",
+      "name": "XmlElement",
+      "signature": "interface XmlElement { tag: string; attrs: Record<string, string>; children: XmlElement[]; text: string; }"
+    },
+    {
+      "id": "/parsers/xml.ts#decode",
+      "label": "Function",
+      "name": "decode",
+      "signature": "function decode(s: string): string"
+    },
+    {
+      "id": "/parsers/xml.ts#parseXml",
+      "label": "Function",
+      "name": "parseXml",
+      "signature": "export function parseXml(source: string): XmlElement"
+    },
+    {
+      "id": "/parsers/xml.ts#findTagEnd",
+      "label": "Function",
+      "name": "findTagEnd",
+      "signature": "function findTagEnd(s: string, lt: number): number"
+    },
+    {
+      "id": "/parsers/xml.ts#xmlChild",
+      "label": "Function",
+      "name": "xmlChild",
+      "signature": "export function xmlChild(el: XmlElement | undefined, tag: string): XmlElement | undefined"
+    },
+    {
+      "id": "/parsers/xml.ts#xmlChildren",
+      "label": "Function",
+      "name": "xmlChildren",
+      "signature": "export function xmlChildren(el: XmlElement | undefined, tag: string): XmlElement[]"
+    },
+    {
+      "id": "/parsers/xml.ts#xmlDescendants",
+      "label": "Function",
+      "name": "xmlDescendants",
+      "signature": "export function xmlDescendants(el: XmlElement | undefined, tag: string, out: XmlElement[] = []): XmlElement[]"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/parsers/xml.ts",
+      "target": "/src/parsers/xml.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

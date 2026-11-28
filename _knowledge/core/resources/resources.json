@@ -1,0 +1,127 @@
+{
+  "component": {
+    "name": "Resources",
+    "source_path": "/core/resources/resources.ts",
+    "doc_path": "/core/resources/resources.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "This class serves as the central, static entry point for managing all engine resources, specifically scoping resources to individual WebGL rendering contexts. It acts as a high-level service layer, orchestrating the use of ResourceManager and ResourceLoader to provide context-aware resource management. It allows for global configuration of loaders and URI resolvers, enabling fine-grained control over asset loading and lifecycle management across multiple rendering environments."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/resources/resources.ts#Resources",
+      "label": "Class",
+      "name": "Resources",
+      "signature": "abstract class Resources"
+    },
+    {
+      "id": "/core/resources/resources.ts#defaultLoader",
+      "label": "Constant",
+      "name": "defaultLoader",
+      "signature": "static readonly ResourceLoader"
+    },
+    {
+      "id": "/core/resources/resources.ts#for",
+      "label": "Method",
+      "name": "for",
+      "signature": "static for(gl?: WebGL2RenderingContext | null): ResourceManager"
+    },
+    {
+      "id": "/core/resources/resources.ts#setLoader",
+      "label": "Method",
+      "name": "setLoader",
+      "signature": "static setLoader(loader: ResourceLoader | null): void"
+    },
+    {
+      "id": "/core/resources/resources.ts#setUriResolver",
+      "label": "Method",
+      "name": "setUriResolver",
+      "signature": "static setUriResolver(resolver: UriResolver | null): void"
+    },
+    {
+      "id": "/core/resources/resources.ts#resolveUri",
+      "label": "Method",
+      "name": "resolveUri",
+      "signature": "static async resolveUri(uri: string): Promise<string>"
+    },
+    {
+      "id": "/core/resources/resources.ts#releaseContext",
+      "label": "Method",
+      "name": "releaseContext",
+      "signature": "static releaseContext(gl: WebGL2RenderingContext): void"
+    },
+    {
+      "id": "/core/resources/resources.ts#forgetTexture",
+      "label": "Method",
+      "name": "forgetTexture",
+      "signature": "static forgetTexture(texture: Texture): void"
+    },
+    {
+      "id": "/core/resources/resources.ts#trim",
+      "label": "Method",
+      "name": "trim",
+      "signature": "static trim(): number"
+    },
+    {
+      "id": "/core/resources/resources.ts#stats",
+      "label": "Method",
+      "name": "stats",
+      "signature": "static stats(): ResourceManagerStats[]"
+    },
+    {
+      "id": "/core/resources/resources.ts#clear",
+      "label": "Method",
+      "name": "clear",
+      "signature": "static clear(): void"
+    },
+    {
+      "id": "/core/resources/resources.ts#get_loader",
+      "label": "Method",
+      "name": "get_loader",
+      "signature": "private static get loader(): ResourceLoader"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/resources/resources.ts",
+      "target": "/core/resources/resource-manager.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resources.ts",
+      "target": "/core/resources/resource-loader.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resources.ts",
+      "target": "/core/resources/resource-loader.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resources.ts",
+      "target": "/core/resources/resource-loader.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resources.ts",
+      "target": "/core/resources/resource-loader.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resources.ts",
+      "target": "/core/resources/resource-loader.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/resources/resources.ts",
+      "target": "/src/textures/texture.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

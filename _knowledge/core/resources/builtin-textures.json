@@ -1,0 +1,67 @@
+{
+  "component": {
+    "name": "builtin-textures",
+    "source_path": "/core/resources/builtin-textures.ts",
+    "doc_path": "/core/resources/builtin-textures.json",
+    "type": "utility"
+  },
+  "vector_memory": {
+    "semantic_summary": "This utility module provides a set of hardcoded, immutable texture assets (white, black, normal, missing) embedded as Base64 Data URLs directly within the code. It acts as a foundational resource provider, mapping symbolic URI keys (e.g., 'builtin://white') to their raw data representations. The primary function, builtinTextureUrl, allows other engine systems to reliably fetch these default graphics without external I/O or network dependencies."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/resources/builtin-textures.ts#BuiltinTextures",
+      "label": "Type",
+      "name": "BuiltinTextures",
+      "signature": "Object"
+    },
+    {
+      "id": "/core/resources/builtin-textures.ts#WHITE",
+      "label": "Variable",
+      "name": "WHITE",
+      "signature": "string"
+    },
+    {
+      "id": "/core/resources/builtin-textures.ts#BLACK",
+      "label": "Variable",
+      "name": "BLACK",
+      "signature": "string"
+    },
+    {
+      "id": "/core/resources/builtin-textures.ts#NORMAL",
+      "label": "Variable",
+      "name": "NORMAL",
+      "signature": "string"
+    },
+    {
+      "id": "/core/resources/builtin-textures.ts#MISSING",
+      "label": "Variable",
+      "name": "MISSING",
+      "signature": "string"
+    },
+    {
+      "id": "/core/resources/builtin-textures.ts#BUILTIN_URLS",
+      "label": "Variable",
+      "name": "BUILTIN_URLS",
+      "signature": "{ readonly [uri: string]: string }"
+    },
+    {
+      "id": "/core/resources/builtin-textures.ts#builtinTextureUrl",
+      "label": "Function",
+      "name": "builtinTextureUrl",
+      "signature": "builtinTextureUrl(uri: string): string | undefined"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/resources/builtin-textures.ts",
+      "target": "/core/resources/builtin-textures.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

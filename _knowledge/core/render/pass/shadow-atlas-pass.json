@@ -1,0 +1,208 @@
+{
+  "component": {
+    "name": "ShadowAtlasPass",
+    "source_path": "/core/render/pass/shadow-atlas-pass.ts",
+    "doc_path": "/core/render/pass/shadow-atlas-pass.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "ShadowAtlasPass is a core rendering service responsible for generating a depth texture atlas containing the depth information of all scene casters for shadow mapping. It implements sophisticated caching logic, only re-rendering a view if the light source, camera matrix, or any caster's state has changed. It manages WebGL resources like the depth atlas, Uniform Buffer Objects (UBOs), and utilizes specialized caster programs for depth rendering."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#SHADOWS_BINDING_POINT",
+      "label": "Constant",
+      "name": "SHADOWS_BINDING_POINT",
+      "signature": ""
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#SHADOW_ATLAS_UNIT",
+      "label": "Constant",
+      "name": "SHADOW_ATLAS_UNIT",
+      "signature": ""
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#JOINT_TEXTURE_UNIT",
+      "label": "Constant",
+      "name": "JOINT_TEXTURE_UNIT",
+      "signature": ""
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#CasterState",
+      "label": "Interface",
+      "name": "CasterState",
+      "signature": "interface CasterState { matrix: Float32Array; version: number; buffer: WebGLBuffer | null; bounds: Sphere; hasBounds: boolean; seen: number; }"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#CachedView",
+      "label": "Interface",
+      "name": "CachedView",
+      "signature": "interface CachedView { light: Light; matrix: Float32Array; }"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#ShadowStats",
+      "label": "Interface",
+      "name": "ShadowStats",
+      "signature": "export interface ShadowStats { views: number; redrawn: number; draws: number; }"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#CasterProgram",
+      "label": "Interface",
+      "name": "CasterProgram",
+      "signature": "interface CasterProgram { program: WebGLProgram; position: number; matrix: WebGLUniformLocation | null; jointTexture: WebGLUniformLocation | null; }"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#ShadowAtlasPass",
+      "label": "Class",
+      "name": "ShadowAtlasPass",
+      "signature": "export class ShadowAtlasPass { constructor(private gl: WebGL2RenderingContext) {} }"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#ShadowAtlasPass.casterProgram",
+      "label": "Static Method",
+      "name": "ShadowAtlasPass.casterProgram",
+      "signature": "static casterProgram(gl: WebGL2RenderingContext, defines: string[]): CasterProgram"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#ShadowAtlasPass.disableSkinAttributes",
+      "label": "Static Method",
+      "name": "ShadowAtlasPass.disableSkinAttributes",
+      "signature": "static disableSkinAttributes(gl: WebGL2RenderingContext, program: WebGLProgram): void"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#ShadowAtlasPass.link",
+      "label": "Static Method",
+      "name": "ShadowAtlasPass.link",
+      "signature": "static link(gl: WebGL2RenderingContext, vs: string, fs: string): WebGLProgram"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#resetStats",
+      "label": "Method",
+      "name": "ShadowAtlasPass.resetStats",
+      "signature": "resetStats(): void"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#invalidate",
+      "label": "Method",
+      "name": "ShadowAtlasPass.invalidate",
+      "signature": "invalidate(): void"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#render",
+      "label": "Method",
+      "name": "ShadowAtlasPass.render",
+      "signature": "render(plan: ShadowPlan, casters: SceneEntity[]): void"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#bindAtlas",
+      "label": "Method",
+      "name": "ShadowAtlasPass.bindAtlas",
+      "signature": "bindAtlas(): void"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#casterChanges",
+      "label": "Method",
+      "name": "ShadowAtlasPass.casterChanges",
+      "signature": "casterChanges(casters: SceneEntity[]): (Sphere | null)[]"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#isDirty",
+      "label": "Method",
+      "name": "ShadowAtlasPass.isDirty",
+      "signature": "isDirty(index: number, light: Light, matrix: mat4, changes: (Sphere | null)[]): boolean"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#createAtlas",
+      "label": "Method",
+      "name": "ShadowAtlasPass.createAtlas",
+      "signature": "createAtlas(size: number): RenderTarget"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#dispose",
+      "label": "Method",
+      "name": "ShadowAtlasPass.dispose",
+      "signature": "dispose(): void"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#drawDepth",
+      "label": "Method",
+      "name": "ShadowAtlasPass.drawDepth",
+      "signature": "drawDepth(entity: SceneEntity, lightMatrix: mat4): void"
+    },
+    {
+      "id": "/core/render/pass/shadow-atlas-pass.ts#equal",
+      "label": "Function",
+      "name": "equal",
+      "signature": "equal(a: ArrayLike<number>, b: ArrayLike<number>): boolean"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/pass/shadow-atlas-pass.ts",
+      "target": "/src/core/render/pass/shadow-atlas-pass.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/shadow-atlas-pass.ts",
+      "target": "/src/core/render/pass/shadow-atlas-pass.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/shadow-atlas-pass.ts",
+      "target": "/src/core/render/pass/shadow-atlas-pass.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/shadow-atlas-pass.ts",
+      "target": "/src/core/render/pass/shadow-atlas-pass.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/shadow-atlas-pass.ts",
+      "target": "/src/core/render/pass/shadow-atlas-pass.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/shadow-atlas-pass.ts",
+      "target": "/src/core/render/pass/shadow-atlas-pass.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/shadow-atlas-pass.ts",
+      "target": "/src/core/render/pass/shadow-atlas-pass.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/shadow-atlas-pass.ts",
+      "target": "/src/core/render/pass/shadow-atlas-pass.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/shadow-atlas-pass.ts",
+      "target": "/src/core/render/pass/shadow-atlas-pass.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/shadow-atlas-pass.ts",
+      "target": "/src/core/render/pass/shadow-atlas-pass.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/shadow-atlas-pass.ts",
+      "target": "/src/core/render/pass/shadow-atlas-pass.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/pass/shadow-atlas-pass.ts",
+      "target": "/src/core/render/pass/shadow-atlas-pass.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}
