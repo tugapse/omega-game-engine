@@ -1,4 +1,5 @@
 import { mat4 } from "gl-matrix";
+import { bindInstances, unbindInstances } from '../instancing';
 import { RendererBehaviour } from "../../../behaviours";
 import { SceneEntity } from "../../../entities";
 import { ShaderUniformsEnum } from "../../../enums";
@@ -68,6 +69,8 @@ export class ShadowAtlasPass {
   private plain: CasterProgram;
   /** The same program with `SKINNED`, for skinned meshes. */
   private skinned: CasterProgram;
+  /** Instanced meshes: the instance attributes move each copy. */
+  private instanced: CasterProgram;
   private ubo: WebGLBuffer;
   private uboData = new Float32Array(SHADOWS_LAYOUT.slots * 4);
   /** PCF taps the lit shader takes per shadow lookup. */
@@ -87,6 +90,7 @@ export class ShadowAtlasPass {
 
     this.plain = ShadowAtlasPass.casterProgram(gl, []);
     this.skinned = ShadowAtlasPass.casterProgram(gl, ['SKINNED']);
+    this.instanced = ShadowAtlasPass.casterProgram(gl, ['INSTANCED']);
 
     this.ubo = gl.createBuffer()!;
     gl.bindBuffer(gl.UNIFORM_BUFFER, this.ubo);
@@ -159,7 +163,7 @@ export class ShadowAtlasPass {
       this.cache.length = views.length;
 
       gl.disable(gl.SCISSOR_TEST);
-      for (const p of [this.plain, this.skinned]) if (p.position >= 0) gl.disableVertexAttribArray(p.position);
+      for (const p of [this.plain, this.skinned, this.instanced]) if (p.position >= 0) gl.disableVertexAttribArray(p.position);
       gl.cullFace(cullMode);
       if (!cull) gl.disable(gl.CULL_FACE);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -238,6 +242,7 @@ export class ShadowAtlasPass {
     this.atlas.dispose();
     this.gl.deleteProgram(this.plain.program);
     this.gl.deleteProgram(this.skinned.program);
+    this.gl.deleteProgram(this.instanced.program);
     this.gl.deleteBuffer(this.ubo);
   }
 
@@ -252,7 +257,9 @@ export class ShadowAtlasPass {
     if (!shader || !buffers?.position || !buffers.indices || !count) return;
 
     const jointTexture = renderer.jointTexture;
-    const caster = jointTexture && buffers.joints ? this.skinned : this.plain;
+    const instances = renderer.instancing;
+    if (instances && !instances.count) return;
+    const caster = instances ? this.instanced : jointTexture && buffers.joints ? this.skinned : this.plain;
     gl.useProgram(caster.program);
     mat4.multiply(this.modelLight, lightMatrix, entity.transform.modelMatrix);
     gl.uniformMatrix4fv(caster.matrix, false, this.modelLight as Float32Array);
@@ -268,6 +275,13 @@ export class ShadowAtlasPass {
       shader.bindSkinAttributes(caster.program);
     }
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
+    if (instances) {
+      const locations = bindInstances(gl, caster.program, instances.buffer);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
+      gl.drawElementsInstanced(gl.TRIANGLES, count, shader.indexType, 0, instances.count);
+      unbindInstances(gl, locations);
+      return;
+    }
     gl.drawElements(gl.TRIANGLES, count, shader.indexType, 0);
     if (caster === this.skinned) ShadowAtlasPass.disableSkinAttributes(gl, caster.program);
   }

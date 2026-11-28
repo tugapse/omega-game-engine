@@ -19,6 +19,14 @@ in vec3 v_bitangent;
 
 out vec4 fragColor;
 
+#ifdef INSTANCED
+in float v_tint;
+#endif
+#ifdef GRASS
+// How dark the foot is beside the tip (uv v from 0 at the foot to 1 at the tip).
+uniform float u_tipShade;
+#endif
+
 @INCLUDE_UTIL_FUNC
 @INCLUDE_LIGHT_FUNC
 @INCLUDE_FOG_FUNC
@@ -31,6 +39,12 @@ void main() {
     vec3 linearMatColor = pow(u_matColor.rgb + 0.0001, vec3(2.2)); 
     
     vec4 baseColor = vec4(linearTexColor * linearMatColor, (u_matColor.a * sampledTexColor.a));
+#ifdef INSTANCED
+    baseColor.rgb *= 0.7 + 0.6 * v_tint;
+#endif
+#ifdef GRASS
+    baseColor.rgb *= mix(1.0 - u_tipShade, 1.0, v_uv.y);
+#endif
 
     // Lighting calculation (math is now accurately happening in linear space)
     vec3 totalLitColorRGB = calculateTotalLitColor(baseColor.rgb, uv);

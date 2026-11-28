@@ -26,8 +26,17 @@ mat4 skinMatrix() {
 }
 #endif
 
+#ifdef INSTANCED
+in vec4 a_instanceA;
+in vec4 a_instanceB;
+#endif
+
 void main() {
-#ifdef SKINNED
+#if defined(INSTANCED)
+    float ic = cos(a_instanceA.w), isn = sin(a_instanceA.w);
+    vec3 p = a_position.xyz;
+    gl_Position = u_modelMatrix * vec4((p.x * ic - p.z * isn) * a_instanceB.x + a_instanceA.x, p.y * a_instanceB.y + a_instanceA.y, (p.x * isn + p.z * ic) * a_instanceB.x + a_instanceA.z, 1.0);
+#elif defined(SKINNED)
     gl_Position = u_modelMatrix * (skinMatrix() * a_position);
 #else
     gl_Position = u_modelMatrix * a_position;
