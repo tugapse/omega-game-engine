@@ -25,6 +25,8 @@ in float v_tint;
 #ifdef GRASS
 // How dark the foot is beside the tip (uv v from 0 at the foot to 1 at the tip).
 uniform float u_tipShade;
+// A colour the tips turn towards (rgb, how much in a).
+uniform vec4 u_tipColor;
 #endif
 
 @INCLUDE_UTIL_FUNC
@@ -44,6 +46,13 @@ void main() {
 #endif
 #ifdef GRASS
     baseColor.rgb *= mix(1.0 - u_tipShade, 1.0, v_uv.y);
+    {
+      vec3 tip = pow(u_tipColor.rgb + 0.0001, vec3(2.2));
+#ifdef INSTANCED
+      tip *= 0.7 + 0.6 * v_tint;
+#endif
+      baseColor.rgb = mix(baseColor.rgb, tip, v_uv.y * v_uv.y * u_tipColor.a);
+    }
 #endif
 
     // Lighting calculation (math is now accurately happening in linear space)
