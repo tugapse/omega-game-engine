@@ -18,6 +18,8 @@ export class InstancedMeshRendererBehaviour extends MeshRendererBehaviour {
   wind: [number, number, number, number] | null = null;
   /** 0 to 1: how much darker the foot is than the top; 0 for none. */
   tipShade = 0;
+  /** With `tipShade`: a colour the top turns towards (r, g, b, how much 0 to 1), or null. */
+  tipColor: [number, number, number, number] | null = null;
   /** How many instances to draw (all when null). */
   drawCount: number | null = null;
 
@@ -76,7 +78,10 @@ export class InstancedMeshRendererBehaviour extends MeshRendererBehaviour {
     const shader = this.shader, count = this.instancesDrawn, buffer = this.upload(), program = shader?._shaderProgram;
     if (!shader || !count || !buffer || !program) return;
     if (this.wind) shader.setVec4('u_wind', this.wind);
-    if (this.tipShade > 0) shader.setFloat('u_tipShade', this.tipShade);
+    if (this.tipShade > 0) {
+      shader.setFloat('u_tipShade', this.tipShade);
+      shader.setVec4('u_tipColor', this.tipColor ?? [0, 0, 0, 0]);
+    }
     const locations = bindInstances(this._gl, program, buffer);
     this._gl.drawElementsInstanced(this.drawPrimitiveType, this.indexCount, shader.indexType, 0, count);
     unbindInstances(this._gl, locations);

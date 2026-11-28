@@ -88,6 +88,16 @@ export class Shader extends JsonSerializable {
    */
   public defines: string[] = [];
 
+  /**
+   * Shares the linked program with every other shader that has the same
+   * sources and defines on the same context (set before `initialize()`): for
+   * many renderers of one kind, such as grass tiles. A shared program is never
+   * deleted. Uniforms are per program, so every draw must set the ones it uses.
+   */
+  public shareProgram = false;
+  private static readonly sharedPrograms = new WeakMap<WebGL2RenderingContext, Map<string, WebGLProgram>>();
+  private usesSharedProgram = false;
+
   /** Type of the index buffer: UNSIGNED_INT for meshes over 65 535 vertices. */
   public indexType: number = 0x1403; // UNSIGNED_SHORT
 
@@ -128,6 +138,17 @@ export class Shader extends JsonSerializable {
     vsSource = Shader.withDefines(vsSource, this.defines);
     fsSource = Shader.withDefines(fsSource, this.defines);
 
+    const shareKey = this.shareProgram ? `${vsSource}\u0000${fsSource}` : '';
+    if (this.shareProgram) {
+      const shared = Shader.sharedPrograms.get(this.gl)?.get(shareKey);
+      if (shared) {
+        this._shaderProgram = shared;
+        this.usesSharedProgram = true;
+        this._initialized = true;
+        return true;
+      }
+    }
+
     const vertexShader = this.compileShader(
       this.gl,
       this.gl.VERTEX_SHADER,
@@ -149,6 +170,12 @@ export class Shader extends JsonSerializable {
       vertexShader,
       fragmentShader,
     ) as WebGLProgram;
+    if (this.shareProgram && this._shaderProgram) {
+      let programs = Shader.sharedPrograms.get(this.gl);
+      if (!programs) Shader.sharedPrograms.set(this.gl, (programs = new Map()));
+      programs.set(shareKey, this._shaderProgram);
+      this.usesSharedProgram = true;
+    }
     this._initialized = true;
     return true;
   }
@@ -515,8 +542,9 @@ export class Shader extends JsonSerializable {
       return null;
     }
 
-    if(this._shaderProgram)
+    if (this._shaderProgram && !this.usesSharedProgram)
       this.gl.deleteProgram(this._shaderProgram);
+    this.usesSharedProgram = false;
 
     gl.attachShader(shaderProgram, vertexShader);
     gl.attachShader(shaderProgram, fragmentShader);
@@ -554,7 +582,7 @@ export class Shader extends JsonSerializable {
     if (this._buffers.indices) this.gl.deleteBuffer(this._buffers.indices);
     if (this._buffers.joints) this.gl.deleteBuffer(this._buffers.joints);
     if (this._buffers.weights) this.gl.deleteBuffer(this._buffers.weights);
-    if (this._shaderProgram) this.gl.deleteProgram(this._shaderProgram);
+    if (this._shaderProgram && !this.usesSharedProgram) this.gl.deleteProgram(this._shaderProgram);
     this._initialized = false;
   }
 

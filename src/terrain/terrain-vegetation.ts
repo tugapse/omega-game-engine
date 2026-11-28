@@ -267,7 +267,10 @@ export class TerrainVegetationBehaviour extends EntityBehaviour {
       const r = new InstancedMeshRendererBehaviour(this.gl);
       r.mesh = new Mesh();
       r.mesh.meshData = g.mesh;
-      r.shader = new LitShader(this.gl, g.material);
+      const shader = new LitShader(this.gl, g.material);
+      // One program for every chunk's renderer of a part: compiled once.
+      shader.shareProgram = true;
+      r.shader = shader;
       r.castShadows = this.castShadows;
       r.setInstances(data);
       e.addBehaviour(r);
