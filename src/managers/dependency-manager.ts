@@ -1,5 +1,6 @@
 import { TerrainBehaviour } from '../terrain/terrain-behaviour';
 import { TerrainVegetationBehaviour } from '../terrain/terrain-vegetation';
+import { TerrainGrassBehaviour } from '../terrain/terrain-grass';
 import { SkinnedMeshRendererBehaviour } from '../behaviours/renderer/skinned-mesh-renderer-behaviour';
 import { Animator } from '../animation/animator';
 import {
@@ -277,6 +278,12 @@ export class DependencyManager {
       type: ClassType.EntityBehaviour,
       path: 'Behaviours/Terrain',
       description: 'Trees and other plants scattered on the terrain beside it, where their layers cover the ground.',
+    });
+    ObjectInstanciator.addDependency('TerrainGrassBehaviour', TerrainGrassBehaviour.instanciate, {
+      name: 'TerrainGrassBehaviour',
+      type: ClassType.EntityBehaviour,
+      path: 'Behaviours/Terrain',
+      description: 'Grass swaying in the wind near the camera, where the grass layers cover the terrain beside it.',
     });
     ObjectInstanciator.addDependency('Animator', Animator.instanciate, {
       name: 'Animator',
