@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Kinds of grass: `GrassKind` (a tuft's shape, its size, colour, darker foot and tip colour, its share), `TerrainGrassBehaviour.kinds` mixed in patches (`patches`, `splitGrass`), `GRASS_PRESETS` (Prado, Seca, Musgo, Juncos, Outono). `grassTuft` takes `GrassTuftOptions` (blades, segments, spread, lean, droop, blade width, height variation); `grassTuft(blades, segments, seed)` still works.
+- `InstancedMeshRendererBehaviour.tipColor`: with `tipShade`, the colour the tips turn towards.
+- `Shader.shareProgram`: shaders with the same sources and defines share one compiled program. Grass tiles and plants use it, so each kind is compiled once instead of once per tile or chunk.
+
 ## 6.2.0 (2026-11-28)
 
 ### Added
