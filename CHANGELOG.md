@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Instancing: `InstancedMeshRendererBehaviour` (one mesh drawn many times in one call, `setInstances`, `drawCount`, culled by the sphere around all its instances), `packInstance` / `instanceBounds` / `bindInstances`, the `INSTANCED`, `WIND` and `GRASS` shader defines in `default.vert`, `default-lit.frag` and `shadow-caster.vert`; instanced meshes cast shadows. `RendererBehaviour.issueDraw` is the draw call itself, for renderers that draw differently.
+- Grass: `TerrainGrassBehaviour` (tufts near the camera in tiles, thinning with distance, swaying in the wind, where the grass layers are), `grassTuft`, `grassTile`, `grassFalloff`.
+
+### Changed
+
+- `TerrainVegetationBehaviour` draws its plants as instances (each a little lighter or darker) instead of merged meshes: chunks are built again quicker and use less memory.
+
 ## 6.1.0 (2026-11-28)
 
 ### Added
