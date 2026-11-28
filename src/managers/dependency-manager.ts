@@ -1,4 +1,5 @@
 import { TerrainBehaviour } from '../terrain/terrain-behaviour';
+import { TerrainVegetationBehaviour } from '../terrain/terrain-vegetation';
 import { SkinnedMeshRendererBehaviour } from '../behaviours/renderer/skinned-mesh-renderer-behaviour';
 import { Animator } from '../animation/animator';
 import {
@@ -270,6 +271,12 @@ export class DependencyManager {
       type: ClassType.EntityBehaviour,
       path: 'Behaviours/Terrain',
       description: 'A terrain of height chunks joined on a grid, painted by height and slope rules and by hand.',
+    });
+    ObjectInstanciator.addDependency('TerrainVegetationBehaviour', TerrainVegetationBehaviour.instanciate, {
+      name: 'TerrainVegetationBehaviour',
+      type: ClassType.EntityBehaviour,
+      path: 'Behaviours/Terrain',
+      description: 'Trees and other plants scattered on the terrain beside it, where their layers cover the ground.',
     });
     ObjectInstanciator.addDependency('Animator', Animator.instanciate, {
       name: 'Animator',
