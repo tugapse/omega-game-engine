@@ -1,0 +1,64 @@
+{
+  "component": {
+    "name": "DependencyManager",
+    "source_path": "/managers/dependency-manager.ts",
+    "doc_path": "/managers/dependency-manager.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The DependencyManager class serves as the central configuration service for the engine's runtime system. Its primary role is to initialize and register all core engine components, including entities, materials, primitives, and shaders, into the ObjectInstanciator. By calling registerDependencies, it populates the dependency injection system with factory methods, dictating how other systems like SceneManager will construct objects. It concludes by triggering shader asset pre-fetching via Shader.preFetchFunctionsGlsl()."
+  },
+  "graph_nodes": [
+    {
+      "id": "/managers/dependency-manager.ts#DependencyManager",
+      "label": "Class",
+      "name": "DependencyManager",
+      "signature": "export class DependencyManager"
+    },
+    {
+      "id": "/managers/dependency-manager.ts#registerDependencies",
+      "label": "Method",
+      "name": "registerDependencies",
+      "signature": "public registerDependencies(): void"
+    },
+    {
+      "id": "/managers/dependency-manager.ts#ObjectInstanciator",
+      "label": "Class",
+      "name": "ObjectInstanciator",
+      "signature": "ObjectInstanciator.addDependency"
+    },
+    {
+      "id": "/managers/dependency-manager.ts#Shader",
+      "label": "Class",
+      "name": "Shader",
+      "signature": "Shader.preFetchFunctionsGlsl()"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/src/managers/dependency-manager.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/src/managers/dependency-manager.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/src/core/object-instanciator.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/managers/dependency-manager.ts",
+      "target": "/src/shaders/shader.md",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

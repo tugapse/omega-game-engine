@@ -1,0 +1,101 @@
+{
+  "component": {
+    "name": "lights-ubo",
+    "source_path": "/core/render/lights-ubo.ts",
+    "doc_path": "/core/render/lights-ubo.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module manages the serialization and GPU buffer management for light data used in rendering. It defines the memory layout (`LIGHTS_LAYOUT`) conforming to std140 for passing various light types (directional, point, spot) to WebGL shaders. The `LightsUBO` class handles the creation, updating, and binding of the WebGLUniformBufferObject, while `packLights` performs the complex data packing logic."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/lights-ubo.ts#MAX_DIRECTIONAL_LIGHTS",
+      "label": "Variable",
+      "name": "MAX_DIRECTIONAL_LIGHTS",
+      "signature": "5"
+    },
+    {
+      "id": "/core/render/lights-ubo.ts#MAX_POINT_LIGHTS",
+      "label": "Variable",
+      "name": "MAX_POINT_LIGHTS",
+      "signature": "20"
+    },
+    {
+      "id": "/core/render/lights-ubo.ts#MAX_SPOT_LIGHTS",
+      "label": "Variable",
+      "name": "MAX_SPOT_LIGHTS",
+      "signature": "20"
+    },
+    {
+      "id": "/core/render/lights-ubo.ts#LIGHTS_BINDING_POINT",
+      "label": "Variable",
+      "name": "LIGHTS_BINDING_POINT",
+      "signature": "1"
+    },
+    {
+      "id": "/core/render/lights-ubo.ts#LIGHTS_LAYOUT",
+      "label": "Variable",
+      "name": "LIGHTS_LAYOUT",
+      "signature": "object"
+    },
+    {
+      "id": "/core/render/lights-ubo.ts#packLights",
+      "label": "Function",
+      "name": "packLights",
+      "signature": "packLights(lights: Light[], shadowSlots: Map<Light, number> = new Map(), out?: Float32Array): Float32Array"
+    },
+    {
+      "id": "/core/render/lights-ubo.ts#LightsUBO",
+      "label": "Class",
+      "name": "LightsUBO",
+      "signature": "new LightsUBO(gl: WebGL2RenderingContext)"
+    },
+    {
+      "id": "/core/render/lights-ubo.ts#LightsUBO.update",
+      "label": "Method",
+      "name": "update",
+      "signature": "update(lights: Light[], shadowSlots?: Map<Light, number>): void"
+    },
+    {
+      "id": "/core/render/lights-ubo.ts#LightsUBO.dispose",
+      "label": "Method",
+      "name": "dispose",
+      "signature": "dispose(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/lights-ubo.ts",
+      "target": "/core/enums/entity-type.enum",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/lights-ubo.ts",
+      "target": "/core/entities/lights/directional-light",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/lights-ubo.ts",
+      "target": "/core/entities/lights/light",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/lights-ubo.ts",
+      "target": "/core/entities/lights/point-light",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/lights-ubo.ts",
+      "target": "/core/entities/lights/spot-light",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

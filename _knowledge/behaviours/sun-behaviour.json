@@ -1,0 +1,227 @@
+{
+  "component": {
+    "name": "SunBehaviour",
+    "source_path": "/behaviours/sun-behaviour.ts",
+    "doc_path": "/behaviours/sun-behaviour.json",
+    "type": "controller"
+  },
+  "vector_memory": {
+    "semantic_summary": "SunBehaviour is a core controller responsible for simulating celestial mechanics, managing the dynamic day/night cycle within the scene. It controls the position and color of the primary directional light (sun) and optionally a secondary moon light based on internal time progression. It interfaces heavily with SkyboxRenderer to update ambient properties like clear color and fog, ensuring visual consistency across the scene's lighting and skybox elements."
+  },
+  "graph_nodes": [
+    {
+      "id": "/behaviours/sun-behaviour.ts#SunBehaviour",
+      "label": "Class",
+      "name": "SunBehaviour",
+      "signature": "export class SunBehaviour extends EntityBehaviour"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#smoothstep",
+      "label": "Function",
+      "name": "smoothstep",
+      "signature": "const smoothstep = (t: number): number => { ... }"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#dayCycleSettings",
+      "label": "Variable",
+      "name": "dayCycleSettings",
+      "signature": "public dayCycleSettings = { ... }"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#hours",
+      "label": "Variable",
+      "name": "hours",
+      "signature": "public hours = { ... }"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#lighColor",
+      "label": "Variable",
+      "name": "lighColor",
+      "signature": "public lighColor = { ... }"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#dayPhaseColors",
+      "label": "Variable",
+      "name": "dayPhaseColors",
+      "signature": "public dayPhaseColors = { ... }"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#sun",
+      "label": "Variable",
+      "name": "sun",
+      "signature": "public sun = { ... }"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#moon",
+      "label": "Variable",
+      "name": "moon",
+      "signature": "public moon = { ... }"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#shadows",
+      "label": "Variable",
+      "name": "shadows",
+      "signature": "public shadows = { ... }"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#clouds",
+      "label": "Variable",
+      "name": "clouds",
+      "signature": "public clouds = { ... }"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#stars",
+      "label": "Variable",
+      "name": "stars",
+      "signature": "public stars = { ... }"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "override initialize(): boolean"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#update",
+      "label": "Method",
+      "name": "update",
+      "signature": "public override update(elapsed: number): void"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#creaMoonLight",
+      "label": "Method",
+      "name": "creaMoonLight",
+      "signature": "private creaMoonLight(moonLight: DirectionalLight): DirectionalLight"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#updateOrCreateMoonLinght",
+      "label": "Method",
+      "name": "updateOrCreateMoonLinght",
+      "signature": "updateOrCreateMoonLinght(): void"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#updateTime",
+      "label": "Method",
+      "name": "updateTime",
+      "signature": "private updateTime(elapsed: number): void"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#updateSunPosition",
+      "label": "Method",
+      "name": "updateSunPosition",
+      "signature": "private updateSunPosition(light: DirectionalLight | undefined, moonLight: DirectionalLight | undefined): void"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#getInterpolationData",
+      "label": "Method",
+      "name": "getInterpolationData",
+      "signature": "private getInterpolationData(): { fromLightColor: Color; toLightColor: Color; fromSkyColor: Color; toSkyColor: Color; fromHorizonColor: Color; toHorizonColor: Color; delta: number; }"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#updateLightColor",
+      "label": "Method",
+      "name": "updateLightColor",
+      "signature": "private updateLightColor(light: DirectionalLight | undefined, moonLight: DirectionalLight | undefined): void"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#_calculateShadowStrength",
+      "label": "Method",
+      "name": "_calculateShadowStrength",
+      "signature": "private _calculateShadowStrength(time: number, maxDayStrength: number): number"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#updateSceneColors",
+      "label": "Method",
+      "name": "updateSceneColors",
+      "signature": "private updateSceneColors(color: Color): void"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#updateSkybox",
+      "label": "Method",
+      "name": "updateSkybox",
+      "signature": "private updateSkybox(light: DirectionalLight | undefined, fromSkyColor: Color, toSkyColor: Color, fromHorizonColor: Color, toHorizonColor: Color, delta: number, isSunDown: boolean): void"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#_updateSkyboxShaderVariables",
+      "label": "Method",
+      "name": "_updateSkyboxShaderVariables",
+      "signature": "private _updateSkyboxShaderVariables(skyboxRenderer: SkyboxRenderer, light: Light, fromSkyColor: Color, toSkyColor: Color, fromHorizonColor: Color, toHorizonColor: Color, delta: number, isSunDown: boolean): void"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "public override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/behaviours/sun-behaviour.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "public override fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/behaviours/sun-behaviour.ts",
+      "target": "/behaviours/entity-behaviour.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/sun-behaviour.ts",
+      "target": "/behaviours/renderer/skybox-renderer.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/sun-behaviour.ts",
+      "target": "/entities/lights/directional-light.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/sun-behaviour.ts",
+      "target": "/core/range.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/sun-behaviour.ts",
+      "target": "/core/color.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/sun-behaviour.ts",
+      "target": "/entities/entity.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/sun-behaviour.ts",
+      "target": "/enums/entity-type.enum.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/sun-behaviour.ts",
+      "target": "/core/vector.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/sun-behaviour.ts",
+      "target": "/shaders/skybox-shader.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/sun-behaviour.ts",
+      "target": "/entities/lights/light.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/sun-behaviour.ts",
+      "target": "/interfaces/json-serialized-data.md",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

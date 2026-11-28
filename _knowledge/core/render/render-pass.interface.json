@@ -1,0 +1,65 @@
+{
+  "component": {
+    "name": "render-pass.interface.ts",
+    "source_path": "/core/render/render-pass.interface.ts",
+    "doc_path": "/core/render/render-pass.interface.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the core architectural contracts for the rendering subsystem, establishing standardized interfaces for rendering operations. The IRenderPass interface mandates lifecycle methods like initialization, execution, cleanup, and resizing for any rendering stage. The RenderContext interface provides the necessary runtime resources, including the WebGL2RenderingContext, frame data, and specific render targets, required by a pass during its execution phase."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/render-pass.interface.ts#RenderContext",
+      "label": "Interface",
+      "name": "RenderContext",
+      "signature": "interface RenderContext { gl: WebGL2RenderingContext; frame: FrameData; target: RenderTarget; source?: RenderTarget; }"
+    },
+    {
+      "id": "/core/render/render-pass.interface.ts#IRenderPass",
+      "label": "Interface",
+      "name": "IRenderPass",
+      "signature": "interface IRenderPass { name: string; initialize(gl: WebGL2RenderingContext): void; execute(scene: Scene, ctx?: RenderContext): void; cleanup(): void; resize(width: number, height: number): void; setGl(gl: WebGL2RenderingContext): void; }"
+    },
+    {
+      "id": "/core/render/render-pass.interface.ts#Scene",
+      "label": "Type",
+      "name": "Scene",
+      "signature": "import { Scene } from \"../../entities\";"
+    },
+    {
+      "id": "/core/render/render-pass.interface.ts#FrameData",
+      "label": "Type",
+      "name": "FrameData",
+      "signature": "import { FrameData } from \"./frame-data\";"
+    },
+    {
+      "id": "/core/render/render-pass.interface.ts#RenderTarget",
+      "label": "Type",
+      "name": "RenderTarget",
+      "signature": "import { RenderTarget } from \"./render-target\";"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/render-pass.interface.ts",
+      "target": "/../../entities",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pass.interface.ts",
+      "target": "/./frame-data",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pass.interface.ts",
+      "target": "/./render-target",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

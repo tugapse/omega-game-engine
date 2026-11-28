@@ -1,0 +1,200 @@
+{
+  "component": {
+    "name": "collada-parser",
+    "source_path": "/parsers/collada/collada-parser.ts",
+    "doc_path": "/parsers/collada/collada-parser.json",
+    "type": "service"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component serves as the specialized data ingestion service for COLLADA (.dae) files, transforming raw XML into structured ModelData. It handles the complex parsing of 3D asset components, including scene graph traversal, geometry definition, material properties, and animation data. Key logic involves indexing XML elements, deduplicating geometry vertices, and converting matrix data from row-major to gl-matrix compatible formats."
+  },
+  "graph_nodes": [
+    {
+      "id": "/parsers/collada/collada-parser.ts#isCollada",
+      "label": "Function",
+      "name": "isCollada",
+      "signature": "isCollada(buffer: ArrayBuffer): boolean"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#parseCollada",
+      "label": "Function",
+      "name": "parseCollada",
+      "signature": "parseCollada(text: string): ModelData"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#Primitive",
+      "label": "Interface",
+      "name": "Primitive",
+      "signature": "interface Primitive { mesh: MeshData; material: string; positionOf: number[]; }"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter",
+      "label": "Class",
+      "name": "ColladaConverter",
+      "signature": "class ColladaConverter"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter.constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(document: XmlElement)"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter.convert",
+      "label": "Method",
+      "name": "convert",
+      "signature": "convert(): ModelData"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter.readNode",
+      "label": "Method",
+      "name": "readNode",
+      "signature": "readNode(el: XmlElement, parent: number): void"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter.localMatrix",
+      "label": "Method",
+      "name": "localMatrix",
+      "signature": "localMatrix(el: XmlElement): mat4"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter.materialBindings",
+      "label": "Method",
+      "name": "materialBindings",
+      "signature": "materialBindings(inst: XmlElement): Map<string, string>"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter.attachPrimitives",
+      "label": "Method",
+      "name": "attachPrimitives",
+      "signature": "attachPrimitives(nodeIndex: number, primitives: Primitive[], bindings: Map<string, string>, skin?: number): void"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter.readGeometry",
+      "label": "Method",
+      "name": "readGeometry",
+      "signature": "readGeometry(geometry: XmlElement): Primitive[]"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter.readPrimitive",
+      "label": "Method",
+      "name": "readPrimitive",
+      "signature": "readPrimitive(mesh: XmlElement, list: XmlElement): Primitive"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter.readSkin",
+      "label": "Method",
+      "name": "readSkin",
+      "signature": "readSkin(entry: { node: number; controller: XmlElement; skeleton?: string; bindings: Map<string, string> }): void"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter.readMaterial",
+      "label": "Method",
+      "name": "readMaterial",
+      "signature": "readMaterial(id: string): number | undefined"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter.readImage",
+      "label": "Method",
+      "name": "readImage",
+      "signature": "readImage(id: string): number | undefined"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter.readAnimations",
+      "label": "Method",
+      "name": "readAnimations",
+      "signature": "readAnimations(): void"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter.ref",
+      "label": "Method",
+      "name": "ref",
+      "signature": "ref(url: string | undefined): XmlElement | undefined"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter.readSource",
+      "label": "Method",
+      "name": "readSource",
+      "signature": "readSource(source: XmlElement | undefined): { data: Float64Array; stride: number }"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#ColladaConverter.readNames",
+      "label": "Method",
+      "name": "readNames",
+      "signature": "readNames(source: XmlElement | undefined): string[]"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#numbers",
+      "label": "Function",
+      "name": "numbers",
+      "signature": "numbers(text: string): number[]"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#rowMajor",
+      "label": "Function",
+      "name": "rowMajor",
+      "signature": "rowMajor(v: ArrayLike<number>): mat4"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#toSkinned",
+      "label": "Function",
+      "name": "toSkinned",
+      "signature": "toSkinned(primitive: Primitive, influences: [number, number][][]): SkinnedMeshData"
+    },
+    {
+      "id": "/parsers/collada/collada-parser.ts#matrixChannels",
+      "label": "Function",
+      "name": "matrixChannels",
+      "signature": "matrixChannels(target: string, times: Float64Array, matrices: Float64Array): AnimationChannel[]"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/parsers/collada/collada-parser.ts",
+      "target": "/src/parsers/xml.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/parsers/collada/collada-parser.ts",
+      "target": "/src/core/model/model-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/parsers/collada/collada-parser.ts",
+      "target": "/src/core/mesh.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/parsers/collada/collada-parser.ts",
+      "target": "/src/animation/animation-clip.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/parsers/collada/collada-parser.ts",
+      "target": "/src/parsers/xml.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/parsers/collada/collada-parser.ts",
+      "target": "/src/core/model/model-data.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/parsers/collada/collada-parser.ts",
+      "target": "/src/core/mesh.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/parsers/collada/collada-parser.ts",
+      "target": "/src/animation/animation-clip.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

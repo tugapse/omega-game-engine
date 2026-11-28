@@ -1,0 +1,31 @@
+{
+  "component": {
+    "name": "blend-mode",
+    "source_path": "/interfaces/blend-mode.ts",
+    "doc_path": "/interfaces/blend-mode.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the BlendingMode interface, which serves as a contract for specifying how two colors or textures should be combined during rendering. It encapsulates the necessary factors—source and destination—required for a mathematical blending calculation. It is a core data structure within the rendering pipeline, specifically residing in the interface layer for graphics state management."
+  },
+  "graph_nodes": [
+    {
+      "id": "/interfaces/blend-mode.ts#BlendingMode",
+      "label": "Interface",
+      "name": "BlendingMode",
+      "signature": "interface BlendingMode {"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/interfaces/blend-mode.ts",
+      "target": "/../enums/gl/blend.enum",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

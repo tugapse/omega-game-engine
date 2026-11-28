@@ -1,0 +1,29 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/model/index.ts",
+    "doc_path": "/model/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as a facade, aggregating and re-exporting core functionalities related to data modeling and object instantiation within the application's data layer. It provides a unified entry point by consolidating exports from model-data and model-instantiator. Its primary architectural role is to simplify consumption of data structures and object creation logic across the codebase."
+  },
+  "graph_nodes": [],
+  "graph_edges": [
+    {
+      "source": "/model/index.ts",
+      "target": "/core/model/model-data.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/model/index.ts",
+      "target": "/model-instantiator",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

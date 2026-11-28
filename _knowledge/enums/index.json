@@ -1,0 +1,54 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/enums/index.ts",
+    "doc_path": "/enums/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module serves as a central aggregation point for various enumeration types across the application. Its primary function is to re-export definitions from several specialized enum files, creating a unified namespace for consumers. It acts as a high-level index within the application's data model layer, simplifying dependency management for engine components. It consolidates constants from GL, entity types, render layers, and shader uniforms."
+  },
+  "graph_nodes": [],
+  "graph_edges": [
+    {
+      "source": "/enums/index.ts",
+      "target": "/enums/gl.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/index.ts",
+      "target": "/enums/class-type.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/index.ts",
+      "target": "/enums/cubemap-side.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/index.ts",
+      "target": "/enums/entity-type.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/index.ts",
+      "target": "/enums/gl-primitive-type.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/index.ts",
+      "target": "/enums/render-layer.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/index.ts",
+      "target": "/enums/shader-uniforms.enum.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

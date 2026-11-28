@@ -1,0 +1,81 @@
+{
+  "component": {
+    "name": "PostEffect",
+    "source_path": "/core/render/post-effect.ts",
+    "doc_path": "/core/render/post-effect.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the abstract base class PostEffect, serving as the core mechanism for applying visual modifications during the rendering pipeline. It mandates subclasses to define their specific fragment shader URI and implement custom uniform setting logic. The render method manages the lifecycle by initializing a FullscreenProgram, binding the source texture, and executing the draw call against the target buffer. It encapsulates the structure for chaining sequential screen-space visual effects."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/post-effect.ts#PostEffect",
+      "label": "Class",
+      "name": "PostEffect",
+      "signature": "abstract class PostEffect"
+    },
+    {
+      "id": "/core/render/post-effect.ts#RetroEffect",
+      "label": "Class",
+      "name": "RetroEffect",
+      "signature": "class RetroEffect extends PostEffect"
+    },
+    {
+      "id": "/core/render/post-effect.ts#PostEffect.render",
+      "label": "Method",
+      "name": "render",
+      "signature": "render(ctx: RenderContext): void"
+    },
+    {
+      "id": "/core/render/post-effect.ts#PostEffect.dispose",
+      "label": "Method",
+      "name": "dispose",
+      "signature": "dispose(): void"
+    },
+    {
+      "id": "/core/render/post-effect.ts#PostEffect.setUniforms",
+      "label": "Method",
+      "name": "setUniforms",
+      "signature": "protected abstract setUniforms(_program: FullscreenProgram, _ctx: RenderContext): void"
+    },
+    {
+      "id": "/core/render/post-effect.ts#RetroEffect.setUniforms",
+      "label": "Method",
+      "name": "setUniforms",
+      "signature": "protected override setUniforms(program: FullscreenProgram, ctx: RenderContext): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/post-effect.ts",
+      "target": "/core/render/shader-sources.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/post-effect.ts",
+      "target": "/core/render/fullscreen-program.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/post-effect.ts",
+      "target": "/core/render/render-pass.interface.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/post-effect.ts",
+      "target": "/core/render/fullscreen-program.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/core/render/post-effect.ts",
+      "target": "/core/render/render-pass.interface.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

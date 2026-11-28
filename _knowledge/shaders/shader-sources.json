@@ -1,0 +1,37 @@
+{
+  "component": {
+    "name": "ShaderSources",
+    "source_path": "/shaders/shader-sources.ts",
+    "doc_path": "/shaders/shader-sources.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component, ShaderSources, acts as a centralized configuration repository for shader asset paths within the rendering subsystem. It exposes two static, read-only maps: 'frag' for fragment shaders and 'vertex' for vertex shaders. Its primary role is to decouple application logic from the physical file locations of shader programs, ensuring consistent asset referencing across the rendering pipeline. It serves as a static resource mapping layer."
+  },
+  "graph_nodes": [
+    {
+      "id": "/shaders/shader-sources.ts#ShaderSources",
+      "label": "Class",
+      "name": "ShaderSources",
+      "signature": ""
+    },
+    {
+      "id": "/shaders/shader-sources.ts#ShaderSources.frag",
+      "label": "Variable",
+      "name": "frag",
+      "signature": ""
+    },
+    {
+      "id": "/shaders/shader-sources.ts#ShaderSources.vertex",
+      "label": "Variable",
+      "name": "vertex",
+      "signature": ""
+    }
+  ],
+  "graph_edges": [],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

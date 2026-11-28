@@ -1,0 +1,191 @@
+{
+  "component": {
+    "name": "SkinnedMeshRendererBehaviour",
+    "source_path": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts",
+    "doc_path": "/behaviours/renderer/skinned-mesh-renderer-behaviour.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "SkinnedMeshRendererBehaviour is a specialized renderer responsible for drawing 3D meshes deformed by skeletal animation using GPU-based linear blend skinning. It manages asynchronous loading of mesh geometry and associated skin/bone data from external URIs. Its core function involves calculating and updating joint transformation matrices every frame, which are uploaded to a dedicated WebGLTexture for shader consumption."
+  },
+  "graph_nodes": [
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#SkinnedMeshRendererBehaviour",
+      "label": "Class",
+      "name": "SkinnedMeshRendererBehaviour",
+      "signature": "extends MeshRendererBehaviour"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#meshUri",
+      "label": "Property",
+      "name": "meshUri",
+      "signature": "string"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#skinUri",
+      "label": "Property",
+      "name": "skinUri",
+      "signature": "string"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#boneIds",
+      "label": "Property",
+      "name": "boneIds",
+      "signature": "string[]"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#jointTexture",
+      "label": "Getter",
+      "name": "jointTexture",
+      "signature": "WebGLTexture | null"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#serializesMesh",
+      "label": "Getter",
+      "name": "serializesMesh",
+      "signature": "boolean"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#whenLoaded",
+      "label": "Method",
+      "name": "whenLoaded",
+      "signature": "(): Promise<void>"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#deformationVersion",
+      "label": "Getter",
+      "name": "deformationVersion",
+      "signature": "number"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "(): JsonSerializedData"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#instanciate",
+      "label": "Static Method",
+      "name": "instanciate",
+      "signature": "static(gl: WebGL2RenderingContext): SkinnedMeshRendererBehaviour"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#load",
+      "label": "Method",
+      "name": "load",
+      "signature": "(): Promise<void>"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#jointReach",
+      "label": "Static Method",
+      "name": "jointReach",
+      "signature": "static(meshData: SkinnedMeshData, inverseBinds: mat4[]): Float32Array"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#worldBounds",
+      "label": "Method",
+      "name": "worldBounds",
+      "signature": "override(out: Sphere): boolean"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#createJointTexture",
+      "label": "Method",
+      "name": "createJointTexture",
+      "signature": "private(joints: number): void"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#resolveBones",
+      "label": "Method",
+      "name": "resolveBones",
+      "signature": "private(): void"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#beforeRender",
+      "label": "Method",
+      "name": "beforeRender",
+      "signature": "override(): void"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#draw",
+      "label": "Method",
+      "name": "draw",
+      "signature": "override(): void"
+    },
+    {
+      "id": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "override(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts",
+      "target": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts",
+      "target": "/src/core/model/model-data/ModelData",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts",
+      "target": "/src/core/model/model-data/SkinnedMeshData",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts",
+      "target": "/src/core/render/culling/maxScale.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts",
+      "target": "/src/core/render/culling/Sphere.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts",
+      "target": "/src/core/transform/Transform.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts",
+      "target": "/src/core/resources/resources.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts",
+      "target": "/src/enums/shader-uniforms.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts",
+      "target": "/src/interfaces/json-serialized-data/JsonSerializedData",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts",
+      "target": "/src/core/render/pass/shadow-atlas-pass/ShadowAtlasPass.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts",
+      "target": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "component": {
+    "name": "terrain-data.ts",
+    "source_path": "/terrain/terrain-data.ts",
+    "doc_path": "/terrain/terrain-data.json",
+    "type": "model"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the core data structures for a chunked terrain system, managing height and splat data. TerrainChunkData holds localized geometry information, while TerrainGrid orchestrates these chunks across a sparse 2D grid, ensuring border consistency. It provides methods for querying heights and normals in both local chunk space and global terrain space, acting as the fundamental data model layer for terrain representation."
+  },
+  "graph_nodes": [
+    {
+      "id": "/terrain/terrain-data.ts#TerrainSettings",
+      "label": "Interface",
+      "name": "TerrainSettings",
+      "signature": "interface TerrainSettings { resolution: number; size: number; heightRange: [number, number]; splatResolution: number; }"
+    },
+    {
+      "id": "/terrain/terrain-data.ts#DEFAULT_TERRAIN_SETTINGS",
+      "label": "Variable",
+      "name": "DEFAULT_TERRAIN_SETTINGS",
+      "signature": "const DEFAULT_TERRAIN_SETTINGS: TerrainSettings = { ... }"
+    },
+    {
+      "id": "/terrain/terrain-data.ts#MAX_TERRAIN_LAYERS",
+      "label": "Variable",
+      "name": "MAX_TERRAIN_LAYERS",
+      "signature": "const MAX_TERRAIN_LAYERS = 8"
+    },
+    {
+      "id": "/terrain/terrain-data.ts#TerrainChunkData",
+      "label": "Class",
+      "name": "TerrainChunkData",
+      "signature": "class TerrainChunkData(cx: number, cz: number, settings: TerrainSettings)"
+    },
+    {
+      "id": "/terrain/terrain-data.ts#cellHeight",
+      "label": "Function",
+      "name": "cellHeight",
+      "signature": "function cellHeight(h00: number, h10: number, h01: number, h11: number, fx: number, fz: number): number"
+    },
+    {
+      "id": "/terrain/terrain-data.ts#encodeHeights",
+      "label": "Function",
+      "name": "encodeHeights",
+      "signature": "function encodeHeights(heights: Float32Array, range: [number, number]): Uint16Array"
+    },
+    {
+      "id": "/terrain/terrain-data.ts#decodeHeights",
+      "label": "Function",
+      "name": "decodeHeights",
+      "signature": "function decodeHeights(data: Uint16Array, range: [number, number], out: Float32Array = new Float32Array(data.length)): Float32Array"
+    },
+    {
+      "id": "/terrain/terrain-data.ts#TerrainGrid",
+      "label": "Class",
+      "name": "TerrainGrid",
+      "signature": "class TerrainGrid(settings: TerrainSettings = { ... })"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/terrain/terrain-data.ts",
+      "target": "/terrain/terrain-data.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

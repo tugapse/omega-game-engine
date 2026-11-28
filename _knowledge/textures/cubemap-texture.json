@@ -1,0 +1,128 @@
+{
+  "component": {
+    "name": "CubemapTexture",
+    "source_path": "/textures/cubemap-texture.ts",
+    "doc_path": "/textures/cubemap-texture.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "CubemapTexture manages the lifecycle of a cubemap texture in a WebGL environment, handling the loading of six individual face images or generating a procedural white fallback. It extends Texture and interfaces directly with WebGL2RenderingContext to create and populate the texture using gl.texImage2D. The component supports asynchronous loading via URIs, resolving upon successful fetching of all six assets, or synchronous creation via createWhiteCubemap()."
+  },
+  "graph_nodes": [
+    {
+      "id": "/textures/cubemap-texture.ts#CubemapTexture",
+      "label": "Class",
+      "name": "CubemapTexture",
+      "signature": "constructor(gl?: WebGL2RenderingContext, textureUris?: string[])"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#isWhiteCubemap",
+      "label": "Variable",
+      "name": "isWhiteCubemap",
+      "signature": "public isWhiteCubemap: boolean = false;"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#imagesData",
+      "label": "Variable",
+      "name": "imagesData",
+      "signature": "protected imagesData: HTMLImageElement[] = [];"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#loadedImages",
+      "label": "Variable",
+      "name": "loadedImages",
+      "signature": "private loadedImages: (boolean | null)[] = [null, null, null, null, null, null];"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#createWhiteCubemap",
+      "label": "Method",
+      "name": "createWhiteCubemap",
+      "signature": "public static createWhiteCubemap(gl: WebGL2RenderingContext): CubemapTexture"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#generateWhiteCubemap",
+      "label": "Method",
+      "name": "generateWhiteCubemap",
+      "signature": "private generateWhiteCubemap(gl: WebGL2RenderingContext): void"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#load",
+      "label": "Method",
+      "name": "load",
+      "signature": "public override async load(): Promise<void>"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#allImagesFetchedAndLoaded",
+      "label": "Method",
+      "name": "allImagesFetchedAndLoaded",
+      "signature": "protected allImagesFetchedAndLoaded(): boolean"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#allImagesFetched",
+      "label": "Method",
+      "name": "allImagesFetched",
+      "signature": "protected allImagesFetched(): boolean"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#setLoadedImage",
+      "label": "Method",
+      "name": "setLoadedImage",
+      "signature": "public setLoadedImage(imageIndex: number, wasLoaded: boolean): void"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#bind",
+      "label": "Method",
+      "name": "bind",
+      "signature": "override bind(): void"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#createGLTexture",
+      "label": "Method",
+      "name": "createGLTexture",
+      "signature": "protected override createGLTexture(gl: WebGL2RenderingContext): void"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#setTextureUris",
+      "label": "Method",
+      "name": "setTextureUris",
+      "signature": "public setTextureUris(uris: string[]): void"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/textures/cubemap-texture.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "override fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/textures/cubemap-texture.ts",
+      "target": "/src/core/resources/resources.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/textures/cubemap-texture.ts",
+      "target": "/src/interfaces.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/textures/cubemap-texture.ts",
+      "target": "/src/textures/texture.ts.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "Image",
+      "Uint8Array"
+    ],
+    "has_side_effects": true
+  }
+}

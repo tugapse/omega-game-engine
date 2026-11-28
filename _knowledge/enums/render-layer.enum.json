@@ -1,0 +1,25 @@
+{
+  "component": {
+    "name": "RenderLayer",
+    "source_path": "/enums/render-layer.enum.ts",
+    "doc_path": "/enums/render-layer.enum.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the RenderLayer enum, which establishes a fixed, ordered set of constants for managing the drawing sequence within the application's rendering pipeline. It dictates the visual hierarchy by assigning specific integer values to layers such as PRE_SCENE, OPAQUE, TRANSPARENT, and SKYBOX. This structure is fundamental for the rendering engine to correctly manage draw calls and ensure proper visual ordering of graphical elements."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/render-layer.enum.ts#RenderLayer",
+      "label": "Type",
+      "name": "RenderLayer",
+      "signature": "enum"
+    }
+  ],
+  "graph_edges": [],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

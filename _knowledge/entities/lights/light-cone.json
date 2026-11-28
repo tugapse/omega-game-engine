@@ -1,0 +1,66 @@
+{
+  "component": {
+    "name": "LightConeAngles",
+    "source_path": "/entities/lights/light-cone.ts",
+    "doc_path": "/entities/lights/light-cone.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "LightConeAngles is a core data model defining the angular properties for a spotlight's light cone, encapsulating both inner and outer cone angles. It extends JsonSerializable, ensuring its state can be reliably persisted and transmitted across system boundaries. The class initializes with default angles (inner=20.0, outer=30.0) and provides methods to serialize and deserialize its state using automatic serialization mechanisms."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/lights/light-cone.ts#LightConeAngles",
+      "label": "Class",
+      "name": "LightConeAngles",
+      "signature": "class LightConeAngles extends JsonSerializable"
+    },
+    {
+      "id": "/entities/lights/light-cone.ts#inner",
+      "label": "Variable",
+      "name": "inner",
+      "signature": "public inner: number = 20.0"
+    },
+    {
+      "id": "/entities/lights/light-cone.ts#outer",
+      "label": "Variable",
+      "name": "outer",
+      "signature": "public outer: number = 30.0"
+    },
+    {
+      "id": "/entities/lights/light-cone.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor()"
+    },
+    {
+      "id": "/entities/lights/light-cone.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "public override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/entities/lights/light-cone.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "public override fromJson(jsonObject: JsonSerializedData): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/lights/light-cone.ts",
+      "target": "/core/json-serializable.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/light-cone.ts",
+      "target": "/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

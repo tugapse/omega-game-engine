@@ -1,0 +1,201 @@
+{
+  "component": {
+    "name": "RapierBackend",
+    "source_path": "/physics/rapier-backend.ts",
+    "doc_path": "/physics/rapier-backend.json",
+    "type": "service"
+  },
+  "vector_memory": {
+    "semantic_summary": "RapierBackend provides a concrete implementation of the PhysicsBackend interface using the @dimforge/rapier3d-compat library. It acts as a service provider, managing the lifecycle of the physics world by wrapping the Rapier module. It exposes methods to initialize the backend, create physics worlds, and manage rigid bodies and colliders within the simulation environment. The implementation handles complex shape translations and simulation stepping via the RapierWorld class."
+  },
+  "graph_nodes": [
+    {
+      "id": "/physics/rapier-backend.ts#RapierBackend",
+      "label": "Class",
+      "name": "RapierBackend",
+      "signature": "constructor(rapier: object)"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierBackend.load",
+      "label": "Method",
+      "name": "load",
+      "signature": "static async load(rapier: { init(): Promise<void> }): Promise<RapierBackend>"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierBackend.createWorld",
+      "label": "Method",
+      "name": "createWorld",
+      "signature": "createWorld(gravity: vec3): PhysicsBackendWorld"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld",
+      "label": "Class",
+      "name": "RapierWorld",
+      "signature": "constructor(private readonly R: R, gravity: vec3)"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.setGravity",
+      "label": "Method",
+      "name": "setGravity",
+      "signature": "setGravity(gravity: vec3): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.step",
+      "label": "Method",
+      "name": "step",
+      "signature": "step(dt: number): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.createBody",
+      "label": "Method",
+      "name": "createBody",
+      "signature": "createBody(d: BackendBodyDesc): number"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.removeBody",
+      "label": "Method",
+      "name": "removeBody",
+      "signature": "removeBody(body: number): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.createCollider",
+      "label": "Method",
+      "name": "createCollider",
+      "signature": "createCollider(d: BackendColliderDesc, body: number | null): number"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.removeCollider",
+      "label": "Method",
+      "name": "removeCollider",
+      "signature": "removeCollider(collider: number): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.getBodyPose",
+      "label": "Method",
+      "name": "getBodyPose",
+      "signature": "getBodyPose(body: number, position: vec3, rotation: quat): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.setBodyPose",
+      "label": "Method",
+      "name": "setBodyPose",
+      "signature": "setBodyPose(body: number, position: vec3, rotation: quat): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.setKinematicTarget",
+      "label": "Method",
+      "name": "setKinematicTarget",
+      "signature": "setKinematicTarget(body: number, position: vec3, rotation: quat): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.getLinearVelocity",
+      "label": "Method",
+      "name": "getLinearVelocity",
+      "signature": "getLinearVelocity(body: number, out: vec3): vec3"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.setLinearVelocity",
+      "label": "Method",
+      "name": "setLinearVelocity",
+      "signature": "setLinearVelocity(body: number, velocity: vec3): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.getAngularVelocity",
+      "label": "Method",
+      "name": "getAngularVelocity",
+      "signature": "getAngularVelocity(body: number, out: vec3): vec3"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.setAngularVelocity",
+      "label": "Method",
+      "name": "setAngularVelocity",
+      "signature": "setAngularVelocity(body: number, velocity: vec3): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.applyImpulse",
+      "label": "Method",
+      "name": "applyImpulse",
+      "signature": "applyImpulse(body: number, impulse: vec3, point?: vec3): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.applyTorqueImpulse",
+      "label": "Method",
+      "name": "applyTorqueImpulse",
+      "signature": "applyTorqueImpulse(body: number, impulse: vec3): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.addForce",
+      "label": "Method",
+      "name": "addForce",
+      "signature": "addForce(body: number, force: vec3): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.resetForces",
+      "label": "Method",
+      "name": "resetForces",
+      "signature": "resetForces(body: number): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.isSleeping",
+      "label": "Method",
+      "name": "isSleeping",
+      "signature": "isSleeping(body: number): boolean"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.wakeUp",
+      "label": "Method",
+      "name": "wakeUp",
+      "signature": "wakeUp(body: number): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.raycast",
+      "label": "Method",
+      "name": "raycast",
+      "signature": "raycast(origin: vec3, direction: vec3, maxDistance: number, solid: boolean): BackendRaycastHit | null"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.drainEvents",
+      "label": "Method",
+      "name": "drainEvents",
+      "signature": "drainEvents(onContact: (a: number, b: number, started: boolean) => void, onContactForce: (a: number, b: number, force: number) => void): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#RapierWorld.destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "destroy(): void"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#v",
+      "label": "Function",
+      "name": "v",
+      "signature": "v(a: ArrayLike<number>): { x: number, y: number, z: number }"
+    },
+    {
+      "id": "/physics/rapier-backend.ts#q",
+      "label": "Function",
+      "name": "q",
+      "signature": "q(a: ArrayLike<number>): { x: number, y: number, z: number, w: number }"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/physics/rapier-backend.ts",
+      "target": "/src/physics/physics-backend.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/rapier-backend.ts",
+      "target": "/@dimforge/rapier3d-compat",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix",
+      "@dimforge/rapier3d-compat"
+    ],
+    "has_side_effects": true
+  }
+}

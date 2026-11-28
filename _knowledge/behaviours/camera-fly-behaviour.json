@@ -1,0 +1,148 @@
+{
+  "component": {
+    "name": "CameraFlyBehaviour",
+    "source_path": "/behaviours/camera-fly-behaviour.ts",
+    "doc_path": "/behaviours/camera-fly-behaviour.json",
+    "type": "controller"
+  },
+  "vector_memory": {
+    "semantic_summary": "CameraFlyBehaviour implements a free-look camera controller, managing continuous 3D navigation via keyboard translation and mouse rotation. It extends EntityBehaviour, translating raw input signals from Keybord and Mouse into changes in the entity's Transform. The logic incorporates physics-like movement with acceleration, dampening, and boost mechanics, while rotation is smoothed using spherical linear interpolation (slerp). It handles both standard and orthographic camera modes, modifying projection parameters accordingly."
+  },
+  "graph_nodes": [
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#ICameraMoveKeys",
+      "label": "Interface",
+      "name": "ICameraMoveKeys",
+      "signature": "forward: string, back: string, left: string, right: string, up: string, down: string, boost: string"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#ICameraMouseButtons",
+      "label": "Interface",
+      "name": "ICameraMouseButtons",
+      "signature": "pan: number, look: number"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#CameraFlyBehaviour",
+      "label": "Class",
+      "name": "CameraFlyBehaviour",
+      "signature": "constructor()"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(): CameraFlyBehaviour"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "override initialize(): boolean"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#update",
+      "label": "Method",
+      "name": "update",
+      "signature": "override update(ellapsed: number): void"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#updateMoveVelocity",
+      "label": "Method",
+      "name": "updateMoveVelocity",
+      "signature": "protected updateMoveVelocity(ellapsed: number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#updateForwardVelocity",
+      "label": "Method",
+      "name": "updateForwardVelocity",
+      "signature": "protected updateForwardVelocity(accelerationDelta: number, maxSpeed: number, stopThreshold: number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#updateStrafeVelocity",
+      "label": "Method",
+      "name": "updateStrafeVelocity",
+      "signature": "protected updateStrafeVelocity(accelerationDelta: number, maxSpeed: number, stopThreshold: number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#updateUpVelocity",
+      "label": "Method",
+      "name": "updateUpVelocity",
+      "signature": "protected updateUpVelocity(accelerationDelta: number, maxSpeed: number, stopThreshold: number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#updatePanVelocity",
+      "label": "Method",
+      "name": "updatePanVelocity",
+      "signature": "protected updatePanVelocity(ellapsed:number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#updateScrollVelocity",
+      "label": "Method",
+      "name": "updateScrollVelocity",
+      "signature": "protected updateScrollVelocity(ellapsed:number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#applyMovementVelocity",
+      "label": "Method",
+      "name": "applyMovementVelocity",
+      "signature": "protected applyMovementVelocity(transform: Transform, ellapsed: number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#applyRotationVelocity",
+      "label": "Method",
+      "name": "applyRotationVelocity",
+      "signature": "protected applyRotationVelocity(transform: Transform, ellapsed: number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#updateInput",
+      "label": "Method",
+      "name": "updateInput",
+      "signature": "protected updateInput(ellapsed: number)"
+    },
+    {
+      "id": "/behaviours/camera-fly-behaviour.ts#clone",
+      "label": "Method",
+      "name": "clone",
+      "signature": "override clone(): EntityBehaviour | null"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/behaviours/camera-fly-behaviour.ts",
+      "target": "/src/behaviours/entity-behaviour.ts",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/camera-fly-behaviour.ts",
+      "target": "/src/core/input.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/camera-fly-behaviour.ts",
+      "target": "/src/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/camera-fly-behaviour.ts",
+      "target": "/src/core/transform.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/camera-fly-behaviour.ts",
+      "target": "/src/entities/camera.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/camera-fly-behaviour.ts",
+      "target": "/src/entities/camera.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

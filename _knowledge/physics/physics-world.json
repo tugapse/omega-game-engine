@@ -1,0 +1,178 @@
+{
+  "component": {
+    "name": "PhysicsWorld",
+    "source_path": "/physics/physics-world.ts",
+    "doc_path": "/physics/physics-world.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "PhysicsWorld is the core simulation manager responsible for advancing the state of physical entities using a PhysicsBackend. It manages time integration via an accumulator pattern to ensure fixed-step updates, handling body and collider registration through flush(). It exposes comprehensive hooks (onContact, onBeforeStep) for external systems to observe simulation events and interact with the physics state.",
+    "architecture_role": "Core Simulation Service"
+  },
+  "graph_nodes": [
+    {
+      "id": "/physics/physics-world.ts#PhysicsWorld",
+      "label": "Class",
+      "name": "PhysicsWorld",
+      "signature": "constructor(backend: PhysicsBackend, options: PhysicsWorldOptions = {})"
+    },
+    {
+      "id": "/physics/physics-world.ts#PhysicsWorldOptions",
+      "label": "Interface",
+      "name": "PhysicsWorldOptions",
+      "signature": "interface PhysicsWorldOptions"
+    },
+    {
+      "id": "/physics/physics-world.ts#ContactEvent",
+      "label": "Interface",
+      "name": "ContactEvent",
+      "signature": "interface ContactEvent"
+    },
+    {
+      "id": "/physics/physics-world.ts#ContactForceEvent",
+      "label": "Interface",
+      "name": "ContactForceEvent",
+      "signature": "interface ContactForceEvent"
+    },
+    {
+      "id": "/physics/physics-world.ts#RaycastHit",
+      "label": "Interface",
+      "name": "RaycastHit",
+      "signature": "interface RaycastHit"
+    },
+    {
+      "id": "/physics/physics-world.ts#PhysicsWorld.main",
+      "label": "Static Property",
+      "name": "main",
+      "signature": "static main: PhysicsWorld | null"
+    },
+    {
+      "id": "/physics/physics-world.ts#PhysicsWorld.gravity",
+      "label": "Getter/Setter",
+      "name": "gravity",
+      "signature": "get gravity(): vec3; set gravity(value: vec3)"
+    },
+    {
+      "id": "/physics/physics-world.ts#PhysicsWorld.onContact",
+      "label": "Method",
+      "name": "onContact",
+      "signature": "onContact(listener: (e: ContactEvent) => void): () => void"
+    },
+    {
+      "id": "/physics/physics-world.ts#PhysicsWorld.onContactForce",
+      "label": "Method",
+      "name": "onContactForce",
+      "signature": "onContactForce(listener: (e: ContactForceEvent) => void): () => void"
+    },
+    {
+      "id": "/physics/physics-world.ts#PhysicsWorld.onBeforeStep",
+      "label": "Method",
+      "name": "onBeforeStep",
+      "signature": "onBeforeStep(listener: (dt: number) => void): () => void"
+    },
+    {
+      "id": "/physics/physics-world.ts#PhysicsWorld.step",
+      "label": "Method",
+      "name": "step",
+      "signature": "step(elapsed: number): void"
+    },
+    {
+      "id": "/physics/physics-world.ts#PhysicsWorld.stepOnce",
+      "label": "Method",
+      "name": "stepOnce",
+      "signature": "stepOnce(): void"
+    },
+    {
+      "id": "/physics/physics-world.ts#PhysicsWorld.flush",
+      "label": "Method",
+      "name": "flush",
+      "signature": "flush(): void"
+    },
+    {
+      "id": "/physics/physics-world.ts#PhysicsWorld.raycast",
+      "label": "Method",
+      "name": "raycast",
+      "signature": "raycast(origin: vec3, direction: vec3, maxDistance = 1000, solid = true): RaycastHit | null"
+    },
+    {
+      "id": "/physics/physics-world.ts#PhysicsWorld.beforeUpdate",
+      "label": "Method",
+      "name": "beforeUpdate",
+      "signature": "beforeUpdate(elapsed: number): void"
+    },
+    {
+      "id": "/physics/physics-world.ts#PhysicsWorld.afterUpdate",
+      "label": "Method",
+      "name": "afterUpdate",
+      "signature": "afterUpdate(): void"
+    },
+    {
+      "id": "/physics/physics-world.ts#PhysicsWorld.beforeDraw",
+      "label": "Method",
+      "name": "beforeDraw",
+      "signature": "beforeDraw(): void"
+    },
+    {
+      "id": "/physics/physics-world.ts#PhysicsWorld.afterDraw",
+      "label": "Method",
+      "name": "afterDraw",
+      "signature": "afterDraw(): void"
+    },
+    {
+      "id": "/physics/physics-world.ts#findBody",
+      "label": "Function",
+      "name": "findBody",
+      "signature": "findBody(entity: SceneEntity | undefined): RigidBodyBehaviour | null"
+    },
+    {
+      "id": "/physics/physics-world.ts#scaleShape",
+      "label": "Function",
+      "name": "scaleShape",
+      "signature": "scaleShape(shape: ColliderShape, s: vec3): ColliderShape"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/physics/physics-world.ts",
+      "target": "/../behaviours/entity-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/physics-world.ts",
+      "target": "/../entities/entity.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/physics-world.ts",
+      "target": "/../interfaces/scene-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/physics-world.ts",
+      "target": "/physics/collider-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/physics-world.ts",
+      "target": "/physics/physics-backend.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/physics-world.ts",
+      "target": "/physics/rigid-body-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/physics-world.ts",
+      "target": "/physics/physics-backend.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

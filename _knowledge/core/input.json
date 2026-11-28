@@ -1,0 +1,159 @@
+{
+  "component": {
+    "name": "InputManager",
+    "source_path": "/core/input.ts",
+    "doc_path": "/core/input.json",
+    "type": "utility"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component provides static managers for tracking and querying the state of user inputs: mouse, keyboard, and gamepad. It centralizes raw input data into global state repositories, allowing other application systems to query current states without direct event listener access. It manages state changes across frames, utilizing browser APIs like navigator.getGamepads() and providing functions to reset transient frame deltas."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/input.ts#Mouse",
+      "label": "Class",
+      "name": "Mouse",
+      "signature": "export class Mouse"
+    },
+    {
+      "id": "/core/input.ts#Mouse.mouseButtonDown",
+      "label": "Variable",
+      "name": "mouseButtonDown",
+      "signature": "{ [key: string]: boolean }"
+    },
+    {
+      "id": "/core/input.ts#Mouse.mouseClickPosition",
+      "label": "Variable",
+      "name": "mouseClickPosition",
+      "signature": "{ x: number; y: number }"
+    },
+    {
+      "id": "/core/input.ts#Mouse.mousePosition",
+      "label": "Variable",
+      "name": "mousePosition",
+      "signature": "{ x: number; y: number }"
+    },
+    {
+      "id": "/core/input.ts#Mouse.mouseMovement",
+      "label": "Variable",
+      "name": "mouseMovement",
+      "signature": "{ x: number; y: number }"
+    },
+    {
+      "id": "/core/input.ts#Mouse.wheelX",
+      "label": "Variable",
+      "name": "wheelX",
+      "signature": "0"
+    },
+    {
+      "id": "/core/input.ts#Mouse.wheelY",
+      "label": "Variable",
+      "name": "wheelY",
+      "signature": "0"
+    },
+    {
+      "id": "/core/input.ts#Mouse.getMousePosition",
+      "label": "Method",
+      "name": "getMousePosition",
+      "signature": "getMousePosition(): { x: number; y: number }"
+    },
+    {
+      "id": "/core/input.ts#Mouse.getMouseMovement",
+      "label": "Method",
+      "name": "getMouseMovement",
+      "signature": "getMouseMovement(): { x: number; y: number }"
+    },
+    {
+      "id": "/core/input.ts#Mouse.isMouseButtonDown",
+      "label": "Method",
+      "name": "isMouseButtonDown",
+      "signature": "isMouseButtonDown(button: number): boolean"
+    },
+    {
+      "id": "/core/input.ts#Mouse.getMouseWheelDelta",
+      "label": "Method",
+      "name": "getMouseWheelDelta",
+      "signature": "getMouseWheelDelta(): { x: number; y: number }"
+    },
+    {
+      "id": "/core/input.ts#Keybord",
+      "label": "Class",
+      "name": "Keybord",
+      "signature": "export class Keybord"
+    },
+    {
+      "id": "/core/input.ts#Keybord.keyDown",
+      "label": "Variable",
+      "name": "keyDown",
+      "signature": "{ [key: string]: boolean }"
+    },
+    {
+      "id": "/core/input.ts#Keybord.keyUp",
+      "label": "Variable",
+      "name": "keyUp",
+      "signature": "{ [key: string]: boolean }"
+    },
+    {
+      "id": "/core/input.ts#Keybord.keyPress",
+      "label": "Variable",
+      "name": "keyPress",
+      "signature": "{ [key: string]: boolean }"
+    },
+    {
+      "id": "/core/input.ts#Keybord.isKeyDown",
+      "label": "Method",
+      "name": "isKeyDown",
+      "signature": "isKeyDown(key: string): boolean"
+    },
+    {
+      "id": "/core/input.ts#Keybord.isKeyPressed",
+      "label": "Method",
+      "name": "isKeyPressed",
+      "signature": "isKeyPressed(key: string): boolean"
+    },
+    {
+      "id": "/core/input.ts#Keybord.isKeyReleased",
+      "label": "Method",
+      "name": "isKeyReleased",
+      "signature": "isKeyReleased(key: string): boolean"
+    },
+    {
+      "id": "/core/input.ts#GamepadManager",
+      "label": "Class",
+      "name": "GamepadManager",
+      "signature": "export class GamepadManager"
+    },
+    {
+      "id": "/core/input.ts#GamepadManager.gamepads",
+      "label": "Variable",
+      "name": "gamepads",
+      "signature": "(Gamepad | null)[]"
+    },
+    {
+      "id": "/core/input.ts#GamepadManager.update",
+      "label": "Method",
+      "name": "update",
+      "signature": "update(): void"
+    },
+    {
+      "id": "/core/input.ts#cleanLastFrame",
+      "label": "Function",
+      "name": "cleanLastFrame",
+      "signature": "cleanLastFrame()"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/input.ts",
+      "target": "/core/input.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "navigator"
+    ],
+    "has_side_effects": true
+  }
+}

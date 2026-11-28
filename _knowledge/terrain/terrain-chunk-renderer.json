@@ -1,0 +1,194 @@
+{
+  "component": {
+    "name": "TerrainChunkRenderer",
+    "source_path": "/terrain/terrain-chunk-renderer.ts",
+    "doc_path": "/terrain/terrain-chunk-renderer.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "TerrainChunkRenderer is a specialized class inheriting from MeshRendererBehaviour, responsible for rendering a single terrain chunk by directly writing vertex buffers from height data rather than using standard MeshData. It manages multiple LOD levels, calculating the appropriate index buffer based on camera distance via the `chooseLod` function. The component ensures geometry buffers are updated only when the chunk's height version changes, triggering a buffer rewrite via the `refresh` method before rendering."
+  },
+  "graph_nodes": [
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#TerrainChunkRenderer",
+      "label": "Class",
+      "name": "TerrainChunkRenderer",
+      "signature": ""
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#lodDistances",
+      "label": "Property",
+      "name": "lodDistances",
+      "signature": "lodDistances: number[]"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#skirtDepth",
+      "label": "Property",
+      "name": "skirtDepth",
+      "signature": "skirtDepth: number"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#lod",
+      "label": "Property",
+      "name": "lod",
+      "signature": "lod: number"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#positions",
+      "label": "Variable",
+      "name": "positions",
+      "signature": "positions: Float32Array"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#normals",
+      "label": "Variable",
+      "name": "normals",
+      "signature": "normals: Float32Array"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#uvs",
+      "label": "Variable",
+      "name": "uvs",
+      "signature": "uvs: Float32Array"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#lodBuffers",
+      "label": "Variable",
+      "name": "lodBuffers",
+      "signature": "lodBuffers: (WebGLBuffer | null)[]"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#lodCounts",
+      "label": "Variable",
+      "name": "lodCounts",
+      "signature": "lodCounts: number[]"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#builtVersion",
+      "label": "Variable",
+      "name": "builtVersion",
+      "signature": "builtVersion: number"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#version",
+      "label": "Variable",
+      "name": "version",
+      "signature": "version: number"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#bounds",
+      "label": "Variable",
+      "name": "bounds",
+      "signature": "bounds: [number, number]"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(gl: WebGL2RenderingContext, public readonly grid: TerrainGrid, public readonly chunk: TerrainChunkData)"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#serializesMesh",
+      "label": "Method",
+      "name": "serializesMesh",
+      "signature": "serializesMesh(): boolean"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#indexCount",
+      "label": "Method",
+      "name": "indexCount",
+      "signature": "indexCount(): number"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#deformationVersion",
+      "label": "Method",
+      "name": "deformationVersion",
+      "signature": "deformationVersion(): number"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#initializeShader",
+      "label": "Method",
+      "name": "initializeShader",
+      "signature": "initializeShader(): void"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#refresh",
+      "label": "Method",
+      "name": "refresh",
+      "signature": "refresh(force = false): void"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#beforeRender",
+      "label": "Method",
+      "name": "beforeRender",
+      "signature": "beforeRender(): void"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#distanceTo",
+      "label": "Method",
+      "name": "distanceTo",
+      "signature": "distanceTo(point: vec3 | undefined): number"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#worldBounds",
+      "label": "Method",
+      "name": "worldBounds",
+      "signature": "worldBounds(out: Sphere): boolean"
+    },
+    {
+      "id": "/terrain/terrain-chunk-renderer.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "destroy(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/terrain/terrain-chunk-renderer.ts",
+      "target": "/terrain/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-chunk-renderer.ts",
+      "target": "/terrain/core/mesh.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-chunk-renderer.ts",
+      "target": "/terrain/core/render/culling.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-chunk-renderer.ts",
+      "target": "/terrain/entities/camera.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-chunk-renderer.ts",
+      "target": "/terrain/terrain-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-chunk-renderer.ts",
+      "target": "/terrain/terrain-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-chunk-renderer.ts",
+      "target": "/terrain/terrain-shader.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/terrain/terrain-chunk-renderer.ts",
+      "target": "/terrain/terrain-mesh.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

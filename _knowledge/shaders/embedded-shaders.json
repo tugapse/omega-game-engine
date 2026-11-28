@@ -1,0 +1,132 @@
+{
+  "component": {
+    "name": "EMBEDDED_SHADERS",
+    "source_path": "/shaders/embedded-shaders.ts",
+    "doc_path": "/shaders/embedded-shaders.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component acts as a static, embedded registry for GLSL source code strings, keyed by their corresponding ShaderSources URIs. Its primary role is to provide a deterministic, bundled source of truth for rendering effects, eliminating runtime file loading for essential shaders. It functions purely as a data provider within the rendering subsystem, containing hardcoded string literals of GLSL code.",
+    "domain_responsibilities": "Shader Registry, Data Provisioning, Asset Bundling"
+  },
+  "graph_nodes": [
+    {
+      "id": "/shaders/embedded-shaders.ts#EMBEDDED_SHADERS",
+      "label": "Variable",
+      "name": "EMBEDDED_SHADERS",
+      "signature": "const EMBEDDED_SHADERS: { readonly [uri: string]: string }"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/editor/entity-picker.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/editor/handle/handle.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/editor/handle/handle.vert",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/editor/picker/entity.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/editor/picker/entity.vert",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/frag/color.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/frag/default-lit.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/frag/default-unlit.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/frag/depth-only.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/frag/screen-blit.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/frag/skybox.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/frag/terrain.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/functions/fog.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/functions/functions.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/functions/light.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/post-processing/copy-with-depth.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/post-processing/retro.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/tools/bitangent.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/tools/normal.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/tools/tangent.frag",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/shaders/embedded-shaders.ts",
+      "target": "/assets/shaders/tools/uv.frag",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

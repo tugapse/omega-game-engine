@@ -1,0 +1,45 @@
+{
+  "component": {
+    "name": "IRendererBehaviour",
+    "source_path": "/interfaces/renderer-behaviour.ts",
+    "doc_path": "/interfaces/renderer-behaviour.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "IRendererBehaviour defines the essential contract for any component responsible for managing a WebGL rendering context within the application. It mandates the inclusion of a private WebGL2RenderingContext instance and requires a method to explicitly set this context. This interface serves as a structural dependency for ensuring consistent interaction between high-level rendering logic and the underlying graphics API implementation."
+  },
+  "graph_nodes": [
+    {
+      "id": "/interfaces/renderer-behaviour.ts#IRendererBehaviour",
+      "label": "Interface",
+      "name": "IRendererBehaviour",
+      "signature": ""
+    },
+    {
+      "id": "/interfaces/renderer-behaviour.ts#_gl",
+      "label": "Variable",
+      "name": "_gl",
+      "signature": "WebGL2RenderingContext"
+    },
+    {
+      "id": "/interfaces/renderer-behaviour.ts#setGl",
+      "label": "Method",
+      "name": "setGl",
+      "signature": "setGl(gl: WebGL2RenderingContext): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/interfaces/renderer-behaviour.ts",
+      "target": "/interfaces/renderer-behaviour.ts",
+      "relation": "defines"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "WebGL2RenderingContext"
+    ],
+    "has_side_effects": false
+  }
+}

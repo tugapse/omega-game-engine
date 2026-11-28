@@ -1,0 +1,45 @@
+{
+  "component": {
+    "name": "PlanePrimitive",
+    "source_path": "/primitives/plane-primitive.ts",
+    "doc_path": "/primitives/plane-primitive.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "PlanePrimitive is a class inheriting from MeshData responsible for procedurally generating the geometric data for a flat, square plane mesh. It constructs vertices, normals (always pointing along Y), UV coordinates, and triangle indices based on a specified resolution parameter. The constructor enforces a minimum resolution of 1, ensuring stable mesh generation centered at the origin on the XZ-plane."
+  },
+  "graph_nodes": [
+    {
+      "id": "/primitives/plane-primitive.ts#PlanePrimitive",
+      "label": "Class",
+      "name": "PlanePrimitive",
+      "signature": ""
+    },
+    {
+      "id": "/primitives/plane-primitive.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(vertices?: vec3[], normals?: vec3[], uvs?: vec2[], indices?: number[]): PlanePrimitive"
+    },
+    {
+      "id": "/primitives/plane-primitive.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(resolution: number = 1)"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/primitives/plane-primitive.ts",
+      "target": "/core/mesh.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

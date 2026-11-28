@@ -1,0 +1,95 @@
+{
+  "component": {
+    "name": "Light",
+    "source_path": "/entities/lights/light.ts",
+    "doc_path": "/entities/lights/light.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The Light class serves as the foundational model for light sources within the rendering engine, inheriting from SceneEntity. It encapsulates physical properties such as color, intensity, and shadow casting behavior. It utilizes Color and Transform types to define spatial and visual characteristics. The class provides a static factory method, instanciate, for controlled object creation, initializing defaults like ambient color.",
+    "semantic_summary_2": "This component defines the Light entity, which is a core data model for the scene graph. It manages properties like castShadows, shadowDepthBias, and shadowStrength. It relies on internal engine types like Color and Transform to maintain state."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/lights/light.ts#Light",
+      "label": "Class",
+      "name": "Light",
+      "signature": "class Light extends SceneEntity"
+    },
+    {
+      "id": "/entities/lights/light.ts#entityType",
+      "label": "Property",
+      "name": "entityType",
+      "signature": "public override entityType: EntityType = EntityType.LIGHT_AMBIENT;"
+    },
+    {
+      "id": "/entities/lights/light.ts#color",
+      "label": "Property",
+      "name": "color",
+      "signature": "public color: Color;"
+    },
+    {
+      "id": "/entities/lights/light.ts#castShadows",
+      "label": "Property",
+      "name": "castShadows",
+      "signature": "public castShadows = false;"
+    },
+    {
+      "id": "/entities/lights/light.ts#shadowDepthBias",
+      "label": "Property",
+      "name": "shadowDepthBias",
+      "signature": "public shadowDepthBias = 0.5;"
+    },
+    {
+      "id": "/entities/lights/light.ts#shadowNormalBias",
+      "label": "Property",
+      "name": "shadowNormalBias",
+      "signature": "public shadowNormalBias = 1;"
+    },
+    {
+      "id": "/entities/lights/light.ts#shadowStrength",
+      "label": "Property",
+      "name": "shadowStrength",
+      "signature": "public shadowStrength = 0.75;"
+    },
+    {
+      "id": "/entities/lights/light.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(name: string)"
+    },
+    {
+      "id": "/entities/lights/light.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(name?: string, transform?: Transform): Light"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/lights/light.ts",
+      "target": "/core/color.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/light.ts",
+      "target": "/core/transform.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/light.ts",
+      "target": "/enums/entity-type.enum.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/light.ts",
+      "target": "/entities/entity.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

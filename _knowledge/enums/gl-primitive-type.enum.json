@@ -1,0 +1,67 @@
+{
+  "component": {
+    "name": "GLPrimitiveType",
+    "source_path": "/enums/gl-primitive-type.enum.ts",
+    "doc_path": "/enums/gl-primitive-type.enum.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the GLPrimitiveType enumeration, which serves as a core data definition layer for the rendering subsystem. It encapsulates standard WebGL constants that dictate how vertex data is interpreted by the graphics pipeline. The enum provides symbolic constants for various geometric primitives, such as POINTS, TRIANGLES, and LINE_STRIP. It is fundamental for configuring the drawing state in rendering calls."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/gl-primitive-type.enum.ts#GLPrimitiveType",
+      "label": "Type",
+      "name": "GLPrimitiveType",
+      "signature": "enum"
+    },
+    {
+      "id": "/enums/gl-primitive-type.enum.ts#POINTS",
+      "label": "Type",
+      "name": "POINTS",
+      "signature": "0x0000"
+    },
+    {
+      "id": "/enums/gl-primitive-type.enum.ts#LINES",
+      "label": "Type",
+      "name": "LINES",
+      "signature": "0x0001"
+    },
+    {
+      "id": "/enums/gl-primitive-type.enum.ts#LINE_STRIP",
+      "label": "Type",
+      "name": "LINE_STRIP",
+      "signature": "0x0002"
+    },
+    {
+      "id": "/enums/gl-primitive-type.enum.ts#LINE_LOOP",
+      "label": "Type",
+      "name": "LINE_LOOP",
+      "signature": "0x0003"
+    },
+    {
+      "id": "/enums/gl-primitive-type.enum.ts#TRIANGLES",
+      "label": "Type",
+      "name": "TRIANGLES",
+      "signature": "0x0004"
+    },
+    {
+      "id": "/enums/gl-primitive-type.enum.ts#TRIANGLE_STRIP",
+      "label": "Type",
+      "name": "TRIANGLE_STRIP",
+      "signature": "0x0005"
+    },
+    {
+      "id": "/enums/gl-primitive-type.enum.ts#TRIANGLE_FAN",
+      "label": "Type",
+      "name": "TRIANGLE_FAN",
+      "signature": "0x0006"
+    }
+  ],
+  "graph_edges": [],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

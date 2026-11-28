@@ -1,0 +1,103 @@
+{
+  "component": {
+    "name": "model-instantiator",
+    "source_path": "/model/model-instantiator.ts",
+    "doc_path": "/model/model-instantiator.json",
+    "type": "service"
+  },
+  "vector_memory": {
+    "semantic_summary": "This service component, instantiateModel, is the core asset pipeline bridge responsible for transforming raw model data (ModelData) from a URI into a dynamic, runnable scene graph. It constructs the hierarchy of SceneEntity objects, correctly setting transforms and attaching appropriate rendering or animation behaviors based on the model's structure. It manages the complex process of material creation, texture resolution, and entity population into a target Scene object."
+  },
+  "graph_nodes": [
+    {
+      "id": "/model/model-instantiator.ts#InstantiateModelOptions",
+      "label": "Interface",
+      "name": "InstantiateModelOptions",
+      "signature": "interface InstantiateModelOptions { name?: string; scene?: Scene; resolveImage?: (path: string, image: ModelImage) => string | undefined; }"
+    },
+    {
+      "id": "/model/model-instantiator.ts#instantiateModel",
+      "label": "Function",
+      "name": "instantiateModel",
+      "signature": "async function instantiateModel(gl: WebGL2RenderingContext, modelUri: string, options: InstantiateModelOptions = {}): Promise<{ root: SceneEntity; entities: SceneEntity[]; }>"
+    },
+    {
+      "id": "/model/model-instantiator.ts#createMaterial",
+      "label": "Function",
+      "name": "createMaterial",
+      "signature": "async function createMaterial(gl: WebGL2RenderingContext, modelUri: string, model: ModelData, source?: ModelMaterial, resolveImage?: InstantiateModelOptions['resolveImage']): Promise<LitMaterial>"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/model/model-instantiator.ts",
+      "target": "/src/model/model-instantiator.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/model/model-instantiator.ts",
+      "target": "/src/animation/animator.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/model/model-instantiator.ts",
+      "target": "/src/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/model/model-instantiator.ts",
+      "target": "/src/behaviours/renderer/skinned-mesh-renderer-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/model/model-instantiator.ts",
+      "target": "/src/core/color.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/model/model-instantiator.ts",
+      "target": "/src/core/mesh.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/model/model-instantiator.ts",
+      "target": "/src/core/resources/builtin-textures.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/model/model-instantiator.ts",
+      "target": "/src/core/resources/resources.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/model/model-instantiator.ts",
+      "target": "/src/core/model/model-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/model/model-instantiator.ts",
+      "target": "/src/entities/entity.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/model/model-instantiator.ts",
+      "target": "/src/entities/scene.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/model/model-instantiator.ts",
+      "target": "/src/materials/lit-material.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/model/model-instantiator.ts",
+      "target": "/src/shaders/lit-shader.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/behaviours/index.ts",
+    "doc_path": "/behaviours/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as a central barrel file, aggregating and exposing various behavioral logic units across the application. It serves as a public interface layer, standardizing access to subsystems like rendering pipelines and entity logic. It consolidates exports from specific subdirectories such as './renderer/' and './entity-behaviour'. The component's role is purely architectural, providing a unified entry point for behavior management."
+  },
+  "graph_nodes": [],
+  "graph_edges": [
+    {
+      "source": "/behaviours/index.ts",
+      "target": "/behaviours/renderer/renderer-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/index.ts",
+      "target": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/index.ts",
+      "target": "/behaviours/renderer/skinned-mesh-renderer-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/index.ts",
+      "target": "/behaviours/renderer/skybox-renderer.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/index.ts",
+      "target": "/behaviours/entity-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/index.ts",
+      "target": "/behaviours/camera-fly-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/index.ts",
+      "target": "/behaviours/sun-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/index.ts",
+      "target": "/behaviours/rotate-behaviour.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

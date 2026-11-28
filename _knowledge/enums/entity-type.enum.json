@@ -1,0 +1,25 @@
+{
+  "component": {
+    "name": "entity-type.enum.ts",
+    "source_path": "/enums/entity-type.enum.ts",
+    "doc_path": "/enums/entity-type.enum.json",
+    "type": "model"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the EntityType enumeration, providing a canonical, immutable set of numerical identifiers for classifying all entities within the engine. It serves as a core data model element, linking different simulation components like the Scene and various light/camera types. The numerical values are specifically utilized to ensure efficient and reliable serialization across application sessions."
+  },
+  "graph_nodes": [
+    {
+      "id": "/enums/entity-type.enum.ts#EntityType",
+      "label": "Type",
+      "name": "EntityType",
+      "signature": "enum"
+    }
+  ],
+  "graph_edges": [],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "component": {
+    "name": "PointLight",
+    "source_path": "/entities/lights/point-light.ts",
+    "doc_path": "/entities/lights/point-light.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "PointLight models a light source that emits uniformly in all directions from a single point in the 3D scene. It extends the base Light class, specializing properties like range and attenuation to define its physical light behavior. This component handles serialization via toJsonObject and deserialization via fromJson, ensuring state persistence within the entity system. It serves as a concrete implementation of a point light entity type."
+  },
+  "graph_nodes": [
+    {
+      "id": "/entities/lights/point-light.ts#PointLight",
+      "label": "Class",
+      "name": "PointLight",
+      "signature": "export class PointLight extends Light"
+    },
+    {
+      "id": "/entities/lights/point-light.ts#className",
+      "label": "Static Property",
+      "name": "className",
+      "signature": "static override get className(): string"
+    },
+    {
+      "id": "/entities/lights/point-light.ts#entityType",
+      "label": "Property",
+      "name": "entityType",
+      "signature": "public override entityType: EntityType"
+    },
+    {
+      "id": "/entities/lights/point-light.ts#attenuation",
+      "label": "Property",
+      "name": "attenuation",
+      "signature": "public attenuation!: LightAttenuation"
+    },
+    {
+      "id": "/entities/lights/point-light.ts#range",
+      "label": "Property",
+      "name": "range",
+      "signature": "public range = 25"
+    },
+    {
+      "id": "/entities/lights/point-light.ts#constructor",
+      "label": "Constructor",
+      "name": "constructor",
+      "signature": "constructor(name: string)"
+    },
+    {
+      "id": "/entities/lights/point-light.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "public override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/entities/lights/point-light.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "public override fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/entities/lights/point-light.ts#instanciate",
+      "label": "Static Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(name?: string, transform?: Transform): PointLight"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/entities/lights/point-light.ts",
+      "target": "/src/core/color.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/point-light.ts",
+      "target": "/src/core/transform.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/point-light.ts",
+      "target": "/src/enums/entity-type.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/point-light.ts",
+      "target": "/src/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/point-light.ts",
+      "target": "/src/entities/lights/light.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/lights/point-light.ts",
+      "target": "/src/entities/lights/light-attenuation.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

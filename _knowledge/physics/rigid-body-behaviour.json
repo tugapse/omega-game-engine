@@ -1,0 +1,144 @@
+{
+  "component": {
+    "name": "RigidBodyBehaviour",
+    "source_path": "/physics/rigid-body-behaviour.ts",
+    "doc_path": "/physics/rigid-body-behaviour.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "RigidBodyBehaviour implements the logic to treat an entity as a dynamic rigid body within a PhysicsWorld. It manages physical properties like mass, damping, and gravity scaling, bridging the entity structure to the low-level physics backend. It provides methods for state manipulation, such as applying impulses, setting velocities, and teleporting, ensuring synchronous updates with the simulation world."
+  },
+  "graph_nodes": [
+    {
+      "id": "/physics/rigid-body-behaviour.ts#RigidBodyBehaviour",
+      "label": "Class",
+      "name": "RigidBodyBehaviour",
+      "signature": "class RigidBodyBehaviour extends EntityBehaviour"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(): RigidBodyBehaviour"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#created",
+      "label": "Getter",
+      "name": "created",
+      "signature": "get created(): boolean"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#isSleeping",
+      "label": "Getter",
+      "name": "isSleeping",
+      "signature": "get isSleeping(): boolean"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#wakeUp",
+      "label": "Method",
+      "name": "wakeUp",
+      "signature": "wakeUp(): void"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#getLinearVelocity",
+      "label": "Method",
+      "name": "getLinearVelocity",
+      "signature": "getLinearVelocity(out = vec3.create()): vec3"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#setLinearVelocity",
+      "label": "Method",
+      "name": "setLinearVelocity",
+      "signature": "setLinearVelocity(velocity: vec3): void"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#getAngularVelocity",
+      "label": "Method",
+      "name": "getAngularVelocity",
+      "signature": "getAngularVelocity(out = vec3.create()): vec3"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#setAngularVelocity",
+      "label": "Method",
+      "name": "setAngularVelocity",
+      "signature": "setAngularVelocity(velocity: vec3): void"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#applyImpulse",
+      "label": "Method",
+      "name": "applyImpulse",
+      "signature": "applyImpulse(impulse: vec3, point?: vec3): void"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#applyTorqueImpulse",
+      "label": "Method",
+      "name": "applyTorqueImpulse",
+      "signature": "applyTorqueImpulse(impulse: vec3): void"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#addForce",
+      "label": "Method",
+      "name": "addForce",
+      "signature": "addForce(force: vec3): void"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#resetForces",
+      "label": "Method",
+      "name": "resetForces",
+      "signature": "resetForces(): void"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#teleport",
+      "label": "Method",
+      "name": "teleport",
+      "signature": "teleport(position: vec3, rotation: quat = this.transform.worldRotationQuat): void"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/physics/rigid-body-behaviour.ts#backend",
+      "label": "Method",
+      "name": "backend",
+      "signature": "private backend(): PhysicsWorld | null"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/physics/rigid-body-behaviour.ts",
+      "target": "/src/behaviours/entity-behaviour.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/rigid-body-behaviour.ts",
+      "target": "/src/interfaces/json-serialized-data.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/rigid-body-behaviour.ts",
+      "target": "/src/physics/physics-backend.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/rigid-body-behaviour.ts",
+      "target": "/src/physics/physics-world.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": true
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "component": {
+    "name": "RotateBehaviour",
+    "source_path": "/behaviours/rotate-behaviour.ts",
+    "doc_path": "/behaviours/rotate-behaviour.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "RotateBehaviour implements rotational logic for an entity by extending EntityBehaviour. It modifies the entity's transformation component by applying incremental rotations based on a configured speed and elapsed time. The class manages its state through methods that serialize and deserialize its configuration using JsonSerializedData. It is responsible for updating the entity's orientation dynamically within the simulation loop."
+  },
+  "graph_nodes": [
+    {
+      "id": "/behaviours/rotate-behaviour.ts#RotateBehaviour",
+      "label": "Class",
+      "name": "RotateBehaviour",
+      "signature": "class RotateBehaviour extends EntityBehaviour"
+    },
+    {
+      "id": "/behaviours/rotate-behaviour.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(): RotateBehaviour"
+    },
+    {
+      "id": "/behaviours/rotate-behaviour.ts#update",
+      "label": "Method",
+      "name": "update",
+      "signature": "public override update(ellapsed: number): void"
+    },
+    {
+      "id": "/behaviours/rotate-behaviour.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "public override toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/behaviours/rotate-behaviour.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "public override fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/behaviours/rotate-behaviour.ts#rotationAngle",
+      "label": "Variable",
+      "name": "rotationAngle",
+      "signature": "rotationAngle: Vector3 = new Vector3(0, 1, 0)"
+    },
+    {
+      "id": "/behaviours/rotate-behaviour.ts#speed",
+      "label": "Variable",
+      "name": "speed",
+      "signature": "speed = 0.005"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/behaviours/rotate-behaviour.ts",
+      "target": "/behaviours/entity-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/rotate-behaviour.ts",
+      "target": "/core/vector.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/behaviours/rotate-behaviour.ts",
+      "target": "/interfaces/json-serialized-data.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

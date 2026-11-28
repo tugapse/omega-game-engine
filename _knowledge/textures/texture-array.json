@@ -1,0 +1,66 @@
+{
+  "component": {
+    "name": "TextureArray",
+    "source_path": "/textures/texture-array.ts",
+    "doc_path": "/textures/texture-array.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The TextureArray class manages a WebGL2 TEXTURE_2D_ARRAY, consolidating multiple 2D layers (e.g., color and normal maps) into a single GPU resource. It handles the initialization of the 3D texture storage using gl.texStorage3D, configuration of wrapping and filtering, and subsequent data uploading via texSubImage3D. Its primary role is to provide a structured, indexed interface for rendering pipelines to access distinct layers within one texture object."
+  },
+  "graph_nodes": [
+    {
+      "id": "/textures/texture-array.ts#TextureArray",
+      "label": "Class",
+      "name": "TextureArray",
+      "signature": "constructor(gl: WebGL2RenderingContext, size: number, layers: number)"
+    },
+    {
+      "id": "/textures/texture-array.ts#glTexture",
+      "label": "Variable",
+      "name": "glTexture",
+      "signature": "WebGLTexture | null"
+    },
+    {
+      "id": "/textures/texture-array.ts#setLayer",
+      "label": "Method",
+      "name": "setLayer",
+      "signature": "setLayer(layer: number, rgba: Uint8Array | Uint8ClampedArray): void"
+    },
+    {
+      "id": "/textures/texture-array.ts#generateMipmaps",
+      "label": "Method",
+      "name": "generateMipmaps",
+      "signature": "generateMipmaps(): void"
+    },
+    {
+      "id": "/textures/texture-array.ts#bind",
+      "label": "Method",
+      "name": "bind",
+      "signature": "bind(unit: number): void"
+    },
+    {
+      "id": "/textures/texture-array.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "destroy(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/textures/texture-array.ts",
+      "target": "/src/textures/texture-array.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "WebGL2RenderingContext",
+      "WebGLTexture",
+      "Uint8Array",
+      "Uint8ClampedArray"
+    ],
+    "has_side_effects": true
+  }
+}

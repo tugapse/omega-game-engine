@@ -1,0 +1,135 @@
+{
+  "component": {
+    "name": "Engine",
+    "source_path": "/engine.ts",
+    "doc_path": "/engine.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The Engine class serves as the primary orchestrator for the application lifecycle, managing initialization, scene state, and rendering loops. It coordinates core subsystems like DependencyManager and EngineEventManager. It controls the application's focus state and delegates update/render calls to the currently active Scene instance."
+  },
+  "graph_nodes": [
+    {
+      "id": "/engine.ts#Engine",
+      "label": "Class",
+      "name": "Engine",
+      "signature": "constructor()"
+    },
+    {
+      "id": "/engine.ts#currentScene",
+      "label": "Getter",
+      "name": "currentScene",
+      "signature": "get currentScene(): Scene"
+    },
+    {
+      "id": "/engine.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "initialize(canvas: HTMLCanvasElement): void"
+    },
+    {
+      "id": "/engine.ts#registerDependencies",
+      "label": "Method",
+      "name": "registerDependencies",
+      "signature": "registerDependencies(): void"
+    },
+    {
+      "id": "/engine.ts#loadScene",
+      "label": "Method",
+      "name": "loadScene",
+      "signature": "loadScene(scene: Scene): void"
+    },
+    {
+      "id": "/engine.ts#update",
+      "label": "Method",
+      "name": "update",
+      "signature": "update(deltaTime: number): void"
+    },
+    {
+      "id": "/engine.ts#render",
+      "label": "Method",
+      "name": "render",
+      "signature": "render(): void"
+    },
+    {
+      "id": "/engine.ts#destroy",
+      "label": "Method",
+      "name": "destroy",
+      "signature": "destroy(): void"
+    },
+    {
+      "id": "/engine.ts#handleFocusChange",
+      "label": "Method",
+      "name": "handleFocusChange",
+      "signature": "handleFocusChange(isFocused: boolean): void"
+    },
+    {
+      "id": "/engine.ts#isFocused",
+      "label": "Variable",
+      "name": "isFocused",
+      "signature": "public isFocused: boolean = false"
+    },
+    {
+      "id": "/engine.ts#isTabActive",
+      "label": "Variable",
+      "name": "isTabActive",
+      "signature": "public isTabActive: boolean = true"
+    },
+    {
+      "id": "/engine.ts#isWindowFocused",
+      "label": "Variable",
+      "name": "isWindowFocused",
+      "signature": "public isWindowFocused: boolean = true"
+    },
+    {
+      "id": "/engine.ts#eventManager",
+      "label": "Variable",
+      "name": "eventManager",
+      "signature": "private eventManager!: EngineEventManager"
+    },
+    {
+      "id": "/engine.ts#dependencyManager",
+      "label": "Variable",
+      "name": "dependencyManager",
+      "signature": "private dependencyManager!: DependencyManager"
+    },
+    {
+      "id": "/engine.ts#scene",
+      "label": "Variable",
+      "name": "scene",
+      "signature": "private scene!: Scene"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/engine.ts",
+      "target": "/./entities#Scene",
+      "relation": "imports"
+    },
+    {
+      "source": "/engine.ts",
+      "target": "/./managers#DependencyManager",
+      "relation": "imports"
+    },
+    {
+      "source": "/engine.ts",
+      "target": "/./managers#EngineEventManager",
+      "relation": "imports"
+    },
+    {
+      "source": "/engine.ts",
+      "target": "/./core/resources/resources#Resources",
+      "relation": "imports"
+    },
+    {
+      "source": "/engine.ts",
+      "target": "/./core/resources/resource-manager#ResourceManager",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

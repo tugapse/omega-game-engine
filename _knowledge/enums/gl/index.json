@@ -1,0 +1,44 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/enums/gl/index.ts",
+    "doc_path": "/enums/gl/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as a central barrel file for aggregating OpenGL enumeration definitions within the graphics subsystem. Its primary role is to consolidate and re-export various specific GL constants, such as blending modes and face winding definitions. It provides a unified, single entry point for consuming modules across the rendering pipeline to access all necessary GL-related constants consistently."
+  },
+  "graph_nodes": [],
+  "graph_edges": [
+    {
+      "source": "/enums/gl/index.ts",
+      "target": "/enums/gl/blend.enum.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/gl/index.ts",
+      "target": "/enums/gl/clear-mask.enum.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/gl/index.ts",
+      "target": "/enums/gl/cull-face.enum.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/gl/index.ts",
+      "target": "/enums/gl/deph-function.enum.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/enums/gl/index.ts",
+      "target": "/enums/gl/face-winding.enum.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

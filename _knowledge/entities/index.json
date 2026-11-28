@@ -1,0 +1,39 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/entities/index.ts",
+    "doc_path": "/entities/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as a central barrel file for the entity subsystem, aggregating and re-exporting all core entity-related modules. It provides a unified entry point for consumers to access types and functions related to various application entities. Its role is purely structural, simplifying dependency management across the codebase by consolidating exports from submodules like lights, camera, entity, and scene."
+  },
+  "graph_nodes": [],
+  "graph_edges": [
+    {
+      "source": "/entities/index.ts",
+      "target": "/entities/lights.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/index.ts",
+      "target": "/entities/camera.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/index.ts",
+      "target": "/entities/entity.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/entities/index.ts",
+      "target": "/entities/scene.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

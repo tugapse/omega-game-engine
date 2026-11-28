@@ -1,0 +1,104 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/index.ts",
+    "doc_path": "/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as the root facade and primary barrel export for the entire engine system. Its sole architectural role is to aggregate and expose all major subsystems, components, and utilities defined across various internal directories. It provides a unified, high-level entry point, allowing consumers to access specialized functionality like audio, physics, and core services through a single namespace."
+  },
+  "graph_nodes": [],
+  "graph_edges": [
+    {
+      "source": "/index.ts",
+      "target": "/src/audio.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/behaviours.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/core.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/entities.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/enums.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/interfaces.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/managers.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/materials.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/parsers.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/primitives.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/shaders.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/textures.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/engine.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/animation.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/model.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/physics.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/index.ts",
+      "target": "/src/terrain.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

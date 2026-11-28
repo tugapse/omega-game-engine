@@ -1,0 +1,51 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/audio/index.ts",
+    "doc_path": "/audio/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module serves as the central public facade for the entire audio subsystem. Its sole purpose is to aggregate and re-export core functionalities, classes, and interfaces from specialized internal audio modules. It simplifies dependency management by providing a single entry point to the audio stack, including the cache, engine, and clock mechanisms."
+  },
+  "graph_nodes": [
+    {
+      "id": "/audio/index.ts#index",
+      "label": "Module",
+      "name": "index",
+      "signature": "export *"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/audio/index.ts",
+      "target": "/audio/audio-cache.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/audio/index.ts",
+      "target": "/audio/audio-engine.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/audio/index.ts",
+      "target": "/audio/sequencer-clock.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/audio/index.ts",
+      "target": "/audio/voice-factory.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/audio/index.ts",
+      "target": "/audio/audio-diagnostics.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

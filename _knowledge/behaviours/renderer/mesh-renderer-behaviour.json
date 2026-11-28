@@ -1,0 +1,105 @@
+{
+  "component": {
+    "name": "MeshRendererBehaviour",
+    "source_path": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+    "doc_path": "/behaviours/renderer/mesh-renderer-behaviour.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "MeshRendererBehaviour is a specialized rendering service extending RendererBehaviour, dedicated to handling physically-based rendering (PBR) for mesh objects. It manages complex state by binding various texture maps—such as normal, specular, roughness, AO, and emissive maps—to the WebGL context. The core logic in the draw() method integrates scene data like SceneFog and utilizes Camera state for correct transformation and shading during rendering."
+  },
+  "graph_nodes": [
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#MeshRendererBehaviour",
+      "label": "Class",
+      "name": "MeshRendererBehaviour",
+      "signature": "class MeshRendererBehaviour extends RendererBehaviour"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#instanciate",
+      "label": "Method",
+      "name": "instanciate",
+      "signature": "static override instanciate(gl: WebGL2RenderingContext): MeshRendererBehaviour"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#fog",
+      "label": "Property",
+      "name": "fog",
+      "signature": "get fog(): SceneFog"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#constructor",
+      "label": "Method",
+      "name": "constructor",
+      "signature": "constructor(public override _gl: WebGL2RenderingContext)"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#draw",
+      "label": "Method",
+      "name": "draw",
+      "signature": "override draw(): void"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#initializeShader",
+      "label": "Method",
+      "name": "initializeShader",
+      "signature": "protected override initializeShader(): void"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#setShaderVariables",
+      "label": "Method",
+      "name": "setShaderVariables",
+      "signature": "protected override setShaderVariables(): void"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#getNormalMapLocations",
+      "label": "Method",
+      "name": "getNormalMapLocations",
+      "signature": "protected getNormalMapLocations(): void"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#getDefaultTexture",
+      "label": "Method",
+      "name": "getDefaultTexture",
+      "signature": "protected getDefaultTexture(type: 'white' | 'black' | 'normal'): WebGLTexture"
+    },
+    {
+      "id": "/behaviours/renderer/mesh-renderer-behaviour.ts#bindMap",
+      "label": "Method",
+      "name": "bindMap",
+      "signature": "protected bindMap(mapData: any, location: WebGLUniformLocation | null, unit: number, fallbackType: 'white' | 'black' | 'normal'): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/core/scene-fog.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/entities/camera.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/behaviours/renderer/renderer-behaviour.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/shaders/lit-shader.md",
+      "relation": "depends_on"
+    },
+    {
+      "source": "/behaviours/renderer/mesh-renderer-behaviour.ts",
+      "target": "/core/render/pass/shadow-atlas-pass.md",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

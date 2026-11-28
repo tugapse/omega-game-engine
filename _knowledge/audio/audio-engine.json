@@ -1,0 +1,142 @@
+{
+  "component": {
+    "name": "AudioEngine",
+    "source_path": "/audio/audio-engine.ts",
+    "doc_path": "/audio/audio-engine.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The AudioEngine is the core service managing the entire Web Audio API graph, responsible for constructing the master output chain, sub-mix routing (synth, SFX, music), and integrating global effects like reverb and delay. It encapsulates complex node topology, providing controlled access points for signal routing and parameter modification. Initialization is deferred until a user gesture, ensuring compliance with browser autoplay policies."
+  },
+  "graph_nodes": [
+    {
+      "id": "/audio/audio-engine.ts#AudioEngineConfig",
+      "label": "Interface",
+      "name": "AudioEngineConfig",
+      "signature": "interface AudioEngineConfig { sampleRate?: number; latencyHint?: AudioContextLatencyCategory; }"
+    },
+    {
+      "id": "/audio/audio-engine.ts#AudioEngine",
+      "label": "Class",
+      "name": "AudioEngine",
+      "signature": "class AudioEngine(config: AudioEngineConfig = {})"
+    },
+    {
+      "id": "/audio/audio-engine.ts#initialize",
+      "label": "Method",
+      "name": "initialize",
+      "signature": "async initialize(): Promise<void>"
+    },
+    {
+      "id": "/audio/audio-engine.ts#suspend",
+      "label": "Method",
+      "name": "suspend",
+      "signature": "async suspend(): Promise<void>"
+    },
+    {
+      "id": "/audio/audio-engine.ts#resume",
+      "label": "Method",
+      "name": "resume",
+      "signature": "async resume(): Promise<void>"
+    },
+    {
+      "id": "/audio/audio-engine.ts#getContext",
+      "label": "Method",
+      "name": "getContext",
+      "signature": "public getContext(): AudioContext"
+    },
+    {
+      "id": "/audio/audio-engine.ts#getAnalyser",
+      "label": "Method",
+      "name": "getAnalyser",
+      "signature": "public getAnalyser(): AnalyserNode"
+    },
+    {
+      "id": "/audio/audio-engine.ts#getSynthBus",
+      "label": "Method",
+      "name": "getSynthBus",
+      "signature": "public getSynthBus(): GainNode"
+    },
+    {
+      "id": "/audio/audio-engine.ts#getSfxBus",
+      "label": "Method",
+      "name": "getSfxBus",
+      "signature": "public getSfxBus(): GainNode"
+    },
+    {
+      "id": "/audio/audio-engine.ts#getMusicBus",
+      "label": "Method",
+      "name": "getMusicBus",
+      "signature": "public getMusicBus(): GainNode"
+    },
+    {
+      "id": "/audio/audio-engine.ts#getReverbBus",
+      "label": "Method",
+      "name": "getReverbBus",
+      "signature": "public getReverbBus(): ConvolverNode"
+    },
+    {
+      "id": "/audio/audio-engine.ts#getDelayBus",
+      "label": "Method",
+      "name": "getDelayBus",
+      "signature": "public getDelayBus(): DelayNode"
+    },
+    {
+      "id": "/audio/audio-engine.ts#setMasterVolume",
+      "label": "Method",
+      "name": "setMasterVolume",
+      "signature": "public setMasterVolume(value: number): void"
+    },
+    {
+      "id": "/audio/audio-engine.ts#setBusVolume",
+      "label": "Method",
+      "name": "setBusVolume",
+      "signature": "public setBusVolume(category: 'synth' | 'sfx' | 'music', value: number): void"
+    },
+    {
+      "id": "/audio/audio-engine.ts#buildMasterGraph",
+      "label": "Method",
+      "name": "buildMasterGraph",
+      "signature": "private buildMasterGraph(): void"
+    },
+    {
+      "id": "/audio/audio-engine.ts#buildFXReturnBuses",
+      "label": "Method",
+      "name": "buildFXReturnBuses",
+      "signature": "private buildFXReturnBuses(): void"
+    },
+    {
+      "id": "/audio/audio-engine.ts#buildSubMixBuses",
+      "label": "Method",
+      "name": "buildSubMixBuses",
+      "signature": "private buildSubMixBuses(): void"
+    },
+    {
+      "id": "/audio/audio-engine.ts#generateSyntheticImpulseResponse",
+      "label": "Method",
+      "name": "generateSyntheticImpulseResponse",
+      "signature": "private generateSyntheticImpulseResponse(duration: number, decay: number): AudioBuffer"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/audio/audio-engine.ts",
+      "target": "/audio/audio-engine.ts",
+      "relation": "depends_on"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "AudioContext",
+      "GainNode",
+      "DynamicsCompressorNode",
+      "AnalyserNode",
+      "ConvolverNode",
+      "DelayNode",
+      "AudioBuffer",
+      "AudioContextOptions"
+    ],
+    "has_side_effects": true
+  }
+}

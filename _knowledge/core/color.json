@@ -1,0 +1,126 @@
+{
+  "component": {
+    "name": "Color",
+    "source_path": "/core/color.ts",
+    "doc_path": "/core/color.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "The Color class models RGBA color data using an internal gl-matrix vec4. It serves as a core data model within a graphics pipeline, providing type-safe accessors for R, G, B, and A components. Key functionalities include serialization/deserialization via JsonSerializable, conversion to vec3/vec4, and linear interpolation (lerp) between color instances."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/color.ts#Color",
+      "label": "Class",
+      "name": "Color",
+      "signature": "constructor(r: number = 1, g: number = 1, b: number = 1, a: number = 1)"
+    },
+    {
+      "id": "/core/color.ts#Color.className",
+      "label": "Static Property",
+      "name": "className",
+      "signature": "get className(): string"
+    },
+    {
+      "id": "/core/color.ts#Color.createFromJsonData",
+      "label": "Static Method",
+      "name": "createFromJsonData",
+      "signature": "static createFromJsonData(jsonData: JsonSerializedData): Color"
+    },
+    {
+      "id": "/core/color.ts#r",
+      "label": "Getter/Setter",
+      "name": "r",
+      "signature": "get r(): number; set r(value: number): void"
+    },
+    {
+      "id": "/core/color.ts#g",
+      "label": "Getter/Setter",
+      "name": "g",
+      "signature": "get g(): number; set g(value: number): void"
+    },
+    {
+      "id": "/core/color.ts#b",
+      "label": "Getter/Setter",
+      "name": "b",
+      "signature": "get b(): number; set b(value: number): void"
+    },
+    {
+      "id": "/core/color.ts#a",
+      "label": "Getter/Setter",
+      "name": "a",
+      "signature": "get a(): number; set a(value: number): void"
+    },
+    {
+      "id": "/core/color.ts#toJsonObject",
+      "label": "Method",
+      "name": "toJsonObject",
+      "signature": "toJsonObject(): JsonSerializedData"
+    },
+    {
+      "id": "/core/color.ts#fromJson",
+      "label": "Method",
+      "name": "fromJson",
+      "signature": "fromJson(jsonObject: JsonSerializedData): void"
+    },
+    {
+      "id": "/core/color.ts#toVec3",
+      "label": "Method",
+      "name": "toVec3",
+      "signature": "toVec3(): vec3"
+    },
+    {
+      "id": "/core/color.ts#toVec4",
+      "label": "Method",
+      "name": "toVec4",
+      "signature": "toVec4(): vec4"
+    },
+    {
+      "id": "/core/color.ts#clone",
+      "label": "Method",
+      "name": "clone",
+      "signature": "clone(): Color"
+    },
+    {
+      "id": "/core/color.ts#set",
+      "label": "Method",
+      "name": "set",
+      "signature": "set(r: number = 1, g: number = 1, b: number = 1, a: number = 1): void"
+    },
+    {
+      "id": "/core/color.ts#lerp",
+      "label": "Static Method",
+      "name": "lerp",
+      "signature": "static lerp(a: Color, b: Color, t: number): Color"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/color.ts",
+      "target": "/core/json-serializable.ts",
+      "relation": "extends"
+    },
+    {
+      "source": "/core/color.ts",
+      "target": "/core/json-serialized-data.ts",
+      "relation": "uses"
+    },
+    {
+      "source": "/core/color.ts",
+      "target": "/gl-matrix/vec3",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/color.ts",
+      "target": "/gl-matrix/vec4",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

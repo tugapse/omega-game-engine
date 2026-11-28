@@ -1,0 +1,249 @@
+{
+  "component": {
+    "name": "RenderPipeline",
+    "source_path": "/core/render/render-pipeline.ts",
+    "doc_path": "/core/render/render-pipeline.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "RenderPipeline is the core rendering engine orchestrator, managing the entire frame generation lifecycle. It sequences rendering passes, including shadow map generation, scene rendering into off-screen targets, and applying post-processing effects. It dynamically adjusts resolution based on frame time against a target budget, relying heavily on RenderPipelineSettings for configuration like tone mapping and quality presets."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/render-pipeline.ts#ViewTargets",
+      "label": "Interface",
+      "name": "ViewTargets",
+      "signature": "interface ViewTargets { scene: RenderTarget; post: RenderTarget[]; }"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#ToneMapping",
+      "label": "Enum",
+      "name": "ToneMapping",
+      "signature": "enum ToneMapping { None = 0, Reinhard = 1, ACES = 2 }"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#ShadowMapSize",
+      "label": "Enum",
+      "name": "ShadowMapSize",
+      "signature": "enum ShadowMapSize { Small = 1024, Medium = 2048, Large = 4096 }"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderQuality",
+      "label": "Enum",
+      "name": "RenderQuality",
+      "signature": "enum RenderQuality { Low = 0, Medium = 1, High = 2 }"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipelineSettings",
+      "label": "Class",
+      "name": "RenderPipelineSettings",
+      "signature": "class RenderPipelineSettings extends JsonSerializable"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipeline",
+      "label": "Class",
+      "name": "RenderPipeline",
+      "signature": "class RenderPipeline extends JsonSerializable"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipelineSettings.applyQuality",
+      "label": "Method",
+      "name": "applyQuality",
+      "signature": "applyQuality(quality: RenderQuality): void"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipelineSettings.suggestedQuality",
+      "label": "Method",
+      "name": "suggestedQuality",
+      "signature": "static suggestedQuality(gl?: WebGL2RenderingContext): RenderQuality"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipelineSettings.isMobileGpu",
+      "label": "Method",
+      "name": "isMobileGpu",
+      "signature": "static isMobileGpu(gl?: WebGL2RenderingContext): boolean"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipeline.draw",
+      "label": "Method",
+      "name": "draw",
+      "signature": "draw(): void"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipeline.adjustResolution",
+      "label": "Method",
+      "name": "adjustResolution",
+      "signature": "adjustResolution(now: number): void"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipeline.textureCameras",
+      "label": "Method",
+      "name": "textureCameras",
+      "signature": "textureCameras(main: Camera): Camera[]"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipeline.renderView",
+      "label": "Method",
+      "name": "renderView",
+      "signature": "renderView(camera: Camera, key: string, width: number, height: number, clearColor: Float32Array, time: number, output: RenderTarget | null): void"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipeline.copyTo",
+      "label": "Method",
+      "name": "copyTo",
+      "signature": "copyTo(output: RenderTarget | null, color: RenderTarget, depth: RenderTarget): void"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipeline.withFullscreenState",
+      "label": "Method",
+      "name": "withFullscreenState",
+      "signature": "withFullscreenState(draw: () => void): void"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipeline.ensureView",
+      "label": "Method",
+      "name": "ensureView",
+      "signature": "ensureView(key: string, width: number, height: number): ViewTargets"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipeline.postTarget",
+      "label": "Method",
+      "name": "postTarget",
+      "signature": "postTarget(view: ViewTargets, i: number): RenderTarget"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipeline.disposeView",
+      "label": "Method",
+      "name": "disposeView",
+      "signature": "disposeView(view: ViewTargets): void"
+    },
+    {
+      "id": "/core/render/render-pipeline.ts#RenderPipeline.disposeTargets",
+      "label": "Method",
+      "name": "disposeTargets",
+      "signature": "disposeTargets(): void"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/render-pipeline.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/entities.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/enums/class-type.enum.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/interfaces.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/shaders/shader-sources.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/camera-ubo.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/json-serializable.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/object-instanciator.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/range.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/frame-data.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/behaviours/renderer/renderer-behaviour.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/lights-ubo.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/fullscreen-program.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/pass/geometry-pass.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/pass/shadow-atlas-pass.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/shadows.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/post-effect.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/render-pass.interface.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/render-target.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/resources/resources.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/render-target.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/render-target.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/render-pipeline.ts",
+      "target": "/src/core/render/render-target.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": true
+  }
+}

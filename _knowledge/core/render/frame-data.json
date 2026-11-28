@@ -1,0 +1,92 @@
+{
+  "component": {
+    "name": "frame-data.ts",
+    "source_path": "/core/render/frame-data.ts",
+    "doc_path": "/core/render/frame-data.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module is the FrameData Builder, responsible for aggregating all necessary rendering information for a single frame draw call. The core function, buildFrameData, processes the Scene and Camera to filter and sort entities into specific lists: opaque, transparent, skybox, and shadow casters. It calculates view-projection matrices and uses frustum culling to ensure only visible entities are included in the final FrameData structure, which is then passed to rendering passes."
+  },
+  "graph_nodes": [
+    {
+      "id": "/core/render/frame-data.ts#FrameData",
+      "label": "Interface",
+      "name": "FrameData",
+      "signature": "interface FrameData { camera: Camera; opaque: SceneEntity[]; skybox: SceneEntity[]; transparent: SceneEntity[]; lights: Light[]; shadowCasters: SceneEntity[]; time: number; }"
+    },
+    {
+      "id": "/core/render/frame-data.ts#buildFrameData",
+      "label": "Function",
+      "name": "buildFrameData",
+      "signature": "export function buildFrameData(scene: Scene, camera: Camera, time: number, cull = true): FrameData"
+    },
+    {
+      "id": "/core/render/frame-data.ts#viewProjection",
+      "label": "Variable",
+      "name": "viewProjection",
+      "signature": "const viewProjection = mat4.create()"
+    },
+    {
+      "id": "/core/render/frame-data.ts#planes",
+      "label": "Variable",
+      "name": "planes",
+      "signature": "const planes = new Float32Array(24)"
+    },
+    {
+      "id": "/core/render/frame-data.ts#bounds",
+      "label": "Variable",
+      "name": "bounds",
+      "signature": "const bounds = createSphere()"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/core/render/frame-data.ts",
+      "target": "/src/core/render/behaviours.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/frame-data.ts",
+      "target": "/src/core/entities/camera.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/frame-data.ts",
+      "target": "/src/core/entities/scene.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/frame-data.ts",
+      "target": "/src/core/entities/scene-entity.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/frame-data.ts",
+      "target": "/src/core/entities/lights/light.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/frame-data.ts",
+      "target": "/src/core/enums/render-layer.md",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/frame-data.ts",
+      "target": "/src/core/render/culling.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/core/render/frame-data.ts",
+      "target": "/gl-matrix",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

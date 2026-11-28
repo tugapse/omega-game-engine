@@ -1,0 +1,51 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/physics/index.ts",
+    "doc_path": "/physics/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module acts as a facade for the entire physics subsystem, aggregating core functionalities into a unified entry point. It consolidates implementations from backend providers, world simulation logic, and specific behavioral definitions. Its primary role is to expose the complete physics domain to consumers within the application architecture."
+  },
+  "graph_nodes": [
+    {
+      "id": "/physics/index.ts#index",
+      "label": "Module",
+      "name": "index",
+      "signature": "export *"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/physics/index.ts",
+      "target": "/physics/physics-backend.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/index.ts",
+      "target": "/physics/physics-world.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/index.ts",
+      "target": "/physics/rigid-body-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/index.ts",
+      "target": "/physics/collider-behaviour.ts",
+      "relation": "imports"
+    },
+    {
+      "source": "/physics/index.ts",
+      "target": "/physics/rapier-backend.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "component": {
+    "name": "SpherePrimitive",
+    "source_path": "/primitives/sphere-primitive.ts",
+    "doc_path": "/primitives/sphere-primitive.json",
+    "type": "class"
+  },
+  "vector_memory": {
+    "semantic_summary": "SpherePrimitive is a class inheriting from MeshData responsible for procedurally generating the geometric data for a sphere mesh. It calculates vertices, surface normals, and UV coordinates by iterating over spherical coordinates (latitude/stacks and longitude/slices). The constructor constructs triangle indices to form a closed, counter-clockwise winding mesh representation suitable for 3D rendering pipelines."
+  },
+  "graph_nodes": [
+    {
+      "id": "/primitives/sphere-primitive.ts#SpherePrimitive",
+      "label": "Class",
+      "name": "SpherePrimitive",
+      "signature": "constructor(radius: number = 1.0, slices: number = 32, stacks: number = 16)"
+    },
+    {
+      "id": "/primitives/sphere-primitive.ts#vec2",
+      "label": "Type",
+      "name": "vec2",
+      "signature": "import { vec2, vec3 } from \"gl-matrix\";"
+    },
+    {
+      "id": "/primitives/sphere-primitive.ts#vec3",
+      "label": "Type",
+      "name": "vec3",
+      "signature": "import { vec2, vec3 } from \"gl-matrix\";"
+    },
+    {
+      "id": "/primitives/sphere-primitive.ts#MeshData",
+      "label": "Class",
+      "name": "MeshData",
+      "signature": "import { MeshData } from \"../core/mesh\";"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/primitives/sphere-primitive.ts",
+      "target": "/core/mesh.ts",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [
+      "gl-matrix"
+    ],
+    "has_side_effects": false
+  }
+}

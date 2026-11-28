@@ -1,0 +1,31 @@
+{
+  "component": {
+    "name": "index",
+    "source_path": "/parsers/collada/index.ts",
+    "doc_path": "/parsers/collada/index.json",
+    "type": "module"
+  },
+  "vector_memory": {
+    "semantic_summary": "This module serves as the primary facade and entry point for the Collada parsing functionality within the application's data parsing layer. Its sole responsibility is to aggregate and export the complete capabilities provided by the specific Collada parser implementation located in './collada-parser'. It abstracts the internal structure, allowing consumers to access all Collada parsing features through a single, unified import point."
+  },
+  "graph_nodes": [
+    {
+      "id": "/parsers/collada/index.ts#index",
+      "label": "Module",
+      "name": "index",
+      "signature": "export *"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/parsers/collada/index.ts",
+      "target": "/parsers/collada/collada-parser.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}

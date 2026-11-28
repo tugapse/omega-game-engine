@@ -1,0 +1,31 @@
+{
+  "component": {
+    "name": "ClassMetadata",
+    "source_path": "/interfaces/class-metadata.ts",
+    "doc_path": "/interfaces/class-metadata.json",
+    "type": "interface"
+  },
+  "vector_memory": {
+    "semantic_summary": "This component defines the ClassMetadata interface, which serves as a standardized data structure for encapsulating descriptive information about a class within the system. It mandates fields for the class's name (string), its enumerated type (ClassType), and its physical path (string). An optional description field allows for supplementary documentation, making it a core contract for reflection and serialization layers."
+  },
+  "graph_nodes": [
+    {
+      "id": "/interfaces/class-metadata.ts#ClassMetadata",
+      "label": "Interface",
+      "name": "ClassMetadata",
+      "signature": "interface ClassMetadata { name: string; type: ClassType; path: string; description?: string; }"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source": "/interfaces/class-metadata.ts",
+      "target": "/enums/class-type.enum.md",
+      "relation": "imports"
+    }
+  ],
+  "metadata": {
+    "environment_variables": [],
+    "external_dependencies": [],
+    "has_side_effects": false
+  }
+}
