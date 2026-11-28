@@ -460,8 +460,14 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
     }
     this.shader.use();
     this.shader.bindBuffers();
-    this._gl.drawElements(this.drawPrimitiveType, this.indexCount, this.shader.indexType, 0);
+    this.issueDraw();
     this.shader.release();
+  }
+
+  /** The draw call itself, with the shader in use and its buffers bound (instanced renderers draw many). */
+  protected issueDraw(): void {
+    if (!this.shader) return;
+    this._gl.drawElements(this.drawPrimitiveType, this.indexCount, this.shader.indexType, 0);
   }
 
 
@@ -497,6 +503,11 @@ export class RendererBehaviour extends EntityBehaviour implements IRendererBehav
    */
   public get deformationVersion(): number {
     return 0;
+  }
+
+  /** Instanced renderers: their instance buffer and how many to draw (null for one copy). */
+  public get instancing(): { buffer: WebGLBuffer; count: number } | null {
+    return null;
   }
 
   /** Whether the mesh data is saved in the scene (false when it comes from a model file). */
